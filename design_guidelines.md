@@ -3,6 +3,32 @@
 ## Design Approach
 Reference-Based Approach inspired by service marketplace apps like "Ma coiffeuse Afro", Uber, and Thumbtack, adapted for the tailoring/fashion industry. The design emphasizes elegant simplicity, mobile-first interactions, and visual richness through photography of garments and craftsmanship.
 
+## Color Palette - Warm Burgundy Theme
+
+### Primary Colors
+- **Primary (Burgundy)**: hsl(350, 55%, 45%) - Main accent color for buttons, links, active states
+- **Primary Foreground**: hsl(0, 0%, 98%) - White text on burgundy backgrounds
+
+### Background Colors (Light Mode)
+- **Background**: hsl(30, 20%, 98%) - Warm off-white base
+- **Card**: hsl(30, 15%, 96%) - Slightly elevated surfaces
+- **Sidebar**: hsl(30, 12%, 94%) - Navigation areas
+
+### Background Colors (Dark Mode)
+- **Background**: hsl(30, 8%, 8%) - Deep charcoal base
+- **Card**: hsl(30, 8%, 11%) - Elevated dark surfaces
+- **Sidebar**: hsl(30, 6%, 12%) - Navigation areas
+
+### Accent Colors
+- **Accent (Light)**: hsl(350, 18%, 88%) - Subtle burgundy tint for highlights
+- **Accent (Dark)**: hsl(350, 12%, 22%) - Muted burgundy for dark mode
+- **Secondary**: Neutral warm grays for secondary actions
+
+### Text Colors
+- **Foreground**: Dark warm gray for primary text
+- **Muted Foreground**: Medium gray for secondary/helper text
+- **Primary Foreground**: White for text on burgundy backgrounds
+
 ## Core Design Principles
 - **Mobile-First Premium Experience**: Bottom navigation for thumb-zone accessibility
 - **Visual Storytelling**: Photography-driven interface showcasing tailoring artistry
