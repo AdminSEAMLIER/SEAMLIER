@@ -6,12 +6,13 @@ export default {
   theme: {
     extend: {
       borderRadius: {
-        lg: ".5625rem", /* 9px */
-        md: ".375rem", /* 6px */
-        sm: ".1875rem", /* 3px */
+        lg: ".5625rem",
+        md: ".375rem",
+        sm: ".1875rem",
+        xl: "1rem",
+        "2xl": "1.5rem",
       },
       colors: {
-        // Flat / base colors (regular buttons)
         background: "hsl(var(--background) / <alpha-value>)",
         foreground: "hsl(var(--foreground) / <alpha-value>)",
         border: "hsl(var(--border) / <alpha-value>)",
@@ -83,9 +84,19 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["var(--font-sans)"],
-        serif: ["var(--font-serif)"],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        serif: ["Playfair Display", "Georgia", "serif"],
         mono: ["var(--font-mono)"],
+      },
+      fontSize: {
+        "hero-mobile": ["2rem", { lineHeight: "1.2", fontWeight: "700" }],
+        "hero-desktop": ["3rem", { lineHeight: "1.2", fontWeight: "700" }],
+        "section-mobile": ["1.5rem", { lineHeight: "1.3", fontWeight: "700" }],
+        "section-desktop": ["2rem", { lineHeight: "1.3", fontWeight: "700" }],
+        "card-title": ["1.125rem", { lineHeight: "1.4", fontWeight: "600" }],
+        "body": ["1rem", { lineHeight: "1.6", fontWeight: "400" }],
+        "caption": ["0.875rem", { lineHeight: "1.5", fontWeight: "500" }],
+        "nav-label": ["0.6875rem", { lineHeight: "1.2", fontWeight: "500" }],
       },
       keyframes: {
         "accordion-down": {
@@ -96,10 +107,15 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        shimmer: {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        shimmer: "shimmer 1.5s ease-in-out infinite",
       },
     },
   },
