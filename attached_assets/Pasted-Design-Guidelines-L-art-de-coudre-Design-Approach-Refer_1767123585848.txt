@@ -1,0 +1,225 @@
+Design Guidelines - L'art de coudre
+
+Design Approach
+
+Reference-Based Approach inspired by service marketplace apps like "Ma coiffeuse Afro", Uber, and Thumbtack, adapted for the tailoring/fashion industry. The design emphasizes elegant simplicity, mobile-first interactions, and visual richness through photography of garments and craftsmanship.
+
+Core Design Principles
+
+Mobile-First Premium Experience: Bottom navigation for thumb-zone accessibility
+Visual Storytelling: Photography-driven interface showcasing tailoring artistry
+Effortless Discovery: Intuitive search and filtering with immediate visual feedback
+Trust & Credibility: Professional profiles with portfolios, reviews, and verified badges
+Typography System
+
+Primary Font: Inter (Google Fonts) - Clean, modern, highly legible Accent Font: Playfair Display (Google Fonts) - Elegant serif for premium touch
+
+Hierarchy:
+
+Hero Headlines: Playfair Display, 32px (mobile) / 48px (desktop), font-weight 700
+Section Titles: Inter, 24px (mobile) / 32px (desktop), font-weight 700
+Card Titles: Inter, 18px, font-weight 600
+Body Text: Inter, 16px, font-weight 400, line-height 1.6
+Captions/Meta: Inter, 14px, font-weight 500
+Bottom Nav Labels: Inter, 11px, font-weight 500
+Layout & Spacing System
+
+Tailwind Spacing Units: Consistently use 2, 4, 6, 8, 12, 16 for cohesive rhythm
+
+Component padding: p-4 (mobile), p-6 (desktop)
+Section spacing: py-8 (mobile), py-12 (desktop)
+Card gaps: gap-4 (mobile), gap-6 (desktop)
+Bottom navigation height: h-16
+Container Strategy:
+
+Mobile: Full-width with px-4 edge padding
+Desktop: max-w-7xl centered with px-6
+Content sections: max-w-6xl for reading comfort
+Grid Patterns:
+
+Professional cards: grid-cols-1 (mobile), md:grid-cols-2, lg:grid-cols-3
+Portfolio gallery: grid-cols-2 (mobile), md:grid-cols-3, lg:grid-cols-4
+Marketplace: grid-cols-2 (mobile), md:grid-cols-3, lg:grid-cols-4
+Feature sections: Single column mobile, 2-column desktop (60/40 split)
+Navigation & Structure
+
+Bottom Navigation Bar (Fixed, Mobile):
+
+5 primary icons: Découverte, Recherche, Messagerie, Marketplace, Profil
+Icon size: 24px, Active state with accent indicator (pill or underline)
+Background: Solid with subtle shadow (shadow-lg)
+Safe area padding for modern devices
+Top App Bar (Desktop):
+
+Logo left-aligned
+Primary navigation center
+User profile/notifications right-aligned
+Height: h-16, sticky positioning
+Page Layouts:
+
+Discovery Feed: Masonry grid of tailor portfolios
+Search Results: Filterable card grid with sidebar filters (desktop)
+Professional Profile: Hero image, about section, portfolio grid, reviews
+Messaging: List-detail pattern (conversations sidebar + active chat)
+Marketplace: Product grid with category filters
+Component Library
+
+Cards
+
+Professional Profile Card:
+
+Aspect ratio 3:4 portrait image
+Rounded corners (rounded-xl)
+Overlay gradient for text readability
+Name, specialties, rating stars, location pin
+Subtle hover lift (hover:scale-105 transition)
+Portfolio/Realization Card:
+
+Square aspect ratio (1:1)
+Full-bleed image with minimal overlay
+Like/save icon top-right
+Creator name bottom-left on hover
+Marketplace Product Card:
+
+Aspect ratio 3:4
+Clean image with no overlay
+Price prominent, product name
+Seller avatar small corner badge
+Review Card:
+
+Horizontal layout: Avatar left, content right
+Star rating, reviewer name, date
+Truncated review text with "Lire plus" link
+Border-bottom separator between reviews
+Forms & Inputs
+
+Text Fields:
+
+Height: h-12
+Rounded: rounded-lg
+Border: 2px solid with focus ring
+Label above field, helper text below
+Icons inside field (left side)
+Buttons:
+
+Primary: h-12, rounded-full, font-weight 600
+Secondary: h-12, rounded-full, outlined variant
+Icon buttons: w-10 h-10, rounded-full
+Blurred background when over images (backdrop-blur-md, bg-white/80)
+Search Bar:
+
+Prominent placement, rounded-full
+Left icon (magnifying glass), right filter button
+Shadow for elevation (shadow-md)
+Calendar/Agenda Interface
+
+Tailor Agenda View:
+
+Week view with time slots (30-min increments)
+Month view with availability indicators
+Appointment cards with client name, service, duration
+Color-coded by status (pending, confirmed, completed)
+Drag-and-drop interactions for rescheduling
+Client Booking Interface:
+
+Calendar picker with available dates highlighted
+Time slot selection grid
+Service selection with duration and price
+Instant confirmation or pending status display
+Messaging
+
+Conversation List:
+
+Avatar + name + last message preview
+Timestamp right-aligned
+Unread badge indicator
+Active conversation highlighted
+Chat Interface:
+
+Bubble messages (sender right, recipient left)
+Timestamp below each message
+Image/file attachments with preview
+Input bar at bottom with attachment button
+Discovery Feed
+
+Masonry Grid Layout:
+
+Variable height cards based on image dimensions
+Lazy loading as user scrolls
+Filter chips at top (Spécialités, Style, Localisation)
+Pull-to-refresh on mobile
+Images
+
+Hero Section (Landing Page):
+
+Full-width hero image showing elegant tailoring scene (e.g., measuring tape on fine fabric, close-up of sewing detail)
+Height: 60vh mobile, 70vh desktop
+Overlay gradient (dark bottom to transparent top)
+Centered headline + CTA with blurred button backgrounds
+Professional Profile Hero:
+
+Cover photo showcasing workspace or signature piece
+Height: 40vh
+Profile photo overlapping bottom edge (rounded-full, border-4)
+Portfolio Images:
+
+High-quality photos of finished garments and works in progress
+Lifestyle shots showing garments being worn
+Detail shots of craftsmanship (stitching, embroidery, buttons)
+Marketplace Product Images:
+
+Clean product photography on neutral backgrounds
+Multiple angles in product detail view
+Lifestyle context shots as secondary images
+Discovery Feed:
+
+Mix of finished pieces, process shots, and client testimonials
+Authentic workshop/studio environments
+Before/after transformations
+Empty States:
+
+Simple illustrations (not photos) for no results, empty inbox, etc.
+Warm, encouraging messaging
+Interactions & Animations
+
+Minimal, Purpose-Driven Animations:
+
+Card hover: Subtle scale (scale-105) + shadow increase
+Page transitions: Smooth fade (300ms)
+Bottom nav: Icon bounce on active tab switch
+Messaging: New message slide-in from bottom
+Loading states: Skeleton screens (shimmer effect)
+No Animations:
+
+Scroll-triggered effects
+Complex parallax
+Autoplay carousels
+Excessive micro-interactions
+Responsive Behavior
+
+Breakpoints:
+
+Mobile: Default (< 768px)
+Tablet: md (768px - 1024px)
+Desktop: lg (> 1024px)
+Mobile Priorities:
+
+Bottom navigation always visible
+Single-column layouts
+Touch-friendly targets (min 44px)
+Swipe gestures for navigation (back, message actions)
+Desktop Enhancements:
+
+Sidebar navigation replaces bottom bar
+Multi-column grids
+Hover states
+Keyboard shortcuts
+Accessibility
+
+WCAG AA compliant contrast ratios throughout
+Focus indicators on all interactive elements (ring-2 ring-offset-2)
+Semantic HTML structure
+Alt text for all images
+Keyboard navigation support
+Screen reader-friendly labels
+Form validation with clear error messages
