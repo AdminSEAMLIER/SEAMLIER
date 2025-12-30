@@ -3,30 +3,33 @@
 ## Design Approach
 Reference-Based Approach inspired by service marketplace apps like "Ma coiffeuse Afro", Uber, and Thumbtack, adapted for the tailoring/fashion industry. The design emphasizes elegant simplicity, mobile-first interactions, and visual richness through photography of garments and craftsmanship.
 
-## Color Palette - Warm Burgundy Theme
+## Color Palette - Beige & Burgundy Theme
 
 ### Primary Colors
 - **Primary (Burgundy)**: hsl(350, 55%, 45%) - Main accent color for buttons, links, active states
 - **Primary Foreground**: hsl(0, 0%, 98%) - White text on burgundy backgrounds
 
 ### Background Colors (Light Mode)
-- **Background**: hsl(30, 20%, 98%) - Warm off-white base
-- **Card**: hsl(30, 15%, 96%) - Slightly elevated surfaces
-- **Sidebar**: hsl(30, 12%, 94%) - Navigation areas
+- **Background**: hsl(36, 42%, 94%) - Warm beige base
+- **Card**: hsl(36, 48%, 97%) - Cream/ivory surfaces
+- **Sidebar**: hsl(35, 40%, 92%) - Soft beige navigation areas
+- **Border**: hsl(34, 26%, 82%) - Subtle beige border
 
 ### Background Colors (Dark Mode)
-- **Background**: hsl(30, 8%, 8%) - Deep charcoal base
-- **Card**: hsl(30, 8%, 11%) - Elevated dark surfaces
-- **Sidebar**: hsl(30, 6%, 12%) - Navigation areas
+- **Background**: hsl(24, 22%, 12%) - Deep cacao/chocolate base
+- **Card**: hsl(24, 26%, 16%) - Rich brown surfaces
+- **Sidebar**: hsl(24, 24%, 14%) - Dark warm brown navigation
+- **Border**: hsl(24, 20%, 24%) - Warm brown border
 
 ### Accent Colors
-- **Accent (Light)**: hsl(350, 18%, 88%) - Subtle burgundy tint for highlights
-- **Accent (Dark)**: hsl(350, 12%, 22%) - Muted burgundy for dark mode
-- **Secondary**: Neutral warm grays for secondary actions
+- **Accent (Light)**: hsl(24, 38%, 88%) - Warm beige tint for highlights
+- **Accent (Dark)**: hsl(22, 28%, 24%) - Muted brown for dark mode
+- **Secondary**: Warm beige tones for secondary actions
 
 ### Text Colors
-- **Foreground**: Dark warm gray for primary text
-- **Muted Foreground**: Medium gray for secondary/helper text
+- **Foreground (Light)**: hsl(28, 30%, 18%) - Dark warm brown for primary text
+- **Foreground (Dark)**: hsl(36, 55%, 94%) - Cream/off-white for dark mode text
+- **Muted Foreground**: Medium warm gray for secondary/helper text
 - **Primary Foreground**: White for text on burgundy backgrounds
 
 ## Core Design Principles
