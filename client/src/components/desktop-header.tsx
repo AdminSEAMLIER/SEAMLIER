@@ -1,18 +1,31 @@
-import { Compass, Search, MessageCircle, ShoppingBag, User, Bell, Scissors } from "lucide-react";
+import { Compass, Search, MessageCircle, ShoppingBag, User, Bell, Scissors, LayoutDashboard, ArrowLeft } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { icon: Compass, label: "Découverte", path: "/" },
-  { icon: Search, label: "Recherche", path: "/search" },
-  { icon: MessageCircle, label: "Messages", path: "/messages" },
-  { icon: ShoppingBag, label: "Boutique", path: "/marketplace" },
+const particulierNavItems = [
+  { icon: Compass, label: "Découverte", path: "/particulier" },
+  { icon: Search, label: "Recherche", path: "/particulier/search" },
+  { icon: MessageCircle, label: "Messages", path: "/particulier/messages" },
+  { icon: ShoppingBag, label: "Boutique", path: "/particulier/marketplace" },
 ];
 
-export function DesktopHeader() {
+const proNavItems = [
+  { icon: LayoutDashboard, label: "Tableau de bord", path: "/professionnel" },
+  { icon: MessageCircle, label: "Messages", path: "/professionnel/messages" },
+];
+
+interface DesktopHeaderProps {
+  mode?: "particulier" | "professionnel";
+}
+
+export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
   const [location] = useLocation();
+  const navItems = mode === "professionnel" ? proNavItems : particulierNavItems;
+  const profilePath = mode === "professionnel" ? "/professionnel/profile" : "/particulier/profile";
+  const basePath = mode === "professionnel" ? "/professionnel" : "/particulier";
 
   return (
     <header 
@@ -20,19 +33,24 @@ export function DesktopHeader() {
       data-testid="header-desktop"
     >
       <div className="flex items-center justify-between w-full max-w-7xl mx-auto px-6">
-        <Link href="/">
-          <div className="flex items-center gap-2 cursor-pointer">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-              <Scissors className="h-5 w-5 text-primary-foreground" />
+        <div className="flex items-center gap-4">
+          <Link href="/">
+            <div className="flex items-center gap-2 cursor-pointer">
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                <Scissors className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <span className="font-serif text-xl font-semibold">L'art de coudre</span>
             </div>
-            <span className="font-serif text-xl font-semibold">L'art de coudre</span>
-          </div>
-        </Link>
+          </Link>
+          {mode === "professionnel" && (
+            <Badge variant="secondary">Pro</Badge>
+          )}
+        </div>
 
         <nav className="flex items-center gap-1">
           {navItems.map((item) => {
             const isActive = location === item.path || 
-              (item.path !== "/" && location.startsWith(item.path));
+              (item.path !== basePath && location.startsWith(item.path));
             const Icon = item.icon;
             
             return (
@@ -54,11 +72,17 @@ export function DesktopHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="gap-2" data-testid="button-switch-space">
+              <ArrowLeft className="h-4 w-4" />
+              Changer d'espace
+            </Button>
+          </Link>
           <ThemeToggle />
           <Button variant="ghost" size="icon" data-testid="button-notifications">
             <Bell className="h-5 w-5" />
           </Button>
-          <Link href="/profile">
+          <Link href={profilePath}>
             <Button variant="ghost" size="icon" data-testid="button-profile-desktop">
               <User className="h-5 w-5" />
             </Button>

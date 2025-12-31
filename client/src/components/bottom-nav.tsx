@@ -3,11 +3,11 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { icon: Compass, label: "Découverte", path: "/" },
-  { icon: Search, label: "Recherche", path: "/search" },
-  { icon: MessageCircle, label: "Messages", path: "/messages" },
-  { icon: ShoppingBag, label: "Boutique", path: "/marketplace" },
-  { icon: User, label: "Profil", path: "/profile" },
+  { icon: Compass, label: "Découverte", path: "/particulier" },
+  { icon: Search, label: "Recherche", path: "/particulier/search" },
+  { icon: MessageCircle, label: "Messages", path: "/particulier/messages" },
+  { icon: ShoppingBag, label: "Boutique", path: "/particulier/marketplace" },
+  { icon: User, label: "Profil", path: "/particulier/profile" },
 ];
 
 export function BottomNav() {
@@ -21,7 +21,7 @@ export function BottomNav() {
       <div className="flex items-center justify-around h-full max-w-lg mx-auto px-2">
         {navItems.map((item) => {
           const isActive = location === item.path || 
-            (item.path !== "/" && location.startsWith(item.path));
+            (item.path !== "/particulier" && location.startsWith(item.path));
           const Icon = item.icon;
           
           return (
