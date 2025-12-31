@@ -3,34 +3,35 @@
 ## Design Approach
 Reference-Based Approach inspired by service marketplace apps like "Ma coiffeuse Afro", Uber, and Thumbtack, adapted for the tailoring/fashion industry. The design emphasizes elegant simplicity, mobile-first interactions, and visual richness through photography of garments and craftsmanship.
 
-## Color Palette - Beige & Burgundy Theme
+## Color Palette - Burgundy Premium Theme (inspired by cremedelacreme.io)
 
-### Primary Colors
-- **Primary (Burgundy)**: hsl(350, 55%, 45%) - Main accent color for buttons, links, active states
-- **Primary Foreground**: hsl(0, 0%, 98%) - White text on burgundy backgrounds
+### Design Philosophy
+Dark, elegant burgundy backgrounds with cream/beige text for a premium, sophisticated feel. Similar to cremedelacreme.io but with burgundy tones instead of purple.
 
-### Background Colors (Light Mode)
-- **Background**: hsl(36, 42%, 94%) - Warm beige base
-- **Card**: hsl(36, 48%, 97%) - Cream/ivory surfaces
-- **Sidebar**: hsl(35, 40%, 92%) - Soft beige navigation areas
-- **Border**: hsl(34, 26%, 82%) - Subtle beige border
+### Primary Colors (Buttons & CTAs)
+- **Primary**: hsl(36, 50%, 90%) - Cream/beige for buttons and CTAs
+- **Primary Foreground**: hsl(350, 45%, 12%) - Dark burgundy text on cream buttons
 
-### Background Colors (Dark Mode)
-- **Background**: hsl(24, 22%, 12%) - Deep cacao/chocolate base
-- **Card**: hsl(24, 26%, 16%) - Rich brown surfaces
-- **Sidebar**: hsl(24, 24%, 14%) - Dark warm brown navigation
-- **Border**: hsl(24, 20%, 24%) - Warm brown border
+### Background Colors (Light Mode = Dark Burgundy)
+- **Background**: hsl(350, 45%, 12%) - Deep burgundy base
+- **Card**: hsl(350, 40%, 16%) - Slightly lighter burgundy for cards
+- **Sidebar**: hsl(350, 42%, 14%) - Burgundy navigation areas
+- **Border**: hsl(350, 35%, 20%) - Subtle burgundy border
+
+### Background Colors (Dark Mode = Deeper Burgundy)
+- **Background**: hsl(350, 50%, 8%) - Very deep burgundy/wine base
+- **Card**: hsl(350, 45%, 12%) - Rich wine-colored surfaces
+- **Sidebar**: hsl(350, 48%, 10%) - Deep burgundy navigation
+- **Border**: hsl(350, 40%, 16%) - Dark burgundy border
 
 ### Accent Colors
-- **Accent (Light)**: hsl(24, 38%, 88%) - Warm beige tint for highlights
-- **Accent (Dark)**: hsl(22, 28%, 24%) - Muted brown for dark mode
-- **Secondary**: Warm beige tones for secondary actions
+- **Accent**: hsl(350, 35%, 25%) - Muted burgundy for highlights
+- **Secondary**: hsl(350, 30%, 22%) - Darker burgundy for secondary elements
 
 ### Text Colors
-- **Foreground (Light)**: hsl(28, 30%, 18%) - Dark warm brown for primary text
-- **Foreground (Dark)**: hsl(36, 55%, 94%) - Cream/off-white for dark mode text
-- **Muted Foreground**: Medium warm gray for secondary/helper text
-- **Primary Foreground**: White for text on burgundy backgrounds
+- **Foreground**: hsl(36, 45%, 95%) - Cream/off-white for primary text
+- **Muted Foreground**: hsl(36, 20%, 65%) - Softer cream for secondary text
+- **Primary Foreground**: Dark burgundy for text on cream buttons
 
 ## Core Design Principles
 - **Mobile-First Premium Experience**: Bottom navigation for thumb-zone accessibility
