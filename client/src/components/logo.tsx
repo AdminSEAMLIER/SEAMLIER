@@ -54,10 +54,10 @@ export function Logo({ className, textClassName, showText = true }: LogoProps) {
       {showText && (
         <span 
           className={cn(
-            "font-semibold tracking-[0.2em] uppercase",
+            "text-2xl",
             textClassName
           )}
-          style={{ fontFamily: "'Bodoni Moda', serif" }}
+          style={{ fontFamily: "'Parisienne', cursive" }}
         >
           L'Art de Coudre
         </span>
