@@ -36,7 +36,9 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
       <div className="flex items-center justify-between w-full max-w-7xl mx-auto px-6">
         <div className="flex items-center gap-4">
           <Link href="/">
-            <img src={logoImage} alt="L'art de coudre" className="h-20 w-auto cursor-pointer" />
+            <div className="bg-[#b8b4af] rounded-lg p-1.5 shadow-sm cursor-pointer">
+              <img src={logoImage} alt="L'art de coudre" className="h-12 w-auto" style={{ mixBlendMode: 'multiply' }} />
+            </div>
           </Link>
           {mode === "professionnel" && (
             <Badge variant="secondary">Pro</Badge>
