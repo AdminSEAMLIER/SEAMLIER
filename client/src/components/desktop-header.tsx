@@ -37,9 +37,9 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
         <div className="flex items-center gap-4">
           <Link href="/">
             <div className="flex flex-col items-center cursor-pointer">
-              <img src={logoImage} alt="L'art de coudre" className="h-10 w-auto" />
+              <img src={logoImage} alt="L'art de coudre" className="h-8 w-auto" />
               <span 
-                className="text-xs font-medium italic tracking-wide"
+                className="text-[10px] font-medium italic tracking-wide"
                 style={{ 
                   fontFamily: "'Playfair Display', serif",
                   color: '#722F37'
