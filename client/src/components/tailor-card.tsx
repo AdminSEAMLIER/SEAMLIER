@@ -9,7 +9,7 @@ interface TailorCardProps {
 
 export function TailorCard({ tailor }: TailorCardProps) {
   return (
-    <Link href={`/tailor/${tailor.id}`}>
+    <Link href={`/particulier/tailor/${tailor.id}`}>
       <div 
         className="group relative aspect-[3/4] rounded-xl overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-[1.02]"
         data-testid={`card-tailor-${tailor.id}`}

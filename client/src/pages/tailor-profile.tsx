@@ -22,7 +22,7 @@ import {
 import type { TailorWithUser, PortfolioWithTailor, ProductWithTailor, ReviewWithUser } from "@shared/schema";
 
 export default function TailorProfile() {
-  const [, params] = useRoute("/tailor/:id");
+  const [, params] = useRoute("/particulier/tailor/:id");
   const tailorId = params?.id;
 
   const { data: tailor, isLoading: tailorLoading } = useQuery<TailorWithUser>({
@@ -66,7 +66,7 @@ export default function TailorProfile() {
       <div className="min-h-screen flex items-center justify-center pb-20 lg:pb-8">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">Couturier non trouvé</p>
-          <Link href="/">
+          <Link href="/particulier">
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour à l'accueil
@@ -88,7 +88,7 @@ export default function TailorProfile() {
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
         
         <div className="absolute top-4 left-4 right-4 flex justify-between">
-          <Link href="/">
+          <Link href="/particulier">
             <Button 
               variant="ghost" 
               size="icon" 
