@@ -1,10 +1,11 @@
 import { Link } from "wouter";
-import { Scissors, MapPin, User, Briefcase, Star, Calendar, Sparkles, Crown, Heart, Shirt, Ruler, Globe, Palette, ArrowRight } from "lucide-react";
+import { MapPin, User, Briefcase, Star, Calendar, Sparkles, Crown, Heart, Shirt, Ruler, Globe, Palette, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import heroImage from "@assets/stock_images/beautiful_evening_go_76ac947c.jpg";
+import logoImage from "@assets/logo.png";
 
 const services = [
   { 
@@ -83,10 +84,7 @@ export default function Landing() {
         
         <header className="relative z-20 flex items-center justify-between px-4 lg:px-8 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
-              <Scissors className="h-6 w-6 text-white" />
-            </div>
-            <span className="font-serif text-2xl text-white font-medium">L'art de coudre</span>
+            <img src={logoImage} alt="L'art de coudre" className="h-14 w-auto" />
           </div>
           <div className="flex items-center gap-3">
             <Link href="/particulier">
@@ -234,12 +232,7 @@ export default function Landing() {
       <footer className="bg-card border-t py-12 px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                <Scissors className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="font-serif text-xl font-medium">L'art de coudre</span>
-            </div>
+            <img src={logoImage} alt="L'art de coudre" className="h-12 w-auto" />
             <p className="text-muted-foreground text-sm">
               La plateforme de mise en relation couturiers-particuliers
             </p>

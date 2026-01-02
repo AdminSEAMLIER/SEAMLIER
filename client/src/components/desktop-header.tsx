@@ -1,9 +1,10 @@
-import { Compass, Search, MessageCircle, ShoppingBag, User, Bell, Scissors, LayoutDashboard, ArrowLeft } from "lucide-react";
+import { Compass, Search, MessageCircle, ShoppingBag, User, Bell, LayoutDashboard, ArrowLeft } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import logoImage from "@assets/logo.png";
 
 const particulierNavItems = [
   { icon: Compass, label: "Découverte", path: "/particulier" },
@@ -35,12 +36,7 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
       <div className="flex items-center justify-between w-full max-w-7xl mx-auto px-6">
         <div className="flex items-center gap-4">
           <Link href="/">
-            <div className="flex items-center gap-2 cursor-pointer">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                <Scissors className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="font-serif text-xl font-semibold">L'art de coudre</span>
-            </div>
+            <img src={logoImage} alt="L'art de coudre" className="h-10 w-auto cursor-pointer" />
           </Link>
           {mode === "professionnel" && (
             <Badge variant="secondary">Pro</Badge>
