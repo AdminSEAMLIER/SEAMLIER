@@ -85,7 +85,15 @@ export default function Landing() {
         <header className="relative z-20 flex items-center justify-between px-4 lg:px-8 py-4">
           <div className="flex flex-col items-center">
             <img src={logoImage} alt="L'art de coudre" className="h-14 w-auto" />
-            <span className="font-serif text-sm text-[#722F37] font-medium italic tracking-wide" style={{ fontStyle: 'italic' }}>L'Art de Coudre</span>
+            <span 
+              className="text-sm font-medium italic tracking-wide"
+              style={{ 
+                fontFamily: "'Playfair Display', serif",
+                color: 'white',
+                WebkitTextStroke: '0.5px #722F37',
+                textShadow: '1px 1px 0 #722F37, -1px -1px 0 #722F37, 1px -1px 0 #722F37, -1px 1px 0 #722F37'
+              }}
+            >L'Art de Coudre</span>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/particulier">
@@ -235,7 +243,15 @@ export default function Landing() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex flex-col items-center">
               <img src={logoImage} alt="L'art de coudre" className="h-12 w-auto" />
-              <span className="font-serif text-sm text-[#722F37] font-medium italic tracking-wide">L'Art de Coudre</span>
+              <span 
+                className="text-sm font-medium italic tracking-wide"
+                style={{ 
+                  fontFamily: "'Playfair Display', serif",
+                  color: 'white',
+                  WebkitTextStroke: '0.5px #722F37',
+                  textShadow: '1px 1px 0 #722F37, -1px -1px 0 #722F37, 1px -1px 0 #722F37, -1px 1px 0 #722F37'
+                }}
+              >L'Art de Coudre</span>
             </div>
             <p className="text-muted-foreground text-sm">
               La plateforme de mise en relation couturiers-particuliers

@@ -38,7 +38,13 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
           <Link href="/">
             <div className="flex flex-col items-center cursor-pointer">
               <img src={logoImage} alt="L'art de coudre" className="h-10 w-auto" />
-              <span className="font-serif text-xs text-[#722F37] font-medium italic tracking-wide">L'Art de Coudre</span>
+              <span 
+                className="text-xs font-medium italic tracking-wide"
+                style={{ 
+                  fontFamily: "'Playfair Display', serif",
+                  color: '#722F37'
+                }}
+              >L'Art de Coudre</span>
             </div>
           </Link>
           {mode === "professionnel" && (
