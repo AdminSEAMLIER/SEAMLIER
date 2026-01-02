@@ -41,7 +41,7 @@ Elegant beige/cream backgrounds with dark burgundy text for a warm, sophisticate
 
 ## Typography System
 **Primary Font**: Inter (Google Fonts) - Clean, modern, highly legible  
-**Accent Font**: Playfair Display (Google Fonts) - Elegant serif for premium touch
+**Accent Font**: Bodoni Moda (Google Fonts) - Elegant serif premium avec contraste raffiné
 
 **Hierarchy**:
 - Hero Headlines: Playfair Display, 32px (mobile) / 48px (desktop), font-weight 700

@@ -85,7 +85,7 @@ export default {
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        serif: ["Playfair Display", "Georgia", "serif"],
+        serif: ["Bodoni Moda", "Georgia", "serif"],
         mono: ["var(--font-mono)"],
       },
       fontSize: {
