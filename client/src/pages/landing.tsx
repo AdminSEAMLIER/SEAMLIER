@@ -89,9 +89,9 @@ export default function Landing() {
               className="text-sm font-medium italic tracking-wide"
               style={{ 
                 fontFamily: "'Playfair Display', serif",
-                color: 'white',
-                WebkitTextStroke: '0.5px #722F37',
-                textShadow: '1px 1px 0 #722F37, -1px -1px 0 #722F37, 1px -1px 0 #722F37, -1px 1px 0 #722F37'
+                color: '#722F37',
+                WebkitTextStroke: '0.5px white',
+                textShadow: '1px 1px 0 white, -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white'
               }}
             >L'Art de Coudre</span>
           </div>
@@ -247,9 +247,7 @@ export default function Landing() {
                 className="text-sm font-medium italic tracking-wide"
                 style={{ 
                   fontFamily: "'Playfair Display', serif",
-                  color: 'white',
-                  WebkitTextStroke: '0.5px #722F37',
-                  textShadow: '1px 1px 0 #722F37, -1px -1px 0 #722F37, 1px -1px 0 #722F37, -1px 1px 0 #722F37'
+                  color: '#722F37'
                 }}
               >L'Art de Coudre</span>
             </div>
