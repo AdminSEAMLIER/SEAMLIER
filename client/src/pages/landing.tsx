@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Scissors, MapPin, User, Briefcase, Star, Calendar, Sparkles } from "lucide-react";
+import { Scissors, MapPin, User, Briefcase, Star, Calendar, Sparkles, Crown, Heart, Shirt, Ruler, Globe, Palette, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,33 +9,33 @@ import heroImage from "@assets/stock_images/beautiful_evening_go_76ac947c.jpg";
 const services = [
   { 
     title: "Haute Couture", 
-    description: "Créations uniques et sur-mesure",
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=500&fit=crop"
+    description: "Pièces d'exception réalisées dans les règles de l'art",
+    icon: Crown
   },
   { 
     title: "Robes de Mariée", 
-    description: "Le jour le plus beau de votre vie",
-    image: "https://images.unsplash.com/photo-1594552072238-b8a33785b261?w=400&h=500&fit=crop"
+    description: "Sublimez le plus beau jour de votre vie",
+    icon: Heart
   },
   { 
     title: "Costumes", 
-    description: "Élégance masculine sur-mesure",
-    image: "https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?w=400&h=500&fit=crop"
+    description: "L'élégance masculine taillée sur mesure",
+    icon: Shirt
   },
   { 
     title: "Retouches", 
-    description: "Ajustements et transformations",
-    image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400&h=500&fit=crop"
+    description: "Ajustements parfaits et transformations expertes",
+    icon: Ruler
   },
   { 
     title: "Mode Africaine", 
-    description: "Traditions et modernité",
-    image: "https://images.unsplash.com/photo-1590735213920-68192a487bc2?w=400&h=500&fit=crop"
+    description: "L'alliance du patrimoine et de la modernité",
+    icon: Globe
   },
   { 
     title: "Streetwear", 
-    description: "Style urbain personnalisé",
-    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=500&fit=crop"
+    description: "Créations urbaines à votre image",
+    icon: Palette
   },
 ];
 
@@ -146,30 +146,28 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="py-16 lg:py-20 px-4 lg:px-8 bg-background">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="font-serif text-3xl lg:text-4xl text-center mb-4">
-            Tous les services de couture
-          </h2>
-          <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-            De la haute couture aux retouches, trouvez l'artisan qui correspond à vos besoins
+      <section className="py-20 lg:py-28 px-4 lg:px-8 bg-background">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-primary font-medium text-center mb-3 tracking-widest uppercase text-sm">
+            Nos expertises
           </p>
+          <h2 className="font-serif text-3xl lg:text-5xl text-center mb-16">
+            Un savoir-faire pour chaque envie
+          </h2>
 
-          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-10">
             {services.map((service) => (
               <Link key={service.title} href="/particulier/search">
-                <div className="flex-shrink-0 w-[200px] lg:w-[220px] snap-start group cursor-pointer">
-                  <div className="relative aspect-[4/5] rounded-lg overflow-hidden mb-3">
-                    <img
-                      src={service.image}
-                      alt={service.title}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <h3 className="font-serif text-lg text-white font-medium">{service.title}</h3>
-                      <p className="text-white/70 text-sm">{service.description}</p>
-                    </div>
+                <div className="group cursor-pointer flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                    <service.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-serif text-xl mb-2 group-hover:text-primary transition-colors flex items-center gap-2">
+                      {service.title}
+                      <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                    </h3>
+                    <p className="text-muted-foreground leading-relaxed">{service.description}</p>
                   </div>
                 </div>
               </Link>
