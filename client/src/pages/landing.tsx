@@ -83,7 +83,7 @@ export default function Landing() {
         </div>
         
         <header className="relative z-20 flex items-center justify-between px-4 lg:px-8 py-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <img src={logoImage} alt="L'art de coudre" className="h-6 w-auto" />
             <span 
               className="text-sm font-medium italic tracking-wide"
@@ -241,7 +241,7 @@ export default function Landing() {
       <footer className="bg-card border-t py-12 px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <img src={logoImage} alt="L'art de coudre" className="h-5 w-auto" />
               <span 
                 className="text-sm font-medium italic tracking-wide"
