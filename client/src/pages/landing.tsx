@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import heroImage from "@assets/stock_images/beautiful_evening_go_76ac947c.jpg";
-import logoImage from "@assets/generated_images/minimal_needle_thread_logo_icon.png";
+import { Logo } from "@/components/logo";
 
 const services = [
   { 
@@ -83,17 +83,7 @@ export default function Landing() {
         </div>
         
         <header className="relative z-20 flex items-center justify-between px-4 lg:px-8 py-4">
-          <div className="flex items-center gap-3">
-            <img src={logoImage} alt="L'Art de Coudre" className="h-10 w-auto" style={{ mixBlendMode: 'multiply' }} />
-            <span 
-              className="text-lg font-medium italic tracking-wide"
-              style={{ 
-                fontFamily: "'Playfair Display', serif",
-                color: 'white',
-                textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
-              }}
-            >L'Art de Coudre</span>
-          </div>
+          <Logo className="text-white drop-shadow-md" textClassName="text-lg text-white drop-shadow-md" />
           <div className="flex items-center gap-3">
             <Link href="/particulier">
               <Button variant="ghost" className="text-white border-white/20 hover:bg-white/10" data-testid="button-login">
@@ -240,16 +230,7 @@ export default function Landing() {
       <footer className="bg-card border-t py-12 px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <img src={logoImage} alt="L'Art de Coudre" className="h-8 w-auto" style={{ mixBlendMode: 'multiply' }} />
-              <span 
-                className="text-base font-medium italic tracking-wide"
-                style={{ 
-                  fontFamily: "'Playfair Display', serif",
-                  color: '#722F37'
-                }}
-              >L'Art de Coudre</span>
-            </div>
+            <Logo className="text-[#722F37]" textClassName="text-base text-[#722F37]" />
             <p className="text-muted-foreground text-sm">
               La plateforme de mise en relation couturiers-particuliers
             </p>

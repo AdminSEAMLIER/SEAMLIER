@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import logoImage from "@assets/generated_images/minimal_needle_thread_logo_icon.png";
+import { Logo } from "@/components/logo";
 
 const particulierNavItems = [
   { icon: Compass, label: "Découverte", path: "/particulier" },
@@ -36,16 +36,7 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
       <div className="flex items-center justify-between w-full max-w-7xl mx-auto px-6">
         <div className="flex items-center gap-4">
           <Link href="/">
-            <div className="flex items-center gap-2 cursor-pointer">
-              <img src={logoImage} alt="L'Art de Coudre" className="h-7 w-auto" style={{ mixBlendMode: 'multiply' }} />
-              <span 
-                className="text-base font-medium italic tracking-wide"
-                style={{ 
-                  fontFamily: "'Playfair Display', serif",
-                  color: '#722F37'
-                }}
-              >L'Art de Coudre</span>
-            </div>
+            <Logo className="text-[#722F37] cursor-pointer" textClassName="text-base text-[#722F37]" />
           </Link>
           {mode === "professionnel" && (
             <Badge variant="secondary">Pro</Badge>
