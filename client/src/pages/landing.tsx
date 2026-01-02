@@ -84,7 +84,9 @@ export default function Landing() {
         
         <header className="relative z-20 flex items-center justify-between px-4 lg:px-8 py-4">
           <div className="flex items-center gap-3">
-            <img src={logoImage} alt="L'art de coudre" className="h-28 w-auto mix-blend-darken" />
+            <div className="bg-background/90 backdrop-blur-sm rounded-lg p-2">
+              <img src={logoImage} alt="L'art de coudre" className="h-24 w-auto mix-blend-darken" />
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/particulier">
