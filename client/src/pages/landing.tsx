@@ -83,10 +83,10 @@ export default function Landing() {
         </div>
         
         <header className="relative z-20 flex items-center justify-between px-4 lg:px-8 py-4">
-          <div className="flex flex-col items-center">
-            <img src={logoImage} alt="L'art de coudre" className="h-10 w-auto" />
+          <div className="flex items-center gap-2">
+            <img src={logoImage} alt="L'art de coudre" className="h-6 w-auto" />
             <span 
-              className="text-xs font-medium italic tracking-wide"
+              className="text-sm font-medium italic tracking-wide"
               style={{ 
                 fontFamily: "'Playfair Display', serif",
                 color: 'white',
@@ -241,10 +241,10 @@ export default function Landing() {
       <footer className="bg-card border-t py-12 px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex flex-col items-center">
-              <img src={logoImage} alt="L'art de coudre" className="h-8 w-auto" />
+            <div className="flex items-center gap-2">
+              <img src={logoImage} alt="L'art de coudre" className="h-5 w-auto" />
               <span 
-                className="text-xs font-medium italic tracking-wide"
+                className="text-sm font-medium italic tracking-wide"
                 style={{ 
                   fontFamily: "'Playfair Display', serif",
                   color: '#722F37'
