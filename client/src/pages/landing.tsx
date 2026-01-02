@@ -84,7 +84,7 @@ export default function Landing() {
         
         <header className="relative z-20 flex items-center justify-between px-4 lg:px-8 py-4">
           <div className="flex items-center gap-3">
-            <img src={logoImage} alt="L'art de coudre" className="h-28 w-auto" style={{ mixBlendMode: 'multiply' }} />
+            <img src={logoImage} alt="L'art de coudre" className="h-28 w-auto mix-blend-darken" />
           </div>
           <div className="flex items-center gap-3">
             <Link href="/particulier">
@@ -232,7 +232,7 @@ export default function Landing() {
       <footer className="bg-card border-t py-12 px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <img src={logoImage} alt="L'art de coudre" className="h-20 w-auto" style={{ mixBlendMode: 'multiply' }} />
+            <img src={logoImage} alt="L'art de coudre" className="h-20 w-auto mix-blend-darken" />
             <p className="text-muted-foreground text-sm">
               La plateforme de mise en relation couturiers-particuliers
             </p>
