@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import heroImage from "@assets/stock_images/elegant_tailor_seams_1d2c9e14.jpg";
 
 const services = [
   { 
@@ -73,7 +74,7 @@ export default function Landing() {
       <section className="relative min-h-[85vh] flex flex-col">
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&h=900&fit=crop"
+            src={heroImage}
             alt="L'art de la couture"
             className="w-full h-full object-cover"
           />
