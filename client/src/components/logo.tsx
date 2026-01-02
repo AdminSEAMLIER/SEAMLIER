@@ -8,45 +8,95 @@ interface LogoProps {
 
 export function Logo({ className, textClassName, showText = true }: LogoProps) {
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn("flex items-center gap-3", className)}>
       <svg
-        viewBox="0 0 40 40"
+        viewBox="0 0 48 48"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="h-8 w-8"
+        className="h-10 w-10"
       >
-        {/* Bobbin/Spool */}
-        <ellipse cx="20" cy="8" rx="8" ry="3" fill="currentColor" opacity="0.9" />
-        <rect x="12" y="8" width="16" height="24" fill="currentColor" opacity="0.7" />
-        <ellipse cx="20" cy="32" rx="8" ry="3" fill="currentColor" opacity="0.9" />
+        {/* Ornate decorative symbol inspired by luxury branding */}
+        {/* Center circle */}
+        <circle cx="24" cy="24" r="6" fill="currentColor" />
         
-        {/* Thread wrapping around bobbin */}
+        {/* Four decorative fleur-de-lis style extensions */}
+        {/* Top */}
         <path
-          d="M12 12 Q8 16 12 20 Q16 24 12 28"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          fill="none"
-          opacity="0.6"
+          d="M24 4 C20 8 20 12 24 18 C28 12 28 8 24 4"
+          fill="currentColor"
         />
-        <path
-          d="M28 12 Q32 16 28 20 Q24 24 28 28"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          fill="none"
-          opacity="0.6"
-        />
+        <circle cx="24" cy="6" r="2" fill="currentColor" />
         
-        {/* Needle with thread coming from bobbin */}
-        <line x1="20" y1="32" x2="20" y2="40" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+        {/* Bottom */}
+        <path
+          d="M24 44 C20 40 20 36 24 30 C28 36 28 40 24 44"
+          fill="currentColor"
+        />
+        <circle cx="24" cy="42" r="2" fill="currentColor" />
+        
+        {/* Left */}
+        <path
+          d="M4 24 C8 20 12 20 18 24 C12 28 8 28 4 24"
+          fill="currentColor"
+        />
+        <circle cx="6" cy="24" r="2" fill="currentColor" />
+        
+        {/* Right */}
+        <path
+          d="M44 24 C40 20 36 20 30 24 C36 28 40 28 44 24"
+          fill="currentColor"
+        />
+        <circle cx="42" cy="24" r="2" fill="currentColor" />
+        
+        {/* Diagonal decorative curls */}
+        {/* Top-left */}
+        <path
+          d="M10 10 Q14 14 18 18"
+          stroke="currentColor"
+          strokeWidth="2"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <circle cx="9" cy="9" r="2" fill="currentColor" />
+        
+        {/* Top-right */}
+        <path
+          d="M38 10 Q34 14 30 18"
+          stroke="currentColor"
+          strokeWidth="2"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <circle cx="39" cy="9" r="2" fill="currentColor" />
+        
+        {/* Bottom-left */}
+        <path
+          d="M10 38 Q14 34 18 30"
+          stroke="currentColor"
+          strokeWidth="2"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <circle cx="9" cy="39" r="2" fill="currentColor" />
+        
+        {/* Bottom-right */}
+        <path
+          d="M38 38 Q34 34 30 30"
+          stroke="currentColor"
+          strokeWidth="2"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <circle cx="39" cy="39" r="2" fill="currentColor" />
       </svg>
       
       {showText && (
         <span 
           className={cn(
-            "font-medium italic tracking-wide",
+            "font-semibold tracking-[0.2em] uppercase",
             textClassName
           )}
-          style={{ fontFamily: "'Playfair Display', serif" }}
+          style={{ fontFamily: "'Bodoni Moda', serif" }}
         >
           L'Art de Coudre
         </span>
@@ -58,34 +108,42 @@ export function Logo({ className, textClassName, showText = true }: LogoProps) {
 export function LogoIcon({ className }: { className?: string }) {
   return (
     <svg
-      viewBox="0 0 40 40"
+      viewBox="0 0 48 48"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={cn("h-8 w-8", className)}
+      className={cn("h-10 w-10", className)}
     >
-      {/* Bobbin/Spool */}
-      <ellipse cx="20" cy="8" rx="8" ry="3" fill="currentColor" opacity="0.9" />
-      <rect x="12" y="8" width="16" height="24" fill="currentColor" opacity="0.7" />
-      <ellipse cx="20" cy="32" rx="8" ry="3" fill="currentColor" opacity="0.9" />
+      {/* Ornate decorative symbol */}
+      <circle cx="24" cy="24" r="6" fill="currentColor" />
       
-      {/* Thread wrapping around bobbin */}
-      <path
-        d="M12 12 Q8 16 12 20 Q16 24 12 28"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        fill="none"
-        opacity="0.6"
-      />
-      <path
-        d="M28 12 Q32 16 28 20 Q24 24 28 28"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        fill="none"
-        opacity="0.6"
-      />
+      {/* Top */}
+      <path d="M24 4 C20 8 20 12 24 18 C28 12 28 8 24 4" fill="currentColor" />
+      <circle cx="24" cy="6" r="2" fill="currentColor" />
       
-      {/* Needle with thread coming from bobbin */}
-      <line x1="20" y1="32" x2="20" y2="40" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+      {/* Bottom */}
+      <path d="M24 44 C20 40 20 36 24 30 C28 36 28 40 24 44" fill="currentColor" />
+      <circle cx="24" cy="42" r="2" fill="currentColor" />
+      
+      {/* Left */}
+      <path d="M4 24 C8 20 12 20 18 24 C12 28 8 28 4 24" fill="currentColor" />
+      <circle cx="6" cy="24" r="2" fill="currentColor" />
+      
+      {/* Right */}
+      <path d="M44 24 C40 20 36 20 30 24 C36 28 40 28 44 24" fill="currentColor" />
+      <circle cx="42" cy="24" r="2" fill="currentColor" />
+      
+      {/* Diagonal curls */}
+      <path d="M10 10 Q14 14 18 18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <circle cx="9" cy="9" r="2" fill="currentColor" />
+      
+      <path d="M38 10 Q34 14 30 18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <circle cx="39" cy="9" r="2" fill="currentColor" />
+      
+      <path d="M10 38 Q14 34 18 30" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <circle cx="9" cy="39" r="2" fill="currentColor" />
+      
+      <path d="M38 38 Q34 34 30 30" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <circle cx="39" cy="39" r="2" fill="currentColor" />
     </svg>
   );
 }
