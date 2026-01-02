@@ -99,7 +99,10 @@ export default function Landing() {
         </header>
 
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 py-12">
-          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-white mb-4 max-w-4xl leading-tight">
+          <h1 
+            className="text-4xl md:text-5xl lg:text-6xl text-white mb-4 max-w-4xl leading-tight"
+            style={{ fontFamily: "'Allura', cursive" }}
+          >
             Trouvez le couturier idéal près de chez vous
           </h1>
           <p className="text-white/80 text-lg md:text-xl max-w-2xl mb-10">
