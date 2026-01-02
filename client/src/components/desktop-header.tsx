@@ -36,9 +36,9 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
       <div className="flex items-center justify-between w-full max-w-7xl mx-auto px-6">
         <div className="flex items-center gap-4">
           <Link href="/">
-            <div className="flex items-center gap-2 cursor-pointer">
-              <img src={logoImage} alt="L'art de coudre" className="h-12 w-auto" />
-              <span className="font-serif text-xl text-primary font-medium italic">L'Art de Coudre</span>
+            <div className="flex flex-col items-center cursor-pointer">
+              <img src={logoImage} alt="L'art de coudre" className="h-10 w-auto" />
+              <span className="font-serif text-xs text-[#722F37] font-medium italic tracking-wide">L'Art de Coudre</span>
             </div>
           </Link>
           {mode === "professionnel" && (
