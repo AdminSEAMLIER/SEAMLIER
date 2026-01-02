@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import heroImage from "@assets/stock_images/beautiful_evening_go_76ac947c.jpg";
-import logoImage from "@assets/generated_images/premium_tailoring_logo_design.png";
+import logoImage from "@assets/generated_images/minimal_needle_thread_logo_icon.png";
 
 const services = [
   { 
@@ -84,7 +84,7 @@ export default function Landing() {
         
         <header className="relative z-20 flex items-center justify-between px-4 lg:px-8 py-4">
           <div className="flex items-center gap-3">
-            <img src={logoImage} alt="L'Art de Coudre" className="h-12 w-12 rounded-full" />
+            <img src={logoImage} alt="L'Art de Coudre" className="h-10 w-auto" style={{ mixBlendMode: 'multiply' }} />
             <span 
               className="text-lg font-medium italic tracking-wide"
               style={{ 
@@ -241,7 +241,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
-              <img src={logoImage} alt="L'Art de Coudre" className="h-10 w-10 rounded-full" />
+              <img src={logoImage} alt="L'Art de Coudre" className="h-8 w-auto" style={{ mixBlendMode: 'multiply' }} />
               <span 
                 className="text-base font-medium italic tracking-wide"
                 style={{ 
