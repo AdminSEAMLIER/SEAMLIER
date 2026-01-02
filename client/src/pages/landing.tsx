@@ -227,13 +227,18 @@ export default function Landing() {
         </div>
       </section>
 
-      <footer className="bg-card border-t py-12 px-4 lg:px-8">
+      <footer className="bg-card border-t py-8 px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <Logo className="text-[#722F37]" textClassName="text-base text-[#722F37]" />
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-muted-foreground text-sm">
-              La plateforme de mise en relation couturiers-particuliers
+              © 2026 L'Art de Coudre. Tous droits réservés.
             </p>
+            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <a href="#" className="hover:text-foreground transition-colors" data-testid="link-mentions">Mentions légales</a>
+              <a href="#" className="hover:text-foreground transition-colors" data-testid="link-cgv">CGV</a>
+              <a href="#" className="hover:text-foreground transition-colors" data-testid="link-privacy">Confidentialité</a>
+              <a href="#" className="hover:text-foreground transition-colors" data-testid="link-contact">Contact</a>
+            </div>
           </div>
         </div>
       </footer>
