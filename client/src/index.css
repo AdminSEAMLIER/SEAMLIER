@@ -2,41 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
-/* LIGHT MODE - Beige Background with Dark Burgundy Text */
+/* LIGHT MODE - White Background with Burgundy Text */
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
   --opaque-button-border-intensity: -8;
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .06);
-  --background: 36 40% 95%;
+  --background: 0 0% 100%;
   --foreground: 350 55% 20%;
-  --border: 36 30% 85%;
-  --card: 36 45% 98%;
+  --border: 0 0% 90%;
+  --card: 0 0% 99%;
   --card-foreground: 350 55% 20%;
-  --card-border: 36 25% 88%;
-  --sidebar: 36 38% 93%;
+  --card-border: 0 0% 92%;
+  --sidebar: 0 0% 98%;
   --sidebar-foreground: 350 55% 20%;
-  --sidebar-border: 36 28% 85%;
+  --sidebar-border: 0 0% 90%;
   --sidebar-primary: 350 55% 35%;
-  --sidebar-primary-foreground: 36 40% 98%;
-  --sidebar-accent: 36 30% 88%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 95%;
   --sidebar-accent-foreground: 350 55% 20%;
   --sidebar-ring: 350 55% 35%;
-  --popover: 36 42% 97%;
+  --popover: 0 0% 100%;
   --popover-foreground: 350 55% 20%;
-  --popover-border: 36 28% 86%;
+  --popover-border: 0 0% 92%;
   --primary: 350 55% 35%;
-  --primary-foreground: 36 40% 98%;
-  --secondary: 36 30% 88%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 95%;
   --secondary-foreground: 350 50% 25%;
-  --muted: 36 25% 90%;
+  --muted: 0 0% 96%;
   --muted-foreground: 350 30% 40%;
-  --accent: 36 35% 90%;
+  --accent: 0 0% 96%;
   --accent-foreground: 350 55% 22%;
   --destructive: 0 84% 45%;
   --destructive-foreground: 0 0% 98%;
-  --input: 36 25% 82%;
+  --input: 0 0% 88%;
   --ring: 350 55% 35%;
   --chart-1: 350 55% 45%;
   --chart-2: 30 60% 50%;
