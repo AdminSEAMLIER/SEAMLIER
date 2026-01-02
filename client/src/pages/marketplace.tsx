@@ -61,7 +61,7 @@ export default function Marketplace() {
 
       <div className="px-4 lg:px-6 py-6 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="font-serif text-section-mobile lg:text-section-desktop">
+          <h1 className="font-serif text-section-mobile lg:text-section-desktop text-[#722F37]">
             Boutique
           </h1>
         </div>

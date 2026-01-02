@@ -4,6 +4,7 @@ import { PortfolioCard, PortfolioCardSkeleton } from "@/components/portfolio-car
 import { FilterChip } from "@/components/filter-chip";
 import { useState } from "react";
 import { Scissors } from "lucide-react";
+import { Logo } from "@/components/logo";
 import type { TailorWithUser, PortfolioWithTailor } from "@shared/schema";
 
 const specialties = [
@@ -46,9 +47,11 @@ export default function Discovery() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
         
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-          <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center mb-6">
-            <Scissors className="h-8 w-8 text-white" />
-          </div>
+          <Logo 
+            className="text-white drop-shadow-lg mb-6" 
+            textClassName="text-2xl lg:text-3xl text-white drop-shadow-lg" 
+            showText={true}
+          />
           <h1 className="font-serif text-hero-mobile lg:text-hero-desktop text-white mb-4 max-w-3xl">
             Trouvez le couturier idéal pour vos créations
           </h1>
@@ -60,7 +63,7 @@ export default function Discovery() {
 
       <section className="px-4 lg:px-6 py-8 lg:py-12 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="font-serif text-section-mobile lg:text-section-desktop">
+          <h2 className="font-serif text-section-mobile lg:text-section-desktop text-[#722F37]">
             Couturiers vedettes
           </h2>
         </div>
@@ -96,7 +99,7 @@ export default function Discovery() {
       </section>
 
       <section className="px-4 lg:px-6 py-8 lg:py-12 max-w-7xl mx-auto">
-        <h2 className="font-serif text-section-mobile lg:text-section-desktop mb-6">
+        <h2 className="font-serif text-section-mobile lg:text-section-desktop mb-6 text-[#722F37]">
           Inspirations & Réalisations
         </h2>
 

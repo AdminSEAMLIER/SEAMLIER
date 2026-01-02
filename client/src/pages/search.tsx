@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { MapPin, Star, Clock, Scissors } from "lucide-react";
+import { Logo } from "@/components/logo";
 import type { TailorWithUser } from "@shared/schema";
 
 const specialties = [
@@ -81,6 +82,11 @@ export default function SearchPage() {
       </div>
 
       <div className="px-4 lg:px-6 py-6 max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="font-serif text-section-mobile lg:text-section-desktop text-[#722F37]">
+            Recherche
+          </h1>
+        </div>
         <div className="lg:flex lg:gap-8">
           <aside className="hidden lg:block w-64 flex-shrink-0">
             <div className="sticky top-36 space-y-6">

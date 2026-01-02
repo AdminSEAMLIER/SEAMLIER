@@ -44,7 +44,7 @@ export default function ProDashboard() {
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="secondary">Pro</Badge>
           </div>
-          <h1 className="font-serif text-3xl lg:text-4xl mb-2">
+          <h1 className="font-serif text-3xl lg:text-4xl mb-2 text-[#722F37]">
             Bienvenue sur votre espace
           </h1>
           <p className="text-muted-foreground">
