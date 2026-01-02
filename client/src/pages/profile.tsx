@@ -62,7 +62,7 @@ export default function Profile() {
     <div className="min-h-screen pb-20 lg:pb-8">
       <div className="px-4 lg:px-6 py-6 max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="font-serif text-section-mobile lg:text-section-desktop text-[#722F37]">
+          <h1 className="font-serif text-2xl lg:text-3xl text-[#722F37]">
             Mon Profil
           </h1>
           <ThemeToggle />

@@ -82,9 +82,9 @@ export default function SearchPage() {
       </div>
 
       <div className="px-4 lg:px-6 py-6 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="font-serif text-section-mobile lg:text-section-desktop text-[#722F37]">
-            Recherche
+        <div className="flex items-center justify-between mb-6 gap-4">
+          <h1 className="font-serif text-2xl lg:text-3xl text-[#722F37]">
+            Recherche de couturiers
           </h1>
         </div>
         <div className="lg:flex lg:gap-8">

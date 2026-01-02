@@ -60,8 +60,8 @@ export default function Marketplace() {
       </div>
 
       <div className="px-4 lg:px-6 py-6 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="font-serif text-section-mobile lg:text-section-desktop text-[#722F37]">
+        <div className="flex items-center justify-between mb-4 gap-4">
+          <h1 className="font-serif text-2xl lg:text-3xl text-[#722F37]">
             Boutique
           </h1>
         </div>

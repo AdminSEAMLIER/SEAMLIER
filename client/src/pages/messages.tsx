@@ -57,7 +57,7 @@ export default function Messages() {
           )}
         >
           <div className="p-4 border-b border-border">
-            <h1 className="font-serif text-section-mobile text-[#722F37]">Messages</h1>
+            <h1 className="font-serif text-xl lg:text-2xl text-[#722F37]">Messages</h1>
           </div>
           
           <div className="flex-1 overflow-y-auto">

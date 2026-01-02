@@ -5,6 +5,7 @@ import { FilterChip } from "@/components/filter-chip";
 import { useState } from "react";
 import { Scissors } from "lucide-react";
 import { Logo } from "@/components/logo";
+import heroImage from "@assets/stock_images/beautiful_evening_go_76ac947c.jpg";
 import type { TailorWithUser, PortfolioWithTailor } from "@shared/schema";
 
 const specialties = [
@@ -38,25 +39,25 @@ export default function Discovery() {
 
   return (
     <div className="min-h-screen pb-20 lg:pb-8">
-      <section className="relative h-[60vh] lg:h-[70vh] overflow-hidden">
+      <section className="relative h-[50vh] lg:h-[60vh] overflow-hidden">
         <img
-          src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&h=900&fit=crop"
+          src={heroImage}
           alt="L'art de la couture"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20" />
         
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
           <Logo 
-            className="text-white drop-shadow-lg mb-6" 
-            textClassName="text-2xl lg:text-3xl text-white drop-shadow-lg" 
+            className="text-white drop-shadow-lg mb-4" 
+            textClassName="text-xl lg:text-2xl text-white drop-shadow-lg" 
             showText={true}
           />
-          <h1 className="font-serif text-hero-mobile lg:text-hero-desktop text-white mb-4 max-w-3xl">
-            Trouvez le couturier idéal pour vos créations
+          <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl text-white mb-3 max-w-3xl leading-tight">
+            Découvrez nos artisans
           </h1>
-          <p className="text-white/80 text-lg max-w-xl mb-8">
-            Découvrez des artisans talentueux près de chez vous et donnez vie à vos projets de couture
+          <p className="text-white/90 text-base lg:text-lg max-w-xl">
+            Les meilleurs couturiers près de chez vous
           </p>
         </div>
       </section>
