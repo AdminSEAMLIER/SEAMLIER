@@ -83,17 +83,16 @@ export default function Landing() {
         </div>
         
         <header className="relative z-20 flex items-center justify-between px-4 lg:px-8 py-4">
-          <div className="flex items-center gap-1">
-            <img src={logoImage} alt="L'art de coudre" className="h-6 w-auto" />
+          <div className="flex items-center">
             <span 
-              className="text-sm font-medium italic tracking-wide"
+              className="text-sm font-medium italic tracking-wide flex items-center"
               style={{ 
                 fontFamily: "'Playfair Display', serif",
                 color: 'white',
                 WebkitTextStroke: '0.3px #722F37',
                 textShadow: '0.5px 0.5px 0 #722F37, -0.5px -0.5px 0 #722F37, 0.5px -0.5px 0 #722F37, -0.5px 0.5px 0 #722F37'
               }}
-            >L'Art de Coudre</span>
+            >L'Art de C<img src={logoImage} alt="o" className="h-4 w-auto inline-block mx-[-1px]" style={{ verticalAlign: 'middle', marginTop: '-2px' }} />udre</span>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/particulier">
@@ -241,15 +240,14 @@ export default function Landing() {
       <footer className="bg-card border-t py-12 px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-1">
-              <img src={logoImage} alt="L'art de coudre" className="h-5 w-auto" />
+            <div className="flex items-center">
               <span 
-                className="text-sm font-medium italic tracking-wide"
+                className="text-sm font-medium italic tracking-wide flex items-center"
                 style={{ 
                   fontFamily: "'Playfair Display', serif",
                   color: '#722F37'
                 }}
-              >L'Art de Coudre</span>
+              >L'Art de C<img src={logoImage} alt="o" className="h-3.5 w-auto inline-block mx-[-1px]" style={{ verticalAlign: 'middle', marginTop: '-2px' }} />udre</span>
             </div>
             <p className="text-muted-foreground text-sm">
               La plateforme de mise en relation couturiers-particuliers
