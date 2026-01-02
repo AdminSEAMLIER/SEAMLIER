@@ -43,7 +43,7 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
                   fontFamily: "'Playfair Display', serif",
                   color: '#722F37'
                 }}
-              >L'Art de C<img src={logoImage} alt="o" className="h-3.5 w-auto inline-block mx-[-1px]" style={{ verticalAlign: 'middle', marginTop: '-2px' }} />udre</span>
+              >L'Art de C<img src={logoImage} alt="o" className="h-2.5 w-auto inline-block" style={{ verticalAlign: 'middle', margin: '0 -2px' }} />udre</span>
             </div>
           </Link>
           {mode === "professionnel" && (
