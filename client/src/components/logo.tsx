@@ -8,7 +8,7 @@ interface LogoProps {
 
 export function Logo({ className, textClassName, showText = true }: LogoProps) {
   return (
-    <div className={cn("flex items-center gap-1", className)}>
+    <div className={cn("flex items-center gap-0", className)}>
       <svg
         viewBox="0 0 48 48"
         fill="none"
