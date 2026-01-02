@@ -13,7 +13,7 @@ export function Logo({ className, textClassName, showText = true }: LogoProps) {
         viewBox="0 0 48 48"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="h-10 w-10"
+        className="h-6 w-6"
       >
         {/* Elegant bobbin/spool with decorative elements */}
         {/* Top disc of bobbin */}
