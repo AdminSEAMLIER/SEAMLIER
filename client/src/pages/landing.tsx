@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import heroImage from "@assets/stock_images/elegant_tailor_seams_1d2c9e14.jpg";
+import heroImage from "@assets/stock_images/beautiful_evening_go_76ac947c.jpg";
 
 const services = [
   { 
