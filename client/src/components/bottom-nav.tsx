@@ -1,13 +1,13 @@
-import { Compass, Search, MessageCircle, ShoppingBag, User } from "lucide-react";
+import { Home, Compass, MessageCircle, Ruler, BookOpen } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { icon: Compass, label: "Découverte", path: "/particulier" },
-  { icon: Search, label: "Recherche", path: "/particulier/search" },
-  { icon: MessageCircle, label: "Messages", path: "/particulier/messages" },
-  { icon: ShoppingBag, label: "Boutique", path: "/particulier/marketplace" },
-  { icon: User, label: "Profil", path: "/particulier/profile" },
+  { icon: Home, label: "Accueil", path: "/particulier" },
+  { icon: Compass, label: "Découverte", path: "/particulier/decouverte" },
+  { icon: MessageCircle, label: "Messagerie", path: "/particulier/messages" },
+  { icon: Ruler, label: "Mesures", path: "/particulier/mesures" },
+  { icon: BookOpen, label: "Magazine", path: "/particulier/magazine" },
 ];
 
 export function BottomNav() {

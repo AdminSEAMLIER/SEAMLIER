@@ -1,4 +1,4 @@
-import { Compass, Search, MessageCircle, ShoppingBag, User, Bell, LayoutDashboard, ArrowLeft } from "lucide-react";
+import { Home, Compass, MessageCircle, Ruler, BookOpen, Bell, LayoutDashboard, ArrowLeft } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
@@ -7,10 +7,11 @@ import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
 
 const particulierNavItems = [
-  { icon: Compass, label: "Découverte", path: "/particulier" },
-  { icon: Search, label: "Recherche", path: "/particulier/search" },
-  { icon: MessageCircle, label: "Messages", path: "/particulier/messages" },
-  { icon: ShoppingBag, label: "Boutique", path: "/particulier/marketplace" },
+  { icon: Home, label: "Accueil", path: "/particulier" },
+  { icon: Compass, label: "Découverte", path: "/particulier/decouverte" },
+  { icon: MessageCircle, label: "Messagerie", path: "/particulier/messages" },
+  { icon: Ruler, label: "Mesures", path: "/particulier/mesures" },
+  { icon: BookOpen, label: "Magazine", path: "/particulier/magazine" },
 ];
 
 const proNavItems = [
@@ -25,12 +26,11 @@ interface DesktopHeaderProps {
 export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
   const [location] = useLocation();
   const navItems = mode === "professionnel" ? proNavItems : particulierNavItems;
-  const profilePath = mode === "professionnel" ? "/professionnel/profile" : "/particulier/profile";
   const basePath = mode === "professionnel" ? "/professionnel" : "/particulier";
 
   return (
     <header 
-      className="hidden lg:flex fixed top-0 left-0 right-0 h-16 bg-background border-b border-border z-50"
+      className="hidden lg:flex fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 z-50"
       data-testid="header-desktop"
     >
       <div className="flex items-center justify-between w-full max-w-7xl mx-auto px-6">
@@ -39,7 +39,7 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
             <Logo className="text-[#722F37] cursor-pointer" textClassName="text-base text-[#722F37]" />
           </Link>
           {mode === "professionnel" && (
-            <Badge variant="secondary">Pro</Badge>
+            <Badge variant="secondary" className="bg-[#722F37]/10 text-[#722F37] border-none">Pro</Badge>
           )}
         </div>
 
@@ -52,10 +52,10 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
             return (
               <Link key={item.path} href={item.path}>
                 <Button
-                  variant={isActive ? "secondary" : "ghost"}
+                  variant="ghost"
                   className={cn(
                     "gap-2",
-                    isActive && "bg-accent"
+                    isActive && "bg-gray-100 text-[#722F37]"
                   )}
                   data-testid={`nav-desktop-${item.label.toLowerCase()}`}
                 >
@@ -69,20 +69,15 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
 
         <div className="flex items-center gap-2">
           <Link href="/">
-            <Button variant="ghost" size="sm" className="gap-2" data-testid="button-switch-space">
+            <Button variant="ghost" size="sm" className="gap-2 text-gray-600" data-testid="button-switch-space">
               <ArrowLeft className="h-4 w-4" />
-              Changer d'espace
+              Accueil
             </Button>
           </Link>
           <ThemeToggle />
-          <Button variant="ghost" size="icon" data-testid="button-notifications">
+          <Button variant="ghost" size="icon" className="text-gray-600" data-testid="button-notifications">
             <Bell className="h-5 w-5" />
           </Button>
-          <Link href={profilePath}>
-            <Button variant="ghost" size="icon" data-testid="button-profile-desktop">
-              <User className="h-5 w-5" />
-            </Button>
-          </Link>
         </div>
       </div>
     </header>

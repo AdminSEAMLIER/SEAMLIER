@@ -8,11 +8,11 @@ import { DesktopHeader } from "@/components/desktop-header";
 import { ProBottomNav } from "@/components/pro-bottom-nav";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
+import Home from "@/pages/home";
 import Discovery from "@/pages/discovery";
-import SearchPage from "@/pages/search";
-import Marketplace from "@/pages/marketplace";
 import Messages from "@/pages/messages";
-import Profile from "@/pages/profile";
+import Mesures from "@/pages/mesures";
+import Magazine from "@/pages/magazine";
 import TailorProfile from "@/pages/tailor-profile";
 import ProductDetail from "@/pages/product-detail";
 import ProDashboard from "@/pages/pro-dashboard";
@@ -48,17 +48,12 @@ function Router() {
       
       <Route path="/particulier">
         <ParticulierLayout>
+          <Home />
+        </ParticulierLayout>
+      </Route>
+      <Route path="/particulier/decouverte">
+        <ParticulierLayout>
           <Discovery />
-        </ParticulierLayout>
-      </Route>
-      <Route path="/particulier/search">
-        <ParticulierLayout>
-          <SearchPage />
-        </ParticulierLayout>
-      </Route>
-      <Route path="/particulier/marketplace">
-        <ParticulierLayout>
-          <Marketplace />
         </ParticulierLayout>
       </Route>
       <Route path="/particulier/messages">
@@ -66,9 +61,14 @@ function Router() {
           <Messages />
         </ParticulierLayout>
       </Route>
-      <Route path="/particulier/profile">
+      <Route path="/particulier/mesures">
         <ParticulierLayout>
-          <Profile />
+          <Mesures />
+        </ParticulierLayout>
+      </Route>
+      <Route path="/particulier/magazine">
+        <ParticulierLayout>
+          <Magazine />
         </ParticulierLayout>
       </Route>
       <Route path="/particulier/tailor/:id">
@@ -94,11 +94,6 @@ function Router() {
       <Route path="/professionnel/messages">
         <ProfessionnelLayout>
           <Messages />
-        </ProfessionnelLayout>
-      </Route>
-      <Route path="/professionnel/profile">
-        <ProfessionnelLayout>
-          <Profile />
         </ProfessionnelLayout>
       </Route>
 
