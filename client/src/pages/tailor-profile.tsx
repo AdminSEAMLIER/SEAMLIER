@@ -129,7 +129,7 @@ export default function TailorProfile() {
 
         <div className="mt-4">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="font-serif text-hero-mobile lg:text-hero-desktop">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
               {tailor.user.fullName}
             </h1>
             {tailor.isVerified && (

@@ -17,7 +17,7 @@ import {
 import type { ProductWithTailor } from "@shared/schema";
 
 export default function ProductDetail() {
-  const [, params] = useRoute("/product/:id");
+  const [, params] = useRoute("/particulier/product/:id");
   const productId = params?.id;
 
   const { data: product, isLoading } = useQuery<ProductWithTailor>({
@@ -43,7 +43,7 @@ export default function ProductDetail() {
       <div className="min-h-screen flex items-center justify-center pb-20 lg:pb-8">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">Produit non trouvé</p>
-          <Link href="/marketplace">
+          <Link href="/particulier/marketplace">
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour à la boutique
@@ -64,7 +64,7 @@ export default function ProductDetail() {
         />
         
         <div className="absolute top-4 left-4 right-4 flex justify-between">
-          <Link href="/marketplace">
+          <Link href="/particulier/marketplace">
             <Button 
               variant="ghost" 
               size="icon" 
@@ -103,7 +103,7 @@ export default function ProductDetail() {
                 {product.category}
               </Badge>
             )}
-            <h1 className="font-serif text-section-mobile lg:text-section-desktop">
+            <h1 className="font-serif text-2xl lg:text-3xl text-[#722F37]">
               {product.title}
             </h1>
           </div>
@@ -119,7 +119,7 @@ export default function ProductDetail() {
         )}
 
         <Card className="p-4 mb-6">
-          <Link href={`/tailor/${product.tailor.id}`}>
+          <Link href={`/particulier/tailor/${product.tailor.id}`}>
             <div className="flex items-center gap-3 cursor-pointer hover-elevate rounded-lg p-2 -m-2">
               <Avatar className="h-12 w-12">
                 <AvatarImage src={product.tailor.user.avatarUrl || undefined} />
