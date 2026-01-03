@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Send, ImagePlus, ArrowLeft, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
@@ -48,16 +47,16 @@ export default function Messages() {
   };
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-0">
+    <div className="min-h-screen pb-20 lg:pb-0 bg-white">
       <div className="lg:flex lg:h-[calc(100vh-4rem)]">
         <aside 
           className={cn(
-            "lg:w-80 lg:border-r lg:border-border lg:flex lg:flex-col",
+            "lg:w-80 lg:border-r lg:border-gray-100 lg:flex lg:flex-col bg-gray-50",
             selectedConversationId ? "hidden lg:flex" : "flex flex-col h-[calc(100vh-4rem)]"
           )}
         >
-          <div className="p-4 border-b border-border">
-            <h1 className="font-serif text-xl lg:text-2xl text-[#722F37]">Messages</h1>
+          <div className="p-4 border-b border-gray-100 bg-white">
+            <h1 className="font-serif text-2xl text-[#722F37]">Messages</h1>
           </div>
           
           <div className="flex-1 overflow-y-auto">
@@ -80,25 +79,25 @@ export default function Messages() {
                     key={conversation.id}
                     onClick={() => setSelectedConversationId(conversation.id)}
                     className={cn(
-                      "w-full flex items-center gap-3 p-4 hover-elevate active-elevate-2 text-left",
-                      selectedConversationId === conversation.id && "bg-accent"
+                      "w-full flex items-center gap-3 p-4 hover:bg-gray-100 transition-colors text-left border-b border-gray-100",
+                      selectedConversationId === conversation.id && "bg-white"
                     )}
                     data-testid={`conversation-${conversation.id}`}
                   >
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={conversation.otherParticipant.avatarUrl || undefined} />
-                      <AvatarFallback className="bg-primary text-primary-foreground">
+                      <AvatarFallback className="bg-[#722F37] text-white">
                         {conversation.otherParticipant.fullName.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <h3 className="font-medium text-sm truncate">
+                        <h3 className="font-medium text-sm text-gray-900 truncate">
                           {conversation.otherParticipant.fullName}
                         </h3>
                         {conversation.lastMessageAt && (
-                          <span className="text-xs text-muted-foreground flex-shrink-0">
+                          <span className="text-xs text-gray-500 flex-shrink-0">
                             {new Date(conversation.lastMessageAt).toLocaleDateString('fr-FR', { 
                               day: 'numeric', 
                               month: 'short' 
@@ -107,13 +106,13 @@ export default function Messages() {
                         )}
                       </div>
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm text-muted-foreground truncate">
+                        <p className="text-sm text-gray-500 truncate">
                           {conversation.lastMessagePreview || "Aucun message"}
                         </p>
                         {conversation.unreadCount > 0 && (
-                          <Badge variant="default" className="h-5 min-w-[1.25rem] p-0 justify-center text-xs">
+                          <span className="bg-[#722F37] text-white text-xs px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
                             {conversation.unreadCount}
-                          </Badge>
+                          </span>
                         )}
                       </div>
                     </div>
@@ -122,9 +121,9 @@ export default function Messages() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                <MessageCircle className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Aucune conversation</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <MessageCircle className="h-12 w-12 text-gray-300 mb-4" />
+                <p className="text-gray-500">Aucune conversation</p>
+                <p className="text-sm text-gray-400 mt-1">
                   Commencez par contacter un couturier
                 </p>
               </div>
@@ -134,13 +133,13 @@ export default function Messages() {
 
         <main 
           className={cn(
-            "flex-1 flex flex-col",
+            "flex-1 flex flex-col bg-white",
             !selectedConversationId && "hidden lg:flex"
           )}
         >
           {selectedConversation ? (
             <>
-              <div className="flex items-center gap-3 p-4 border-b border-border">
+              <div className="flex items-center gap-3 p-4 border-b border-gray-100">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -152,17 +151,17 @@ export default function Messages() {
                 </Button>
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={selectedConversation.otherParticipant.avatarUrl || undefined} />
-                  <AvatarFallback className="bg-primary text-primary-foreground">
+                  <AvatarFallback className="bg-[#722F37] text-white">
                     {selectedConversation.otherParticipant.fullName.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h2 className="font-medium">{selectedConversation.otherParticipant.fullName}</h2>
-                  <p className="text-xs text-muted-foreground">En ligne</p>
+                  <h2 className="font-medium text-gray-900">{selectedConversation.otherParticipant.fullName}</h2>
+                  <p className="text-xs text-gray-500">En ligne</p>
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
                 {messagesLoading ? (
                   <div className="space-y-4">
                     {Array.from({ length: 3 }).map((_, i) => (
@@ -186,15 +185,15 @@ export default function Messages() {
                           className={cn(
                             "max-w-[75%] px-4 py-2 rounded-2xl",
                             isSent 
-                              ? "bg-primary text-primary-foreground rounded-br-sm" 
-                              : "bg-card border border-border rounded-bl-sm"
+                              ? "bg-[#722F37] text-white rounded-br-sm" 
+                              : "bg-white border border-gray-200 rounded-bl-sm"
                           )}
                           data-testid={`message-${message.id}`}
                         >
                           <p className="text-sm">{message.content}</p>
                           <p className={cn(
                             "text-[10px] mt-1",
-                            isSent ? "text-primary-foreground/70" : "text-muted-foreground"
+                            isSent ? "text-white/70" : "text-gray-500"
                           )}>
                             {new Date(message.sentAt).toLocaleTimeString('fr-FR', { 
                               hour: '2-digit', 
@@ -207,29 +206,30 @@ export default function Messages() {
                   })
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-center">
-                    <p className="text-muted-foreground">Aucun message</p>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-gray-500">Aucun message</p>
+                    <p className="text-sm text-gray-400 mt-1">
                       Envoyez votre premier message
                     </p>
                   </div>
                 )}
               </div>
 
-              <div className="p-4 border-t border-border">
+              <div className="p-4 border-t border-gray-100 bg-white">
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon" data-testid="button-attach">
+                  <Button variant="ghost" size="icon" className="text-gray-500" data-testid="button-attach">
                     <ImagePlus className="h-5 w-5" />
                   </Button>
                   <Input
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
                     placeholder="Écrivez votre message..."
-                    className="flex-1"
+                    className="flex-1 border-gray-200"
                     onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
                     data-testid="input-message"
                   />
                   <Button 
                     size="icon" 
+                    className="bg-[#722F37] hover:bg-[#5a252c]"
                     onClick={handleSendMessage}
                     disabled={!messageInput.trim() || sendMessageMutation.isPending}
                     data-testid="button-send-message"
@@ -241,9 +241,9 @@ export default function Messages() {
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-              <MessageCircle className="h-16 w-16 text-muted-foreground mb-4" />
-              <h2 className="font-serif text-xl mb-2">Vos messages</h2>
-              <p className="text-muted-foreground">
+              <MessageCircle className="h-16 w-16 text-gray-300 mb-4" />
+              <h2 className="font-serif text-xl text-[#722F37] mb-2">Vos messages</h2>
+              <p className="text-gray-500">
                 Sélectionnez une conversation pour voir les messages
               </p>
             </div>

@@ -47,10 +47,10 @@ export default function TailorProfile() {
 
   if (tailorLoading) {
     return (
-      <div className="min-h-screen pb-20 lg:pb-8">
-        <div className="h-[40vh] skeleton-shimmer" />
+      <div className="min-h-screen pb-20 lg:pb-8 bg-white">
+        <div className="h-64 skeleton-shimmer" />
         <div className="px-4 lg:px-6 -mt-16 max-w-4xl mx-auto">
-          <div className="h-32 w-32 rounded-full skeleton-shimmer border-4 border-background" />
+          <div className="h-24 w-24 rounded-full skeleton-shimmer border-4 border-white" />
           <div className="mt-4 space-y-3">
             <div className="h-8 w-48 rounded skeleton-shimmer" />
             <div className="h-4 w-32 rounded skeleton-shimmer" />
@@ -63,9 +63,9 @@ export default function TailorProfile() {
 
   if (!tailor) {
     return (
-      <div className="min-h-screen flex items-center justify-center pb-20 lg:pb-8">
+      <div className="min-h-screen flex items-center justify-center pb-20 lg:pb-8 bg-white">
         <div className="text-center">
-          <p className="text-muted-foreground mb-4">Couturier non trouvé</p>
+          <p className="text-gray-500 mb-4">Couturier non trouvé</p>
           <Link href="/particulier">
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -78,21 +78,21 @@ export default function TailorProfile() {
   }
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8">
-      <div className="relative h-[40vh]">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
+      <div className="relative h-64">
         <img
-          src={tailor.coverImageUrl || `https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&h=600&fit=crop`}
+          src={tailor.coverImageUrl || `https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&h=400&fit=crop`}
           alt={tailor.user.fullName}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         
         <div className="absolute top-4 left-4 right-4 flex justify-between">
           <Link href="/particulier">
             <Button 
               variant="ghost" 
               size="icon" 
-              className="bg-black/30 backdrop-blur-sm text-white hover:bg-black/50"
+              className="bg-white/90 hover:bg-white text-gray-700"
               data-testid="button-back"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -102,7 +102,7 @@ export default function TailorProfile() {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="bg-black/30 backdrop-blur-sm text-white hover:bg-black/50"
+              className="bg-white/90 hover:bg-white text-gray-700"
               data-testid="button-share"
             >
               <Share2 className="h-5 w-5" />
@@ -110,7 +110,7 @@ export default function TailorProfile() {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="bg-black/30 backdrop-blur-sm text-white hover:bg-black/50"
+              className="bg-white/90 hover:bg-white text-gray-700"
               data-testid="button-favorite"
             >
               <Heart className="h-5 w-5" />
@@ -119,25 +119,25 @@ export default function TailorProfile() {
         </div>
       </div>
 
-      <div className="px-4 lg:px-6 -mt-16 max-w-4xl mx-auto relative z-10">
-        <Avatar className="h-32 w-32 border-4 border-background shadow-lg">
+      <div className="px-4 lg:px-6 -mt-12 max-w-4xl mx-auto relative z-10">
+        <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
           <AvatarImage src={tailor.user.avatarUrl || undefined} />
-          <AvatarFallback className="bg-primary text-primary-foreground text-4xl">
+          <AvatarFallback className="bg-[#722F37] text-white text-3xl">
             {tailor.user.fullName.charAt(0)}
           </AvatarFallback>
         </Avatar>
 
         <div className="mt-4">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+            <h1 className="font-serif text-2xl lg:text-3xl text-[#722F37]">
               {tailor.user.fullName}
             </h1>
             {tailor.isVerified && (
-              <BadgeCheck className="h-6 w-6 text-primary" fill="currentColor" />
+              <BadgeCheck className="h-5 w-5 text-[#722F37]" fill="currentColor" />
             )}
           </div>
 
-          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground flex-wrap">
+          <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 flex-wrap">
             {tailor.user.location && (
               <div className="flex items-center gap-1">
                 <MapPin className="h-4 w-4" />
@@ -146,7 +146,7 @@ export default function TailorProfile() {
             )}
             <div className="flex items-center gap-1">
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-              <span className="font-medium text-foreground">
+              <span className="font-medium text-gray-900">
                 {tailor.rating?.toFixed(1) || "Nouveau"}
               </span>
               {tailor.reviewCount && tailor.reviewCount > 0 && (
@@ -164,7 +164,7 @@ export default function TailorProfile() {
           {tailor.specialties && tailor.specialties.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-4">
               {tailor.specialties.map((specialty) => (
-                <Badge key={specialty} variant="secondary">
+                <Badge key={specialty} variant="secondary" className="bg-gray-100 text-gray-700 border-none">
                   {specialty}
                 </Badge>
               ))}
@@ -172,27 +172,27 @@ export default function TailorProfile() {
           )}
 
           {tailor.bio && (
-            <p className="mt-4 text-muted-foreground leading-relaxed">
+            <p className="mt-4 text-gray-600 leading-relaxed">
               {tailor.bio}
             </p>
           )}
 
           <div className="flex gap-3 mt-6">
-            <Button className="flex-1 rounded-full h-12" data-testid="button-contact">
+            <Button className="flex-1 h-12 bg-[#722F37] hover:bg-[#5a252c]" data-testid="button-contact">
               <MessageCircle className="h-5 w-5 mr-2" />
               Contacter
             </Button>
-            <Button variant="outline" className="flex-1 rounded-full h-12" data-testid="button-book">
+            <Button variant="outline" className="flex-1 h-12 border-gray-200" data-testid="button-book">
               <Calendar className="h-5 w-5 mr-2" />
               Réserver
             </Button>
           </div>
 
           {tailor.hourlyRate && (
-            <Card className="p-4 mt-6">
+            <Card className="p-4 mt-6 border-gray-100 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Tarif horaire</span>
-                <span className="font-semibold text-lg">
+                <span className="text-gray-500">Tarif horaire</span>
+                <span className="font-semibold text-lg text-[#722F37]">
                   {tailor.hourlyRate.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}/h
                 </span>
               </div>
@@ -201,14 +201,14 @@ export default function TailorProfile() {
         </div>
 
         <Tabs defaultValue="portfolio" className="mt-8">
-          <TabsList className="w-full grid grid-cols-3">
-            <TabsTrigger value="portfolio" data-testid="tab-portfolio">
+          <TabsList className="w-full grid grid-cols-3 bg-gray-100">
+            <TabsTrigger value="portfolio" className="data-[state=active]:bg-white" data-testid="tab-portfolio">
               Portfolio ({portfolio?.length || 0})
             </TabsTrigger>
-            <TabsTrigger value="products" data-testid="tab-products">
+            <TabsTrigger value="products" className="data-[state=active]:bg-white" data-testid="tab-products">
               Boutique ({products?.length || 0})
             </TabsTrigger>
-            <TabsTrigger value="reviews" data-testid="tab-reviews">
+            <TabsTrigger value="reviews" className="data-[state=active]:bg-white" data-testid="tab-reviews">
               Avis ({reviews?.length || 0})
             </TabsTrigger>
           </TabsList>
@@ -225,7 +225,7 @@ export default function TailorProfile() {
                 ))
               ) : (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-muted-foreground">Aucune réalisation</p>
+                  <p className="text-gray-500">Aucune réalisation</p>
                 </div>
               )}
             </div>
@@ -243,7 +243,7 @@ export default function TailorProfile() {
                 ))
               ) : (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-muted-foreground">Aucun produit en vente</p>
+                  <p className="text-gray-500">Aucun produit en vente</p>
                 </div>
               )}
             </div>
@@ -261,7 +261,7 @@ export default function TailorProfile() {
                 ))
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground">Aucun avis pour le moment</p>
+                  <p className="text-gray-500">Aucun avis pour le moment</p>
                 </div>
               )}
             </div>

@@ -1,38 +1,24 @@
-import { X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface FilterChipProps {
   label: string;
   isActive?: boolean;
   onClick: () => void;
-  onRemove?: () => void;
 }
 
-export function FilterChip({ label, isActive, onClick, onRemove }: FilterChipProps) {
+export function FilterChip({ label, isActive, onClick }: FilterChipProps) {
   return (
-    <Badge
-      variant={isActive ? "default" : "secondary"}
+    <button
       className={cn(
-        "cursor-pointer px-3 py-1.5 text-sm gap-1.5 whitespace-nowrap",
-        isActive && "pr-2"
+        "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+        isActive
+          ? "bg-[#722F37] text-white"
+          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
       )}
       onClick={onClick}
       data-testid={`filter-chip-${label.toLowerCase().replace(/\s+/g, '-')}`}
     >
       {label}
-      {isActive && onRemove && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-          className="ml-1 hover:bg-primary-foreground/20 rounded-full p-0.5"
-          data-testid={`filter-remove-${label.toLowerCase().replace(/\s+/g, '-')}`}
-        >
-          <X className="h-3 w-3" />
-        </button>
-      )}
-    </Badge>
+    </button>
   );
 }

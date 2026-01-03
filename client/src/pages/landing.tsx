@@ -1,243 +1,260 @@
 import { Link } from "wouter";
-import { MapPin, User, Briefcase, Star, Calendar, Sparkles, Crown, Heart, Shirt, Ruler, Globe, Palette, ArrowRight } from "lucide-react";
+import { MapPin, Search, MessageCircle, CheckCircle, Star, ArrowRight, Scissors, Users, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
-import heroImage from "@assets/stock_images/beautiful_evening_go_76ac947c.jpg";
 import { Logo } from "@/components/logo";
 
-const services = [
-  { 
-    title: "Haute Couture", 
-    description: "Pièces d'exception réalisées dans les règles de l'art",
-    icon: Crown
+const steps = [
+  {
+    number: "1",
+    title: "Décrivez votre projet",
+    description: "Dites-nous ce dont vous avez besoin et nous contacterons les couturiers de votre région.",
+    icon: MessageCircle,
   },
-  { 
-    title: "Robes de Mariée", 
-    description: "Sublimez le plus beau jour de votre vie",
-    icon: Heart
+  {
+    number: "2",
+    title: "Recevez des devis gratuits",
+    description: "Comparez les profils, lisez les avis et choisissez le couturier qui vous convient.",
+    icon: Users,
   },
-  { 
-    title: "Costumes", 
-    description: "L'élégance masculine taillée sur mesure",
-    icon: Shirt
-  },
-  { 
-    title: "Retouches", 
-    description: "Ajustements parfaits et transformations expertes",
-    icon: Ruler
-  },
-  { 
-    title: "Mode Africaine", 
-    description: "L'alliance du patrimoine et de la modernité",
-    icon: Globe
-  },
-  { 
-    title: "Streetwear", 
-    description: "Créations urbaines à votre image",
-    icon: Palette
+  {
+    number: "3",
+    title: "Choisissez votre couturier",
+    description: "Contactez directement les professionnels et réalisez votre projet en toute confiance.",
+    icon: CheckCircle,
   },
 ];
 
-const features = [
-  {
-    icon: Star,
-    title: "Artisans vérifiés",
-    description: "Tous nos couturiers sont sélectionnés pour leur savoir-faire et leur expertise.",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop",
-    cta: "Découvrir",
-    href: "/particulier"
-  },
-  {
-    icon: Calendar,
-    title: "Réservation facile",
-    description: "Prenez rendez-vous en quelques clics avec le couturier de votre choix.",
-    image: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=600&h=400&fit=crop",
-    cta: "Réserver",
-    href: "/particulier/search"
-  },
-  {
-    icon: Sparkles,
-    title: "Créations uniques",
-    description: "Des pièces sur-mesure qui reflètent votre personnalité.",
-    image: "https://images.unsplash.com/photo-1518657175232-6f728c325f0f?w=600&h=400&fit=crop",
-    cta: "Explorer",
-    href: "/particulier/marketplace"
-  },
+const cities = [
+  { name: "Paris", image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=300&fit=crop" },
+  { name: "Lyon", image: "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?w=400&h=300&fit=crop" },
+  { name: "Marseille", image: "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?w=400&h=300&fit=crop" },
+  { name: "Bordeaux", image: "https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=400&h=300&fit=crop" },
+  { name: "Toulouse", image: "https://images.unsplash.com/photo-1582974214784-4e2a5ad6c9c4?w=400&h=300&fit=crop" },
+  { name: "Nice", image: "https://images.unsplash.com/photo-1491166617655-0723a0999cfc?w=400&h=300&fit=crop" },
+];
+
+const stats = [
+  { value: "500+", label: "Couturiers vérifiés" },
+  { value: "10 000+", label: "Projets réalisés" },
+  { value: "4.8/5", label: "Note moyenne" },
 ];
 
 export default function Landing() {
   const [location, setLocation] = useState("");
 
   return (
-    <div className="min-h-screen bg-background">
-      <section className="relative min-h-[85vh] flex flex-col">
-        <div className="absolute inset-0">
-          <img
-            src={heroImage}
-            alt="L'art de la couture"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60" />
-        </div>
-        
-        <header className="relative z-20 flex items-center justify-between px-4 lg:px-8 py-4">
-          <Logo className="text-white drop-shadow-md" textClassName="text-lg text-white drop-shadow-md" />
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-white">
+      <header className="border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
+          <Logo className="text-[#722F37]" textClassName="text-lg text-[#722F37]" />
+          <div className="flex items-center gap-4">
             <Link href="/particulier">
-              <Button variant="ghost" className="text-white border-white/20 hover:bg-white/10" data-testid="button-login">
-                Connexion
+              <Button variant="ghost" className="text-[#722F37]" data-testid="button-particulier-header">
+                Espace Particulier
               </Button>
             </Link>
             <Link href="/professionnel">
-              <Button className="bg-white text-foreground hover:bg-white/90" data-testid="button-pro">
+              <Button variant="outline" className="border-[#722F37] text-[#722F37]" data-testid="button-pro-header">
                 Espace Pro
               </Button>
             </Link>
           </div>
-        </header>
+        </div>
+      </header>
 
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 py-12">
-          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-white mb-4 max-w-4xl leading-tight">
-            Trouvez le couturier idéal près de chez vous
+      <section className="py-16 lg:py-24 px-4 lg:px-8 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-[#722F37] mb-6 leading-tight">
+            Trouvez un couturier près de chez vous
           </h1>
-          <p className="text-white/80 text-lg md:text-xl max-w-2xl mb-10">
-            La plateforme qui connecte les particuliers aux meilleurs artisans couturiers
+          <p className="text-gray-600 text-lg lg:text-xl mb-10 max-w-2xl mx-auto">
+            Comparez les meilleurs couturiers de votre région et obtenez des devis gratuits pour votre projet
           </p>
-
-          <div className="w-full max-w-xl bg-white rounded-full p-2 flex items-center gap-2 shadow-xl">
-            <div className="flex items-center gap-2 flex-1 pl-4">
-              <MapPin className="h-5 w-5 text-muted-foreground" />
-              <Input 
-                type="text"
-                placeholder="Entrez votre ville ou code postal"
+          
+          <div className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
+            <div className="relative flex-1">
+              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                placeholder="Entrez votre ville..."
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="border-0 shadow-none focus-visible:ring-0 text-base"
+                className="pl-12 h-14 text-base border-gray-200 bg-white"
                 data-testid="input-location"
               />
             </div>
-            <Link href="/particulier/search">
-              <Button size="lg" className="rounded-full px-8" data-testid="button-search-location">
+            <Link href="/particulier">
+              <Button size="lg" className="h-14 px-8 bg-[#722F37] hover:bg-[#5a252c] text-white" data-testid="button-search-hero">
+                <Search className="h-5 w-5 mr-2" />
                 Rechercher
               </Button>
             </Link>
           </div>
+        </div>
+      </section>
 
-          <div className="flex flex-wrap items-center justify-center gap-6 mt-8 text-white/70 text-sm">
-            <span className="flex items-center gap-2">
-              <Star className="h-4 w-4 fill-current" />
-              Artisans vérifiés
-            </span>
-            <span className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Réservation en ligne
-            </span>
-            <span className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              Créations sur-mesure
-            </span>
+      <section className="py-12 px-4 lg:px-8 border-y border-gray-100 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-3 gap-8 text-center">
+            {stats.map((stat) => (
+              <div key={stat.label}>
+                <p className="text-3xl lg:text-4xl font-bold text-[#722F37]">{stat.value}</p>
+                <p className="text-gray-600 text-sm lg:text-base mt-1">{stat.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="py-20 lg:py-28 px-4 lg:px-8 bg-background">
+      <section className="py-16 lg:py-24 px-4 lg:px-8 bg-white">
         <div className="max-w-6xl mx-auto">
-          <p className="text-primary font-medium text-center mb-3 tracking-widest uppercase text-sm">
-            Nos expertises
-          </p>
-          <h2 className="font-serif text-3xl lg:text-5xl text-center mb-16">
-            Un savoir-faire pour chaque envie
-          </h2>
+          <div className="text-center mb-12">
+            <h2 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-4">
+              Comment ça marche ?
+            </h2>
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              Trouvez le couturier idéal en 3 étapes simples
+            </p>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-10">
-            {services.map((service) => (
-              <Link key={service.title} href="/particulier/search">
-                <div className="group cursor-pointer flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                    <service.icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-serif text-xl mb-2 group-hover:text-primary transition-colors flex items-center gap-2">
-                      {service.title}
-                      <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-                    </h3>
-                    <p className="text-muted-foreground leading-relaxed">{service.description}</p>
-                  </div>
+          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+            {steps.map((step) => (
+              <div key={step.number} className="text-center">
+                <div className="w-16 h-16 rounded-full bg-[#722F37] text-white flex items-center justify-center mx-auto mb-6">
+                  <span className="text-2xl font-bold">{step.number}</span>
                 </div>
+                <h3 className="font-semibold text-xl text-[#722F37] mb-3">
+                  {step.title}
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {step.description}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Link href="/particulier">
+              <Button size="lg" className="bg-[#722F37] hover:bg-[#5a252c] text-white" data-testid="button-start-project">
+                Démarrer mon projet
+                <ArrowRight className="h-5 w-5 ml-2" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 lg:py-24 px-4 lg:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-4">
+              Villes populaires
+            </h2>
+            <p className="text-gray-600 text-lg">
+              Trouvez des couturiers dans les principales villes de France
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {cities.map((city) => (
+              <Link key={city.name} href="/particulier">
+                <Card className="overflow-hidden cursor-pointer group border-0 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="relative h-32">
+                    <img
+                      src={city.image}
+                      alt={city.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <h3 className="text-white font-semibold text-lg">{city.name}</h3>
+                    </div>
+                  </div>
+                </Card>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-16 lg:py-20 px-4 lg:px-8 bg-card">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-6">
-            {features.map((feature) => (
-              <Card key={feature.title} className="overflow-hidden group hover-elevate">
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={feature.image}
-                    alt={feature.title}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
+      <section className="py-16 lg:py-24 px-4 lg:px-8 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-4">
+              Pourquoi nous choisir ?
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="border-0 shadow-sm p-6">
+              <CardContent className="p-0 text-center">
+                <div className="w-14 h-14 rounded-full bg-[#722F37]/10 flex items-center justify-center mx-auto mb-4">
+                  <Shield className="h-7 w-7 text-[#722F37]" />
                 </div>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 mb-3 text-primary">
-                    <feature.icon className="h-5 w-5" />
-                    <h3 className="font-serif text-xl font-medium">{feature.title}</h3>
-                  </div>
-                  <p className="text-muted-foreground mb-4">{feature.description}</p>
-                  <Link href={feature.href}>
-                    <Button variant="outline" className="w-full" data-testid={`button-${feature.title.toLowerCase().replace(/\s/g, '-')}`}>
-                      {feature.cta}
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
+                <h3 className="font-semibold text-lg text-[#722F37] mb-2">Couturiers vérifiés</h3>
+                <p className="text-gray-600 text-sm">
+                  Tous nos professionnels sont sélectionnés et vérifiés pour garantir un service de qualité.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm p-6">
+              <CardContent className="p-0 text-center">
+                <div className="w-14 h-14 rounded-full bg-[#722F37]/10 flex items-center justify-center mx-auto mb-4">
+                  <Star className="h-7 w-7 text-[#722F37]" />
+                </div>
+                <h3 className="font-semibold text-lg text-[#722F37] mb-2">Avis authentiques</h3>
+                <p className="text-gray-600 text-sm">
+                  Consultez les avis de clients vérifiés pour faire le meilleur choix.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm p-6">
+              <CardContent className="p-0 text-center">
+                <div className="w-14 h-14 rounded-full bg-[#722F37]/10 flex items-center justify-center mx-auto mb-4">
+                  <Scissors className="h-7 w-7 text-[#722F37]" />
+                </div>
+                <h3 className="font-semibold text-lg text-[#722F37] mb-2">Service gratuit</h3>
+                <p className="text-gray-600 text-sm">
+                  Notre service est entièrement gratuit pour les particuliers. Recevez des devis sans engagement.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
 
-      <section className="py-16 lg:py-20 px-4 lg:px-8 bg-background">
+      <section className="py-16 lg:py-24 px-4 lg:px-8 bg-[#722F37]">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="font-serif text-3xl lg:text-4xl mb-4">
+          <h2 className="font-serif text-3xl lg:text-4xl text-white mb-4">
             Vous êtes couturier ?
           </h2>
-          <p className="text-muted-foreground mb-8 text-lg">
-            Rejoignez notre communauté d'artisans et développez votre activité
+          <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
+            Rejoignez notre réseau de professionnels et développez votre activité. Inscription gratuite.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/professionnel">
-              <Button size="lg" className="gap-2" data-testid="button-join-pro">
-                <Briefcase className="h-5 w-5" />
-                Accéder à l'espace Pro
-              </Button>
-            </Link>
-            <Link href="/particulier">
-              <Button size="lg" variant="outline" className="gap-2" data-testid="button-client-space">
-                <User className="h-5 w-5" />
-                Espace Particulier
-              </Button>
-            </Link>
-          </div>
+          <Link href="/professionnel">
+            <Button size="lg" variant="outline" className="bg-white text-[#722F37] border-white hover:bg-gray-100" data-testid="button-join-pro">
+              Rejoindre en tant que professionnel
+              <ArrowRight className="h-5 w-5 ml-2" />
+            </Button>
+          </Link>
         </div>
       </section>
 
-      <footer className="bg-card border-t py-8 px-4 lg:px-8">
+      <footer className="bg-white border-t border-gray-100 py-8 px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-muted-foreground text-sm">
+            <p className="text-gray-500 text-sm">
               © 2026 L'Art de Coudre. Tous droits réservés.
             </p>
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-foreground transition-colors" data-testid="link-mentions">Mentions légales</a>
-              <a href="#" className="hover:text-foreground transition-colors" data-testid="link-cgv">CGV</a>
-              <a href="#" className="hover:text-foreground transition-colors" data-testid="link-privacy">Confidentialité</a>
-              <a href="#" className="hover:text-foreground transition-colors" data-testid="link-contact">Contact</a>
+            <div className="flex items-center gap-6 text-sm text-gray-500">
+              <a href="#" className="hover:text-[#722F37] transition-colors" data-testid="link-mentions">Mentions légales</a>
+              <a href="#" className="hover:text-[#722F37] transition-colors" data-testid="link-cgv">CGV</a>
+              <a href="#" className="hover:text-[#722F37] transition-colors" data-testid="link-privacy">Confidentialité</a>
+              <a href="#" className="hover:text-[#722F37] transition-colors" data-testid="link-contact">Contact</a>
             </div>
           </div>
         </div>

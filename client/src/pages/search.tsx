@@ -1,14 +1,12 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { SearchBar } from "@/components/search-bar";
 import { TailorCard, TailorCardSkeleton } from "@/components/tailor-card";
 import { FilterChip } from "@/components/filter-chip";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
-import { MapPin, Star, Clock, Scissors } from "lucide-react";
-import { Logo } from "@/components/logo";
+import { Search, MapPin, Star, Clock, Scissors, SlidersHorizontal } from "lucide-react";
 import type { TailorWithUser } from "@shared/schema";
 
 const specialties = [
@@ -69,30 +67,36 @@ export default function SearchPage() {
   const activeFiltersCount = selectedSpecialties.length + (selectedLocation ? 1 : 0) + (minRating > 0 ? 1 : 0);
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8">
-      <div className="sticky top-0 lg:top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="px-4 lg:px-6 py-4 max-w-7xl mx-auto">
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            onFilterClick={() => {}}
-            placeholder="Rechercher par nom, spécialité..."
-          />
+    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
+      <div className="bg-gray-50 border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
+          <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-2">
+            Recherche avancée
+          </h1>
+          <p className="text-gray-600 mb-6">
+            Trouvez le couturier idéal selon vos critères
+          </p>
+          
+          <div className="relative max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Input
+              placeholder="Rechercher par nom, spécialité..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 h-12 bg-white border-gray-200"
+              data-testid="input-search-advanced"
+            />
+          </div>
         </div>
       </div>
 
-      <div className="px-4 lg:px-6 py-6 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6 gap-4">
-          <h1 className="font-serif text-2xl lg:text-3xl text-[#722F37]">
-            Recherche de couturiers
-          </h1>
-        </div>
+      <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6">
         <div className="lg:flex lg:gap-8">
           <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="sticky top-36 space-y-6">
+            <div className="sticky top-24 space-y-6 bg-gray-50 p-4 rounded-lg">
               <div>
-                <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
-                  <Star className="h-4 w-4" />
+                <h3 className="font-semibold text-sm text-gray-900 mb-3 flex items-center gap-2">
+                  <Star className="h-4 w-4 text-[#722F37]" />
                   Spécialités
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -108,8 +112,8 @@ export default function SearchPage() {
               </div>
 
               <div>
-                <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
+                <h3 className="font-semibold text-sm text-gray-900 mb-3 flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-[#722F37]" />
                   Localisation
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -125,8 +129,8 @@ export default function SearchPage() {
               </div>
 
               <div>
-                <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
-                  <Star className="h-4 w-4" />
+                <h3 className="font-semibold text-sm text-gray-900 mb-3 flex items-center gap-2">
+                  <Star className="h-4 w-4 text-[#722F37]" />
                   Note minimum
                 </h3>
                 <div className="flex gap-2">
@@ -135,6 +139,7 @@ export default function SearchPage() {
                       key={rating}
                       variant={minRating === rating ? "default" : "outline"}
                       size="sm"
+                      className={minRating === rating ? "bg-[#722F37] hover:bg-[#5a252c]" : ""}
                       onClick={() => setMinRating(rating)}
                       data-testid={`filter-rating-${rating}`}
                     >
@@ -145,8 +150,8 @@ export default function SearchPage() {
               </div>
 
               <div>
-                <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
+                <h3 className="font-semibold text-sm text-gray-900 mb-3 flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-[#722F37]" />
                   Tarif horaire
                 </h3>
                 <div className="px-2">
@@ -158,7 +163,7 @@ export default function SearchPage() {
                     step={10}
                     data-testid="slider-price"
                   />
-                  <div className="flex justify-between text-sm text-muted-foreground mt-2">
+                  <div className="flex justify-between text-sm text-gray-500 mt-2">
                     <span>{priceRange[0]}€</span>
                     <span>{priceRange[1]}€+</span>
                   </div>
@@ -169,80 +174,66 @@ export default function SearchPage() {
 
           <div className="flex-1">
             <div className="lg:hidden mb-4">
-              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="sm" className="flex-shrink-0">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between" data-testid="button-filters-mobile">
+                    <span className="flex items-center gap-2">
+                      <SlidersHorizontal className="h-4 w-4" />
                       Filtres
-                      {activeFiltersCount > 0 && (
-                        <Badge variant="default" className="ml-2 h-5 w-5 p-0 justify-center">
-                          {activeFiltersCount}
-                        </Badge>
-                      )}
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="bottom" className="h-[80vh]">
-                    <SheetHeader>
-                      <SheetTitle>Filtres</SheetTitle>
-                    </SheetHeader>
-                    <div className="py-6 space-y-6 overflow-y-auto">
-                      <div>
-                        <h3 className="font-semibold text-sm mb-3">Spécialités</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {specialties.map((specialty) => (
-                            <FilterChip
-                              key={specialty}
-                              label={specialty}
-                              isActive={selectedSpecialties.includes(specialty)}
-                              onClick={() => toggleSpecialty(specialty)}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-sm mb-3">Localisation</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {locations.map((location) => (
-                            <FilterChip
-                              key={location}
-                              label={location}
-                              isActive={selectedLocation === location}
-                              onClick={() => setSelectedLocation(selectedLocation === location ? null : location)}
-                            />
-                          ))}
-                        </div>
+                    </span>
+                    {activeFiltersCount > 0 && (
+                      <span className="bg-[#722F37] text-white text-xs px-2 py-0.5 rounded-full">
+                        {activeFiltersCount}
+                      </span>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[80vh]">
+                  <SheetHeader>
+                    <SheetTitle className="text-[#722F37]">Filtres</SheetTitle>
+                  </SheetHeader>
+                  <div className="py-6 space-y-6 overflow-y-auto">
+                    <div>
+                      <h3 className="font-semibold text-sm mb-3">Spécialités</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {specialties.map((specialty) => (
+                          <FilterChip
+                            key={specialty}
+                            label={specialty}
+                            isActive={selectedSpecialties.includes(specialty)}
+                            onClick={() => toggleSpecialty(specialty)}
+                          />
+                        ))}
                       </div>
                     </div>
-                  </SheetContent>
-                </Sheet>
-
-                {selectedSpecialties.map((specialty) => (
-                  <FilterChip
-                    key={specialty}
-                    label={specialty}
-                    isActive
-                    onClick={() => toggleSpecialty(specialty)}
-                    onRemove={() => toggleSpecialty(specialty)}
-                  />
-                ))}
-                {selectedLocation && (
-                  <FilterChip
-                    label={selectedLocation}
-                    isActive
-                    onClick={() => setSelectedLocation(null)}
-                    onRemove={() => setSelectedLocation(null)}
-                  />
-                )}
-              </div>
+                    <div>
+                      <h3 className="font-semibold text-sm mb-3">Localisation</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {locations.map((location) => (
+                          <FilterChip
+                            key={location}
+                            label={location}
+                            isActive={selectedLocation === location}
+                            onClick={() => setSelectedLocation(selectedLocation === location ? null : location)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
 
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm text-muted-foreground">
-                {isLoading ? "Chargement..." : `${filteredTailors.length} couturiers trouvés`}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-serif text-2xl text-[#722F37]">
+                Résultats
+              </h2>
+              <p className="text-sm text-gray-500">
+                {isLoading ? "Chargement..." : `${filteredTailors.length} couturiers`}
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {isLoading ? (
                 Array.from({ length: 6 }).map((_, i) => (
                   <TailorCardSkeleton key={i} />
@@ -253,10 +244,11 @@ export default function SearchPage() {
                 ))
               ) : (
                 <div className="col-span-full text-center py-12">
-                  <Scissors className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">
+                  <Scissors className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">
                     Aucun couturier ne correspond à vos critères
                   </p>
+                  <p className="text-gray-400 text-sm mt-1">Essayez de modifier vos filtres</p>
                 </div>
               )}
             </div>

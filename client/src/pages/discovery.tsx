@@ -2,13 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { TailorCard, TailorCardSkeleton } from "@/components/tailor-card";
 import { PortfolioCard, PortfolioCardSkeleton } from "@/components/portfolio-card";
 import { FilterChip } from "@/components/filter-chip";
+import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { Scissors } from "lucide-react";
-import { Logo } from "@/components/logo";
-import heroImage from "@assets/stock_images/beautiful_evening_go_76ac947c.jpg";
+import { Search, Scissors, MapPin } from "lucide-react";
 import type { TailorWithUser, PortfolioWithTailor } from "@shared/schema";
 
 const specialties = [
+  "Tous",
   "Haute Couture",
   "Retouches",
   "Mariage",
@@ -19,7 +19,8 @@ const specialties = [
 ];
 
 export default function Discovery() {
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState("Tous");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: tailors, isLoading: tailorsLoading } = useQuery<TailorWithUser[]>({
     queryKey: ["/api/tailors"],
@@ -29,82 +30,86 @@ export default function Discovery() {
     queryKey: ["/api/portfolio"],
   });
 
-  const toggleFilter = (filter: string) => {
-    setSelectedFilters((prev) =>
-      prev.includes(filter)
-        ? prev.filter((f) => f !== filter)
-        : [...prev, filter]
-    );
-  };
+  const filteredTailors = tailors?.filter((tailor) => {
+    const matchesFilter = selectedFilter === "Tous" || tailor.specialties?.includes(selectedFilter);
+    const matchesSearch = !searchQuery || 
+      tailor.user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tailor.user.location?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8">
-      <section className="relative h-[50vh] lg:h-[60vh] overflow-hidden">
-        <img
-          src={heroImage}
-          alt="L'art de la couture"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20" />
-        
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-          <Logo 
-            className="text-white drop-shadow-lg mb-4" 
-            textClassName="text-xl lg:text-2xl text-white drop-shadow-lg" 
-            showText={true}
-          />
-          <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl text-white mb-3 max-w-3xl leading-tight">
-            Découvrez nos artisans
+    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
+      <div className="bg-gray-50 border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
+          <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-2">
+            Trouvez votre couturier
           </h1>
-          <p className="text-white/90 text-base lg:text-lg max-w-xl">
-            Les meilleurs couturiers près de chez vous
+          <p className="text-gray-600 mb-6">
+            Parcourez les profils de nos artisans couturiers vérifiés
           </p>
+          
+          <div className="relative max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Input
+              placeholder="Rechercher par nom ou ville..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 h-12 bg-white border-gray-200"
+              data-testid="input-search-discovery"
+            />
+          </div>
         </div>
-      </section>
+      </div>
 
-      <section className="px-4 lg:px-6 py-8 lg:py-12 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="font-serif text-section-mobile lg:text-section-desktop text-[#722F37]">
-            Couturiers vedettes
-          </h2>
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide mb-6">
+      <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6">
+        <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
           {specialties.map((specialty) => (
             <FilterChip
               key={specialty}
               label={specialty}
-              isActive={selectedFilters.includes(specialty)}
-              onClick={() => toggleFilter(specialty)}
-              onRemove={() => toggleFilter(specialty)}
+              isActive={selectedFilter === specialty}
+              onClick={() => setSelectedFilter(specialty)}
             />
           ))}
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+      <section className="px-4 lg:px-6 py-4 max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-serif text-2xl text-[#722F37]">
+            Couturiers disponibles
+          </h2>
+          <p className="text-gray-500 text-sm">
+            {filteredTailors?.length || 0} résultats
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tailorsLoading ? (
             Array.from({ length: 6 }).map((_, i) => (
               <TailorCardSkeleton key={i} />
             ))
-          ) : tailors && tailors.length > 0 ? (
-            tailors.map((tailor) => (
+          ) : filteredTailors && filteredTailors.length > 0 ? (
+            filteredTailors.map((tailor) => (
               <TailorCard key={tailor.id} tailor={tailor} />
             ))
           ) : (
             <div className="col-span-full text-center py-12">
-              <Scissors className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Aucun couturier trouvé</p>
+              <Scissors className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">Aucun couturier trouvé</p>
+              <p className="text-gray-400 text-sm mt-1">Essayez de modifier vos filtres</p>
             </div>
           )}
         </div>
       </section>
 
-      <section className="px-4 lg:px-6 py-8 lg:py-12 max-w-7xl mx-auto">
-        <h2 className="font-serif text-section-mobile lg:text-section-desktop mb-6 text-[#722F37]">
-          Inspirations & Réalisations
+      <section className="px-4 lg:px-6 py-12 max-w-7xl mx-auto">
+        <h2 className="font-serif text-2xl text-[#722F37] mb-6">
+          Dernières réalisations
         </h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {portfolioLoading ? (
             Array.from({ length: 8 }).map((_, i) => (
               <PortfolioCardSkeleton key={i} />
@@ -115,7 +120,7 @@ export default function Discovery() {
             ))
           ) : (
             <div className="col-span-full text-center py-12">
-              <p className="text-muted-foreground">Aucune réalisation disponible</p>
+              <p className="text-gray-500">Aucune réalisation disponible</p>
             </div>
           )}
         </div>

@@ -15,20 +15,20 @@ export function ReviewCard({ review }: ReviewCardProps) {
 
   return (
     <div 
-      className="flex gap-4 py-4 border-b border-border last:border-b-0"
+      className="flex gap-4 py-4 border-b border-gray-100 last:border-b-0"
       data-testid={`card-review-${review.id}`}
     >
       <Avatar className="h-10 w-10 flex-shrink-0">
         <AvatarImage src={review.user.avatarUrl || undefined} />
-        <AvatarFallback className="bg-secondary text-secondary-foreground">
+        <AvatarFallback className="bg-gray-100 text-gray-700">
           {review.user.fullName.charAt(0)}
         </AvatarFallback>
       </Avatar>
       
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2 mb-1">
-          <h4 className="font-medium text-sm">{review.user.fullName}</h4>
-          <span className="text-xs text-muted-foreground">{formattedDate}</span>
+          <h4 className="font-medium text-sm text-gray-900">{review.user.fullName}</h4>
+          <span className="text-xs text-gray-500">{formattedDate}</span>
         </div>
         
         <div className="flex items-center gap-0.5 mb-2">
@@ -38,14 +38,14 @@ export function ReviewCard({ review }: ReviewCardProps) {
               className={`h-3.5 w-3.5 ${
                 i < review.rating 
                   ? "fill-yellow-400 text-yellow-400" 
-                  : "fill-muted text-muted"
+                  : "fill-gray-200 text-gray-200"
               }`}
             />
           ))}
         </div>
         
         {review.comment && (
-          <p className="text-sm text-muted-foreground line-clamp-3">
+          <p className="text-sm text-gray-600 line-clamp-3">
             {review.comment}
           </p>
         )}
@@ -56,7 +56,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
 
 export function ReviewCardSkeleton() {
   return (
-    <div className="flex gap-4 py-4 border-b border-border">
+    <div className="flex gap-4 py-4 border-b border-gray-100">
       <div className="h-10 w-10 rounded-full skeleton-shimmer flex-shrink-0" />
       <div className="flex-1 space-y-2">
         <div className="flex justify-between">
