@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* LIGHT MODE - White Background with Burgundy Text */
+/* LIGHT MODE - White Background with Burgundy Accents, Black Text */
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
@@ -10,30 +10,30 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .06);
   --background: 0 0% 100%;
-  --foreground: 350 55% 20%;
+  --foreground: 0 0% 10%;
   --border: 0 0% 90%;
   --card: 0 0% 99%;
-  --card-foreground: 350 55% 20%;
+  --card-foreground: 0 0% 10%;
   --card-border: 0 0% 92%;
   --sidebar: 0 0% 98%;
-  --sidebar-foreground: 350 55% 20%;
+  --sidebar-foreground: 0 0% 10%;
   --sidebar-border: 0 0% 90%;
   --sidebar-primary: 350 55% 35%;
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 0 0% 95%;
-  --sidebar-accent-foreground: 350 55% 20%;
+  --sidebar-accent-foreground: 0 0% 10%;
   --sidebar-ring: 350 55% 35%;
   --popover: 0 0% 100%;
-  --popover-foreground: 350 55% 20%;
+  --popover-foreground: 0 0% 10%;
   --popover-border: 0 0% 92%;
   --primary: 350 55% 35%;
   --primary-foreground: 0 0% 100%;
   --secondary: 0 0% 95%;
-  --secondary-foreground: 350 50% 25%;
+  --secondary-foreground: 0 0% 15%;
   --muted: 0 0% 96%;
-  --muted-foreground: 350 30% 40%;
+  --muted-foreground: 0 0% 45%;
   --accent: 0 0% 96%;
-  --accent-foreground: 350 55% 22%;
+  --accent-foreground: 0 0% 10%;
   --destructive: 0 84% 45%;
   --destructive-foreground: 0 0% 98%;
   --input: 0 0% 88%;
