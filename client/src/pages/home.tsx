@@ -200,9 +200,9 @@ export default function Home() {
           </h2>
 
           <div className="grid md:grid-cols-3 gap-6">
-            <Card className="border-0 shadow-sm p-6">
+            <Card className="border border-gray-100 bg-white shadow-sm p-6">
               <CardContent className="p-0 text-center">
-                <div className="w-12 h-12 rounded-full bg-[#722F37]/10 flex items-center justify-center mx-auto mb-4">
+                <div className="w-12 h-12 rounded-full bg-white border border-[#722F37] flex items-center justify-center mx-auto mb-4">
                   <Shield className="h-6 w-6 text-[#722F37]" />
                 </div>
                 <h3 className="font-semibold text-[#722F37] mb-2">Couturiers vérifiés</h3>
@@ -212,9 +212,9 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm p-6">
+            <Card className="border border-gray-100 bg-white shadow-sm p-6">
               <CardContent className="p-0 text-center">
-                <div className="w-12 h-12 rounded-full bg-[#722F37]/10 flex items-center justify-center mx-auto mb-4">
+                <div className="w-12 h-12 rounded-full bg-white border border-[#722F37] flex items-center justify-center mx-auto mb-4">
                   <Star className="h-6 w-6 text-[#722F37]" />
                 </div>
                 <h3 className="font-semibold text-[#722F37] mb-2">Avis authentiques</h3>
@@ -224,9 +224,9 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm p-6">
+            <Card className="border border-gray-100 bg-white shadow-sm p-6">
               <CardContent className="p-0 text-center">
-                <div className="w-12 h-12 rounded-full bg-[#722F37]/10 flex items-center justify-center mx-auto mb-4">
+                <div className="w-12 h-12 rounded-full bg-white border border-[#722F37] flex items-center justify-center mx-auto mb-4">
                   <Scissors className="h-6 w-6 text-[#722F37]" />
                 </div>
                 <h3 className="font-semibold text-[#722F37] mb-2">Service gratuit</h3>
