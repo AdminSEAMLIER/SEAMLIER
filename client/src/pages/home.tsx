@@ -96,13 +96,13 @@ export default function Home() {
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-gray-600 text-xs lg:text-sm">Couturiers vérifiés</p>
+              <p className="text-lg lg:text-xl font-bold text-[#722F37]">Couturiers vérifiés</p>
             </div>
             <div>
-              <p className="text-gray-600 text-xs lg:text-sm">Délais respectés</p>
+              <p className="text-lg lg:text-xl font-bold text-[#722F37]">Délais respectés</p>
             </div>
             <div>
-              <p className="text-2xl lg:text-3xl font-bold text-[#722F37]">4.8/5</p>
+              <p className="text-lg lg:text-xl font-bold text-[#722F37]">4.8/5</p>
               <p className="text-gray-600 text-xs lg:text-sm mt-1">Note moyenne</p>
             </div>
           </div>
