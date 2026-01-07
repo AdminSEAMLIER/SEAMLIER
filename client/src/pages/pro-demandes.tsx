@@ -133,7 +133,7 @@ export default function ProDemandes() {
               </div>
 
               <div className="flex gap-2 pt-4 border-t border-gray-100">
-                <Button className="flex-1 bg-[#722F37] hover:bg-[#5a252c]" data-testid={`button-accept-${request.id}`}>
+                <Button className="flex-1 bg-white border-2 border-[#722F37] text-[#722F37] hover:bg-[#722F37]/10" data-testid={`button-accept-${request.id}`}>
                   <CheckCircle className="h-4 w-4 mr-2" />
                   {t('pro.accept')}
                 </Button>
