@@ -18,7 +18,7 @@ const measurements = [
 
 function BodyDiagram({ activeMeasurement }: { activeMeasurement: string | null }) {
   return (
-    <div className="relative w-full max-w-[160px] mx-auto">
+    <div className="relative w-full max-w-[120px] mx-auto">
       <svg viewBox="0 0 100 220" className="w-full h-auto">
         <circle cx="50" cy="18" r="14" fill="#f5f5f4" stroke="#722F37" strokeWidth="1" />
         
