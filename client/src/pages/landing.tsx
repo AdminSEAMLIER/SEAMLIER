@@ -37,8 +37,8 @@ const cities = [
 ];
 
 const stats = [
-  { value: "500+", label: "Couturiers vérifiés" },
-  { value: "10 000+", label: "Projets réalisés" },
+  { value: "100%", label: "des couturiers vérifiés" },
+  { value: "100%", label: "des délais respectés" },
   { value: "4.8/5", label: "Note moyenne" },
 ];
 
