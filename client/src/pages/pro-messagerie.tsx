@@ -1,58 +1,59 @@
 import { useTranslation } from "react-i18next";
 import { MessageSquare, Search, Send } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
 
-const mockConversations = [
-  {
-    id: "1",
-    name: "Claire Beaumont",
-    lastMessage: "Parfait, on se voit mardi pour l'essayage !",
-    time: "14:30",
-    unread: 2,
-    project: "Robe de mariée",
-  },
-  {
-    id: "2",
-    name: "Marc Lefebvre",
-    lastMessage: "Pouvez-vous m'envoyer les options de tissus ?",
-    time: "11:20",
-    unread: 0,
-    project: "Costume 3 pièces",
-  },
-  {
-    id: "3",
-    name: "Julie Moreau",
-    lastMessage: "Merci beaucoup pour votre travail !",
-    time: "Hier",
-    unread: 0,
-    project: "Retouches robe",
-  },
-  {
-    id: "4",
-    name: "Marie Dupont",
-    lastMessage: "Je suis intéressée par votre offre",
-    time: "Hier",
-    unread: 1,
-    project: "Nouvelle demande",
-  },
-];
-
-const mockMessages = [
-  { id: "1", sender: "client", text: "Bonjour, je voudrais savoir si vous êtes disponible pour l'essayage mardi ?", time: "14:00" },
-  { id: "2", sender: "pro", text: "Bonjour Claire ! Oui, je suis disponible mardi après-midi. 15h vous conviendrait ?", time: "14:15" },
-  { id: "3", sender: "client", text: "15h c'est parfait pour moi !", time: "14:25" },
-  { id: "4", sender: "client", text: "Parfait, on se voit mardi pour l'essayage !", time: "14:30" },
-];
-
 export default function ProMessagerie() {
   const { t } = useTranslation();
-  const [selectedConv, setSelectedConv] = useState(mockConversations[0]);
-  const [newMessage, setNewMessage] = useState("");
   const [showChat, setShowChat] = useState(false);
+  const [newMessage, setNewMessage] = useState("");
+
+  const mockConversations = [
+    {
+      id: "1",
+      name: "Claire Beaumont",
+      lastMessageKey: "pro.mockMessages.fitting",
+      time: "14:30",
+      unread: 2,
+      projectKey: "pro.weddingDress",
+    },
+    {
+      id: "2",
+      name: "Marc Lefebvre",
+      lastMessageKey: "pro.mockMessages.fabrics",
+      time: "11:20",
+      unread: 0,
+      projectKey: "pro.suit3Piece",
+    },
+    {
+      id: "3",
+      name: "Julie Moreau",
+      lastMessageKey: "pro.mockMessages.thanks",
+      time: t('pro.yesterday'),
+      unread: 0,
+      projectKey: "pro.alterations",
+    },
+    {
+      id: "4",
+      name: "Marie Dupont",
+      lastMessageKey: "pro.mockMessages.interested",
+      time: t('pro.yesterday'),
+      unread: 1,
+      projectKey: "pro.newRequestLabel",
+    },
+  ];
+
+  const [selectedConv, setSelectedConv] = useState(mockConversations[0]);
+
+  const mockMessages = [
+    { id: "1", sender: "client", textKey: "pro.mockMessages.availableTuesday", time: "14:00" },
+    { id: "2", sender: "pro", textKey: "pro.mockMessages.yesAvailable", time: "14:15" },
+    { id: "3", sender: "client", textKey: "pro.mockMessages.perfect", time: "14:25" },
+    { id: "4", sender: "client", textKey: "pro.mockMessages.fitting", time: "14:30" },
+  ];
 
   return (
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
@@ -109,8 +110,8 @@ export default function ProMessagerie() {
                         <span className="font-medium text-gray-900 truncate">{conv.name}</span>
                         <span className="text-xs text-gray-400 flex-shrink-0">{conv.time}</span>
                       </div>
-                      <p className="text-sm text-gray-500 truncate">{conv.lastMessage}</p>
-                      <span className="text-xs text-[#722F37]">{conv.project}</span>
+                      <p className="text-sm text-gray-500 truncate">{t(conv.lastMessageKey)}</p>
+                      <span className="text-xs text-[#722F37]">{t(conv.projectKey)}</span>
                     </div>
                     {conv.unread > 0 && (
                       <span className="w-5 h-5 rounded-full bg-[#722F37] text-white text-xs flex items-center justify-center flex-shrink-0">
@@ -132,7 +133,7 @@ export default function ProMessagerie() {
                   onClick={() => setShowChat(false)}
                   className="text-gray-500"
                 >
-                  Retour
+                  {t('pro.back')}
                 </Button>
                 <Avatar className="h-10 w-10 border border-gray-100">
                   <AvatarFallback className="bg-[#722F37]/10 text-[#722F37]">
@@ -141,7 +142,7 @@ export default function ProMessagerie() {
                 </Avatar>
                 <div>
                   <p className="font-medium text-gray-900">{selectedConv.name}</p>
-                  <p className="text-sm text-[#722F37]">{selectedConv.project}</p>
+                  <p className="text-sm text-[#722F37]">{t(selectedConv.projectKey)}</p>
                 </div>
               </div>
             </CardHeader>
@@ -159,7 +160,7 @@ export default function ProMessagerie() {
                           : 'bg-white border border-gray-200 text-gray-900'
                       }`}
                     >
-                      <p>{msg.text}</p>
+                      <p>{t(msg.textKey)}</p>
                       <p className={`text-xs mt-1 ${msg.sender === 'pro' ? 'text-white/70' : 'text-gray-400'}`}>
                         {msg.time}
                       </p>

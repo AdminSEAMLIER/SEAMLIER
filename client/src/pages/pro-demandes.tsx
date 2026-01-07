@@ -1,47 +1,49 @@
 import { useTranslation } from "react-i18next";
 import { FileText, Clock, MapPin, Euro, CheckCircle, XCircle, MessageSquare } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-const mockRequests = [
-  {
-    id: "1",
-    clientName: "Marie Dupont",
-    clientLocation: "Paris 16e",
-    type: "Robe de soirée",
-    description: "Création d'une robe de soirée longue en soie pour un gala",
-    budget: "800 - 1200€",
-    deadline: "15 février 2026",
-    status: "new",
-    date: "Il y a 2 heures",
-  },
-  {
-    id: "2",
-    clientName: "Sophie Martin",
-    clientLocation: "Paris 8e",
-    type: "Retouches costume",
-    description: "Ajustement d'un costume de mariage (veste et pantalon)",
-    budget: "150 - 250€",
-    deadline: "20 janvier 2026",
-    status: "new",
-    date: "Il y a 5 heures",
-  },
-  {
-    id: "3",
-    clientName: "Jean Durand",
-    clientLocation: "Neuilly",
-    type: "Chemises sur-mesure",
-    description: "Création de 3 chemises sur-mesure pour le travail",
-    budget: "400 - 600€",
-    deadline: "1 mars 2026",
-    status: "pending",
-    date: "Hier",
-  },
-];
-
 export default function ProDemandes() {
   const { t } = useTranslation();
+
+  const mockRequests = [
+    {
+      id: "1",
+      clientName: "Marie Dupont",
+      clientLocation: "Paris 16e",
+      typeKey: "pro.eveningDress",
+      descriptionKey: "pro.eveningDressDesc",
+      budget: "800 - 1200€",
+      deadline: "15/02/2026",
+      status: "new",
+      dateKey: "pro.hoursAgo",
+      dateCount: 2,
+    },
+    {
+      id: "2",
+      clientName: "Sophie Martin",
+      clientLocation: "Paris 8e",
+      typeKey: "pro.suitAlterations",
+      descriptionKey: "pro.suitAlterationsDesc",
+      budget: "150 - 250€",
+      deadline: "20/01/2026",
+      status: "new",
+      dateKey: "pro.hoursAgo",
+      dateCount: 5,
+    },
+    {
+      id: "3",
+      clientName: "Jean Durand",
+      clientLocation: "Neuilly",
+      typeKey: "pro.customShirts",
+      descriptionKey: "pro.customShirtsDesc",
+      budget: "400 - 600€",
+      deadline: "01/03/2026",
+      status: "pending",
+      dateKey: "pro.yesterday",
+    },
+  ];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -52,6 +54,13 @@ export default function ProDemandes() {
       default:
         return null;
     }
+  };
+
+  const getDateText = (request: typeof mockRequests[0]) => {
+    if (request.dateCount) {
+      return t(request.dateKey, { count: request.dateCount });
+    }
+    return t(request.dateKey);
   };
 
   return (
@@ -95,7 +104,7 @@ export default function ProDemandes() {
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <h3 className="font-semibold text-[#722F37]">{request.type}</h3>
+                    <h3 className="font-semibold text-[#722F37]">{t(request.typeKey)}</h3>
                     {getStatusBadge(request.status)}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
@@ -107,10 +116,10 @@ export default function ProDemandes() {
                     </span>
                   </div>
                 </div>
-                <span className="text-xs text-gray-400 flex-shrink-0">{request.date}</span>
+                <span className="text-xs text-gray-400 flex-shrink-0">{getDateText(request)}</span>
               </div>
 
-              <p className="text-gray-600 text-sm mb-4">{request.description}</p>
+              <p className="text-gray-600 text-sm mb-4">{t(request.descriptionKey)}</p>
 
               <div className="flex flex-wrap gap-4 text-sm mb-4">
                 <div className="flex items-center gap-1 text-gray-600">

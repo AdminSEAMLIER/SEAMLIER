@@ -1,57 +1,61 @@
 import { useTranslation } from "react-i18next";
-import { Calendar, Clock, MapPin, User, Plus, ChevronLeft, ChevronRight } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, MapPin, User, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 
-const mockAppointments = [
-  {
-    id: "1",
-    client: "Claire Beaumont",
-    type: "Essayage",
-    project: "Robe de mariée",
-    time: "10:00",
-    duration: "1h",
-    location: "Atelier",
-  },
-  {
-    id: "2",
-    client: "Marc Lefebvre",
-    type: "Prise de mesures",
-    project: "Costume 3 pièces",
-    time: "14:00",
-    duration: "45min",
-    location: "À domicile",
-  },
-  {
-    id: "3",
-    client: "Sophie Martin",
-    type: "Consultation",
-    project: "Nouvelle demande",
-    time: "16:30",
-    duration: "30min",
-    location: "Visio",
-  },
-];
-
-const weekDays = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
-
 export default function ProPlanning() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selectedDate, setSelectedDate] = useState(new Date());
 
+  const weekDaysKeys = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+  const weekDaysFr = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+  const weekDaysEn = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const weekDays = i18n.language === 'fr' ? weekDaysFr : weekDaysEn;
+
+  const mockAppointments = [
+    {
+      id: "1",
+      client: "Claire Beaumont",
+      typeKey: "pro.fitting",
+      projectKey: "pro.weddingDress",
+      time: "10:00",
+      duration: "1h",
+      locationKey: "pro.atWorkshop",
+    },
+    {
+      id: "2",
+      client: "Marc Lefebvre",
+      typeKey: "pro.measurements",
+      projectKey: "pro.suit3Piece",
+      time: "14:00",
+      duration: "45min",
+      locationKey: "pro.atHome",
+    },
+    {
+      id: "3",
+      client: "Sophie Martin",
+      typeKey: "pro.consultation",
+      projectKey: "pro.newRequestLabel",
+      time: "16:30",
+      duration: "30min",
+      locationKey: "pro.video",
+    },
+  ];
+
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+    return date.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "Essayage":
+  const getTypeColor = (typeKey: string) => {
+    switch (typeKey) {
+      case "pro.fitting":
         return "bg-blue-100 text-blue-700";
-      case "Prise de mesures":
+      case "pro.measurements":
         return "bg-green-100 text-green-700";
-      case "Consultation":
+      case "pro.consultation":
         return "bg-purple-100 text-purple-700";
       default:
         return "bg-gray-100 text-gray-700";
@@ -138,11 +142,11 @@ export default function ProPlanning() {
 
                 <div className="flex-1 border-l border-gray-100 pl-4">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <Badge className={`${getTypeColor(apt.type)} border-none`}>
-                      {apt.type}
+                    <Badge className={`${getTypeColor(apt.typeKey)} border-none`}>
+                      {t(apt.typeKey)}
                     </Badge>
                   </div>
-                  <p className="font-medium text-gray-900 mb-1">{apt.project}</p>
+                  <p className="font-medium text-gray-900 mb-1">{t(apt.projectKey)}</p>
                   <div className="flex flex-wrap gap-3 text-sm text-gray-500">
                     <span className="flex items-center gap-1">
                       <User className="h-3 w-3" />
@@ -150,7 +154,7 @@ export default function ProPlanning() {
                     </span>
                     <span className="flex items-center gap-1">
                       <MapPin className="h-3 w-3" />
-                      {apt.location}
+                      {t(apt.locationKey)}
                     </span>
                   </div>
                 </div>

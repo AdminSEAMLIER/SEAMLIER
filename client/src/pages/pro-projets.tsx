@@ -1,53 +1,53 @@
 import { useTranslation } from "react-i18next";
 import { FolderKanban, Clock, Euro, User, ChevronRight } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-const mockProjects = [
-  {
-    id: "1",
-    title: "Robe de mariée - Claire B.",
-    client: "Claire Beaumont",
-    status: "in_progress",
-    progress: 65,
-    amount: "2500€",
-    deadline: "28 février 2026",
-    nextStep: "Deuxième essayage",
-  },
-  {
-    id: "2",
-    title: "Costume 3 pièces - Marc L.",
-    client: "Marc Lefebvre",
-    status: "in_progress",
-    progress: 30,
-    amount: "1200€",
-    deadline: "15 mars 2026",
-    nextStep: "Prise de mesures",
-  },
-  {
-    id: "3",
-    title: "Retouches robe soirée - Julie M.",
-    client: "Julie Moreau",
-    status: "pending_payment",
-    progress: 100,
-    amount: "180€",
-    deadline: "Terminé",
-    nextStep: "En attente de paiement",
-  },
-  {
-    id: "4",
-    title: "Chemises sur-mesure - Paul D.",
-    client: "Paul Duval",
-    status: "completed",
-    progress: 100,
-    amount: "450€",
-    deadline: "Livré le 2 jan.",
-    nextStep: "Projet terminé",
-  },
-];
 
 export default function ProProjets() {
   const { t } = useTranslation();
+
+  const mockProjects = [
+    {
+      id: "1",
+      titleKey: "pro.weddingDress",
+      client: "Claire Beaumont",
+      status: "in_progress",
+      progress: 65,
+      amount: "2500€",
+      deadline: "28/02/2026",
+      nextStepKey: "pro.secondFitting",
+    },
+    {
+      id: "2",
+      titleKey: "pro.suit3Piece",
+      client: "Marc Lefebvre",
+      status: "in_progress",
+      progress: 30,
+      amount: "1200€",
+      deadline: "15/03/2026",
+      nextStepKey: "pro.measurements",
+    },
+    {
+      id: "3",
+      titleKey: "pro.alterations",
+      client: "Julie Moreau",
+      status: "pending_payment",
+      progress: 100,
+      amount: "180€",
+      deadline: "pro.finished",
+      nextStepKey: "pro.awaitingPaymentStatus",
+    },
+    {
+      id: "4",
+      titleKey: "pro.customShirts",
+      client: "Paul Duval",
+      status: "completed",
+      progress: 100,
+      deadline: "02/01/2026",
+      amount: "450€",
+      nextStepKey: "pro.projectFinished",
+    },
+  ];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -117,7 +117,7 @@ export default function ProProjets() {
               <div className="flex items-start justify-between gap-4 mb-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <h3 className="font-semibold text-[#722F37]">{project.title}</h3>
+                    <h3 className="font-semibold text-[#722F37]">{t(project.titleKey)} - {project.client.split(' ')[0]} {project.client.split(' ')[1]?.[0]}.</h3>
                     {getStatusBadge(project.status)}
                   </div>
                   <div className="flex items-center gap-1 text-sm text-gray-500">
@@ -148,12 +148,12 @@ export default function ProProjets() {
                 </div>
                 <div className="flex items-center gap-1 text-gray-600">
                   <Clock className="h-4 w-4 text-[#722F37]" />
-                  <span>{project.deadline}</span>
+                  <span>{project.deadline.startsWith('pro.') ? t(project.deadline) : project.deadline}</span>
                 </div>
               </div>
 
               <p className="text-sm text-gray-500 mt-3 pt-3 border-t border-gray-100">
-                {t('pro.nextStep')}: <span className="text-gray-700">{project.nextStep}</span>
+                {t('pro.nextStep')}: <span className="text-gray-700">{t(project.nextStepKey)}</span>
               </p>
             </CardContent>
           </Card>
