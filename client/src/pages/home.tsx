@@ -238,6 +238,54 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <footer className="py-8 px-4 lg:px-8 bg-white border-t border-gray-100">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <div className="flex items-center gap-1 text-[#722F37] mb-4">
+                <Scissors className="h-5 w-5" />
+                <span style={{ fontFamily: "'Parisienne', cursive" }} className="text-xl">
+                  L'Art de Coudre
+                </span>
+              </div>
+              <p className="text-gray-600 text-sm">
+                La plateforme qui connecte particuliers et couturiers professionnels.
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-[#722F37] mb-4">Navigation</h4>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li><a href="/particulier" className="hover:text-[#722F37]">Accueil</a></li>
+                <li><a href="/particulier/decouverte" className="hover:text-[#722F37]">Découverte</a></li>
+                <li><a href="/particulier/magazine" className="hover:text-[#722F37]">Magazine</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-[#722F37] mb-4">Légal</h4>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li><a href="#" className="hover:text-[#722F37]">Mentions légales</a></li>
+                <li><a href="#" className="hover:text-[#722F37]">Politique de confidentialité</a></li>
+                <li><a href="#" className="hover:text-[#722F37]">CGU</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-[#722F37] mb-4">Contact</h4>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li>contact@lartdecoudre.fr</li>
+                <li>+33 1 23 45 67 89</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-100 pt-6 text-center text-sm text-gray-500">
+            <p>&copy; 2026 L'Art de Coudre. Tous droits réservés.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
