@@ -230,6 +230,9 @@ export default function Home() {
                   <Scissors className="h-6 w-6 text-[#722F37]" />
                 </div>
                 <h3 className="font-semibold text-[#722F37] mb-2">Un match 100% gagnant</h3>
+                <p className="text-gray-600 text-sm">
+                  Le couturier expose son savoir-faire, le particulier trouve le professionnel parfait pour sa confection.
+                </p>
               </CardContent>
             </Card>
           </div>
