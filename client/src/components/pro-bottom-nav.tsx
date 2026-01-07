@@ -16,8 +16,11 @@ export function ProBottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 lg:hidden">
-      <div className="flex items-center justify-around h-16 px-1">
+    <nav 
+      className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-100 shadow-lg z-50 pb-safe lg:hidden"
+      data-testid="nav-bottom-pro"
+    >
+      <div className="flex items-center justify-around h-full max-w-lg mx-auto px-2">
         {navItems.map((item) => {
           const isActive = location === item.href || 
             (item.href !== "/professionnel" && location.startsWith(item.href));
@@ -26,14 +29,14 @@ export function ProBottomNav() {
             <Link key={item.href} href={item.href}>
               <button
                 className={cn(
-                  "flex flex-col items-center justify-center w-full h-full gap-1 px-2 transition-colors",
+                  "flex flex-col items-center justify-center gap-1 w-16 h-full transition-colors",
                   isActive
                     ? "text-[#722F37]"
-                    : "text-gray-700"
+                    : "text-gray-700 hover:text-gray-900"
                 )}
                 data-testid={`nav-pro-${item.labelKey.split('.')[1]}`}
               >
-                <item.icon className={cn("h-5 w-5", isActive && "stroke-[2.5px]")} />
+                <item.icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
                 <span className="text-[10px] font-medium">{t(item.labelKey)}</span>
               </button>
             </Link>
