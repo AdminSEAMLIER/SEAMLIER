@@ -90,7 +90,7 @@ export default function Magazine() {
         </div>
 
         {articles.length > 0 && (
-          <Card className="border-0 shadow-sm overflow-hidden mb-6">
+          <Card className="border border-gray-100 bg-white shadow-sm overflow-hidden mb-6">
             <div className="md:flex">
               <div className="md:w-1/2 h-48 md:h-auto">
                 <img
@@ -99,7 +99,7 @@ export default function Magazine() {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <CardContent className="md:w-1/2 p-6 flex flex-col justify-center">
+              <CardContent className="md:w-1/2 p-6 flex flex-col justify-center bg-white">
                 <Badge variant="secondary" className="w-fit mb-3 bg-[#722F37]/10 text-[#722F37] border-none">
                   {articles[0].category}
                 </Badge>
@@ -133,7 +133,7 @@ export default function Magazine() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {articles.slice(1).map((article) => (
-            <Card key={article.id} className="border-gray-100 shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow">
+            <Card key={article.id} className="border border-gray-100 bg-white shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow">
               <div className="h-40 overflow-hidden">
                 <img
                   src={article.image}
@@ -141,7 +141,7 @@ export default function Magazine() {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <CardContent className="p-4">
+              <CardContent className="p-4 bg-white">
                 <Badge variant="secondary" className="mb-2 bg-gray-100 text-gray-600 border-none text-xs">
                   {article.category}
                 </Badge>
