@@ -18,56 +18,133 @@ const measurements = [
 
 function BodyDiagram({ activeMeasurement }: { activeMeasurement: string | null }) {
   return (
-    <div className="relative w-full max-w-[200px] mx-auto">
-      <svg viewBox="0 0 100 200" className="w-full h-auto">
+    <div className="relative w-full max-w-[180px] mx-auto">
+      <svg viewBox="0 0 120 280" className="w-full h-auto">
         <defs>
-          <linearGradient id="bodyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#f3f4f6" />
-            <stop offset="100%" stopColor="#e5e7eb" />
+          <linearGradient id="bodyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#faf9f7" />
+            <stop offset="100%" stopColor="#f0eeeb" />
           </linearGradient>
+          <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="1" dy="2" stdDeviation="2" floodOpacity="0.1"/>
+          </filter>
         </defs>
         
-        <ellipse cx="50" cy="15" rx="12" ry="14" fill="#e5e7eb" stroke="#722F37" strokeWidth="0.5" />
+        <ellipse cx="60" cy="22" rx="14" ry="17" fill="url(#bodyGradient)" stroke="#722F37" strokeWidth="0.8" filter="url(#softShadow)" />
         
-        <path d="M38 29 L30 75 L35 75 L40 55 L50 60 L60 55 L65 75 L70 75 L62 29 Z" 
-              fill="#e5e7eb" stroke="#722F37" strokeWidth="0.5" />
+        <ellipse cx="60" cy="40" rx="6" ry="4" fill="url(#bodyGradient)" stroke="#722F37" strokeWidth="0.6" />
         
-        <path d="M30 75 L28 145 L38 145 L42 90 L50 95 L58 90 L62 145 L72 145 L70 75 Z" 
-              fill="#e5e7eb" stroke="#722F37" strokeWidth="0.5" />
+        <path d="M60 44 
+                 C60 44, 42 46, 38 50
+                 C34 54, 32 58, 30 65
+                 L28 90
+                 C28 92, 30 94, 32 94
+                 L36 94
+                 C38 94, 40 92, 40 90
+                 L42 75
+                 C42 73, 44 72, 46 73
+                 L46 110
+                 C46 112, 47 114, 49 114
+                 L71 114
+                 C73 114, 74 112, 74 110
+                 L74 73
+                 C76 72, 78 73, 78 75
+                 L80 90
+                 C80 92, 82 94, 84 94
+                 L88 94
+                 C90 94, 92 92, 92 90
+                 L90 65
+                 C88 58, 86 54, 82 50
+                 C78 46, 60 44, 60 44
+                 Z" 
+              fill="url(#bodyGradient)" stroke="#722F37" strokeWidth="0.8" filter="url(#softShadow)" />
         
-        <path d="M28 145 L26 195 L36 195 L38 145 Z" 
-              fill="#e5e7eb" stroke="#722F37" strokeWidth="0.5" />
-        <path d="M62 145 L64 195 L74 195 L72 145 Z" 
-              fill="#e5e7eb" stroke="#722F37" strokeWidth="0.5" />
-        
-        <path d="M30 32 L15 70 L20 72 L33 40 Z" 
-              fill="#e5e7eb" stroke="#722F37" strokeWidth="0.5" />
-        <path d="M70 32 L85 70 L80 72 L67 40 Z" 
-              fill="#e5e7eb" stroke="#722F37" strokeWidth="0.5" />
+        <path d="M49 114
+                 C49 114, 48 118, 48 122
+                 L46 155
+                 C46 158, 45 160, 44 162
+                 L42 190
+                 C42 195, 43 198, 45 200
+                 L48 255
+                 C48 258, 50 260, 53 260
+                 L55 260
+                 C58 260, 60 258, 60 255
+                 L60 200
+                 C60 198, 60 196, 60 194
+                 L60 200
+                 C60 198, 60 196, 60 194
+                 L60 255
+                 C60 258, 62 260, 65 260
+                 L67 260
+                 C70 260, 72 258, 72 255
+                 L75 200
+                 C77 198, 78 195, 78 190
+                 L76 162
+                 C75 160, 74 158, 74 155
+                 L72 122
+                 C72 118, 71 114, 71 114
+                 Z" 
+              fill="url(#bodyGradient)" stroke="#722F37" strokeWidth="0.8" filter="url(#softShadow)" />
 
         {activeMeasurement === "tour_cou" && (
-          <ellipse cx="50" cy="28" rx="8" ry="3" fill="none" stroke="#722F37" strokeWidth="2" strokeDasharray="3,2" />
+          <>
+            <ellipse cx="60" cy="40" rx="10" ry="5" fill="none" stroke="#722F37" strokeWidth="2" opacity="0.8" />
+            <circle cx="75" cy="40" r="3" fill="#722F37" />
+            <text x="82" y="43" fontSize="8" fill="#722F37" fontWeight="500">Cou</text>
+          </>
         )}
         {activeMeasurement === "largeur_epaules" && (
-          <line x1="30" y1="32" x2="70" y2="32" stroke="#722F37" strokeWidth="2" strokeDasharray="3,2" />
+          <>
+            <line x1="30" y1="52" x2="90" y2="52" stroke="#722F37" strokeWidth="2" />
+            <circle cx="30" cy="52" r="2" fill="#722F37" />
+            <circle cx="90" cy="52" r="2" fill="#722F37" />
+            <text x="95" y="55" fontSize="8" fill="#722F37" fontWeight="500">Épaules</text>
+          </>
         )}
         {activeMeasurement === "tour_poitrine" && (
-          <ellipse cx="50" cy="45" rx="18" ry="8" fill="none" stroke="#722F37" strokeWidth="2" strokeDasharray="3,2" />
+          <>
+            <ellipse cx="60" cy="70" rx="28" ry="10" fill="none" stroke="#722F37" strokeWidth="2" opacity="0.8" />
+            <circle cx="92" cy="70" r="3" fill="#722F37" />
+            <text x="97" y="73" fontSize="8" fill="#722F37" fontWeight="500">Poitrine</text>
+          </>
         )}
         {activeMeasurement === "tour_taille" && (
-          <ellipse cx="50" cy="62" rx="15" ry="6" fill="none" stroke="#722F37" strokeWidth="2" strokeDasharray="3,2" />
+          <>
+            <ellipse cx="60" cy="100" rx="22" ry="8" fill="none" stroke="#722F37" strokeWidth="2" opacity="0.8" />
+            <circle cx="85" cy="100" r="3" fill="#722F37" />
+            <text x="90" y="103" fontSize="8" fill="#722F37" fontWeight="500">Taille</text>
+          </>
         )}
         {activeMeasurement === "tour_hanches" && (
-          <ellipse cx="50" cy="80" rx="18" ry="7" fill="none" stroke="#722F37" strokeWidth="2" strokeDasharray="3,2" />
+          <>
+            <ellipse cx="60" cy="125" rx="26" ry="10" fill="none" stroke="#722F37" strokeWidth="2" opacity="0.8" />
+            <circle cx="90" cy="125" r="3" fill="#722F37" />
+            <text x="95" y="128" fontSize="8" fill="#722F37" fontWeight="500">Hanches</text>
+          </>
         )}
         {activeMeasurement === "longueur_dos" && (
-          <line x1="50" y1="28" x2="50" y2="62" stroke="#722F37" strokeWidth="2" strokeDasharray="3,2" />
+          <>
+            <line x1="60" y1="44" x2="60" y2="100" stroke="#722F37" strokeWidth="2" />
+            <circle cx="60" cy="44" r="2" fill="#722F37" />
+            <circle cx="60" cy="100" r="2" fill="#722F37" />
+            <text x="15" y="75" fontSize="8" fill="#722F37" fontWeight="500">Dos</text>
+          </>
         )}
         {activeMeasurement === "longueur_bras" && (
-          <line x1="70" y1="32" x2="85" y2="70" stroke="#722F37" strokeWidth="2" strokeDasharray="3,2" />
+          <>
+            <line x1="82" y1="50" x2="90" y2="94" stroke="#722F37" strokeWidth="2" />
+            <circle cx="82" cy="50" r="2" fill="#722F37" />
+            <circle cx="90" cy="94" r="2" fill="#722F37" />
+            <text x="95" y="75" fontSize="8" fill="#722F37" fontWeight="500">Bras</text>
+          </>
         )}
         {activeMeasurement === "longueur_jambe" && (
-          <line x1="65" y1="80" x2="68" y2="195" stroke="#722F37" strokeWidth="2" strokeDasharray="3,2" />
+          <>
+            <line x1="68" y1="125" x2="70" y2="255" stroke="#722F37" strokeWidth="2" />
+            <circle cx="68" cy="125" r="2" fill="#722F37" />
+            <circle cx="70" cy="255" r="2" fill="#722F37" />
+            <text x="75" y="190" fontSize="8" fill="#722F37" fontWeight="500">Jambe</text>
+          </>
         )}
       </svg>
     </div>
