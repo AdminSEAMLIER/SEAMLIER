@@ -1,4 +1,4 @@
-import { Home, Compass, MessageCircle, Ruler, BookOpen, User, Bell, FileText, FolderKanban, Calendar, ArrowLeft } from "lucide-react";
+import { Home, Compass, MessageCircle, Ruler, BookOpen, User, Bell, FileText, FolderKanban, Calendar, ArrowLeftRight, Briefcase, Users } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -75,12 +75,29 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="gap-2 text-gray-600" data-testid="button-switch-space">
-              <ArrowLeft className="h-4 w-4" />
-              {t('nav.home')}
-            </Button>
-          </Link>
+          {mode === "professionnel" ? (
+            <Link href="/particulier">
+              <Button 
+                className="gap-2 bg-white border-2 border-[#722F37] text-[#722F37] hover:bg-[#722F37]/10" 
+                size="sm"
+                data-testid="button-switch-to-client"
+              >
+                <Users className="h-4 w-4" />
+                {t('landing.clientSpace')}
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/professionnel">
+              <Button 
+                className="gap-2 bg-white border-2 border-[#722F37] text-[#722F37] hover:bg-[#722F37]/10" 
+                size="sm"
+                data-testid="button-switch-to-pro"
+              >
+                <Briefcase className="h-4 w-4" />
+                {t('landing.proSpace')}
+              </Button>
+            </Link>
+          )}
           <LanguageToggle />
           <ThemeToggle />
           <Button variant="ghost" size="icon" className="text-gray-600" data-testid="button-notifications">
