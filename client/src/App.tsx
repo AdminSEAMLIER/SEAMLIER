@@ -16,6 +16,7 @@ import Magazine from "@/pages/magazine";
 import TailorProfile from "@/pages/tailor-profile";
 import ProductDetail from "@/pages/product-detail";
 import ProDashboard from "@/pages/pro-dashboard";
+import InscriptionParticulier from "@/pages/inscription-particulier";
 
 function ParticulierLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -45,6 +46,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
+      <Route path="/inscription-particulier" component={InscriptionParticulier} />
       
       <Route path="/particulier">
         <ParticulierLayout>
