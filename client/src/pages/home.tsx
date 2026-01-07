@@ -46,6 +46,17 @@ export default function Home() {
 
   return (
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
+      <div className="lg:hidden flex items-center justify-center py-4 bg-white border-b border-gray-100">
+        <Link href="/">
+          <div className="flex items-center gap-1 text-[#722F37]">
+            <Scissors className="h-5 w-5" />
+            <span style={{ fontFamily: "'Parisienne', cursive" }} className="text-xl">
+              L'Art de Coudre
+            </span>
+          </div>
+        </Link>
+      </div>
+      
       <section className="relative py-16 lg:py-24 px-4 lg:px-8 overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center"
