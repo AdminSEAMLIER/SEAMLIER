@@ -229,10 +229,7 @@ export default function Home() {
                 <div className="w-12 h-12 rounded-full bg-white border border-[#722F37] flex items-center justify-center mx-auto mb-4">
                   <Scissors className="h-6 w-6 text-[#722F37]" />
                 </div>
-                <h3 className="font-semibold text-[#722F37] mb-2">Service gratuit</h3>
-                <p className="text-gray-600 text-sm">
-                  Notre service est entièrement gratuit pour les particuliers.
-                </p>
+                <h3 className="font-semibold text-[#722F37] mb-2">Un match 100% gagnant</h3>
               </CardContent>
             </Card>
           </div>
