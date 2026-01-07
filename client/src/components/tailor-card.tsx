@@ -13,7 +13,7 @@ export function TailorCard({ tailor }: TailorCardProps) {
   return (
     <Link href={`/particulier/tailor/${tailor.id}`}>
       <Card 
-        className="overflow-hidden cursor-pointer border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+        className="overflow-hidden cursor-pointer border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow"
         data-testid={`card-tailor-${tailor.id}`}
       >
         <div className="relative h-40 overflow-hidden">
