@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { TailorCard, TailorCardSkeleton } from "@/components/tailor-card";
-import { Logo } from "@/components/logo";
 import { useState } from "react";
 import type { TailorWithUser } from "@shared/schema";
 
@@ -49,12 +48,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
-      <div className="lg:hidden flex items-center justify-center py-4 bg-white border-b border-gray-100">
-        <Link href="/">
-          <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
-        </Link>
-      </div>
-      
       <section className="relative py-16 lg:py-24 px-4 lg:px-8 overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center"
