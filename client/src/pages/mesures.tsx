@@ -173,7 +173,7 @@ export default function Mesures() {
         </div>
 
         <div className="flex gap-3 mt-6">
-          <Button variant="outline" className="flex-1 h-12 bg-white border-gray-200 text-gray-600 hover:bg-gray-50" data-testid="button-save-measures">
+          <Button variant="outline" className="flex-1 h-12 bg-white border border-gray-300 text-gray-600 hover:bg-gray-50" data-testid="button-save-measures">
             <Save className="h-5 w-5 mr-2" />
             Enregistrer mes mesures
           </Button>
