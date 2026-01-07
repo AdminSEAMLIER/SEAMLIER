@@ -21,8 +21,8 @@ export default function Mesures() {
       <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-[#722F37] flex items-center justify-center">
-              <Ruler className="h-5 w-5 text-white" />
+            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
+              <Ruler className="h-5 w-5 text-[#722F37]" />
             </div>
             <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
               Prise de mesures

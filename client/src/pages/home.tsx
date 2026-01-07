@@ -46,12 +46,17 @@ export default function Home() {
 
   return (
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
-      <section className="py-12 lg:py-16 px-4 lg:px-8 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl text-[#722F37] mb-4 leading-tight">
+      <section className="relative py-16 lg:py-24 px-4 lg:px-8 overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1558171813-4c088753af8f?w=1920&h=800&fit=crop')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
+        <div className="relative max-w-4xl mx-auto text-center">
+          <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl text-white mb-4 leading-tight">
             Trouvez un couturier près de chez vous
           </h1>
-          <p className="text-gray-600 text-base lg:text-lg mb-8 max-w-2xl mx-auto">
+          <p className="text-white/90 text-base lg:text-lg mb-8 max-w-2xl mx-auto">
             Comparez les meilleurs couturiers et obtenez des devis gratuits
           </p>
           
@@ -62,12 +67,12 @@ export default function Home() {
                 placeholder="Entrez votre ville..."
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="pl-12 h-12 text-base border-gray-200 bg-white"
+                className="pl-12 h-12 text-base border-0 bg-white shadow-lg"
                 data-testid="input-location-home"
               />
             </div>
             <Link href="/particulier/decouverte">
-              <Button size="lg" className="h-12 px-6 bg-[#722F37] hover:bg-[#5a252c] text-white w-full sm:w-auto" data-testid="button-search-home">
+              <Button size="lg" className="h-12 px-6 bg-[#722F37] hover:bg-[#5a252c] text-white w-full sm:w-auto shadow-lg" data-testid="button-search-home">
                 <Search className="h-5 w-5 mr-2" />
                 Rechercher
               </Button>
