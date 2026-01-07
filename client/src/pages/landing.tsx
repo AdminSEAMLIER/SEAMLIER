@@ -238,7 +238,7 @@ export default function Landing() {
             Vous êtes couturier ?
           </h2>
           <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
-            Rejoignez notre réseau de professionnels et développez votre activité. Inscription gratuite.
+            Rejoignez notre réseau de professionnels et développez votre activité.
           </p>
           <Link href="/professionnel">
             <Button size="lg" variant="outline" className="bg-white text-[#722F37] border-white hover:bg-gray-100" data-testid="button-join-pro">
