@@ -227,7 +227,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="py-16 lg:py-24 px-4 lg:px-8 bg-[#722F37]">
+      <section className="py-16 lg:py-24 px-4 lg:px-8 bg-[#5a1f25]">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="font-serif text-3xl lg:text-4xl text-white mb-4">
             Vous êtes couturier ?
