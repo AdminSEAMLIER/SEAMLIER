@@ -65,12 +65,17 @@ export default function Landing() {
         </div>
       </header>
 
-      <section className="py-16 lg:py-24 px-4 lg:px-8 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-[#722F37] mb-6 leading-tight">
+      <section className="relative py-20 lg:py-28 px-4 lg:px-8 overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1537274942065-eda9d00a6293?w=1920&h=800&fit=crop')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
+        <div className="relative max-w-4xl mx-auto text-center">
+          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-white mb-6 leading-tight">
             Trouvez un couturier près de chez vous
           </h1>
-          <p className="text-gray-600 text-lg lg:text-xl mb-10 max-w-2xl mx-auto">
+          <p className="text-white/90 text-lg lg:text-xl mb-10 max-w-2xl mx-auto">
             Comparez les meilleurs couturiers de votre région et obtenez des devis gratuits pour votre projet
           </p>
           
@@ -81,12 +86,12 @@ export default function Landing() {
                 placeholder="Entrez votre ville..."
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="pl-12 h-14 text-base border-gray-200 bg-white"
+                className="pl-12 h-14 text-base border-0 bg-white shadow-lg"
                 data-testid="input-location"
               />
             </div>
             <Link href="/particulier">
-              <Button size="lg" className="h-14 px-8 bg-[#722F37] hover:bg-[#5a252c] text-white" data-testid="button-search-hero">
+              <Button size="lg" className="h-14 px-8 bg-[#722F37] hover:bg-[#5a252c] text-white shadow-lg" data-testid="button-search-hero">
                 <Search className="h-5 w-5 mr-2" />
                 Rechercher
               </Button>
