@@ -8,7 +8,26 @@
     "messages": "Messages",
     "dashboard": "Dashboard",
     "portfolio": "Portfolio",
-    "shop": "Shop"
+    "shop": "Shop",
+    "products": "Products"
+  },
+  "pro": {
+    "welcome": "Welcome to your space",
+    "manageActivity": "Manage your business and grow your clientele",
+    "productsOnline": "Products online",
+    "messages": "Messages",
+    "averageRating": "Average rating",
+    "viewsThisMonth": "Views this month",
+    "quickActions": "Quick actions",
+    "addProduct": "Add a product",
+    "addToPortfolio": "Add to portfolio",
+    "viewClients": "View my clients",
+    "settings": "Settings",
+    "recentMessages": "Recent messages",
+    "noMessages": "No messages yet",
+    "recentProducts": "Recent products",
+    "noProducts": "No products for sale",
+    "addFirstProduct": "Add your first product to start selling"
   },
   "landing": {
     "heroTitle": "Find a tailor near you",

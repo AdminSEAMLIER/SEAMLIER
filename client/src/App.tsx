@@ -8,6 +8,7 @@ import { DesktopHeader } from "@/components/desktop-header";
 import { ProBottomNav } from "@/components/pro-bottom-nav";
 import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
+import { Badge } from "@/components/ui/badge";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
@@ -50,10 +51,23 @@ function ParticulierLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ProMobileHeader() {
+  return (
+    <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-50">
+      <Badge variant="secondary" className="bg-[#722F37]/10 text-[#722F37] border-none">Pro</Badge>
+      <Link href="/professionnel">
+        <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
+      </Link>
+      <LanguageToggle />
+    </div>
+  );
+}
+
 function ProfessionnelLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <DesktopHeader mode="professionnel" />
+      <ProMobileHeader />
       <main className="lg:pt-16">
         {children}
       </main>

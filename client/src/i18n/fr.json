@@ -8,7 +8,26 @@
     "messages": "Messages",
     "dashboard": "Tableau de bord",
     "portfolio": "Portfolio",
-    "shop": "Boutique"
+    "shop": "Boutique",
+    "products": "Produits"
+  },
+  "pro": {
+    "welcome": "Bienvenue sur votre espace",
+    "manageActivity": "Gérez votre activité et développez votre clientèle",
+    "productsOnline": "Produits en ligne",
+    "messages": "Messages",
+    "averageRating": "Note moyenne",
+    "viewsThisMonth": "Vues ce mois",
+    "quickActions": "Actions rapides",
+    "addProduct": "Ajouter un produit",
+    "addToPortfolio": "Ajouter au portfolio",
+    "viewClients": "Voir mes clients",
+    "settings": "Paramètres",
+    "recentMessages": "Messages récents",
+    "noMessages": "Aucun message pour le moment",
+    "recentProducts": "Produits récents",
+    "noProducts": "Aucun produit en vente",
+    "addFirstProduct": "Ajoutez votre premier produit pour commencer à vendre"
   },
   "landing": {
     "heroTitle": "Trouvez un couturier près de chez vous",
