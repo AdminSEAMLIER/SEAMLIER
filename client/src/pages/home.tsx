@@ -239,19 +239,19 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="py-8 px-4 lg:px-8 bg-white border-t border-gray-100">
+      <footer className="py-10 px-4 lg:px-8 bg-gray-50 border-t border-gray-100">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-            <div className="text-center md:text-left">
-              <span style={{ fontFamily: "'Parisienne', cursive" }} className="text-xl text-[#722F37]">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
+            <div>
+              <p style={{ fontFamily: "'Parisienne', cursive" }} className="text-2xl text-[#722F37] mb-2">
                 L'Art de Coudre
-              </span>
-              <p className="text-gray-600 text-sm mt-1">
+              </p>
+              <p className="text-gray-600 text-sm">
                 La plateforme qui connecte particuliers et couturiers professionnels.
               </p>
             </div>
             
-            <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
+            <div className="flex flex-wrap gap-6 text-sm text-gray-600">
               <a href="#" className="hover:text-[#722F37]">Mentions légales</a>
               <a href="#" className="hover:text-[#722F37]">Confidentialité</a>
               <a href="#" className="hover:text-[#722F37]">CGU</a>
@@ -259,7 +259,7 @@ export default function Home() {
             </div>
           </div>
           
-          <div className="border-t border-gray-100 pt-4 text-center text-sm text-gray-500">
+          <div className="border-t border-gray-200 pt-6 text-center text-sm text-gray-500">
             <p>&copy; 2026 L'Art de Coudre. Tous droits réservés.</p>
           </div>
         </div>
