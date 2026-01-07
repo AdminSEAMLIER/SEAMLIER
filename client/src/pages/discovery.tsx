@@ -110,7 +110,7 @@ export default function Discovery() {
               placeholder={t('landing.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-12 bg-white border-gray-200"
+              className="pl-12 h-12 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
               data-testid="input-search-discovery"
             />
           </div>
