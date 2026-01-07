@@ -29,7 +29,7 @@ export function ProBottomNav() {
                   "flex flex-col items-center justify-center w-full h-full gap-1 px-2 transition-colors",
                   isActive
                     ? "text-[#722F37]"
-                    : "text-gray-500"
+                    : "text-gray-700"
                 )}
                 data-testid={`nav-pro-${item.labelKey.split('.')[1]}`}
               >

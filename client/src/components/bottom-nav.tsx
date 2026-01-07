@@ -33,7 +33,7 @@ export function BottomNav() {
                   "flex flex-col items-center justify-center gap-1 w-16 h-full transition-colors",
                   isActive 
                     ? "text-[#722F37]" 
-                    : "text-gray-400 hover:text-gray-600"
+                    : "text-gray-700 hover:text-gray-900"
                 )}
                 data-testid={`nav-${item.labelKey.split('.')[1]}`}
               >
