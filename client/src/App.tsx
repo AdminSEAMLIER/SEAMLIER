@@ -20,6 +20,7 @@ import InscriptionParticulier from "@/pages/inscription-particulier";
 import InscriptionProfessionnel from "@/pages/inscription-professionnel";
 import ProfilParticulier from "@/pages/profil-particulier";
 import Connexion from "@/pages/connexion";
+import MentionsLegales from "@/pages/mentions-legales";
 
 function ParticulierLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -50,6 +51,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Landing} />
       <Route path="/connexion" component={Connexion} />
+      <Route path="/mentions-legales" component={MentionsLegales} />
       <Route path="/inscription-particulier" component={InscriptionParticulier} />
       <Route path="/inscription-professionnel" component={InscriptionProfessionnel} />
       

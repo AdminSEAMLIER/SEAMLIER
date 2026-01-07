@@ -256,7 +256,7 @@ export default function Landing() {
               © 2026 L'Art de Coudre. Tous droits réservés.
             </p>
             <div className="flex items-center gap-6 text-sm text-gray-500">
-              <a href="#" className="hover:text-[#722F37] transition-colors" data-testid="link-mentions">Mentions légales</a>
+              <Link href="/mentions-legales" className="hover:text-[#722F37] transition-colors" data-testid="link-mentions">Mentions légales</Link>
               <a href="#" className="hover:text-[#722F37] transition-colors" data-testid="link-cgv">CGV</a>
               <a href="#" className="hover:text-[#722F37] transition-colors" data-testid="link-privacy">Confidentialité</a>
               <a href="#" className="hover:text-[#722F37] transition-colors" data-testid="link-contact">Contact</a>
