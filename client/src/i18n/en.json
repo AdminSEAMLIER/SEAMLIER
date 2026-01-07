@@ -201,6 +201,28 @@
     "contact": "Contact",
     "allRightsReserved": "All rights reserved"
   },
+  "magazine": {
+    "title": "Magazine",
+    "subtitle": "Inspiration, tips and news from the world of tailoring",
+    "all": "All",
+    "trends": "Trends",
+    "tips": "Tips",
+    "portrait": "Portrait",
+    "wedding": "Wedding",
+    "readTime": "min read",
+    "articles": {
+      "article1Title": "Spring-Summer 2026 sewing trends",
+      "article1Excerpt": "Discover the fabrics, colors and styles that will define the season...",
+      "article2Title": "How to choose your tailor: the complete guide",
+      "article2Excerpt": "All our tips for finding the artisan who will bring your projects to life...",
+      "article3Title": "The art of African haute couture",
+      "article3Excerpt": "Meet designers who are reinventing traditions...",
+      "article4Title": "Caring for your custom-made clothes",
+      "article4Excerpt": "Essential tips for preserving the quality of your pieces...",
+      "article5Title": "Wedding dresses: designers to follow",
+      "article5Excerpt": "Our selection of the best tailors specializing in weddings..."
+    }
+  },
   "common": {
     "loading": "Loading...",
     "error": "An error occurred",

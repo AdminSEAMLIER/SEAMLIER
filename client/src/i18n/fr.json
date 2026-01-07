@@ -201,6 +201,28 @@
     "contact": "Contact",
     "allRightsReserved": "Tous droits réservés"
   },
+  "magazine": {
+    "title": "Magazine",
+    "subtitle": "Inspirations, conseils et actualités du monde de la couture",
+    "all": "Tous",
+    "trends": "Tendances",
+    "tips": "Conseils",
+    "portrait": "Portrait",
+    "wedding": "Mariage",
+    "readTime": "min de lecture",
+    "articles": {
+      "article1Title": "Les tendances couture printemps-été 2026",
+      "article1Excerpt": "Découvrez les tissus, couleurs et styles qui marqueront la saison...",
+      "article2Title": "Comment choisir son couturier : le guide complet",
+      "article2Excerpt": "Tous nos conseils pour trouver l'artisan qui saura réaliser vos projets...",
+      "article3Title": "L'art de la haute couture africaine",
+      "article3Excerpt": "Rencontre avec des créateurs qui réinventent les traditions...",
+      "article4Title": "Entretenir ses vêtements sur-mesure",
+      "article4Excerpt": "Les gestes essentiels pour préserver la qualité de vos pièces...",
+      "article5Title": "Robes de mariée : les créateurs à suivre",
+      "article5Excerpt": "Notre sélection des meilleurs couturiers spécialisés en mariage..."
+    }
+  },
   "common": {
     "loading": "Chargement...",
     "error": "Une erreur est survenue",
