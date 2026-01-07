@@ -1,10 +1,12 @@
 import { Link } from "wouter";
+import { useTranslation } from "react-i18next";
 import { MapPin, Search, MessageCircle, CheckCircle, Star, ArrowRight, Scissors, Users, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import { Logo } from "@/components/logo";
+import { LanguageToggle } from "@/components/language-toggle";
 
 const steps = [
   {
@@ -43,6 +45,7 @@ const stats = [
 ];
 
 export default function Landing() {
+  const { t } = useTranslation();
   const [location, setLocation] = useState("");
 
   return (
@@ -51,14 +54,15 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
           <Logo className="text-[#722F37]" textClassName="text-lg text-[#722F37]" />
           <div className="flex items-center gap-4">
+            <LanguageToggle />
             <Link href="/connexion">
               <Button variant="ghost" className="text-[#722F37]" data-testid="button-connexion-header">
-                Connexion
+                {t('landing.login')}
               </Button>
             </Link>
             <Link href="/inscription-particulier">
               <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white" data-testid="button-inscription-header">
-                S'inscrire
+                {t('landing.signup')}
               </Button>
             </Link>
           </div>

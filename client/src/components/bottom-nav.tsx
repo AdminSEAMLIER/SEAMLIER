@@ -1,16 +1,18 @@
 import { Home, Compass, MessageCircle, Ruler, BookOpen, User } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { icon: Home, label: "Accueil", path: "/particulier" },
-  { icon: Compass, label: "Recherche", path: "/particulier/decouverte" },
-  { icon: Ruler, label: "Mesures", path: "/particulier/mesures" },
-  { icon: BookOpen, label: "Magazine", path: "/particulier/magazine" },
-  { icon: User, label: "Profil", path: "/particulier/profil" },
+  { icon: Home, labelKey: "nav.home", path: "/particulier" },
+  { icon: Compass, labelKey: "nav.search", path: "/particulier/decouverte" },
+  { icon: Ruler, labelKey: "nav.measures", path: "/particulier/mesures" },
+  { icon: BookOpen, labelKey: "nav.magazine", path: "/particulier/magazine" },
+  { icon: User, labelKey: "nav.profile", path: "/particulier/profil" },
 ];
 
 export function BottomNav() {
+  const { t } = useTranslation();
   const [location] = useLocation();
 
   return (
@@ -33,10 +35,10 @@ export function BottomNav() {
                     ? "text-[#722F37]" 
                     : "text-gray-400 hover:text-gray-600"
                 )}
-                data-testid={`nav-${item.label.toLowerCase()}`}
+                data-testid={`nav-${item.labelKey.split('.')[1]}`}
               >
                 <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span className="text-[10px] font-medium">{t(item.labelKey)}</span>
               </button>
             </Link>
           );

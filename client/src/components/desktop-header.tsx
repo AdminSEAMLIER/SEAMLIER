@@ -1,22 +1,24 @@
 import { Home, Compass, MessageCircle, Ruler, BookOpen, User, Bell, LayoutDashboard, ArrowLeft } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
+import { LanguageToggle } from "./language-toggle";
 
 const particulierNavItems = [
-  { icon: Home, label: "Accueil", path: "/particulier" },
-  { icon: Compass, label: "Recherche", path: "/particulier/decouverte" },
-  { icon: Ruler, label: "Mesures", path: "/particulier/mesures" },
-  { icon: BookOpen, label: "Magazine", path: "/particulier/magazine" },
-  { icon: User, label: "Profil", path: "/particulier/profil" },
+  { icon: Home, labelKey: "nav.home", path: "/particulier" },
+  { icon: Compass, labelKey: "nav.search", path: "/particulier/decouverte" },
+  { icon: Ruler, labelKey: "nav.measures", path: "/particulier/mesures" },
+  { icon: BookOpen, labelKey: "nav.magazine", path: "/particulier/magazine" },
+  { icon: User, labelKey: "nav.profile", path: "/particulier/profil" },
 ];
 
 const proNavItems = [
-  { icon: LayoutDashboard, label: "Tableau de bord", path: "/professionnel" },
-  { icon: MessageCircle, label: "Messages", path: "/professionnel/messages" },
+  { icon: LayoutDashboard, labelKey: "nav.dashboard", path: "/professionnel" },
+  { icon: MessageCircle, labelKey: "nav.messages", path: "/professionnel/messages" },
 ];
 
 interface DesktopHeaderProps {
@@ -24,6 +26,7 @@ interface DesktopHeaderProps {
 }
 
 export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
+  const { t } = useTranslation();
   const [location] = useLocation();
   const navItems = mode === "professionnel" ? proNavItems : particulierNavItems;
   const basePath = mode === "professionnel" ? "/professionnel" : "/particulier";
@@ -57,10 +60,10 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
                     "gap-2",
                     isActive && "bg-gray-100 text-[#722F37]"
                   )}
-                  data-testid={`nav-desktop-${item.label.toLowerCase()}`}
+                  data-testid={`nav-desktop-${item.labelKey.split('.')[1]}`}
                 >
                   <Icon className="h-4 w-4" />
-                  <span>{item.label}</span>
+                  <span>{t(item.labelKey)}</span>
                 </Button>
               </Link>
             );
@@ -71,9 +74,10 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
           <Link href="/">
             <Button variant="ghost" size="sm" className="gap-2 text-gray-600" data-testid="button-switch-space">
               <ArrowLeft className="h-4 w-4" />
-              Accueil
+              {t('nav.home')}
             </Button>
           </Link>
+          <LanguageToggle />
           <ThemeToggle />
           <Button variant="ghost" size="icon" className="text-gray-600" data-testid="button-notifications">
             <Bell className="h-5 w-5" />
