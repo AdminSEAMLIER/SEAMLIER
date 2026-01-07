@@ -193,9 +193,9 @@ export default function Landing() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <Card className="border-0 shadow-sm p-6">
+            <Card className="border border-gray-100 bg-white shadow-sm p-6">
               <CardContent className="p-0 text-center">
-                <div className="w-14 h-14 rounded-full bg-[#722F37]/10 flex items-center justify-center mx-auto mb-4">
+                <div className="w-14 h-14 rounded-full bg-white border border-[#722F37] flex items-center justify-center mx-auto mb-4">
                   <Shield className="h-7 w-7 text-[#722F37]" />
                 </div>
                 <h3 className="font-semibold text-lg text-[#722F37] mb-2">Couturiers vérifiés</h3>
@@ -205,9 +205,9 @@ export default function Landing() {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm p-6">
+            <Card className="border border-gray-100 bg-white shadow-sm p-6">
               <CardContent className="p-0 text-center">
-                <div className="w-14 h-14 rounded-full bg-[#722F37]/10 flex items-center justify-center mx-auto mb-4">
+                <div className="w-14 h-14 rounded-full bg-white border border-[#722F37] flex items-center justify-center mx-auto mb-4">
                   <Star className="h-7 w-7 text-[#722F37]" />
                 </div>
                 <h3 className="font-semibold text-lg text-[#722F37] mb-2">Avis authentiques</h3>
@@ -217,9 +217,9 @@ export default function Landing() {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm p-6">
+            <Card className="border border-gray-100 bg-white shadow-sm p-6">
               <CardContent className="p-0 text-center">
-                <div className="w-14 h-14 rounded-full bg-[#722F37]/10 flex items-center justify-center mx-auto mb-4">
+                <div className="w-14 h-14 rounded-full bg-white border border-[#722F37] flex items-center justify-center mx-auto mb-4">
                   <Scissors className="h-7 w-7 text-[#722F37]" />
                 </div>
                 <h3 className="font-semibold text-lg text-[#722F37] mb-2">Service gratuit</h3>
