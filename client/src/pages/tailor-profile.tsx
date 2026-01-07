@@ -189,10 +189,10 @@ export default function TailorProfile() {
           </div>
 
           {tailor.hourlyRate && (
-            <Card className="p-4 mt-6 border-gray-100 shadow-sm">
+            <Card className="p-4 mt-6 bg-[#722F37] border-none shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-gray-500">Tarif horaire</span>
-                <span className="font-semibold text-lg text-[#722F37]">
+                <span className="text-white/80">Tarif horaire</span>
+                <span className="font-semibold text-lg text-white">
                   {tailor.hourlyRate.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}/h
                 </span>
               </div>
