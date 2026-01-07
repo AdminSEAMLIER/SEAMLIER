@@ -8,10 +8,10 @@ interface LogoProps {
   iconSize?: string;
 }
 
-export function Logo({ className, textClassName, showText = true, iconSize = "h-5 w-5" }: LogoProps) {
+export function Logo({ className, textClassName, showText = true, iconSize = "h-7 w-7" }: LogoProps) {
   return (
-    <div className={cn("flex items-center gap-1", className)}>
-      <Scissors className={cn(iconSize, "text-current")} />
+    <div className={cn("flex items-center gap-0", className)}>
+      <Scissors className={cn(iconSize, "text-current -mr-1")} />
       {showText && (
         <span 
           className={cn(
