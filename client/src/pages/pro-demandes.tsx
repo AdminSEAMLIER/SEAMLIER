@@ -85,7 +85,7 @@ export default function ProDemandes() {
         <Card className="border border-gray-100 bg-white shadow-sm mb-6">
           <CardContent className="p-4 bg-white">
             <div className="flex gap-2 overflow-x-auto pb-1">
-              <Button variant="default" className="bg-[#722F37] hover:bg-[#5a252c]" size="sm">
+              <Button variant="default" className="bg-white border-2 border-[#722F37] text-[#722F37] hover:bg-[#722F37]/10" size="sm">
                 {t('pro.allRequests')} (3)
               </Button>
               <Button variant="outline" size="sm" className="border-gray-200 text-gray-600">
