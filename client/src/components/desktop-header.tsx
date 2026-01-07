@@ -1,4 +1,4 @@
-import { Home, Compass, MessageCircle, Ruler, BookOpen, Bell, LayoutDashboard, ArrowLeft } from "lucide-react";
+import { Home, Compass, MessageCircle, Ruler, BookOpen, User, Bell, LayoutDashboard, ArrowLeft } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
@@ -9,9 +9,9 @@ import { Logo } from "@/components/logo";
 const particulierNavItems = [
   { icon: Home, label: "Accueil", path: "/particulier" },
   { icon: Compass, label: "Découverte", path: "/particulier/decouverte" },
-  { icon: MessageCircle, label: "Messagerie", path: "/particulier/messages" },
   { icon: Ruler, label: "Mesures", path: "/particulier/mesures" },
   { icon: BookOpen, label: "Magazine", path: "/particulier/magazine" },
+  { icon: User, label: "Profil", path: "/particulier/profil" },
 ];
 
 const proNavItems = [

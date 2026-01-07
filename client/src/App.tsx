@@ -18,6 +18,7 @@ import ProductDetail from "@/pages/product-detail";
 import ProDashboard from "@/pages/pro-dashboard";
 import InscriptionParticulier from "@/pages/inscription-particulier";
 import InscriptionProfessionnel from "@/pages/inscription-professionnel";
+import ProfilParticulier from "@/pages/profil-particulier";
 
 function ParticulierLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -73,6 +74,11 @@ function Router() {
       <Route path="/particulier/magazine">
         <ParticulierLayout>
           <Magazine />
+        </ParticulierLayout>
+      </Route>
+      <Route path="/particulier/profil">
+        <ParticulierLayout>
+          <ProfilParticulier />
         </ParticulierLayout>
       </Route>
       <Route path="/particulier/tailor/:id">
