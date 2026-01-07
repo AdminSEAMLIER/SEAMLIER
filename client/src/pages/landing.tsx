@@ -8,27 +8,6 @@ import { useState } from "react";
 import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
 
-const steps = [
-  {
-    number: "1",
-    title: "Décrivez votre projet",
-    description: "Dites-nous ce dont vous avez besoin et nous contacterons les couturiers de votre région.",
-    icon: MessageCircle,
-  },
-  {
-    number: "2",
-    title: "Recevez des devis gratuits",
-    description: "Comparez les profils, lisez les avis et choisissez le couturier qui vous convient.",
-    icon: Users,
-  },
-  {
-    number: "3",
-    title: "Choisissez votre couturier",
-    description: "Contactez directement les professionnels et réalisez votre projet en toute confiance.",
-    icon: CheckCircle,
-  },
-];
-
 const cities = [
   { name: "Paris", image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=300&fit=crop" },
   { name: "Lyon", image: "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?w=400&h=300&fit=crop" },
@@ -38,15 +17,36 @@ const cities = [
   { name: "Nice", image: "https://images.unsplash.com/photo-1491166617655-0723a0999cfc?w=400&h=300&fit=crop" },
 ];
 
-const stats = [
-  { value: "100%", label: "des couturiers vérifiés" },
-  { value: "100%", label: "des délais respectés" },
-  { value: "4.8/5", label: "Note moyenne" },
-];
-
 export default function Landing() {
   const { t } = useTranslation();
   const [location, setLocation] = useState("");
+
+  const steps = [
+    {
+      number: "1",
+      title: t('landing.step1Title'),
+      description: t('landing.step1Desc'),
+      icon: MessageCircle,
+    },
+    {
+      number: "2",
+      title: t('landing.step2Title'),
+      description: t('landing.step2Desc'),
+      icon: Users,
+    },
+    {
+      number: "3",
+      title: t('landing.step3Title'),
+      description: t('landing.step3Desc'),
+      icon: CheckCircle,
+    },
+  ];
+
+  const stats = [
+    { value: "100%", label: t('landing.verifiedTailors') },
+    { value: "100%", label: t('landing.onTimeDelivery') },
+    { value: "4.8/5", label: t('landing.averageRating') },
+  ];
 
   return (
     <div className="min-h-screen bg-white">
@@ -77,17 +77,17 @@ export default function Landing() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
         <div className="relative max-w-4xl mx-auto text-center">
           <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-white mb-6 leading-tight">
-            Trouvez un couturier près de chez vous
+            {t('landing.heroTitle')}
           </h1>
           <p className="text-white/90 text-lg lg:text-xl mb-10 max-w-2xl mx-auto">
-            Comparez les meilleurs couturiers de votre région et obtenez des devis gratuits pour votre projet
+            {t('landing.heroSubtitle')}
           </p>
           
           <div className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
             <div className="relative flex-1">
               <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input
-                placeholder="Entrez votre ville..."
+                placeholder={t('landing.searchPlaceholder')}
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 className="pl-12 h-14 text-base border-0 bg-white shadow-lg"
@@ -97,7 +97,7 @@ export default function Landing() {
             <Link href="/particulier">
               <Button size="lg" className="h-14 px-8 bg-[#722F37] hover:bg-[#5a252c] text-white shadow-lg" data-testid="button-search-hero">
                 <Search className="h-5 w-5 mr-2" />
-                Rechercher
+                {t('landing.searchButton')}
               </Button>
             </Link>
           </div>
@@ -121,10 +121,10 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-4">
-              Comment ça marche ?
+              {t('landing.howItWorks')}
             </h2>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Trouvez le couturier idéal en 3 étapes simples
+              {t('landing.howItWorksSubtitle')}
             </p>
           </div>
 
@@ -143,15 +143,6 @@ export default function Landing() {
               </div>
             ))}
           </div>
-
-          <div className="text-center mt-12">
-            <Link href="/particulier">
-              <Button size="lg" className="bg-[#722F37] hover:bg-[#5a252c] text-white" data-testid="button-start-project">
-                Démarrer mon projet
-                <ArrowRight className="h-5 w-5 ml-2" />
-              </Button>
-            </Link>
-          </div>
         </div>
       </section>
 
@@ -159,11 +150,8 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-4">
-              Villes populaires
+              {t('landing.popularCities')}
             </h2>
-            <p className="text-gray-600 text-lg">
-              Trouvez des couturiers dans les principales villes de France
-            </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -192,7 +180,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-4">
-              Pourquoi nous choisir ?
+              {t('landing.whyChooseUs')}
             </h2>
           </div>
 
@@ -202,9 +190,9 @@ export default function Landing() {
                 <div className="w-14 h-14 rounded-full bg-white border border-[#722F37] flex items-center justify-center mx-auto mb-4">
                   <Shield className="h-7 w-7 text-[#722F37]" />
                 </div>
-                <h3 className="font-semibold text-lg text-[#722F37] mb-2">Couturiers vérifiés</h3>
+                <h3 className="font-semibold text-lg text-[#722F37] mb-2">{t('landing.verifiedPros')}</h3>
                 <p className="text-gray-600 text-sm">
-                  Tous nos professionnels sont sélectionnés et vérifiés pour garantir un service de qualité.
+                  {t('landing.verifiedProsDesc')}
                 </p>
               </CardContent>
             </Card>
@@ -214,9 +202,9 @@ export default function Landing() {
                 <div className="w-14 h-14 rounded-full bg-white border border-[#722F37] flex items-center justify-center mx-auto mb-4">
                   <Star className="h-7 w-7 text-[#722F37]" />
                 </div>
-                <h3 className="font-semibold text-lg text-[#722F37] mb-2">Avis authentiques</h3>
+                <h3 className="font-semibold text-lg text-[#722F37] mb-2">{t('landing.authenticReviews')}</h3>
                 <p className="text-gray-600 text-sm">
-                  Consultez les avis de clients vérifiés pour faire le meilleur choix.
+                  {t('landing.authenticReviewsDesc')}
                 </p>
               </CardContent>
             </Card>
@@ -226,9 +214,9 @@ export default function Landing() {
                 <div className="w-14 h-14 rounded-full bg-white border border-[#722F37] flex items-center justify-center mx-auto mb-4">
                   <Scissors className="h-7 w-7 text-[#722F37]" />
                 </div>
-                <h3 className="font-semibold text-lg text-[#722F37] mb-2">Service gratuit</h3>
+                <h3 className="font-semibold text-lg text-[#722F37] mb-2">{t('landing.freeService')}</h3>
                 <p className="text-gray-600 text-sm">
-                  Notre service est entièrement gratuit pour les particuliers. Recevez des devis sans engagement.
+                  {t('landing.freeServiceDesc')}
                 </p>
               </CardContent>
             </Card>
@@ -239,14 +227,14 @@ export default function Landing() {
       <section className="py-16 lg:py-24 px-4 lg:px-8 bg-[#5a1f25]">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="font-serif text-3xl lg:text-4xl text-white mb-4">
-            Vous êtes couturier ?
+            {t('landing.areTailor')}
           </h2>
           <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
-            Rejoignez notre réseau de professionnels et développez votre activité.
+            {t('landing.joinNetwork')}
           </p>
           <Link href="/professionnel">
             <Button size="lg" variant="outline" className="bg-white text-[#722F37] border-white hover:bg-gray-100" data-testid="button-join-pro">
-              Rejoindre en tant que professionnel
+              {t('landing.joinAsPro')}
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
           </Link>
@@ -257,13 +245,13 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-gray-500 text-sm">
-              © 2026 L'Art de Coudre. Tous droits réservés.
+              © 2026 L'Art de Coudre. {t('footer.allRightsReserved')}
             </p>
             <div className="flex items-center gap-6 text-sm text-gray-500">
-              <Link href="/mentions-legales" className="hover:text-[#722F37] transition-colors" data-testid="link-mentions">Mentions légales</Link>
-              <a href="#" className="hover:text-[#722F37] transition-colors" data-testid="link-cgv">CGV</a>
-              <Link href="/confidentialite" className="hover:text-[#722F37] transition-colors" data-testid="link-privacy">Confidentialité</Link>
-              <a href="#" className="hover:text-[#722F37] transition-colors" data-testid="link-contact">Contact</a>
+              <Link href="/mentions-legales" className="hover:text-[#722F37] transition-colors" data-testid="link-mentions">{t('footer.legalNotice')}</Link>
+              <a href="#" className="hover:text-[#722F37] transition-colors" data-testid="link-cgv">{t('footer.terms')}</a>
+              <Link href="/confidentialite" className="hover:text-[#722F37] transition-colors" data-testid="link-privacy">{t('footer.privacy')}</Link>
+              <a href="#" className="hover:text-[#722F37] transition-colors" data-testid="link-contact">{t('footer.contact')}</a>
             </div>
           </div>
         </div>
