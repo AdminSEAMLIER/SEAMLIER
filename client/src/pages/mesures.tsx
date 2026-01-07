@@ -1,20 +1,10 @@
+import { useTranslation } from "react-i18next";
 import { Ruler, Camera, Save, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-
-const measurements = [
-  { id: "tour_cou", label: "Tour de cou", unit: "cm", placeholder: "38", position: { top: "12%", left: "50%" } },
-  { id: "largeur_epaules", label: "Largeur d'épaules", unit: "cm", placeholder: "40", position: { top: "18%", left: "50%" } },
-  { id: "tour_poitrine", label: "Tour de poitrine", unit: "cm", placeholder: "88", position: { top: "28%", left: "50%" } },
-  { id: "tour_taille", label: "Tour de taille", unit: "cm", placeholder: "72", position: { top: "38%", left: "50%" } },
-  { id: "tour_hanches", label: "Tour de hanches", unit: "cm", placeholder: "96", position: { top: "48%", left: "50%" } },
-  { id: "longueur_dos", label: "Longueur du dos", unit: "cm", placeholder: "42", position: { top: "33%", left: "30%" } },
-  { id: "longueur_bras", label: "Longueur des bras", unit: "cm", placeholder: "60", position: { top: "35%", left: "75%" } },
-  { id: "longueur_jambe", label: "Longueur de jambe", unit: "cm", placeholder: "105", position: { top: "75%", left: "50%" } },
-];
 
 function BodyDiagram({ activeMeasurement }: { activeMeasurement: string | null }) {
   return (
@@ -68,7 +58,19 @@ function BodyDiagram({ activeMeasurement }: { activeMeasurement: string | null }
 }
 
 export default function Mesures() {
+  const { t } = useTranslation();
   const [activeMeasurement, setActiveMeasurement] = useState<string | null>(null);
+
+  const measurements = [
+    { id: "tour_cou", label: t('measures.neck'), unit: t('common.cm'), placeholder: "38" },
+    { id: "largeur_epaules", label: t('measures.shoulders'), unit: t('common.cm'), placeholder: "40" },
+    { id: "tour_poitrine", label: t('measures.chest'), unit: t('common.cm'), placeholder: "88" },
+    { id: "tour_taille", label: t('measures.waist'), unit: t('common.cm'), placeholder: "72" },
+    { id: "tour_hanches", label: t('measures.hips'), unit: t('common.cm'), placeholder: "96" },
+    { id: "longueur_dos", label: t('measures.backLength'), unit: t('common.cm'), placeholder: "42" },
+    { id: "longueur_bras", label: t('measures.armLength'), unit: t('common.cm'), placeholder: "60" },
+    { id: "longueur_jambe", label: t('measures.legLength'), unit: t('common.cm'), placeholder: "105" },
+  ];
 
   return (
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
@@ -79,11 +81,11 @@ export default function Mesures() {
               <Ruler className="h-5 w-5 text-[#722F37]" />
             </div>
             <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
-              Prise de mesures
+              {t('measures.title')}
             </h1>
           </div>
           <p className="text-gray-600 mt-2">
-            Enregistrez vos mesures pour faciliter vos commandes auprès des couturiers
+            {t('measures.subtitle')}
           </p>
         </div>
       </div>
@@ -93,26 +95,26 @@ export default function Mesures() {
           <CardHeader className="pb-4">
             <CardTitle className="text-lg text-[#722F37] flex items-center gap-2">
               <HelpCircle className="h-5 w-5" />
-              Comment prendre vos mesures ?
+              {t('measures.howTo')}
             </CardTitle>
           </CardHeader>
           <CardContent className="bg-white">
             <ul className="text-sm text-gray-600 space-y-2">
               <li className="flex items-start gap-2">
                 <span className="text-[#722F37] font-medium">1.</span>
-                Utilisez un mètre ruban souple
+                {t('measures.tip1')}
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-[#722F37] font-medium">2.</span>
-                Mesurez directement sur le corps, avec des vêtements légers
+                {t('measures.tip2')}
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-[#722F37] font-medium">3.</span>
-                Ne serrez pas trop le mètre ruban
+                {t('measures.tip3')}
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-[#722F37] font-medium">4.</span>
-                Faites-vous aider si possible pour plus de précision
+                {t('measures.tip4')}
               </li>
             </ul>
           </CardContent>
@@ -121,21 +123,21 @@ export default function Mesures() {
         <div className="grid lg:grid-cols-2 gap-6">
           <Card className="border border-gray-100 bg-white shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg text-[#722F37]">Guide visuel</CardTitle>
+              <CardTitle className="text-lg text-[#722F37]">{t('measures.visualGuide')}</CardTitle>
             </CardHeader>
             <CardContent className="bg-white flex justify-center py-6">
               <BodyDiagram activeMeasurement={activeMeasurement} />
             </CardContent>
             <div className="px-6 pb-6">
               <p className="text-sm text-gray-500 text-center">
-                Cliquez sur un champ de mesure pour voir où prendre la mesure sur le corps
+                {t('measures.clickToSee')}
               </p>
             </div>
           </Card>
 
           <Card className="border border-gray-100 bg-white shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg text-[#722F37]">Mes mesures</CardTitle>
+              <CardTitle className="text-lg text-[#722F37]">{t('measures.myMeasures')}</CardTitle>
             </CardHeader>
             <CardContent className="bg-white">
               <div className="grid gap-4">
@@ -175,7 +177,7 @@ export default function Mesures() {
         <div className="flex gap-3 mt-6">
           <Button variant="outline" className="flex-1 h-12 bg-white border border-gray-300 text-gray-600 hover:bg-gray-50" data-testid="button-save-measures">
             <Save className="h-5 w-5 mr-2" />
-            Enregistrer mes mesures
+            {t('measures.save')}
           </Button>
           <Button variant="outline" className="h-12 border-gray-200" data-testid="button-scan">
             <Camera className="h-5 w-5" />
@@ -183,7 +185,7 @@ export default function Mesures() {
         </div>
 
         <p className="text-center text-gray-500 text-sm mt-4">
-          Vos mesures seront automatiquement partagées avec les couturiers lors de vos commandes
+          {t('measures.autoShare')}
         </p>
       </div>
     </div>

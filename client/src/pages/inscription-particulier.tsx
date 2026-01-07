@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Eye, EyeOff, Scissors, Check } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { LanguageToggle } from "@/components/language-toggle";
 
 const inscriptionSchema = z.object({
   fullName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
@@ -33,6 +35,7 @@ const inscriptionSchema = z.object({
 type InscriptionForm = z.infer<typeof inscriptionSchema>;
 
 export default function InscriptionParticulier() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
@@ -62,15 +65,15 @@ export default function InscriptionParticulier() {
     },
     onSuccess: () => {
       toast({
-        title: "Compte créé avec succès",
-        description: "Bienvenue sur L'Art de Coudre !",
+        title: t('auth.accountCreated'),
+        description: t('auth.welcomeDesc'),
       });
       setLocation("/particulier");
     },
     onError: (error: Error) => {
       toast({
-        title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de l'inscription",
+        title: t('auth.error'),
+        description: error.message || t('auth.errorMessage'),
         variant: "destructive",
       });
     },
@@ -81,25 +84,28 @@ export default function InscriptionParticulier() {
   };
 
   const benefits = [
-    "Accédez à des couturiers vérifiés",
-    "Recevez des devis personnalisés",
-    "Sauvegardez vos mesures",
-    "Messagerie directe avec les professionnels",
+    t('auth.benefits.verified'),
+    t('auth.benefits.quotes'),
+    t('auth.benefits.measures'),
+    t('auth.benefits.messaging'),
   ];
 
   return (
     <div className="min-h-screen bg-white">
       <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/">
-            <Button variant="ghost" size="icon" data-testid="button-back">
-              <ArrowLeft className="h-5 w-5 text-gray-600" />
-            </Button>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Scissors className="h-6 w-6 text-[#722F37]" />
-            <span className="font-['Parisienne'] text-2xl text-[#722F37]">L'Art de Coudre</span>
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/">
+              <Button variant="ghost" size="icon" data-testid="button-back">
+                <ArrowLeft className="h-5 w-5 text-gray-600" />
+              </Button>
+            </Link>
+            <div className="flex items-center gap-2">
+              <Scissors className="h-6 w-6 text-[#722F37]" />
+              <span className="font-['Parisienne'] text-2xl text-[#722F37]">L'Art de Coudre</span>
+            </div>
           </div>
+          <LanguageToggle />
         </div>
       </header>
 
@@ -107,10 +113,10 @@ export default function InscriptionParticulier() {
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           <div className="hidden lg:block">
             <h1 className="font-serif text-4xl text-[#722F37] mb-4">
-              Créez votre compte
+              {t('auth.createAccount')}
             </h1>
             <p className="text-gray-600 text-lg mb-8">
-              Rejoignez notre communauté et trouvez le couturier idéal pour vos projets.
+              {t('auth.joinCommunity')}
             </p>
 
             <div className="space-y-4">
@@ -126,8 +132,7 @@ export default function InscriptionParticulier() {
 
             <div className="mt-12 p-6 bg-gray-50 rounded-lg">
               <p className="text-gray-600 italic">
-                "J'ai trouvé une couturière exceptionnelle pour ma robe de mariée. 
-                Le processus était simple et le résultat magnifique !"
+                "{t('auth.testimonialClient')}"
               </p>
               <p className="text-[#722F37] font-medium mt-3">— Marie L., Paris</p>
             </div>
@@ -136,10 +141,10 @@ export default function InscriptionParticulier() {
           <div>
             <div className="lg:hidden mb-8">
               <h1 className="font-serif text-3xl text-[#722F37] mb-2">
-                Créez votre compte
+                {t('auth.createAccount')}
               </h1>
               <p className="text-gray-600">
-                Rejoignez notre communauté de passionnés.
+                {t('auth.joinCommunityShort')}
               </p>
             </div>
 
@@ -152,7 +157,7 @@ export default function InscriptionParticulier() {
                       name="fullName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">Nom complet</FormLabel>
+                          <FormLabel className="text-gray-700">{t('auth.fullName')}</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Marie Dupont" 
@@ -171,11 +176,11 @@ export default function InscriptionParticulier() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">Adresse email</FormLabel>
+                          <FormLabel className="text-gray-700">{t('auth.email')}</FormLabel>
                           <FormControl>
                             <Input 
                               type="email" 
-                              placeholder="marie@exemple.com" 
+                              placeholder={t('auth.emailPlaceholder')} 
                               {...field} 
                               data-testid="input-email"
                               className="border-gray-200 focus:border-[#722F37] focus:ring-[#722F37]"
@@ -192,7 +197,7 @@ export default function InscriptionParticulier() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-gray-700">
-                            Téléphone <span className="text-gray-400">(optionnel)</span>
+                            {t('auth.phoneOptional')}
                           </FormLabel>
                           <FormControl>
                             <Input 
@@ -213,12 +218,12 @@ export default function InscriptionParticulier() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">Mot de passe</FormLabel>
+                          <FormLabel className="text-gray-700">{t('auth.password')}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input 
                                 type={showPassword ? "text" : "password"} 
-                                placeholder="Minimum 8 caractères" 
+                                placeholder={t('auth.minChars')} 
                                 {...field} 
                                 data-testid="input-password"
                                 className="border-gray-200 focus:border-[#722F37] focus:ring-[#722F37] pr-10"
@@ -243,12 +248,12 @@ export default function InscriptionParticulier() {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">Confirmer le mot de passe</FormLabel>
+                          <FormLabel className="text-gray-700">{t('auth.confirmPassword')}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input 
                                 type={showConfirmPassword ? "text" : "password"} 
-                                placeholder="Confirmez votre mot de passe" 
+                                placeholder={t('auth.confirmPasswordPlaceholder')} 
                                 {...field} 
                                 data-testid="input-confirm-password"
                                 className="border-gray-200 focus:border-[#722F37] focus:ring-[#722F37] pr-10"
@@ -275,24 +280,24 @@ export default function InscriptionParticulier() {
                         disabled={registerMutation.isPending}
                         data-testid="button-submit"
                       >
-                        {registerMutation.isPending ? "Création en cours..." : "Créer mon compte"}
+                        {registerMutation.isPending ? t('auth.creating') : t('auth.signup')}
                       </Button>
                     </div>
 
                     <p className="text-center text-sm text-gray-500">
-                      En créant un compte, vous acceptez nos{" "}
-                      <a href="#" className="text-[#722F37] hover:underline">conditions d'utilisation</a>
-                      {" "}et notre{" "}
-                      <a href="#" className="text-[#722F37] hover:underline">politique de confidentialité</a>.
+                      {t('auth.termsAccept')}{" "}
+                      <a href="#" className="text-[#722F37] hover:underline">{t('auth.termsOfUse')}</a>
+                      {" "}{t('auth.and')}{" "}
+                      <a href="#" className="text-[#722F37] hover:underline">{t('auth.privacyPolicy')}</a>.
                     </p>
                   </form>
                 </Form>
 
                 <div className="mt-6 pt-6 border-t border-gray-100 text-center">
                   <p className="text-gray-600">
-                    Déjà un compte ?{" "}
+                    {t('auth.hasAccount')}{" "}
                     <Link href="/connexion" className="text-[#722F37] font-medium hover:underline" data-testid="link-login">
-                      Se connecter
+                      {t('auth.login')}
                     </Link>
                   </p>
                 </div>
@@ -300,9 +305,9 @@ export default function InscriptionParticulier() {
             </Card>
 
             <p className="text-center text-sm text-gray-500 mt-6">
-              Vous êtes couturier ?{" "}
+              {t('auth.areYouTailor')}{" "}
               <Link href="/inscription-professionnel" className="text-[#722F37] font-medium hover:underline" data-testid="link-pro-signup">
-                Créer un compte professionnel
+                {t('auth.createProAccount')}
               </Link>
             </p>
           </div>
@@ -312,7 +317,7 @@ export default function InscriptionParticulier() {
       <footer className="bg-white border-t border-gray-100 py-6 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-gray-500 text-sm">
-            © 2026 L'Art de Coudre. Tous droits réservés.
+            © 2026 L'Art de Coudre. {t('footer.allRightsReserved')}
           </p>
         </div>
       </footer>

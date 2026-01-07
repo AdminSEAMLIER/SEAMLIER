@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
+import { useTranslation } from "react-i18next";
 import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, Ruler, BookOpen, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ProfilParticulier() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
@@ -22,8 +24,8 @@ export default function ProfilParticulier() {
   const handleSave = () => {
     setIsEditing(false);
     toast({
-      title: "Profil mis à jour",
-      description: "Vos informations ont été enregistrées avec succès.",
+      title: t('profile.updated'),
+      description: t('profile.updatedDesc'),
     });
   };
 
@@ -45,11 +47,11 @@ export default function ProfilParticulier() {
               <User className="h-5 w-5 text-[#722F37]" />
             </div>
             <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
-              Mon Profil
+              {t('profile.title')}
             </h1>
           </div>
           <p className="text-gray-600 mt-2">
-            Gérez vos informations personnelles
+            {t('profile.subtitle')}
           </p>
         </div>
       </div>
@@ -74,7 +76,7 @@ export default function ProfilParticulier() {
               </div>
               <div className="text-center sm:text-left flex-1">
                 <h2 className="text-xl font-semibold text-[#722F37]">{profile.fullName}</h2>
-                <p className="text-gray-500">Membre depuis janvier 2026</p>
+                <p className="text-gray-500">{t('profile.memberSince')} janvier 2026</p>
               </div>
             </div>
             
@@ -82,11 +84,11 @@ export default function ProfilParticulier() {
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="text-2xl font-bold text-[#722F37]">3</p>
-                  <p className="text-sm text-gray-500">Projets réalisés</p>
+                  <p className="text-sm text-gray-500">{t('profile.projectsCompleted')}</p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="text-2xl font-bold text-[#722F37]">2</p>
-                  <p className="text-sm text-gray-500">Couturiers contactés</p>
+                  <p className="text-sm text-gray-500">{t('profile.tailorsContacted')}</p>
                 </div>
               </div>
             </div>
@@ -95,7 +97,7 @@ export default function ProfilParticulier() {
 
         <Card className="border border-gray-100 bg-white shadow-sm mb-6">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg text-[#722F37]">Informations personnelles</CardTitle>
+            <CardTitle className="text-lg text-[#722F37]">{t('profile.personalInfo')}</CardTitle>
             {!isEditing && (
               <Button 
                 variant="ghost" 
@@ -105,7 +107,7 @@ export default function ProfilParticulier() {
                 data-testid="button-edit-profile"
               >
                 <Edit2 className="h-4 w-4 mr-2" />
-                Modifier
+                {t('profile.edit')}
               </Button>
             )}
           </CardHeader>
@@ -116,7 +118,7 @@ export default function ProfilParticulier() {
                   <User className="h-5 w-5 text-gray-400" />
                 </div>
                 <div className="flex-1">
-                  <Label className="text-gray-500 text-sm">Nom complet</Label>
+                  <Label className="text-gray-500 text-sm">{t('auth.fullName')}</Label>
                   {isEditing ? (
                     <Input
                       value={profile.fullName}
@@ -135,7 +137,7 @@ export default function ProfilParticulier() {
                   <Mail className="h-5 w-5 text-gray-400" />
                 </div>
                 <div className="flex-1">
-                  <Label className="text-gray-500 text-sm">Email</Label>
+                  <Label className="text-gray-500 text-sm">{t('auth.email')}</Label>
                   {isEditing ? (
                     <Input
                       type="email"
@@ -155,7 +157,7 @@ export default function ProfilParticulier() {
                   <Phone className="h-5 w-5 text-gray-400" />
                 </div>
                 <div className="flex-1">
-                  <Label className="text-gray-500 text-sm">Téléphone</Label>
+                  <Label className="text-gray-500 text-sm">{t('auth.phone')}</Label>
                   {isEditing ? (
                     <Input
                       type="tel"
@@ -175,7 +177,7 @@ export default function ProfilParticulier() {
                   <MapPin className="h-5 w-5 text-gray-400" />
                 </div>
                 <div className="flex-1">
-                  <Label className="text-gray-500 text-sm">Ville</Label>
+                  <Label className="text-gray-500 text-sm">{t('profile.city')}</Label>
                   {isEditing ? (
                     <Input
                       value={profile.location}
@@ -198,7 +200,7 @@ export default function ProfilParticulier() {
                   onClick={() => setIsEditing(false)}
                   data-testid="button-cancel"
                 >
-                  Annuler
+                  {t('profile.cancel')}
                 </Button>
                 <Button 
                   className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
@@ -206,7 +208,7 @@ export default function ProfilParticulier() {
                   data-testid="button-save"
                 >
                   <Save className="h-4 w-4 mr-2" />
-                  Enregistrer
+                  {t('profile.save')}
                 </Button>
               </div>
             )}
@@ -215,7 +217,7 @@ export default function ProfilParticulier() {
 
         <Card className="border border-gray-100 bg-white shadow-sm mb-6">
           <CardHeader>
-            <CardTitle className="text-lg text-[#722F37]">Accès rapide</CardTitle>
+            <CardTitle className="text-lg text-[#722F37]">{t('profile.quickAccess')}</CardTitle>
           </CardHeader>
           <CardContent className="bg-white">
             <div className="grid grid-cols-3 gap-3">
@@ -224,7 +226,7 @@ export default function ProfilParticulier() {
                   <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
                     <Search className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-sm text-gray-600 text-center">Recherche</span>
+                  <span className="text-sm text-gray-600 text-center">{t('nav.search')}</span>
                 </div>
               </Link>
               <Link href="/particulier/mesures">
@@ -232,7 +234,7 @@ export default function ProfilParticulier() {
                   <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
                     <Ruler className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-sm text-gray-600 text-center">Mesures</span>
+                  <span className="text-sm text-gray-600 text-center">{t('nav.measures')}</span>
                 </div>
               </Link>
               <Link href="/particulier/magazine">
@@ -240,7 +242,7 @@ export default function ProfilParticulier() {
                   <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
                     <BookOpen className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-sm text-gray-600 text-center">Magazine</span>
+                  <span className="text-sm text-gray-600 text-center">{t('nav.magazine')}</span>
                 </div>
               </Link>
             </div>
@@ -249,7 +251,7 @@ export default function ProfilParticulier() {
 
         <Card className="border border-gray-100 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg text-[#722F37]">Compte</CardTitle>
+            <CardTitle className="text-lg text-[#722F37]">{t('profile.account')}</CardTitle>
           </CardHeader>
           <CardContent className="bg-white">
             <div className="space-y-3">
@@ -258,14 +260,14 @@ export default function ProfilParticulier() {
                 className="w-full justify-start bg-white border border-gray-200 text-gray-600"
                 data-testid="button-change-password"
               >
-                Changer de mot de passe
+                {t('profile.changePassword')}
               </Button>
               <Button 
                 variant="outline" 
                 className="w-full justify-start bg-white border border-gray-200 text-gray-600"
                 data-testid="button-notifications"
               >
-                Préférences de notifications
+                {t('profile.notifications')}
               </Button>
               <Link href="/">
                 <Button 
@@ -274,7 +276,7 @@ export default function ProfilParticulier() {
                   data-testid="button-logout"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  Se déconnecter
+                  {t('auth.logout')}
                 </Button>
               </Link>
             </div>

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { TailorCard, TailorCardSkeleton } from "@/components/tailor-card";
 import { PortfolioCard, PortfolioCardSkeleton } from "@/components/portfolio-card";
 import { FilterChip } from "@/components/filter-chip";
@@ -16,7 +17,7 @@ import { Search, Scissors, MapPin, Star, SlidersHorizontal } from "lucide-react"
 import type { TailorWithUser, PortfolioWithTailor } from "@shared/schema";
 
 const specialties = [
-  "Tous",
+  "all",
   "Haute Couture",
   "Retouches",
   "Mariage",
@@ -27,7 +28,7 @@ const specialties = [
 ];
 
 const cities = [
-  "Toutes les villes",
+  "all",
   "Paris",
   "Lyon",
   "Marseille",
@@ -39,10 +40,11 @@ const cities = [
 ];
 
 export default function Discovery() {
-  const [selectedFilter, setSelectedFilter] = useState("Tous");
+  const { t } = useTranslation();
+  const [selectedFilter, setSelectedFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("default");
-  const [selectedCity, setSelectedCity] = useState("Toutes les villes");
+  const [selectedCity, setSelectedCity] = useState("all");
 
   const { data: tailors, isLoading: tailorsLoading } = useQuery<TailorWithUser[]>({
     queryKey: ["/api/tailors"],
@@ -53,11 +55,11 @@ export default function Discovery() {
   });
 
   const filteredTailors = tailors?.filter((tailor) => {
-    const matchesFilter = selectedFilter === "Tous" || tailor.specialties?.includes(selectedFilter);
+    const matchesFilter = selectedFilter === "all" || tailor.specialties?.includes(selectedFilter);
     const matchesSearch = !searchQuery || 
       tailor.user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tailor.user.location?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCity = selectedCity === "Toutes les villes" || 
+    const matchesCity = selectedCity === "all" || 
       tailor.user.location?.toLowerCase().includes(selectedCity.toLowerCase());
     return matchesFilter && matchesSearch && matchesCity;
   }).sort((a, b) => {
@@ -70,21 +72,31 @@ export default function Discovery() {
     return 0;
   });
 
+  const getSpecialtyLabel = (specialty: string) => {
+    if (specialty === "all") return t('discovery.allCities').replace('cities', 'specialties');
+    return specialty;
+  };
+
+  const getCityLabel = (city: string) => {
+    if (city === "all") return t('discovery.allCities');
+    return city;
+  };
+
   return (
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
       <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-2">
-            Trouvez votre couturier
+            {t('discovery.title')}
           </h1>
           <p className="text-gray-600 mb-6">
-            Parcourez les profils de nos artisans couturiers vérifiés
+            {t('discovery.adjustFilters')}
           </p>
           
           <div className="relative max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
-              placeholder="Rechercher par nom ou ville..."
+              placeholder={t('landing.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 h-12 bg-white border-gray-200"
@@ -101,11 +113,11 @@ export default function Discovery() {
               <MapPin className="h-4 w-4 text-[#722F37]" />
               <Select value={selectedCity} onValueChange={setSelectedCity}>
                 <SelectTrigger className="w-[160px] border-gray-200" data-testid="select-city">
-                  <SelectValue placeholder="Ville" />
+                  <SelectValue placeholder={t('discovery.filterByCity')} />
                 </SelectTrigger>
                 <SelectContent>
                   {cities.map((city) => (
-                    <SelectItem key={city} value={city}>{city}</SelectItem>
+                    <SelectItem key={city} value={city}>{getCityLabel(city)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -115,80 +127,81 @@ export default function Discovery() {
               <Star className="h-4 w-4 text-[#722F37]" />
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-[180px] border-gray-200" data-testid="select-sort">
-                  <SelectValue placeholder="Trier par" />
+                  <SelectValue placeholder={t('discovery.sortBy')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="default">Par défaut</SelectItem>
-                  <SelectItem value="rating">Mieux notés</SelectItem>
-                  <SelectItem value="reviews">Plus d'avis</SelectItem>
+                  <SelectItem value="default">{t('discovery.sortBy')}</SelectItem>
+                  <SelectItem value="rating">{t('discovery.bestRating')}</SelectItem>
+                  <SelectItem value="reviews">{t('discovery.mostReviews')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-2 mr-2">
+              <Scissors className="h-4 w-4 text-[#722F37]" />
+              <span className="text-sm text-gray-600">{t('discovery.specialties')}:</span>
+            </div>
             {specialties.map((specialty) => (
               <FilterChip
                 key={specialty}
-                label={specialty}
+                label={specialty === "all" ? t('discovery.allCities').split(' ')[0] : specialty}
                 isActive={selectedFilter === specialty}
                 onClick={() => setSelectedFilter(specialty)}
               />
             ))}
           </div>
         </div>
-      </div>
 
-      <section className="px-4 lg:px-6 py-4 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="font-serif text-2xl text-[#722F37]">
-            Couturiers disponibles
+        <div className="mt-8">
+          <h2 className="font-serif text-xl text-[#722F37] mb-4">
+            {t('discovery.title')}
           </h2>
-          <p className="text-gray-500 text-sm">
-            {filteredTailors?.length || 0} résultats
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          
           {tailorsLoading ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <TailorCardSkeleton key={i} />
-            ))
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <TailorCardSkeleton key={i} />
+              ))}
+            </div>
           ) : filteredTailors && filteredTailors.length > 0 ? (
-            filteredTailors.map((tailor) => (
-              <TailorCard key={tailor.id} tailor={tailor} />
-            ))
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredTailors.map((tailor) => (
+                <TailorCard key={tailor.id} tailor={tailor} />
+              ))}
+            </div>
           ) : (
-            <div className="col-span-full text-center py-12">
-              <Scissors className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Aucun couturier trouvé</p>
-              <p className="text-gray-400 text-sm mt-1">Essayez de modifier vos filtres</p>
+            <div className="text-center py-12 text-gray-500">
+              <Scissors className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p className="text-lg font-medium">{t('discovery.noResults')}</p>
+              <p className="text-sm mt-1">{t('discovery.adjustFilters')}</p>
             </div>
           )}
         </div>
-      </section>
 
-      <section className="px-4 lg:px-6 py-12 max-w-7xl mx-auto">
-        <h2 className="font-serif text-2xl text-[#722F37] mb-6">
-          Dernières réalisations
-        </h2>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {portfolioLoading ? (
-            Array.from({ length: 8 }).map((_, i) => (
-              <PortfolioCardSkeleton key={i} />
-            ))
-          ) : portfolio && portfolio.length > 0 ? (
-            portfolio.map((item) => (
-              <PortfolioCard key={item.id} item={item} />
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12">
-              <p className="text-gray-500">Aucune réalisation disponible</p>
-            </div>
-          )}
-        </div>
-      </section>
+        {portfolio && portfolio.length > 0 && (
+          <div className="mt-12">
+            <h2 className="font-serif text-xl text-[#722F37] mb-4">
+              {t('tailor.portfolio')}
+            </h2>
+            
+            {portfolioLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <PortfolioCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {portfolio.slice(0, 8).map((item) => (
+                  <PortfolioCard key={item.id} item={item} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -26,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Eye, EyeOff, Scissors, Check, Users, TrendingUp, MessageCircle } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { LanguageToggle } from "@/components/language-toggle";
 
 const inscriptionProSchema = z.object({
   fullName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
@@ -45,6 +47,7 @@ const inscriptionProSchema = z.object({
 type InscriptionProForm = z.infer<typeof inscriptionProSchema>;
 
 export default function InscriptionProfessionnel() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
@@ -82,15 +85,15 @@ export default function InscriptionProfessionnel() {
     },
     onSuccess: () => {
       toast({
-        title: "Compte professionnel créé",
-        description: "Bienvenue sur L'Art de Coudre ! Vous pouvez maintenant gérer votre profil.",
+        title: t('auth.proAccountCreated'),
+        description: t('auth.welcomeProDesc2'),
       });
       setLocation("/professionnel");
     },
     onError: (error: Error) => {
       toast({
-        title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de l'inscription",
+        title: t('auth.error'),
+        description: error.message || t('auth.errorMessage'),
         variant: "destructive",
       });
     },
@@ -101,25 +104,28 @@ export default function InscriptionProfessionnel() {
   };
 
   const benefits = [
-    { icon: Users, text: "Accédez à des milliers de clients potentiels" },
-    { icon: TrendingUp, text: "Développez votre activité et votre visibilité" },
-    { icon: MessageCircle, text: "Messagerie directe avec vos clients" },
-    { icon: Check, text: "Gérez votre portfolio et vos créations" },
+    { icon: Users, text: t('auth.proBenefits.clients') },
+    { icon: TrendingUp, text: t('auth.proBenefits.growth') },
+    { icon: MessageCircle, text: t('auth.proBenefits.messaging') },
+    { icon: Check, text: t('auth.proBenefits.portfolio') },
   ];
 
   return (
     <div className="min-h-screen bg-white">
       <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/">
-            <Button variant="ghost" size="icon" data-testid="button-back">
-              <ArrowLeft className="h-5 w-5 text-gray-600" />
-            </Button>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Scissors className="h-6 w-6 text-[#722F37]" />
-            <span className="font-['Parisienne'] text-2xl text-[#722F37]">L'Art de Coudre</span>
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/">
+              <Button variant="ghost" size="icon" data-testid="button-back">
+                <ArrowLeft className="h-5 w-5 text-gray-600" />
+              </Button>
+            </Link>
+            <div className="flex items-center gap-2">
+              <Scissors className="h-6 w-6 text-[#722F37]" />
+              <span className="font-['Parisienne'] text-2xl text-[#722F37]">L'Art de Coudre</span>
+            </div>
           </div>
+          <LanguageToggle />
         </div>
       </header>
 
@@ -127,10 +133,10 @@ export default function InscriptionProfessionnel() {
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           <div className="hidden lg:block">
             <h1 className="font-serif text-4xl text-[#722F37] mb-4">
-              Rejoignez notre réseau
+              {t('auth.joinOurNetwork')}
             </h1>
             <p className="text-gray-600 text-lg mb-8">
-              Développez votre activité en rejoignant la première plateforme de mise en relation avec des particuliers.
+              {t('auth.developActivity')}
             </p>
 
             <div className="space-y-5">
@@ -146,20 +152,19 @@ export default function InscriptionProfessionnel() {
 
             <div className="mt-12 p-6 bg-gray-50 rounded-lg">
               <p className="text-gray-600 italic">
-                "Grâce à L'Art de Coudre, j'ai pu développer ma clientèle de 40% en seulement 6 mois. 
-                La plateforme est intuitive et les demandes sont qualifiées."
+                "{t('auth.testimonialPro')}"
               </p>
-              <p className="text-[#722F37] font-medium mt-3">— Sophie M., Couturière à Lyon</p>
+              <p className="text-[#722F37] font-medium mt-3">— Sophie M., Lyon</p>
             </div>
           </div>
 
           <div>
             <div className="lg:hidden mb-8">
               <h1 className="font-serif text-3xl text-[#722F37] mb-2">
-                Rejoignez notre réseau
+                {t('auth.joinOurNetwork')}
               </h1>
               <p className="text-gray-600">
-                Développez votre activité de couturier.
+                {t('auth.developActivityShort')}
               </p>
             </div>
 
@@ -172,7 +177,7 @@ export default function InscriptionProfessionnel() {
                       name="fullName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">Nom complet / Nom de l'atelier</FormLabel>
+                          <FormLabel className="text-gray-700">{t('auth.workshopName')}</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Atelier Sophie Couture" 
@@ -192,7 +197,7 @@ export default function InscriptionProfessionnel() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">Email professionnel</FormLabel>
+                            <FormLabel className="text-gray-700">{t('auth.proEmail')}</FormLabel>
                             <FormControl>
                               <Input 
                                 type="email" 
@@ -212,7 +217,7 @@ export default function InscriptionProfessionnel() {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">Téléphone</FormLabel>
+                            <FormLabel className="text-gray-700">{t('auth.phone')}</FormLabel>
                             <FormControl>
                               <Input 
                                 type="tel" 
@@ -234,7 +239,7 @@ export default function InscriptionProfessionnel() {
                         name="location"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">Ville</FormLabel>
+                            <FormLabel className="text-gray-700">{t('auth.city')}</FormLabel>
                             <FormControl>
                               <Input 
                                 placeholder="Lyon" 
@@ -253,21 +258,21 @@ export default function InscriptionProfessionnel() {
                         name="experience"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">Années d'expérience</FormLabel>
+                            <FormLabel className="text-gray-700">{t('auth.yearsExperience')}</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger 
                                   data-testid="select-experience"
                                   className="border-gray-200 focus:border-[#722F37] focus:ring-[#722F37]"
                                 >
-                                  <SelectValue placeholder="Sélectionner" />
+                                  <SelectValue placeholder={t('auth.select')} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="1">Moins de 2 ans</SelectItem>
-                                <SelectItem value="3">2 à 5 ans</SelectItem>
-                                <SelectItem value="7">5 à 10 ans</SelectItem>
-                                <SelectItem value="15">Plus de 10 ans</SelectItem>
+                                <SelectItem value="1">{t('auth.lessThan2')}</SelectItem>
+                                <SelectItem value="3">{t('auth.twoToFive')}</SelectItem>
+                                <SelectItem value="7">{t('auth.fiveToTen')}</SelectItem>
+                                <SelectItem value="15">{t('auth.moreThan10')}</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -281,16 +286,16 @@ export default function InscriptionProfessionnel() {
                       name="specialties"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">Spécialités</FormLabel>
+                          <FormLabel className="text-gray-700">{t('auth.specialties')}</FormLabel>
                           <FormControl>
                             <Input 
-                              placeholder="Robes de mariée, Retouches, Sur-mesure..." 
+                              placeholder={t('auth.specialtiesPlaceholder')} 
                               {...field} 
                               data-testid="input-specialties"
                               className="border-gray-200 focus:border-[#722F37] focus:ring-[#722F37]"
                             />
                           </FormControl>
-                          <p className="text-xs text-gray-500 mt-1">Séparez vos spécialités par des virgules</p>
+                          <p className="text-xs text-gray-500 mt-1">{t('auth.separateByComma')}</p>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -302,11 +307,11 @@ export default function InscriptionProfessionnel() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-gray-700">
-                            Présentation <span className="text-gray-400">(optionnel)</span>
+                            {t('auth.presentation')} <span className="text-gray-400">({t('auth.optional')})</span>
                           </FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="Décrivez votre parcours, votre savoir-faire et ce qui vous distingue..." 
+                              placeholder={t('auth.presentationPlaceholder')} 
                               {...field} 
                               data-testid="input-bio"
                               className="border-gray-200 focus:border-[#722F37] focus:ring-[#722F37] min-h-[100px]"
@@ -322,12 +327,12 @@ export default function InscriptionProfessionnel() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">Mot de passe</FormLabel>
+                          <FormLabel className="text-gray-700">{t('auth.password')}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input 
                                 type={showPassword ? "text" : "password"} 
-                                placeholder="Minimum 8 caractères" 
+                                placeholder={t('auth.minChars')} 
                                 {...field} 
                                 data-testid="input-password"
                                 className="border-gray-200 focus:border-[#722F37] focus:ring-[#722F37] pr-10"
@@ -352,12 +357,12 @@ export default function InscriptionProfessionnel() {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">Confirmer le mot de passe</FormLabel>
+                          <FormLabel className="text-gray-700">{t('auth.confirmPassword')}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input 
                                 type={showConfirmPassword ? "text" : "password"} 
-                                placeholder="Confirmez votre mot de passe" 
+                                placeholder={t('auth.confirmPasswordPlaceholder')} 
                                 {...field} 
                                 data-testid="input-confirm-password"
                                 className="border-gray-200 focus:border-[#722F37] focus:ring-[#722F37] pr-10"
@@ -384,24 +389,24 @@ export default function InscriptionProfessionnel() {
                         disabled={registerMutation.isPending}
                         data-testid="button-submit"
                       >
-                        {registerMutation.isPending ? "Création en cours..." : "Créer mon compte professionnel"}
+                        {registerMutation.isPending ? t('auth.creating') : t('auth.signupPro')}
                       </Button>
                     </div>
 
                     <p className="text-center text-sm text-gray-500">
-                      En créant un compte, vous acceptez nos{" "}
-                      <a href="#" className="text-[#722F37] hover:underline">conditions d'utilisation</a>
-                      {" "}et notre{" "}
-                      <a href="#" className="text-[#722F37] hover:underline">politique de confidentialité</a>.
+                      {t('auth.termsAccept')}{" "}
+                      <a href="#" className="text-[#722F37] hover:underline">{t('auth.termsOfUse')}</a>
+                      {" "}{t('auth.and')}{" "}
+                      <a href="#" className="text-[#722F37] hover:underline">{t('auth.privacyPolicy')}</a>.
                     </p>
                   </form>
                 </Form>
 
                 <div className="mt-6 pt-6 border-t border-gray-100 text-center">
                   <p className="text-gray-600">
-                    Déjà un compte ?{" "}
+                    {t('auth.hasAccount')}{" "}
                     <Link href="/connexion" className="text-[#722F37] font-medium hover:underline" data-testid="link-login">
-                      Se connecter
+                      {t('auth.login')}
                     </Link>
                   </p>
                 </div>
@@ -409,9 +414,9 @@ export default function InscriptionProfessionnel() {
             </Card>
 
             <p className="text-center text-sm text-gray-500 mt-6">
-              Vous êtes particulier ?{" "}
+              {t('auth.areYouClient')}{" "}
               <Link href="/inscription-particulier" className="text-[#722F37] font-medium hover:underline" data-testid="link-client-signup">
-                Créer un compte client
+                {t('auth.createClientAccount')}
               </Link>
             </p>
           </div>
@@ -421,7 +426,7 @@ export default function InscriptionProfessionnel() {
       <footer className="bg-white border-t border-gray-100 py-6 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-gray-500 text-sm">
-            © 2026 L'Art de Coudre. Tous droits réservés.
+            © 2026 L'Art de Coudre. {t('footer.allRightsReserved')}
           </p>
         </div>
       </footer>
