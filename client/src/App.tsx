@@ -9,6 +9,9 @@ import { ProBottomNav } from "@/components/pro-bottom-nav";
 import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Briefcase, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
@@ -32,9 +35,20 @@ import MentionsLegales from "@/pages/mentions-legales";
 import Confidentialite from "@/pages/confidentialite";
 
 function MobileHeader() {
+  const { t } = useTranslation();
   return (
-    <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-50">
-      <div className="w-10" />
+    <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-card border-b border-border sticky top-0 z-50">
+      <Link href="/professionnel">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-[#722F37] gap-1 px-2"
+          data-testid="button-mobile-switch-pro"
+        >
+          <Briefcase className="h-4 w-4" />
+          <span className="text-xs">Pro</span>
+        </Button>
+      </Link>
       <Link href="/particulier">
         <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
       </Link>
@@ -57,11 +71,25 @@ function ParticulierLayout({ children }: { children: React.ReactNode }) {
 }
 
 function ProMobileHeader() {
+  const { t } = useTranslation();
   return (
-    <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-50">
-      <Badge variant="secondary" className="bg-[#722F37]/10 text-[#722F37] border-none">Pro</Badge>
+    <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-card border-b border-border sticky top-0 z-50">
+      <Link href="/particulier">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-[#722F37] gap-1 px-2"
+          data-testid="button-mobile-switch-client"
+        >
+          <Users className="h-4 w-4" />
+          <span className="text-xs">{t('landing.clientSpace')}</span>
+        </Button>
+      </Link>
       <Link href="/professionnel">
-        <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
+        <div className="flex items-center gap-2">
+          <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
+          <Badge variant="secondary" className="bg-[#722F37]/10 text-[#722F37] border-none text-[10px]">Pro</Badge>
+        </div>
       </Link>
       <LanguageToggle />
     </div>

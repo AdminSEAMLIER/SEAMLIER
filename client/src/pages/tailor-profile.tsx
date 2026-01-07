@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
+import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ import {
 import type { TailorWithUser, PortfolioWithTailor, ProductWithTailor, ReviewWithUser } from "@shared/schema";
 
 export default function TailorProfile() {
+  const { t } = useTranslation();
   const [, params] = useRoute("/particulier/tailor/:id");
   const tailorId = params?.id;
 
@@ -47,7 +49,7 @@ export default function TailorProfile() {
 
   if (tailorLoading) {
     return (
-      <div className="min-h-screen pb-20 lg:pb-8 bg-white">
+      <div className="min-h-screen pb-20 lg:pb-8 bg-background">
         <div className="h-64 skeleton-shimmer" />
         <div className="px-4 lg:px-6 -mt-16 max-w-4xl mx-auto">
           <div className="h-24 w-24 rounded-full skeleton-shimmer border-4 border-white" />
@@ -63,13 +65,13 @@ export default function TailorProfile() {
 
   if (!tailor) {
     return (
-      <div className="min-h-screen flex items-center justify-center pb-20 lg:pb-8 bg-white">
+      <div className="min-h-screen flex items-center justify-center pb-20 lg:pb-8 bg-background">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">Couturier non trouvé</p>
+          <p className="text-gray-500 mb-4">{t('tailorProfile.notFound')}</p>
           <Link href="/particulier">
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour à l'accueil
+              {t('common.backToHome')}
             </Button>
           </Link>
         </div>
@@ -78,7 +80,7 @@ export default function TailorProfile() {
   }
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
       <div className="relative h-64">
         <img
           src={tailor.coverImageUrl || `https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&h=400&fit=crop`}
@@ -147,16 +149,16 @@ export default function TailorProfile() {
             <div className="flex items-center gap-1">
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
               <span className="font-medium text-gray-900">
-                {tailor.rating?.toFixed(1) || "Nouveau"}
+                {tailor.rating?.toFixed(1) || t('tailorProfile.new')}
               </span>
               {tailor.reviewCount && tailor.reviewCount > 0 && (
-                <span>({tailor.reviewCount} avis)</span>
+                <span>({tailor.reviewCount} {t('tailorProfile.reviews')})</span>
               )}
             </div>
             {tailor.experience && (
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
-                <span>{tailor.experience} ans d'expérience</span>
+                <span>{tailor.experience} {t('tailorProfile.yearsExperience')}</span>
               </div>
             )}
           </div>
@@ -180,18 +182,18 @@ export default function TailorProfile() {
           <div className="flex gap-3 mt-6">
             <Button variant="outline" className="flex-1 h-12 bg-white border-[#722F37] text-[#722F37] hover:bg-gray-50" data-testid="button-contact">
               <MessageCircle className="h-5 w-5 mr-2" />
-              Contacter
+              {t('tailorProfile.contact')}
             </Button>
             <Button variant="outline" className="flex-1 h-12 border-gray-200" data-testid="button-book">
               <Calendar className="h-5 w-5 mr-2" />
-              Réserver
+              {t('tailorProfile.book')}
             </Button>
           </div>
 
           {tailor.hourlyRate && (
             <Card className="p-4 mt-6 bg-[#722F37] border-none shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-white/80">Tarif horaire</span>
+                <span className="text-white/80">{t('tailorProfile.hourlyRate')}</span>
                 <span className="font-semibold text-lg text-white">
                   {tailor.hourlyRate.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}/h
                 </span>
@@ -203,13 +205,13 @@ export default function TailorProfile() {
         <Tabs defaultValue="portfolio" className="mt-8">
           <TabsList className="w-full grid grid-cols-3 bg-gray-100">
             <TabsTrigger value="portfolio" className="data-[state=active]:bg-white" data-testid="tab-portfolio">
-              Portfolio ({portfolio?.length || 0})
+              {t('tailorProfile.portfolio')} ({portfolio?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="products" className="data-[state=active]:bg-white" data-testid="tab-products">
-              Boutique ({products?.length || 0})
+              {t('tailorProfile.shop')} ({products?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="reviews" className="data-[state=active]:bg-white" data-testid="tab-reviews">
-              Avis ({reviews?.length || 0})
+              {t('tailorProfile.reviewsTab')} ({reviews?.length || 0})
             </TabsTrigger>
           </TabsList>
 
@@ -225,7 +227,7 @@ export default function TailorProfile() {
                 ))
               ) : (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-gray-500">Aucune réalisation</p>
+                  <p className="text-gray-500">{t('tailorProfile.noRealisations')}</p>
                 </div>
               )}
             </div>
@@ -243,7 +245,7 @@ export default function TailorProfile() {
                 ))
               ) : (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-gray-500">Aucun produit en vente</p>
+                  <p className="text-gray-500">{t('tailorProfile.noProducts')}</p>
                 </div>
               )}
             </div>
@@ -261,7 +263,7 @@ export default function TailorProfile() {
                 ))
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-gray-500">Aucun avis pour le moment</p>
+                  <p className="text-gray-500">{t('tailorProfile.noReviews')}</p>
                 </div>
               )}
             </div>

@@ -4,7 +4,6 @@ import { TailorCard, TailorCardSkeleton } from "@/components/tailor-card";
 import { PortfolioCard, PortfolioCardSkeleton } from "@/components/portfolio-card";
 import { FilterChip } from "@/components/filter-chip";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -16,15 +15,15 @@ import { useState } from "react";
 import { Search, Scissors, MapPin, Star, SlidersHorizontal } from "lucide-react";
 import type { TailorWithUser, PortfolioWithTailor } from "@shared/schema";
 
-const specialties = [
-  "all",
-  "Haute Couture",
-  "Retouches",
-  "Mariage",
-  "Costumes",
-  "Robes",
-  "Vêtements Africains",
-  "Streetwear",
+const specialtyKeys = [
+  { key: "all", dbValue: "all" },
+  { key: "hauteCouture", dbValue: "Haute Couture" },
+  { key: "alterations", dbValue: "Retouches" },
+  { key: "wedding", dbValue: "Mariage" },
+  { key: "suits", dbValue: "Costumes" },
+  { key: "dresses", dbValue: "Robes" },
+  { key: "african", dbValue: "Vêtements Africains" },
+  { key: "streetwear", dbValue: "Streetwear" },
 ];
 
 const cities = [
@@ -54,8 +53,14 @@ export default function Discovery() {
     queryKey: ["/api/portfolio"],
   });
 
+  const getDbValueForFilter = (filterKey: string) => {
+    const found = specialtyKeys.find(s => s.key === filterKey);
+    return found?.dbValue || filterKey;
+  };
+
   const filteredTailors = tailors?.filter((tailor) => {
-    const matchesFilter = selectedFilter === "all" || tailor.specialties?.includes(selectedFilter);
+    const dbValue = getDbValueForFilter(selectedFilter);
+    const matchesFilter = selectedFilter === "all" || tailor.specialties?.includes(dbValue);
     const matchesSearch = !searchQuery || 
       tailor.user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tailor.user.location?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -72,34 +77,29 @@ export default function Discovery() {
     return 0;
   });
 
-  const getSpecialtyLabel = (specialty: string) => {
-    if (specialty === "all") return t('discovery.allCities').replace('cities', 'specialties');
-    return specialty;
-  };
-
   const getCityLabel = (city: string) => {
     if (city === "all") return t('discovery.allCities');
     return city;
   };
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
-      <div className="bg-gray-50 border-b border-gray-100">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
+      <div className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-2">
             {t('discovery.title')}
           </h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-muted-foreground mb-6">
             {t('discovery.adjustFilters')}
           </p>
           
           <div className="relative max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               placeholder={t('landing.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-12 bg-white border-gray-200"
+              className="pl-12 h-12 bg-card border-border"
               data-testid="input-search-discovery"
             />
           </div>
@@ -112,7 +112,7 @@ export default function Discovery() {
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-[#722F37]" />
               <Select value={selectedCity} onValueChange={setSelectedCity}>
-                <SelectTrigger className="w-[160px] border-gray-200" data-testid="select-city">
+                <SelectTrigger className="w-[160px] border-border" data-testid="select-city">
                   <SelectValue placeholder={t('discovery.filterByCity')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -126,7 +126,7 @@ export default function Discovery() {
             <div className="flex items-center gap-2">
               <Star className="h-4 w-4 text-[#722F37]" />
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[180px] border-gray-200" data-testid="select-sort">
+                <SelectTrigger className="w-[180px] border-border" data-testid="select-sort">
                   <SelectValue placeholder={t('discovery.sortBy')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -141,14 +141,14 @@ export default function Discovery() {
           <div className="flex flex-wrap gap-2">
             <div className="flex items-center gap-2 mr-2">
               <Scissors className="h-4 w-4 text-[#722F37]" />
-              <span className="text-sm text-gray-600">{t('discovery.specialties')}:</span>
+              <span className="text-sm text-muted-foreground">{t('discovery.specialties')}:</span>
             </div>
-            {specialties.map((specialty) => (
+            {specialtyKeys.map((specialty) => (
               <FilterChip
-                key={specialty}
-                label={specialty === "all" ? t('discovery.allCities').split(' ')[0] : specialty}
-                isActive={selectedFilter === specialty}
-                onClick={() => setSelectedFilter(specialty)}
+                key={specialty.key}
+                label={specialty.key === "all" ? t('discovery.allSpecialties') : t(`specialties.${specialty.key}`)}
+                isActive={selectedFilter === specialty.key}
+                onClick={() => setSelectedFilter(specialty.key)}
               />
             ))}
           </div>
@@ -172,8 +172,8 @@ export default function Discovery() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-500">
-              <Scissors className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <div className="text-center py-12 text-muted-foreground">
+              <Scissors className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
               <p className="text-lg font-medium">{t('discovery.noResults')}</p>
               <p className="text-sm mt-1">{t('discovery.adjustFilters')}</p>
             </div>

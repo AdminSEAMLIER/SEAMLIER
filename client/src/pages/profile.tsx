@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { 
   User, 
@@ -21,27 +21,29 @@ import {
 } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
 
-const menuItems = [
-  { icon: Heart, label: "Favoris", path: "/favorites" },
-  { icon: ShoppingBag, label: "Mes commandes", path: "/orders" },
-  { icon: Calendar, label: "Mes rendez-vous", path: "/appointments" },
-  { icon: Bell, label: "Notifications", path: "/notifications" },
-];
-
-const settingsItems = [
-  { icon: Settings, label: "Paramètres", path: "/settings" },
-  { icon: Shield, label: "Confidentialité", path: "/privacy" },
-  { icon: HelpCircle, label: "Aide & Support", path: "/help" },
-];
-
 export default function Profile() {
+  const { t } = useTranslation();
+  
+  const menuItems = [
+    { icon: Heart, labelKey: "userProfile.favorites", path: "/favorites" },
+    { icon: ShoppingBag, labelKey: "userProfile.orders", path: "/orders" },
+    { icon: Calendar, labelKey: "userProfile.appointments", path: "/appointments" },
+    { icon: Bell, labelKey: "userProfile.notifications", path: "/notifications" },
+  ];
+
+  const settingsItems = [
+    { icon: Settings, labelKey: "userProfile.settings", path: "/settings" },
+    { icon: Shield, labelKey: "userProfile.privacy", path: "/privacy" },
+    { icon: HelpCircle, labelKey: "userProfile.help", path: "/help" },
+  ];
+
   const { data: user, isLoading } = useQuery<UserType>({
     queryKey: ["/api/user/me"],
   });
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pb-20 lg:pb-8 px-4 lg:px-6 py-6 bg-white">
+      <div className="min-h-screen pb-20 lg:pb-8 px-4 lg:px-6 py-6 bg-background">
         <div className="max-w-2xl mx-auto space-y-6">
           <div className="flex items-center gap-4">
             <div className="h-20 w-20 rounded-full skeleton-shimmer" />
@@ -58,12 +60,12 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
-      <div className="bg-gray-50 border-b border-gray-100">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
+      <div className="bg-card border-b border-border">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
             <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
-              Mon Profil
+              {t('userProfile.title')}
             </h1>
             <ThemeToggle />
           </div>
@@ -78,7 +80,7 @@ export default function Profile() {
             
             <div className="flex-1">
               <h2 className="font-semibold text-xl text-gray-900">
-                {user?.fullName || "Utilisateur"}
+                {user?.fullName || t('userProfile.user')}
               </h2>
               {user?.location && (
                 <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
@@ -88,13 +90,13 @@ export default function Profile() {
               )}
               {user?.role === "tailor" && (
                 <span className="inline-block bg-[#722F37]/10 text-[#722F37] text-xs font-medium px-2 py-1 rounded-full mt-2">
-                  Couturier
+                  {t('userProfile.tailor')}
                 </span>
               )}
             </div>
             
             <Button variant="outline" size="sm" className="border-gray-200" data-testid="button-edit-profile">
-              Modifier
+              {t('userProfile.edit')}
             </Button>
           </div>
         </div>
@@ -119,19 +121,19 @@ export default function Profile() {
         </Card>
 
         <Card className="mb-6 border-gray-100 shadow-sm overflow-hidden">
-          {menuItems.map((item, index) => {
+          {menuItems.map((item) => {
             const Icon = item.icon;
             return (
               <button
                 key={item.path}
                 className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors text-left border-b border-gray-100 last:border-b-0"
-                data-testid={`menu-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                data-testid={`menu-${item.labelKey.split('.')[1]}`}
               >
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
                     <Icon className="h-5 w-5 text-gray-600" />
                   </div>
-                  <span className="font-medium text-gray-900">{item.label}</span>
+                  <span className="font-medium text-gray-900">{t(item.labelKey)}</span>
                 </div>
                 <ChevronRight className="h-5 w-5 text-gray-400" />
               </button>
@@ -146,13 +148,13 @@ export default function Profile() {
               <button
                 key={item.path}
                 className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors text-left border-b border-gray-100 last:border-b-0"
-                data-testid={`menu-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                data-testid={`menu-${item.labelKey.split('.')[1]}`}
               >
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
                     <Icon className="h-5 w-5 text-gray-600" />
                   </div>
-                  <span className="font-medium text-gray-900">{item.label}</span>
+                  <span className="font-medium text-gray-900">{t(item.labelKey)}</span>
                 </div>
                 <ChevronRight className="h-5 w-5 text-gray-400" />
               </button>
@@ -166,7 +168,7 @@ export default function Profile() {
           data-testid="button-logout"
         >
           <LogOut className="h-4 w-4 mr-2" />
-          Déconnexion
+          {t('userProfile.logout')}
         </Button>
       </div>
     </div>

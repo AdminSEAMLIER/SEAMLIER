@@ -316,5 +316,75 @@
     "next": "Next",
     "submit": "Submit",
     "cm": "cm"
+  },
+  "marketplace": {
+    "title": "Shop",
+    "subtitle": "Discover unique creations from our tailors",
+    "searchPlaceholder": "Search for a product...",
+    "availableProducts": "Available products",
+    "results": "results",
+    "noProducts": "No products available",
+    "adjustFilters": "Try adjusting your filters",
+    "categories": {
+      "all": "All",
+      "dresses": "Dresses",
+      "suits": "Suits",
+      "accessories": "Accessories",
+      "children": "Children's Clothing",
+      "african": "African Attire",
+      "wedding": "Wedding",
+      "readyToWear": "Ready-to-wear"
+    }
+  },
+  "tailorProfile": {
+    "notFound": "Tailor not found",
+    "contact": "Contact",
+    "book": "Book",
+    "hourlyRate": "Hourly rate",
+    "yearsExperience": "years of experience",
+    "reviews": "reviews",
+    "new": "New",
+    "portfolio": "Portfolio",
+    "shop": "Shop",
+    "reviewsTab": "Reviews",
+    "noRealisations": "No work to show",
+    "noProducts": "No products for sale",
+    "noReviews": "No reviews yet"
+  },
+  "userProfile": {
+    "title": "My Profile",
+    "edit": "Edit",
+    "tailor": "Tailor",
+    "user": "User",
+    "favorites": "Favorites",
+    "orders": "My orders",
+    "appointments": "My appointments",
+    "notifications": "Notifications",
+    "settings": "Settings",
+    "privacy": "Privacy",
+    "help": "Help & Support",
+    "logout": "Log out"
+  },
+  "specialties": {
+    "all": "All",
+    "hauteCouture": "Haute Couture",
+    "alterations": "Alterations",
+    "wedding": "Wedding",
+    "suits": "Suits",
+    "dresses": "Dresses",
+    "african": "African Clothing",
+    "streetwear": "Streetwear"
+  },
+  "discovery": {
+    "title": "Discover Tailors",
+    "adjustFilters": "Adjust your filters to find the perfect tailor",
+    "allCities": "All cities",
+    "allSpecialties": "All",
+    "filterByCity": "Filter by city",
+    "sortBy": "Sort by",
+    "bestRating": "Best rating",
+    "mostReviews": "Most reviews",
+    "specialties": "Specialties",
+    "noResults": "No tailors found"
   }
 }

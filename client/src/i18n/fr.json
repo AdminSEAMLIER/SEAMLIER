@@ -316,5 +316,75 @@
     "next": "Suivant",
     "submit": "Envoyer",
     "cm": "cm"
+  },
+  "marketplace": {
+    "title": "Boutique",
+    "subtitle": "Découvrez les créations uniques de nos couturiers",
+    "searchPlaceholder": "Rechercher un produit...",
+    "availableProducts": "Produits disponibles",
+    "results": "résultats",
+    "noProducts": "Aucun produit disponible",
+    "adjustFilters": "Essayez de modifier vos filtres",
+    "categories": {
+      "all": "Tous",
+      "dresses": "Robes",
+      "suits": "Costumes",
+      "accessories": "Accessoires",
+      "children": "Vêtements Enfants",
+      "african": "Tenues Africaines",
+      "wedding": "Mariage",
+      "readyToWear": "Prêt-à-porter"
+    }
+  },
+  "tailorProfile": {
+    "notFound": "Couturier non trouvé",
+    "contact": "Contacter",
+    "book": "Réserver",
+    "hourlyRate": "Tarif horaire",
+    "yearsExperience": "ans d'expérience",
+    "reviews": "avis",
+    "new": "Nouveau",
+    "portfolio": "Portfolio",
+    "shop": "Boutique",
+    "reviewsTab": "Avis",
+    "noRealisations": "Aucune réalisation",
+    "noProducts": "Aucun produit en vente",
+    "noReviews": "Aucun avis pour le moment"
+  },
+  "userProfile": {
+    "title": "Mon Profil",
+    "edit": "Modifier",
+    "tailor": "Couturier",
+    "user": "Utilisateur",
+    "favorites": "Favoris",
+    "orders": "Mes commandes",
+    "appointments": "Mes rendez-vous",
+    "notifications": "Notifications",
+    "settings": "Paramètres",
+    "privacy": "Confidentialité",
+    "help": "Aide & Support",
+    "logout": "Déconnexion"
+  },
+  "specialties": {
+    "all": "Toutes",
+    "hauteCouture": "Haute Couture",
+    "alterations": "Retouches",
+    "wedding": "Mariage",
+    "suits": "Costumes",
+    "dresses": "Robes",
+    "african": "Vêtements Africains",
+    "streetwear": "Streetwear"
+  },
+  "discovery": {
+    "title": "Découvrir les Couturiers",
+    "adjustFilters": "Ajustez vos filtres pour trouver le couturier idéal",
+    "allCities": "Toutes les villes",
+    "allSpecialties": "Toutes",
+    "filterByCity": "Filtrer par ville",
+    "sortBy": "Trier par",
+    "bestRating": "Meilleure note",
+    "mostReviews": "Plus d'avis",
+    "specialties": "Spécialités",
+    "noResults": "Aucun couturier trouvé"
   }
 }
