@@ -61,7 +61,7 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
                 <Button
                   variant="ghost"
                   className={cn(
-                    "gap-2",
+                    "gap-2 text-gray-800",
                     isActive && "bg-gray-100 text-[#722F37]"
                   )}
                   data-testid={`nav-desktop-${item.labelKey.split('.')[1]}`}
