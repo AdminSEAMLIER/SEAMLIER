@@ -16,7 +16,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Eye, EyeOff, Scissors, Check } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Check } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -100,10 +101,7 @@ export default function InscriptionParticulier() {
                 <ArrowLeft className="h-5 w-5 text-gray-600" />
               </Button>
             </Link>
-            <div className="flex items-center gap-2">
-              <Scissors className="h-6 w-6 text-[#722F37]" />
-              <span className="font-['Parisienne'] text-2xl text-[#722F37]">L'Art de Coudre</span>
-            </div>
+            <Logo className="text-[#722F37]" textClassName="text-2xl text-[#722F37]" iconSize="h-6 w-6" />
           </div>
           <LanguageToggle />
         </div>
