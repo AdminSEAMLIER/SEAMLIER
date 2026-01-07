@@ -71,9 +71,22 @@ export default function ProfilParticulier() {
                   <Camera className="h-4 w-4" />
                 </button>
               </div>
-              <div className="text-center sm:text-left">
+              <div className="text-center sm:text-left flex-1">
                 <h2 className="text-xl font-semibold text-[#722F37]">{profile.fullName}</h2>
                 <p className="text-gray-500">Membre depuis janvier 2026</p>
+              </div>
+            </div>
+            
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-2xl font-bold text-[#722F37]">3</p>
+                  <p className="text-sm text-gray-500">Projets réalisés</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-2xl font-bold text-[#722F37]">2</p>
+                  <p className="text-sm text-gray-500">Couturiers contactés</p>
+                </div>
               </div>
             </div>
           </CardContent>
