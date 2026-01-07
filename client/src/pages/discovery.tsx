@@ -11,7 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearch } from "wouter";
 import { Search, Scissors, MapPin, Star, SlidersHorizontal } from "lucide-react";
 import type { TailorWithUser, PortfolioWithTailor } from "@shared/schema";
 
@@ -40,10 +41,20 @@ const cities = [
 
 export default function Discovery() {
   const { t } = useTranslation();
+  const searchString = useSearch();
+  const urlParams = new URLSearchParams(searchString);
+  const villeParam = urlParams.get("ville") || "";
+  
   const [selectedFilter, setSelectedFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(villeParam);
   const [sortBy, setSortBy] = useState("default");
   const [selectedCity, setSelectedCity] = useState("all");
+  
+  useEffect(() => {
+    if (villeParam) {
+      setSearchQuery(villeParam);
+    }
+  }, [villeParam]);
 
   const { data: tailors, isLoading: tailorsLoading } = useQuery<TailorWithUser[]>({
     queryKey: ["/api/tailors"],

@@ -156,7 +156,7 @@ export default function Landing() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {cities.map((city) => (
-              <Link key={city.name} href="/particulier">
+              <Link key={city.name} href={`/particulier/decouverte?ville=${encodeURIComponent(city.name)}`}>
                 <Card className="overflow-hidden cursor-pointer group border-0 shadow-sm hover:shadow-md transition-shadow">
                   <div className="relative h-32">
                     <img
