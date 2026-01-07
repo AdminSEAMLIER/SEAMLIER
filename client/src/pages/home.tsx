@@ -49,7 +49,7 @@ export default function Home() {
       <section className="relative py-16 lg:py-24 px-4 lg:px-8 overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=1920&h=800&fit=crop')" }}
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&h=800&fit=crop')" }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
         <div className="relative max-w-4xl mx-auto text-center">
