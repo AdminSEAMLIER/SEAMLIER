@@ -3,8 +3,16 @@ import { TailorCard, TailorCardSkeleton } from "@/components/tailor-card";
 import { PortfolioCard, PortfolioCardSkeleton } from "@/components/portfolio-card";
 import { FilterChip } from "@/components/filter-chip";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useState } from "react";
-import { Search, Scissors, MapPin } from "lucide-react";
+import { Search, Scissors, MapPin, Star, SlidersHorizontal } from "lucide-react";
 import type { TailorWithUser, PortfolioWithTailor } from "@shared/schema";
 
 const specialties = [
@@ -18,9 +26,23 @@ const specialties = [
   "Streetwear",
 ];
 
+const cities = [
+  "Toutes les villes",
+  "Paris",
+  "Lyon",
+  "Marseille",
+  "Bordeaux",
+  "Toulouse",
+  "Nice",
+  "Nantes",
+  "Lille",
+];
+
 export default function Discovery() {
   const [selectedFilter, setSelectedFilter] = useState("Tous");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("default");
+  const [selectedCity, setSelectedCity] = useState("Toutes les villes");
 
   const { data: tailors, isLoading: tailorsLoading } = useQuery<TailorWithUser[]>({
     queryKey: ["/api/tailors"],
@@ -35,7 +57,17 @@ export default function Discovery() {
     const matchesSearch = !searchQuery || 
       tailor.user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tailor.user.location?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesFilter && matchesSearch;
+    const matchesCity = selectedCity === "Toutes les villes" || 
+      tailor.user.location?.toLowerCase().includes(selectedCity.toLowerCase());
+    return matchesFilter && matchesSearch && matchesCity;
+  }).sort((a, b) => {
+    if (sortBy === "rating") {
+      return (b.rating || 0) - (a.rating || 0);
+    }
+    if (sortBy === "reviews") {
+      return (b.reviewCount || 0) - (a.reviewCount || 0);
+    }
+    return 0;
   });
 
   return (
@@ -63,15 +95,47 @@ export default function Discovery() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6">
-        <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
-          {specialties.map((specialty) => (
-            <FilterChip
-              key={specialty}
-              label={specialty}
-              isActive={selectedFilter === specialty}
-              onClick={() => setSelectedFilter(specialty)}
-            />
-          ))}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-[#722F37]" />
+              <Select value={selectedCity} onValueChange={setSelectedCity}>
+                <SelectTrigger className="w-[160px] border-gray-200" data-testid="select-city">
+                  <SelectValue placeholder="Ville" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cities.map((city) => (
+                    <SelectItem key={city} value={city}>{city}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4 text-[#722F37]" />
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[180px] border-gray-200" data-testid="select-sort">
+                  <SelectValue placeholder="Trier par" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Par défaut</SelectItem>
+                  <SelectItem value="rating">Mieux notés</SelectItem>
+                  <SelectItem value="reviews">Plus d'avis</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {specialties.map((specialty) => (
+              <FilterChip
+                key={specialty}
+                label={specialty}
+                isActive={selectedFilter === specialty}
+                onClick={() => setSelectedFilter(specialty)}
+              />
+            ))}
+          </div>
         </div>
       </div>
 

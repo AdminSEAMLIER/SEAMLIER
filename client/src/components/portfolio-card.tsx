@@ -8,7 +8,7 @@ interface PortfolioCardProps {
 export function PortfolioCard({ item }: PortfolioCardProps) {
   return (
     <Card 
-      className="overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      className="overflow-hidden border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer"
       data-testid={`card-portfolio-${item.id}`}
     >
       <div className="relative aspect-square overflow-hidden">
@@ -20,8 +20,8 @@ export function PortfolioCard({ item }: PortfolioCardProps) {
         />
       </div>
       
-      <CardContent className="p-3">
-        <p className="font-medium text-gray-900 text-sm line-clamp-1">{item.title}</p>
+      <CardContent className="p-3 bg-white">
+        <p className="font-medium text-[#722F37] text-sm line-clamp-1">{item.title}</p>
         <p className="text-xs text-gray-500 mt-0.5">par {item.tailor.user.fullName}</p>
       </CardContent>
     </Card>
