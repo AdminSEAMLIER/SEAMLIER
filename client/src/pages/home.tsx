@@ -136,7 +136,7 @@ export default function Home() {
       </section>
 
       {featuredTailors && featuredTailors.length > 0 && (
-        <section className="py-12 lg:py-16 px-4 lg:px-8 bg-gray-50">
+        <section className="py-12 lg:py-16 px-4 lg:px-8 bg-white border-y border-gray-100">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-serif text-2xl lg:text-3xl text-[#722F37]">
