@@ -51,14 +51,14 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
           <Logo className="text-[#722F37]" textClassName="text-lg text-[#722F37]" />
           <div className="flex items-center gap-4">
-            <Link href="/particulier">
-              <Button variant="ghost" className="text-[#722F37]" data-testid="button-particulier-header">
-                Espace Particulier
+            <Link href="/connexion">
+              <Button variant="ghost" className="text-[#722F37]" data-testid="button-connexion-header">
+                Connexion
               </Button>
             </Link>
-            <Link href="/professionnel">
-              <Button variant="outline" className="border-[#722F37] text-[#722F37]" data-testid="button-pro-header">
-                Espace Pro
+            <Link href="/inscription-particulier">
+              <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white" data-testid="button-inscription-header">
+                S'inscrire
               </Button>
             </Link>
           </div>

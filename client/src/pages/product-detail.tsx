@@ -157,7 +157,7 @@ export default function ProductDetail() {
             <ShoppingCart className="h-5 w-5 mr-2" />
             Ajouter au panier
           </Button>
-          <Button variant="outline" className="flex-1 h-12 border-gray-200" data-testid="button-contact-seller">
+          <Button variant="outline" className="flex-1 h-12 bg-white border-[#722F37] text-[#722F37] hover:bg-gray-50" data-testid="button-contact-seller">
             <MessageCircle className="h-5 w-5 mr-2" />
             Contacter
           </Button>

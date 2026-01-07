@@ -178,7 +178,7 @@ export default function TailorProfile() {
           )}
 
           <div className="flex gap-3 mt-6">
-            <Button className="flex-1 h-12 bg-[#722F37] hover:bg-[#5a252c]" data-testid="button-contact">
+            <Button variant="outline" className="flex-1 h-12 bg-white border-[#722F37] text-[#722F37] hover:bg-gray-50" data-testid="button-contact">
               <MessageCircle className="h-5 w-5 mr-2" />
               Contacter
             </Button>

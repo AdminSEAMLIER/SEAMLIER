@@ -19,6 +19,7 @@ import ProDashboard from "@/pages/pro-dashboard";
 import InscriptionParticulier from "@/pages/inscription-particulier";
 import InscriptionProfessionnel from "@/pages/inscription-professionnel";
 import ProfilParticulier from "@/pages/profil-particulier";
+import Connexion from "@/pages/connexion";
 
 function ParticulierLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -48,6 +49,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
+      <Route path="/connexion" component={Connexion} />
       <Route path="/inscription-particulier" component={InscriptionParticulier} />
       <Route path="/inscription-professionnel" component={InscriptionProfessionnel} />
       

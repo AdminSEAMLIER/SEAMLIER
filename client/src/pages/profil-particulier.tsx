@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut } from "lucide-react";
+import { Link } from "wouter";
+import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, Ruler, BookOpen, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -212,6 +213,40 @@ export default function ProfilParticulier() {
           </CardContent>
         </Card>
 
+        <Card className="border border-gray-100 bg-white shadow-sm mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg text-[#722F37]">Accès rapide</CardTitle>
+          </CardHeader>
+          <CardContent className="bg-white">
+            <div className="grid grid-cols-3 gap-3">
+              <Link href="/particulier/decouverte">
+                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-testid="link-recherche">
+                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
+                    <Search className="h-5 w-5 text-[#722F37]" />
+                  </div>
+                  <span className="text-sm text-gray-600 text-center">Recherche</span>
+                </div>
+              </Link>
+              <Link href="/particulier/mesures">
+                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-testid="link-mesures">
+                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
+                    <Ruler className="h-5 w-5 text-[#722F37]" />
+                  </div>
+                  <span className="text-sm text-gray-600 text-center">Mesures</span>
+                </div>
+              </Link>
+              <Link href="/particulier/magazine">
+                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-testid="link-magazine">
+                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
+                    <BookOpen className="h-5 w-5 text-[#722F37]" />
+                  </div>
+                  <span className="text-sm text-gray-600 text-center">Magazine</span>
+                </div>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="border border-gray-100 bg-white shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg text-[#722F37]">Compte</CardTitle>
@@ -232,14 +267,16 @@ export default function ProfilParticulier() {
               >
                 Préférences de notifications
               </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start bg-white border border-red-200 text-red-600 hover:bg-red-50"
-                data-testid="button-logout"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Se déconnecter
-              </Button>
+              <Link href="/">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start bg-white border border-red-200 text-red-600 hover:bg-red-50"
+                  data-testid="button-logout"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Se déconnecter
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
