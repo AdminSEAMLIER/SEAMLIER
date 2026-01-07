@@ -8,7 +8,7 @@ import { Logo } from "@/components/logo";
 
 const particulierNavItems = [
   { icon: Home, label: "Accueil", path: "/particulier" },
-  { icon: Compass, label: "Découverte", path: "/particulier/decouverte" },
+  { icon: Compass, label: "Recherche", path: "/particulier/decouverte" },
   { icon: Ruler, label: "Mesures", path: "/particulier/mesures" },
   { icon: BookOpen, label: "Magazine", path: "/particulier/magazine" },
   { icon: User, label: "Profil", path: "/particulier/profil" },
