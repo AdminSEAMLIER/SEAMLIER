@@ -19,6 +19,11 @@ import Magazine from "@/pages/magazine";
 import TailorProfile from "@/pages/tailor-profile";
 import ProductDetail from "@/pages/product-detail";
 import ProDashboard from "@/pages/pro-dashboard";
+import ProDemandes from "@/pages/pro-demandes";
+import ProProjets from "@/pages/pro-projets";
+import ProMessagerie from "@/pages/pro-messagerie";
+import ProPlanning from "@/pages/pro-planning";
+import ProProfil from "@/pages/pro-profil";
 import InscriptionParticulier from "@/pages/inscription-particulier";
 import InscriptionProfessionnel from "@/pages/inscription-professionnel";
 import ProfilParticulier from "@/pages/profil-particulier";
@@ -136,9 +141,29 @@ function Router() {
           <ProDashboard />
         </ProfessionnelLayout>
       </Route>
-      <Route path="/professionnel/messages">
+      <Route path="/professionnel/demandes">
         <ProfessionnelLayout>
-          <Messages />
+          <ProDemandes />
+        </ProfessionnelLayout>
+      </Route>
+      <Route path="/professionnel/projets">
+        <ProfessionnelLayout>
+          <ProProjets />
+        </ProfessionnelLayout>
+      </Route>
+      <Route path="/professionnel/messagerie">
+        <ProfessionnelLayout>
+          <ProMessagerie />
+        </ProfessionnelLayout>
+      </Route>
+      <Route path="/professionnel/planning">
+        <ProfessionnelLayout>
+          <ProPlanning />
+        </ProfessionnelLayout>
+      </Route>
+      <Route path="/professionnel/profil">
+        <ProfessionnelLayout>
+          <ProProfil />
         </ProfessionnelLayout>
       </Route>
 

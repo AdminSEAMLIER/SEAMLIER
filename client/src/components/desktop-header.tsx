@@ -1,4 +1,4 @@
-import { Home, Compass, MessageCircle, Ruler, BookOpen, User, Bell, LayoutDashboard, ArrowLeft } from "lucide-react";
+import { Home, Compass, MessageCircle, Ruler, BookOpen, User, Bell, FileText, FolderKanban, Calendar, ArrowLeft } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,12 @@ const particulierNavItems = [
 ];
 
 const proNavItems = [
-  { icon: LayoutDashboard, labelKey: "nav.dashboard", path: "/professionnel" },
-  { icon: MessageCircle, labelKey: "nav.messages", path: "/professionnel/messages" },
+  { icon: Home, labelKey: "nav.proHome", path: "/professionnel" },
+  { icon: FileText, labelKey: "nav.requests", path: "/professionnel/demandes" },
+  { icon: FolderKanban, labelKey: "nav.projects", path: "/professionnel/projets" },
+  { icon: MessageCircle, labelKey: "nav.messaging", path: "/professionnel/messagerie" },
+  { icon: Calendar, labelKey: "nav.planning", path: "/professionnel/planning" },
+  { icon: User, labelKey: "nav.profile", path: "/professionnel/profil" },
 ];
 
 interface DesktopHeaderProps {
