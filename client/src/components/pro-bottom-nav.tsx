@@ -17,7 +17,7 @@ export function ProBottomNav() {
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border shadow-lg z-50 pb-safe lg:hidden"
+      className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 shadow-lg z-50 pb-safe lg:hidden"
       data-testid="nav-bottom-pro"
     >
       <div className="flex items-center justify-around h-full max-w-lg mx-auto px-2">

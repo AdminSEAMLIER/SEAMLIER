@@ -37,7 +37,7 @@ import Confidentialite from "@/pages/confidentialite";
 function MobileHeader() {
   const { t } = useTranslation();
   return (
-    <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-card border-b border-border sticky top-0 z-50">
+    <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-50">
       <Link href="/professionnel">
         <Button
           size="sm"
@@ -73,7 +73,7 @@ function ParticulierLayout({ children }: { children: React.ReactNode }) {
 function ProMobileHeader() {
   const { t } = useTranslation();
   return (
-    <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-card border-b border-border sticky top-0 z-50">
+    <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-50">
       <Link href="/particulier">
         <Button
           size="sm"
