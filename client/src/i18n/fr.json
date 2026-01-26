@@ -130,7 +130,8 @@
     "searchError": "Ville requise",
     "enterCity": "Veuillez entrer une ville pour rechercher des couturiers.",
     "searchSuccess": "Recherche en cours",
-    "searchingIn": "Recherche de couturiers à {{city}}..."
+    "searchingIn": "Recherche de couturiers à {{city}}...",
+    "selectSpaceFirst": "Connectez-vous ou choisissez un espace pour découvrir les couturiers de cette ville."
   },
   "auth": {
     "login": "Se connecter",

@@ -130,7 +130,8 @@
     "searchError": "City required",
     "enterCity": "Please enter a city to search for tailors.",
     "searchSuccess": "Searching",
-    "searchingIn": "Searching for tailors in {{city}}..."
+    "searchingIn": "Searching for tailors in {{city}}...",
+    "selectSpaceFirst": "Log in or choose a space to discover tailors in this city."
   },
   "auth": {
     "login": "Log in",
