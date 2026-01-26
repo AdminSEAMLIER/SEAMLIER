@@ -127,7 +127,7 @@ export default function CouturierProfile() {
             </AvatarFallback>
           </Avatar>
           
-          <div className="flex-1 pb-1">
+          <div className="flex-1 pt-4">
             <div className="flex items-center gap-2">
               <h1 className="font-serif text-2xl lg:text-3xl text-gray-700">
                 {tailor.user.fullName}
