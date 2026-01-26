@@ -65,10 +65,10 @@ export default function Landing() {
     },
   ];
 
-  const stats = [
-    { value: "100%", label: t('landing.verifiedTailors') },
-    { value: "100%", label: t('landing.onTimeDelivery') },
-    { value: "4.8/5", label: t('landing.averageRating') },
+  const features = [
+    "Des couturiers vérifiés",
+    "Des délais respectés",
+    "Une messagerie sécurisée",
   ];
 
   return (
@@ -133,10 +133,9 @@ export default function Landing() {
       <section className="py-8 md:py-12 px-4 md:px-8 border-y border-gray-100 bg-white">
         <div className="w-full max-w-7xl mx-auto">
           <div className="grid grid-cols-3 gap-2 md:gap-8 text-center">
-            {stats.map((stat) => (
-              <div key={stat.label}>
-                <p className="text-xl md:text-3xl lg:text-4xl font-bold text-[#722F37]">{stat.value}</p>
-                <p className="text-gray-600 text-xs md:text-sm lg:text-base mt-1 leading-tight">{stat.label}</p>
+            {features.map((feature) => (
+              <div key={feature}>
+                <p className="text-gray-800 text-sm md:text-base lg:text-lg font-medium leading-tight">{feature}</p>
               </div>
             ))}
           </div>
