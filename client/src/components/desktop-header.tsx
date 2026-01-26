@@ -75,7 +75,7 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
         </nav>
 
         <div className="flex items-center gap-2">
-          {mode === "professionnel" ? (
+          {mode === "professionnel" && (
             <Link href="/particulier">
               <Button 
                 className="gap-2 bg-white border-2 border-[#722F37] text-[#722F37] hover:bg-[#722F37]/10" 
@@ -84,17 +84,6 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
               >
                 <Users className="h-4 w-4" />
                 {t('landing.clientSpace')}
-              </Button>
-            </Link>
-          ) : (
-            <Link href="/professionnel">
-              <Button 
-                className="gap-2 bg-white border-2 border-[#722F37] text-[#722F37] hover:bg-[#722F37]/10" 
-                size="sm"
-                data-testid="button-switch-to-pro"
-              >
-                <Briefcase className="h-4 w-4" />
-                {t('landing.proSpace')}
               </Button>
             </Link>
           )}
