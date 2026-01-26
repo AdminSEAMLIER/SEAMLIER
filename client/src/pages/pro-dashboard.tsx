@@ -59,6 +59,22 @@ export default function ProDashboard() {
         </div>
       </div>
 
+      <section className="py-6 px-4 lg:px-6 border-b border-gray-100 bg-white">
+        <div className="max-w-2xl mx-auto">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-gray-800 text-sm md:text-base font-medium leading-tight">Des couturiers vérifiés</p>
+            </div>
+            <div>
+              <p className="text-gray-800 text-sm md:text-base font-medium leading-tight">Des délais respectés</p>
+            </div>
+            <div>
+              <p className="text-gray-800 text-sm md:text-base font-medium leading-tight">Une messagerie sécurisée</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <div className="max-w-2xl mx-auto px-4 lg:px-6 py-6">
         <Card className="border border-gray-100 bg-white shadow-sm mb-6">
           <CardContent className="p-6 bg-white">
