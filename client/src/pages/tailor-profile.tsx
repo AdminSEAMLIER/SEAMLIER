@@ -228,17 +228,6 @@ export default function TailorProfile() {
               Prendre rendez-vous
             </Button>
           </div>
-
-          {tailor.hourlyRate && (
-            <Card className="p-4 mt-6 bg-gray-50 border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">{t('tailorProfile.hourlyRate')}</span>
-                <span className="font-semibold text-lg text-[#722F37]">
-                  {tailor.hourlyRate.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}/h
-                </span>
-              </div>
-            </Card>
-          )}
         </div>
 
         <Tabs defaultValue="portfolio" className="mt-8">
