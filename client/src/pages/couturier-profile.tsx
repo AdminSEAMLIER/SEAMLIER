@@ -182,21 +182,18 @@ export default function CouturierProfile() {
             </p>
           )}
 
-          <div className="bg-[#f8f5f5] rounded-lg p-4 text-center">
-            <p className="text-gray-700 mb-3">{t('recherche.wantFullAccess')}</p>
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              <Link href="/inscription-particulier">
-                <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white w-full sm:w-auto">
+              <Link href={`/particulier/messagerie?tailor=${tailorId}`}>
+                <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white w-full sm:w-auto" data-testid="button-contact-tailor">
                   <MessageCircle className="h-4 w-4 mr-2" />
-                  {t('tailorProfile.contact')}
+                  Envoyer un message
                 </Button>
               </Link>
-              <Link href="/inscription-particulier">
-                <Button variant="outline" className="border-[#722F37] text-[#722F37] w-full sm:w-auto">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Prendre rendez-vous
-                </Button>
-              </Link>
+              <Button variant="outline" className="border-[#722F37] text-[#722F37] w-full sm:w-auto" data-testid="button-book-appointment">
+                <Calendar className="h-4 w-4 mr-2" />
+                Prendre rendez-vous
+              </Button>
             </div>
           </div>
         </Card>
