@@ -74,7 +74,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-100 sticky top-0 z-50 bg-white">
-        <div className="w-full px-3 md:px-8 py-3 lg:py-4 flex items-center justify-between gap-2">
+        <div className="w-full px-2 md:px-8 py-2 md:py-4 flex items-center justify-between gap-1 md:gap-2">
           <Logo className="text-[#722F37] shrink-0" textClassName="text-base lg:text-lg text-[#722F37]" />
           <div className="flex items-center gap-2 lg:gap-4">
             <LanguageToggle />
@@ -92,34 +92,34 @@ export default function Landing() {
         </div>
       </header>
 
-      <section className="relative py-20 lg:py-28 px-2 md:px-8 overflow-hidden">
+      <section className="relative py-20 lg:py-28 px-4 md:px-8 overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1537274942065-eda9d00a6293?w=1920&h=800&fit=crop')" }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
-        <div className="relative max-w-4xl mx-auto text-center">
-          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-white mb-6 leading-tight">
+        <div className="relative w-full max-w-4xl mx-auto text-center px-2">
+          <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl text-white mb-6 leading-tight">
             {t('landing.heroTitle')}
           </h1>
-          <p className="text-white/90 text-lg lg:text-xl mb-10 max-w-2xl mx-auto">
+          <p className="text-white/90 text-base lg:text-xl mb-10 max-w-2xl mx-auto px-2">
             {t('landing.heroSubtitle')}
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
+          <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xl mx-auto">
             <div className="relative flex-1">
               <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input
                 placeholder={t('landing.searchPlaceholder')}
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="pl-12 h-14 text-base border-0 bg-white shadow-lg"
+                className="pl-12 h-14 text-base border-0 bg-white shadow-lg w-full"
                 data-testid="input-location"
               />
             </div>
             <Button 
               size="lg" 
-              className="h-14 px-8 bg-[#722F37] hover:bg-[#5a252c] text-white shadow-lg" 
+              className="h-14 px-6 bg-[#722F37] hover:bg-[#5a252c] text-white shadow-lg w-full sm:w-auto" 
               data-testid="button-search-hero"
               onClick={handleSearch}
             >
@@ -130,13 +130,13 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="py-12 px-2 md:px-8 border-y border-gray-100 bg-white">
+      <section className="py-8 md:py-12 px-4 md:px-8 border-y border-gray-100 bg-white">
         <div className="w-full max-w-7xl mx-auto">
-          <div className="grid grid-cols-3 gap-4 lg:gap-8 text-center">
+          <div className="grid grid-cols-3 gap-2 md:gap-8 text-center">
             {stats.map((stat) => (
               <div key={stat.label}>
-                <p className="text-3xl lg:text-4xl font-bold text-[#722F37]">{stat.value}</p>
-                <p className="text-gray-600 text-sm lg:text-base mt-1">{stat.label}</p>
+                <p className="text-xl md:text-3xl lg:text-4xl font-bold text-[#722F37]">{stat.value}</p>
+                <p className="text-gray-600 text-xs md:text-sm lg:text-base mt-1 leading-tight">{stat.label}</p>
               </div>
             ))}
           </div>
