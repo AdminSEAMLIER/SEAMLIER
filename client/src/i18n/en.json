@@ -1,4 +1,17 @@
 {
+  "recherche": {
+    "title": "Find your tailor",
+    "subtitle": "Browse our network of qualified tailors near you",
+    "resultsFor": "Results for {{city}}",
+    "allTailors": "All tailors",
+    "tailorsFound": "tailors found",
+    "noResults": "No tailors found",
+    "tryAnotherCity": "Try another city or broaden your search",
+    "wantFullAccess": "Want to contact a tailor?",
+    "createAccountMessage": "Create an account to send messages, request quotes, and book appointments.",
+    "signupAsClient": "Sign up as a client",
+    "signupAsPro": "Sign up as a professional"
+  },
   "nav": {
     "home": "Home",
     "search": "Search",

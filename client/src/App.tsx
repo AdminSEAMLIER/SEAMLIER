@@ -28,6 +28,7 @@ import ProMessagerie from "@/pages/pro-messagerie";
 import ProPlanning from "@/pages/pro-planning";
 import ProProfil from "@/pages/pro-profil";
 import InscriptionParticulier from "@/pages/inscription-particulier";
+import Recherche from "@/pages/recherche";
 import InscriptionProfessionnel from "@/pages/inscription-professionnel";
 import ProfilParticulier from "@/pages/profil-particulier";
 import Connexion from "@/pages/connexion";
@@ -118,6 +119,7 @@ function Router() {
       <Route path="/confidentialite" component={Confidentialite} />
       <Route path="/inscription-particulier" component={InscriptionParticulier} />
       <Route path="/inscription-professionnel" component={InscriptionProfessionnel} />
+      <Route path="/recherche" component={Recherche} />
       
       <Route path="/particulier">
         <ParticulierLayout>

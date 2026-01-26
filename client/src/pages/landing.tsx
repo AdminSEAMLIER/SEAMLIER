@@ -182,28 +182,21 @@ export default function Landing() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {cities.map((city) => (
-              <Card 
-                key={city.name} 
-                className="overflow-hidden cursor-pointer group border-0 shadow-sm hover:shadow-md transition-shadow"
-                onClick={() => {
-                  toast({
-                    title: city.name,
-                    description: t('landing.selectSpaceFirst'),
-                  });
-                }}
-              >
-                <div className="relative h-32">
-                  <img
-                    src={city.image}
-                    alt={city.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <h3 className="text-white font-semibold text-lg">{city.name}</h3>
+              <Link key={city.name} href={`/recherche?ville=${encodeURIComponent(city.name)}`}>
+                <Card className="overflow-hidden cursor-pointer group border-0 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="relative h-32">
+                    <img
+                      src={city.image}
+                      alt={city.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <h3 className="text-white font-semibold text-lg">{city.name}</h3>
+                    </div>
                   </div>
-                </div>
-              </Card>
+                </Card>
+              </Link>
             ))}
           </div>
         </div>

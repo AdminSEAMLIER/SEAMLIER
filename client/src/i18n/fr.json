@@ -1,4 +1,17 @@
 {
+  "recherche": {
+    "title": "Trouvez votre couturier",
+    "subtitle": "Parcourez notre réseau de couturiers qualifiés près de chez vous",
+    "resultsFor": "Résultats pour {{city}}",
+    "allTailors": "Tous les couturiers",
+    "tailorsFound": "couturiers trouvés",
+    "noResults": "Aucun couturier trouvé",
+    "tryAnotherCity": "Essayez une autre ville ou élargissez votre recherche",
+    "wantFullAccess": "Vous souhaitez contacter un couturier ?",
+    "createAccountMessage": "Créez un compte pour envoyer des messages, demander des devis et prendre rendez-vous.",
+    "signupAsClient": "S'inscrire en tant que particulier",
+    "signupAsPro": "S'inscrire en tant que professionnel"
+  },
   "nav": {
     "home": "Accueil",
     "search": "Recherche",
