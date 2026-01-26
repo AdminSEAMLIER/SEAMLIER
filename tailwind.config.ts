@@ -85,7 +85,7 @@ export default {
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        serif: ["Bodoni Moda", "Georgia", "serif"],
+        serif: ["Inter", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)"],
       },
       fontSize: {
