@@ -101,7 +101,7 @@ export default function InscriptionParticulier() {
                 <ArrowLeft className="h-5 w-5 text-gray-600" />
               </Button>
             </Link>
-            <Logo className="text-[#722F37]" textClassName="text-2xl text-[#722F37]" iconSize="h-6 w-6" />
+            <Logo className="text-2xl text-[#722F37]" />
           </div>
           <LanguageToggle />
         </div>
