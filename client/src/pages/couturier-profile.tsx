@@ -194,7 +194,7 @@ export default function CouturierProfile() {
               <Link href="/inscription-particulier">
                 <Button variant="outline" className="border-[#722F37] text-[#722F37] w-full sm:w-auto">
                   <Calendar className="h-4 w-4 mr-2" />
-                  {t('tailorProfile.bookAppointment')}
+                  Prendre rendez-vous
                 </Button>
               </Link>
             </div>
