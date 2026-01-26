@@ -161,5 +161,53 @@ export async function registerRoutes(
     }
   });
 
+  // User profile routes
+  app.get("/api/users/:id", async (req, res) => {
+    try {
+      const user = await storage.getUser(req.params.id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      // Don't return password
+      const { password, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
+
+  app.patch("/api/users/:id", async (req, res) => {
+    try {
+      const { fullName, email, phone, location } = req.body;
+      const user = await storage.updateUser(req.params.id, { fullName, email, phone, location });
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      const { password, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
+  // Measurements routes
+  app.get("/api/measurements/:userId", async (req, res) => {
+    try {
+      const measurements = await storage.getMeasurements(req.params.userId);
+      res.json(measurements || null);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch measurements" });
+    }
+  });
+
+  app.post("/api/measurements", async (req, res) => {
+    try {
+      const measurements = await storage.upsertMeasurements(req.body);
+      res.status(201).json(measurements);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to save measurements" });
+    }
+  });
+
   return httpServer;
 }
