@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -6,9 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PortfolioCard, PortfolioCardSkeleton } from "@/components/portfolio-card";
 import { ProductCard, ProductCardSkeleton } from "@/components/product-card";
 import { ReviewCard, ReviewCardSkeleton } from "@/components/review-card";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Star, 
   MapPin, 
@@ -24,8 +30,34 @@ import type { TailorWithUser, PortfolioWithTailor, ProductWithTailor, ReviewWith
 
 export default function TailorProfile() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [, params] = useRoute("/particulier/tailor/:id");
   const tailorId = params?.id;
+  
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingTime, setBookingTime] = useState("");
+  const [bookingMessage, setBookingMessage] = useState("");
+
+  const handleBooking = () => {
+    if (!bookingDate || !bookingTime) {
+      toast({
+        title: "Champs requis",
+        description: "Veuillez sélectionner une date et une heure.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toast({
+      title: "Demande envoyée",
+      description: `Votre demande de rendez-vous pour le ${bookingDate} à ${bookingTime} a été envoyée.`,
+    });
+    setBookingOpen(false);
+    setBookingDate("");
+    setBookingTime("");
+    setBookingMessage("");
+  };
 
   const { data: tailor, isLoading: tailorLoading } = useQuery<TailorWithUser>({
     queryKey: ["/api/tailors", tailorId],
@@ -186,7 +218,12 @@ export default function TailorProfile() {
                 Envoyer un message
               </Button>
             </Link>
-            <Button variant="outline" className="flex-1 h-12 border-[#722F37] text-[#722F37]" data-testid="button-book">
+            <Button 
+              variant="outline" 
+              className="flex-1 h-12 border-[#722F37] text-[#722F37]" 
+              data-testid="button-book"
+              onClick={() => setBookingOpen(true)}
+            >
               <Calendar className="h-5 w-5 mr-2" />
               Prendre rendez-vous
             </Button>
@@ -272,6 +309,73 @@ export default function TailorProfile() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Prendre rendez-vous</DialogTitle>
+            <DialogDescription>
+              Choisissez une date et une heure pour votre rendez-vous avec {tailor?.user.fullName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="booking-date">Date</Label>
+              <Input
+                id="booking-date"
+                type="date"
+                value={bookingDate}
+                onChange={(e) => setBookingDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                data-testid="input-booking-date"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="booking-time">Heure</Label>
+              <Select value={bookingTime} onValueChange={setBookingTime}>
+                <SelectTrigger data-testid="select-booking-time">
+                  <SelectValue placeholder="Sélectionnez une heure" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="09:00">09:00</SelectItem>
+                  <SelectItem value="10:00">10:00</SelectItem>
+                  <SelectItem value="11:00">11:00</SelectItem>
+                  <SelectItem value="14:00">14:00</SelectItem>
+                  <SelectItem value="15:00">15:00</SelectItem>
+                  <SelectItem value="16:00">16:00</SelectItem>
+                  <SelectItem value="17:00">17:00</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="booking-message">Message (optionnel)</Label>
+              <Input
+                id="booking-message"
+                placeholder="Décrivez brièvement votre besoin..."
+                value={bookingMessage}
+                onChange={(e) => setBookingMessage(e.target.value)}
+                data-testid="input-booking-message"
+              />
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={() => setBookingOpen(false)}
+            >
+              Annuler
+            </Button>
+            <Button 
+              className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+              onClick={handleBooking}
+              data-testid="button-confirm-booking"
+            >
+              Confirmer
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
