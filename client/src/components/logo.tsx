@@ -9,11 +9,11 @@ export function Logo({ className, textClassName }: LogoProps) {
   return (
     <span 
       className={cn(
-        "text-xl font-bold tracking-wide",
+        "text-xl tracking-wide",
         className,
         textClassName
       )}
-      style={{ fontFamily: "'Satoshi', sans-serif" }}
+      style={{ fontFamily: "'Satoshi', sans-serif", fontWeight: 900 }}
     >
       SEAMLI
     </span>
