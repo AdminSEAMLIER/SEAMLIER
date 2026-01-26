@@ -234,8 +234,8 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
             <div>
-              <p style={{ fontFamily: "'Parisienne', cursive" }} className="text-2xl text-[#722F37] mb-2">
-                L'Art de Coudre
+              <p style={{ fontFamily: "'Satoshi', sans-serif" }} className="text-2xl font-bold text-[#722F37] mb-2">
+                SEAMLI
               </p>
               <p className="text-gray-600 text-sm">
                 {t('landing.joinNetwork')}

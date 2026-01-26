@@ -220,7 +220,8 @@
   }
 
   .font-serif {
-    font-family: "Playfair Display", Georgia, serif;
+    font-family: "General Sans", system-ui, sans-serif;
+    font-weight: 700;
   }
 
   .line-clamp-2 {
