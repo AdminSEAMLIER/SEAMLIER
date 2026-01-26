@@ -36,6 +36,53 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/auth/register-pro", async (req, res) => {
+    try {
+      const { fullName, email, phone, password, location, experience, specialties, bio } = req.body;
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Un compte existe déjà avec cet email" });
+      }
+      
+      // Create user with tailor role
+      const user = await storage.createUser({
+        username: email.split("@")[0],
+        password: password, // In production, hash this!
+        fullName,
+        email,
+        phone: phone || null,
+        avatarUrl: null,
+        role: "tailor",
+        location: location || null,
+      });
+      
+      // Create tailor profile
+      const tailor = await storage.createTailor({
+        userId: user.id,
+        bio: bio || "",
+        specialties: Array.isArray(specialties) ? specialties : [],
+        experience: experience || 0,
+        hourlyRate: null,
+        coverImageUrl: null,
+        isVerified: false,
+        rating: 0,
+        reviewCount: 0,
+        portfolioCount: 0,
+      });
+      
+      res.status(201).json({ 
+        message: "Compte professionnel créé avec succès", 
+        userId: user.id,
+        tailorId: tailor.id 
+      });
+    } catch (error) {
+      console.error("Register pro error:", error);
+      res.status(500).json({ error: "Erreur lors de la création du compte professionnel" });
+    }
+  });
+
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email, password } = req.body;
