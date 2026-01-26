@@ -129,11 +129,11 @@ export default function CouturierProfile() {
           
           <div className="flex-1 pb-1">
             <div className="flex items-center gap-2">
-              <h1 className="font-serif text-2xl lg:text-3xl text-white drop-shadow-lg">
+              <h1 className="font-serif text-2xl lg:text-3xl text-gray-700">
                 {tailor.user.fullName}
               </h1>
               {tailor.isVerified && (
-                <BadgeCheck className="h-6 w-6 text-white drop-shadow-lg" fill="currentColor" />
+                <BadgeCheck className="h-6 w-6 text-[#722F37]" fill="currentColor" />
               )}
             </div>
           </div>
