@@ -158,7 +158,7 @@ export default function CouturierProfile() {
             
             <div className="flex items-center gap-1.5 text-gray-600">
               <Clock className="h-4 w-4" />
-              <span>{t('tailorProfile.responseTime')}</span>
+              <span>Disponible</span>
             </div>
           </div>
 
