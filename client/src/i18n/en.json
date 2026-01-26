@@ -132,7 +132,7 @@
     "login": "Log in",
     "loginSubtitle": "Log in to your account",
     "loginSuccess": "Login successful",
-    "welcomeMessage": "Welcome to L'Art de Coudre!",
+    "welcomeMessage": "Welcome to SEAMLI!",
     "logout": "Log out",
     "signup": "Create my account",
     "signupPro": "Create my professional account",
@@ -166,8 +166,8 @@
     "joinCommunityShort": "Join our community of enthusiasts.",
     "accountCreated": "Account created successfully",
     "proAccountCreated": "Professional account created",
-    "welcomeDesc": "Welcome to L'Art de Coudre!",
-    "welcomeProDesc2": "Welcome to L'Art de Coudre! You can now manage your profile.",
+    "welcomeDesc": "Welcome to SEAMLI!",
+    "welcomeProDesc2": "Welcome to SEAMLI! You can now manage your profile.",
     "error": "Error",
     "errorMessage": "An error occurred during registration",
     "creating": "Creating...",
@@ -204,7 +204,7 @@
     "minChars": "Minimum 8 characters",
     "confirmPasswordPlaceholder": "Confirm your password",
     "testimonialClient": "I found an exceptional seamstress for my wedding dress. The process was simple and the result was beautiful!",
-    "testimonialPro": "Thanks to L'Art de Coudre, I was able to grow my clientele by 40% in just 6 months. The platform is intuitive and the requests are qualified."
+    "testimonialPro": "Thanks to SEAMLI, I was able to grow my clientele by 40% in just 6 months. The platform is intuitive and the requests are qualified."
   },
   "profile": {
     "title": "My Profile",

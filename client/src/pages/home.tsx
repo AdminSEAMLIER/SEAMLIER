@@ -246,12 +246,12 @@ export default function Home() {
               <Link href="/mentions-legales" className="hover:text-[#722F37]">{t('footer.legalNotice')}</Link>
               <Link href="/confidentialite" className="hover:text-[#722F37]">{t('footer.privacy')}</Link>
               <a href="#" className="hover:text-[#722F37]">{t('footer.terms')}</a>
-              <span>contact@lartdecoudre.fr</span>
+              <span>contact@seamli.com</span>
             </div>
           </div>
           
           <div className="border-t border-gray-200 pt-6 text-center text-sm text-gray-500">
-            <p>&copy; 2026 L'Art de Coudre. {t('footer.allRightsReserved')}</p>
+            <p>&copy; 2026 SEAMLI. {t('footer.allRightsReserved')}</p>
           </div>
         </div>
       </footer>
