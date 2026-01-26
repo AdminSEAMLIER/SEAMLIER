@@ -7,6 +7,50 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
+  // Auth routes
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const { fullName, email, phone, password, role } = req.body;
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Un compte existe déjà avec cet email" });
+      }
+      
+      // Create user
+      const user = await storage.createUser({
+        username: email.split("@")[0],
+        password: password, // In production, hash this!
+        fullName,
+        email,
+        phone: phone || null,
+        avatarUrl: null,
+        role: role || "client",
+        location: null,
+      });
+      
+      res.status(201).json({ message: "Compte créé avec succès", userId: user.id });
+    } catch (error) {
+      res.status(500).json({ error: "Erreur lors de la création du compte" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      const user = await storage.getUserByEmail(email);
+      if (!user || user.password !== password) {
+        return res.status(401).json({ error: "Email ou mot de passe incorrect" });
+      }
+      
+      res.json({ message: "Connexion réussie", user: { id: user.id, fullName: user.fullName, email: user.email, role: user.role } });
+    } catch (error) {
+      res.status(500).json({ error: "Erreur lors de la connexion" });
+    }
+  });
+  
   app.get("/api/tailors", async (req, res) => {
     try {
       const tailors = await storage.getTailors();
