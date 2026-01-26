@@ -128,7 +128,9 @@
     "featuredTailors": "Featured tailors",
     "viewAll": "View all",
     "searchError": "City required",
-    "enterCity": "Please enter a city to search for tailors."
+    "enterCity": "Please enter a city to search for tailors.",
+    "searchSuccess": "Searching",
+    "searchingIn": "Searching for tailors in {{city}}..."
   },
   "auth": {
     "login": "Log in",

@@ -33,7 +33,15 @@ export default function Landing() {
       });
       return;
     }
-    setPageLocation(`/particulier?ville=${encodeURIComponent(location.trim())}`);
+    // Scroll to featured tailors section when a city is entered
+    const tailorsSection = document.getElementById('featured-tailors');
+    if (tailorsSection) {
+      tailorsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+    toast({
+      title: t('landing.searchSuccess'),
+      description: t('landing.searchingIn', { city: location.trim() }),
+    });
   };
 
   const steps = [
@@ -164,7 +172,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="py-16 lg:py-24 px-4 lg:px-8 bg-gray-50">
+      <section id="featured-tailors" className="py-16 lg:py-24 px-4 lg:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-4">

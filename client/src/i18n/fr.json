@@ -128,7 +128,9 @@
     "featuredTailors": "Couturiers en vedette",
     "viewAll": "Voir tous",
     "searchError": "Ville requise",
-    "enterCity": "Veuillez entrer une ville pour rechercher des couturiers."
+    "enterCity": "Veuillez entrer une ville pour rechercher des couturiers.",
+    "searchSuccess": "Recherche en cours",
+    "searchingIn": "Recherche de couturiers à {{city}}..."
   },
   "auth": {
     "login": "Se connecter",
