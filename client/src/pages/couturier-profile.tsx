@@ -210,7 +210,7 @@ export default function CouturierProfile() {
               {t('tailorProfile.shop')}
             </TabsTrigger>
             <TabsTrigger value="avis" className="text-sm">
-              {t('tailorProfile.reviews')}
+              Avis
             </TabsTrigger>
           </TabsList>
 
