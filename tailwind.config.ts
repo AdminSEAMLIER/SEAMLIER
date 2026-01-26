@@ -84,8 +84,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        serif: ["Inter", "system-ui", "sans-serif"],
+        sans: ["General Sans", "system-ui", "sans-serif"],
+        serif: ["General Sans", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)"],
       },
       fontSize: {
