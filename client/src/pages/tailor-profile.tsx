@@ -180,7 +180,7 @@ export default function TailorProfile() {
           )}
 
           <div className="flex gap-3 mt-6">
-            <Link href={`/particulier/messagerie?tailor=${tailorId}`} className="flex-1">
+            <Link href={`/particulier/messages?tailor=${tailorId}`} className="flex-1">
               <Button className="w-full h-12 bg-[#722F37] hover:bg-[#5a252c] text-white" data-testid="button-contact">
                 <MessageCircle className="h-5 w-5 mr-2" />
                 Envoyer un message

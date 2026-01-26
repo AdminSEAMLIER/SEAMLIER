@@ -184,7 +184,7 @@ export default function CouturierProfile() {
 
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              <Link href={`/particulier/messagerie?tailor=${tailorId}`}>
+              <Link href={`/particulier/messages?tailor=${tailorId}`}>
                 <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white w-full sm:w-auto" data-testid="button-contact-tailor">
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Envoyer un message
