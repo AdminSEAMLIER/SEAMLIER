@@ -1,35 +1,85 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, Ruler, BookOpen, Search } from "lucide-react";
+import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, Ruler, BookOpen, Search, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+
+const DEMO_USER_ID = "u6";
 
 export default function ProfilParticulier() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
-    fullName: "Marie Dupont",
-    email: "marie.dupont@email.com",
-    phone: "06 12 34 56 78",
-    location: "Paris",
+    fullName: "",
+    email: "",
+    phone: "",
+    location: "",
     avatarUrl: "",
   });
 
+  const { data: userData, isLoading } = useQuery({
+    queryKey: ['/api/users', DEMO_USER_ID],
+    queryFn: async () => {
+      const res = await fetch(`/api/users/${DEMO_USER_ID}`);
+      return res.json();
+    }
+  });
+
+  useEffect(() => {
+    if (userData) {
+      setProfile({
+        fullName: userData.fullName || "",
+        email: userData.email || "",
+        phone: userData.phone || "",
+        location: userData.location || "",
+        avatarUrl: userData.avatarUrl || "",
+      });
+    }
+  }, [userData]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest(`/api/users/${DEMO_USER_ID}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          fullName: profile.fullName,
+          email: profile.email,
+          phone: profile.phone,
+          location: profile.location,
+        }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users', DEMO_USER_ID] });
+      setIsEditing(false);
+      toast({
+        title: t('profile.updated'),
+        description: t('profile.updatedDesc'),
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder le profil",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSave = () => {
-    setIsEditing(false);
-    toast({
-      title: t('profile.updated'),
-      description: t('profile.updatedDesc'),
-    });
+    saveMutation.mutate();
   };
 
   const getInitials = (name: string) => {
+    if (!name) return "";
     return name
       .split(" ")
       .map((n) => n[0])
@@ -37,6 +87,14 @@ export default function ProfilParticulier() {
       .toUpperCase()
       .slice(0, 2);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pb-20 lg:pb-8 bg-white flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#722F37]" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
@@ -167,7 +225,7 @@ export default function ProfilParticulier() {
                       data-testid="input-phone"
                     />
                   ) : (
-                    <p className="text-gray-700">{profile.phone}</p>
+                    <p className="text-gray-700">{profile.phone || "-"}</p>
                   )}
                 </div>
               </div>
@@ -186,7 +244,7 @@ export default function ProfilParticulier() {
                       data-testid="input-location"
                     />
                   ) : (
-                    <p className="text-gray-700">{profile.location}</p>
+                    <p className="text-gray-700">{profile.location || "-"}</p>
                   )}
                 </div>
               </div>
@@ -205,9 +263,14 @@ export default function ProfilParticulier() {
                 <Button 
                   className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
                   onClick={handleSave}
+                  disabled={saveMutation.isPending}
                   data-testid="button-save"
                 >
-                  <Save className="h-4 w-4 mr-2" />
+                  {saveMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
                   {t('profile.save')}
                 </Button>
               </div>

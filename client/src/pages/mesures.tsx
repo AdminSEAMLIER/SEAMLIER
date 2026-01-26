@@ -1,10 +1,13 @@
 import { useTranslation } from "react-i18next";
-import { Ruler, Camera, Save, HelpCircle } from "lucide-react";
+import { Ruler, Camera, Save, HelpCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 function BodyDiagram({ activeMeasurement }: { activeMeasurement: string | null }) {
   return (
@@ -57,9 +60,88 @@ function BodyDiagram({ activeMeasurement }: { activeMeasurement: string | null }
   );
 }
 
+const DEMO_USER_ID = "u6";
+
 export default function Mesures() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [activeMeasurement, setActiveMeasurement] = useState<string | null>(null);
+  const [values, setValues] = useState<Record<string, string>>({
+    tour_cou: "",
+    largeur_epaules: "",
+    tour_poitrine: "",
+    tour_taille: "",
+    tour_hanches: "",
+    longueur_dos: "",
+    longueur_bras: "",
+    longueur_jambe: "",
+  });
+
+  const { data: savedMeasurements, isLoading } = useQuery({
+    queryKey: ['/api/measurements', DEMO_USER_ID],
+    queryFn: async () => {
+      const res = await fetch(`/api/measurements/${DEMO_USER_ID}`);
+      return res.json();
+    }
+  });
+
+  useEffect(() => {
+    if (savedMeasurements) {
+      setValues({
+        tour_cou: savedMeasurements.neck?.toString() || "",
+        largeur_epaules: savedMeasurements.shoulders?.toString() || "",
+        tour_poitrine: savedMeasurements.bust?.toString() || "",
+        tour_taille: savedMeasurements.waist?.toString() || "",
+        tour_hanches: savedMeasurements.hips?.toString() || "",
+        longueur_dos: savedMeasurements.backLength?.toString() || "",
+        longueur_bras: savedMeasurements.armLength?.toString() || "",
+        longueur_jambe: savedMeasurements.inseam?.toString() || "",
+      });
+    }
+  }, [savedMeasurements]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('/api/measurements', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId: DEMO_USER_ID,
+          neck: parseFloat(values.tour_cou) || null,
+          bust: parseFloat(values.tour_poitrine) || null,
+          waist: parseFloat(values.tour_taille) || null,
+          hips: parseFloat(values.tour_hanches) || null,
+          shoulders: parseFloat(values.largeur_epaules) || null,
+          armLength: parseFloat(values.longueur_bras) || null,
+          backLength: parseFloat(values.longueur_dos) || null,
+          inseam: parseFloat(values.longueur_jambe) || null,
+          height: null,
+          weight: null,
+        }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/measurements', DEMO_USER_ID] });
+      toast({
+        title: "Mesures enregistrées",
+        description: "Vos mesures ont été sauvegardées avec succès",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder vos mesures",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSave = () => {
+    saveMutation.mutate();
+  };
+
+  const handleChange = (id: string, value: string) => {
+    setValues(prev => ({ ...prev, [id]: value }));
+  };
 
   const measurements = [
     { id: "tour_cou", label: t('measures.neck'), unit: t('common.cm'), placeholder: "38" },
@@ -140,43 +222,61 @@ export default function Mesures() {
               <CardTitle className="text-lg text-[#722F37]">{t('measures.myMeasures')}</CardTitle>
             </CardHeader>
             <CardContent className="bg-white">
-              <div className="grid gap-4">
-                {measurements.map((m) => (
-                  <div 
-                    key={m.id} 
-                    className={`flex items-center gap-3 p-2 rounded-md transition-colors ${
-                      activeMeasurement === m.id ? 'bg-[#722F37]/5' : ''
-                    }`}
-                  >
-                    <Label 
-                      htmlFor={m.id} 
-                      className="w-36 text-sm text-gray-700 cursor-pointer"
-                      onClick={() => setActiveMeasurement(m.id)}
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-[#722F37]" />
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {measurements.map((m) => (
+                    <div 
+                      key={m.id} 
+                      className={`flex items-center gap-3 p-2 rounded-md transition-colors ${
+                        activeMeasurement === m.id ? 'bg-[#722F37]/5' : ''
+                      }`}
                     >
-                      {m.label}
-                    </Label>
-                    <div className="flex-1 flex items-center gap-2">
-                      <Input
-                        id={m.id}
-                        type="number"
-                        placeholder={m.placeholder}
-                        className="border-gray-200 focus:border-[#722F37] focus:ring-[#722F37]"
-                        data-testid={`input-${m.id}`}
-                        onFocus={() => setActiveMeasurement(m.id)}
-                        onBlur={() => setActiveMeasurement(null)}
-                      />
-                      <span className="text-gray-500 text-sm w-8">{m.unit}</span>
+                      <Label 
+                        htmlFor={m.id} 
+                        className="w-36 text-sm text-gray-700 cursor-pointer"
+                        onClick={() => setActiveMeasurement(m.id)}
+                      >
+                        {m.label}
+                      </Label>
+                      <div className="flex-1 flex items-center gap-2">
+                        <Input
+                          id={m.id}
+                          type="number"
+                          placeholder={m.placeholder}
+                          value={values[m.id]}
+                          onChange={(e) => handleChange(m.id, e.target.value)}
+                          className="border-gray-200 focus:border-[#722F37] focus:ring-[#722F37]"
+                          data-testid={`input-${m.id}`}
+                          onFocus={() => setActiveMeasurement(m.id)}
+                          onBlur={() => setActiveMeasurement(null)}
+                        />
+                        <span className="text-gray-500 text-sm w-8">{m.unit}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
         <div className="flex gap-3 mt-6">
-          <Button variant="outline" className="flex-1 h-12 bg-white border border-gray-300 text-gray-600 hover:bg-gray-50" data-testid="button-save-measures">
-            <Save className="h-5 w-5 mr-2" />
+          <Button 
+            variant="outline" 
+            className="flex-1 h-12 bg-[#722F37] border-[#722F37] text-white hover:bg-[#5a252c]" 
+            data-testid="button-save-measures"
+            onClick={handleSave}
+            disabled={saveMutation.isPending}
+          >
+            {saveMutation.isPending ? (
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+            ) : (
+              <Save className="h-5 w-5 mr-2" />
+            )}
             {t('measures.save')}
           </Button>
           <Button variant="outline" className="h-12 border-gray-200" data-testid="button-scan">

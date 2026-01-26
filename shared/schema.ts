@@ -79,11 +79,13 @@ export const messages = pgTable("messages", {
 export const measurements = pgTable("measurements", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().unique(),
+  neck: real("neck"),
   bust: real("bust"),
   waist: real("waist"),
   hips: real("hips"),
   shoulders: real("shoulders"),
   armLength: real("arm_length"),
+  backLength: real("back_length"),
   inseam: real("inseam"),
   height: real("height"),
   weight: real("weight"),
