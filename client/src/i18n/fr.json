@@ -126,7 +126,9 @@
     "joinAsPro": "Rejoindre en tant que professionnel",
     "popularCities": "Villes populaires",
     "featuredTailors": "Couturiers en vedette",
-    "viewAll": "Voir tous"
+    "viewAll": "Voir tous",
+    "searchError": "Ville requise",
+    "enterCity": "Veuillez entrer une ville pour rechercher des couturiers."
   },
   "auth": {
     "login": "Se connecter",

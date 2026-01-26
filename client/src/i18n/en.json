@@ -126,7 +126,9 @@
     "joinAsPro": "Join as a professional",
     "popularCities": "Popular cities",
     "featuredTailors": "Featured tailors",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "searchError": "City required",
+    "enterCity": "Please enter a city to search for tailors."
   },
   "auth": {
     "login": "Log in",

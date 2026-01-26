@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation as useWouterLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { MapPin, Search, MessageCircle, CheckCircle, Star, ArrowRight, Scissors, Users, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
+import { useToast } from "@/hooks/use-toast";
 
 const cities = [
   { name: "Paris", image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=300&fit=crop" },
@@ -19,7 +20,21 @@ const cities = [
 
 export default function Landing() {
   const { t } = useTranslation();
+  const [, setPageLocation] = useWouterLocation();
+  const { toast } = useToast();
   const [location, setLocation] = useState("");
+
+  const handleSearch = () => {
+    if (!location.trim()) {
+      toast({
+        title: t('landing.searchError'),
+        description: t('landing.enterCity'),
+        variant: "destructive",
+      });
+      return;
+    }
+    setPageLocation(`/particulier?ville=${encodeURIComponent(location.trim())}`);
+  };
 
   const steps = [
     {
@@ -94,12 +109,15 @@ export default function Landing() {
                 data-testid="input-location"
               />
             </div>
-            <Link href="/particulier">
-              <Button size="lg" className="h-14 px-8 bg-[#722F37] hover:bg-[#5a252c] text-white shadow-lg" data-testid="button-search-hero">
-                <Search className="h-5 w-5 mr-2" />
-                {t('landing.searchButton')}
-              </Button>
-            </Link>
+            <Button 
+              size="lg" 
+              className="h-14 px-8 bg-[#722F37] hover:bg-[#5a252c] text-white shadow-lg" 
+              data-testid="button-search-hero"
+              onClick={handleSearch}
+            >
+              <Search className="h-5 w-5 mr-2" />
+              {t('landing.searchButton')}
+            </Button>
           </div>
         </div>
       </section>
