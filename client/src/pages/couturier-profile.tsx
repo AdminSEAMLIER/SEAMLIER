@@ -199,14 +199,14 @@ export default function CouturierProfile() {
         </Card>
 
         <Tabs defaultValue="portfolio" className="mt-6">
-          <TabsList className="w-full grid grid-cols-3 bg-gray-100">
-            <TabsTrigger value="portfolio" className="text-sm">
+          <TabsList className="w-full grid grid-cols-3 bg-transparent border-b border-gray-200 rounded-none h-auto p-0">
+            <TabsTrigger value="portfolio" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#722F37] data-[state=active]:bg-transparent data-[state=active]:text-[#722F37] data-[state=active]:shadow-none bg-transparent py-3 text-sm">
               {t('tailorProfile.portfolio')}
             </TabsTrigger>
-            <TabsTrigger value="boutique" className="text-sm">
+            <TabsTrigger value="boutique" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#722F37] data-[state=active]:bg-transparent data-[state=active]:text-[#722F37] data-[state=active]:shadow-none bg-transparent py-3 text-sm">
               {t('tailorProfile.shop')}
             </TabsTrigger>
-            <TabsTrigger value="avis" className="text-sm">
+            <TabsTrigger value="avis" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#722F37] data-[state=active]:bg-transparent data-[state=active]:text-[#722F37] data-[state=active]:shadow-none bg-transparent py-3 text-sm">
               Avis
             </TabsTrigger>
           </TabsList>

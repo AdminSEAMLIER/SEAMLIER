@@ -231,14 +231,14 @@ export default function TailorProfile() {
         </div>
 
         <Tabs defaultValue="portfolio" className="mt-8">
-          <TabsList className="w-full grid grid-cols-3 bg-gray-100">
-            <TabsTrigger value="portfolio" className="data-[state=active]:bg-white" data-testid="tab-portfolio">
+          <TabsList className="w-full grid grid-cols-3 bg-transparent border-b border-gray-200 rounded-none h-auto p-0">
+            <TabsTrigger value="portfolio" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#722F37] data-[state=active]:bg-transparent data-[state=active]:text-[#722F37] data-[state=active]:shadow-none bg-transparent py-3" data-testid="tab-portfolio">
               {t('tailorProfile.portfolio')} ({portfolio?.length || 0})
             </TabsTrigger>
-            <TabsTrigger value="products" className="data-[state=active]:bg-white" data-testid="tab-products">
+            <TabsTrigger value="products" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#722F37] data-[state=active]:bg-transparent data-[state=active]:text-[#722F37] data-[state=active]:shadow-none bg-transparent py-3" data-testid="tab-products">
               {t('tailorProfile.shop')} ({products?.length || 0})
             </TabsTrigger>
-            <TabsTrigger value="reviews" className="data-[state=active]:bg-white" data-testid="tab-reviews">
+            <TabsTrigger value="reviews" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#722F37] data-[state=active]:bg-transparent data-[state=active]:text-[#722F37] data-[state=active]:shadow-none bg-transparent py-3" data-testid="tab-reviews">
               {t('tailorProfile.reviewsTab')} ({reviews?.length || 0})
             </TabsTrigger>
           </TabsList>
