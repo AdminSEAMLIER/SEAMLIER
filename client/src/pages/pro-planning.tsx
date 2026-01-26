@@ -75,7 +75,7 @@ export default function ProPlanning() {
                 {t('nav.planning')}
               </h1>
             </div>
-            <Button className="bg-[#722F37] hover:bg-[#5a252c]" size="sm" data-testid="button-add-appointment">
+            <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white" size="sm" data-testid="button-add-appointment">
               <Plus className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">{t('pro.addAppointment')}</span>
             </Button>
