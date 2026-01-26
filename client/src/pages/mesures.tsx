@@ -102,21 +102,18 @@ export default function Mesures() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('/api/measurements', {
-        method: 'POST',
-        body: JSON.stringify({
-          userId: DEMO_USER_ID,
-          neck: parseFloat(values.tour_cou) || null,
-          bust: parseFloat(values.tour_poitrine) || null,
-          waist: parseFloat(values.tour_taille) || null,
-          hips: parseFloat(values.tour_hanches) || null,
-          shoulders: parseFloat(values.largeur_epaules) || null,
-          armLength: parseFloat(values.longueur_bras) || null,
-          backLength: parseFloat(values.longueur_dos) || null,
-          inseam: parseFloat(values.longueur_jambe) || null,
-          height: null,
-          weight: null,
-        }),
+      return apiRequest('POST', '/api/measurements', {
+        userId: DEMO_USER_ID,
+        neck: parseFloat(values.tour_cou) || null,
+        bust: parseFloat(values.tour_poitrine) || null,
+        waist: parseFloat(values.tour_taille) || null,
+        hips: parseFloat(values.tour_hanches) || null,
+        shoulders: parseFloat(values.largeur_epaules) || null,
+        armLength: parseFloat(values.longueur_bras) || null,
+        backLength: parseFloat(values.longueur_dos) || null,
+        inseam: parseFloat(values.longueur_jambe) || null,
+        height: null,
+        weight: null,
       });
     },
     onSuccess: () => {

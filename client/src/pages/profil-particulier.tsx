@@ -47,14 +47,11 @@ export default function ProfilParticulier() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest(`/api/users/${DEMO_USER_ID}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          fullName: profile.fullName,
-          email: profile.email,
-          phone: profile.phone,
-          location: profile.location,
-        }),
+      return apiRequest('PATCH', `/api/users/${DEMO_USER_ID}`, {
+        fullName: profile.fullName,
+        email: profile.email,
+        phone: profile.phone,
+        location: profile.location,
       });
     },
     onSuccess: () => {
