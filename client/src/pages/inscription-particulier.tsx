@@ -155,7 +155,7 @@ export default function InscriptionParticulier() {
                       name="fullName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">{t('auth.fullName')}</FormLabel>
+                          <FormLabel className="text-white">{t('auth.fullName')}</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Marie Dupont" 
@@ -174,7 +174,7 @@ export default function InscriptionParticulier() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">{t('auth.email')}</FormLabel>
+                          <FormLabel className="text-white">{t('auth.email')}</FormLabel>
                           <FormControl>
                             <Input 
                               type="email" 
@@ -194,7 +194,7 @@ export default function InscriptionParticulier() {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">
+                          <FormLabel className="text-white">
                             {t('auth.phoneOptional')}
                           </FormLabel>
                           <FormControl>
@@ -216,7 +216,7 @@ export default function InscriptionParticulier() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">{t('auth.password')}</FormLabel>
+                          <FormLabel className="text-white">{t('auth.password')}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input 
@@ -246,7 +246,7 @@ export default function InscriptionParticulier() {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">{t('auth.confirmPassword')}</FormLabel>
+                          <FormLabel className="text-white">{t('auth.confirmPassword')}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input 

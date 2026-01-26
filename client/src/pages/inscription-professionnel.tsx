@@ -175,7 +175,7 @@ export default function InscriptionProfessionnel() {
                       name="fullName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">{t('auth.workshopName')}</FormLabel>
+                          <FormLabel className="text-white">{t('auth.workshopName')}</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Atelier Sophie Couture" 
@@ -195,7 +195,7 @@ export default function InscriptionProfessionnel() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">{t('auth.proEmail')}</FormLabel>
+                            <FormLabel className="text-white">{t('auth.proEmail')}</FormLabel>
                             <FormControl>
                               <Input 
                                 type="email" 
@@ -215,7 +215,7 @@ export default function InscriptionProfessionnel() {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">{t('auth.phone')}</FormLabel>
+                            <FormLabel className="text-white">{t('auth.phone')}</FormLabel>
                             <FormControl>
                               <Input 
                                 type="tel" 
@@ -237,7 +237,7 @@ export default function InscriptionProfessionnel() {
                         name="location"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">{t('auth.city')}</FormLabel>
+                            <FormLabel className="text-white">{t('auth.city')}</FormLabel>
                             <FormControl>
                               <Input 
                                 placeholder="Lyon" 
@@ -256,7 +256,7 @@ export default function InscriptionProfessionnel() {
                         name="experience"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">{t('auth.yearsExperience')}</FormLabel>
+                            <FormLabel className="text-white">{t('auth.yearsExperience')}</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger 
@@ -284,7 +284,7 @@ export default function InscriptionProfessionnel() {
                       name="specialties"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">{t('auth.specialties')}</FormLabel>
+                          <FormLabel className="text-white">{t('auth.specialties')}</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder={t('auth.specialtiesPlaceholder')} 
@@ -304,8 +304,8 @@ export default function InscriptionProfessionnel() {
                       name="bio"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">
-                            {t('auth.presentation')} <span className="text-gray-400">({t('auth.optional')})</span>
+                          <FormLabel className="text-white">
+                            {t('auth.presentation')} <span className="text-gray-300">({t('auth.optional')})</span>
                           </FormLabel>
                           <FormControl>
                             <Textarea 
@@ -325,7 +325,7 @@ export default function InscriptionProfessionnel() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">{t('auth.password')}</FormLabel>
+                          <FormLabel className="text-white">{t('auth.password')}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input 
@@ -355,7 +355,7 @@ export default function InscriptionProfessionnel() {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">{t('auth.confirmPassword')}</FormLabel>
+                          <FormLabel className="text-white">{t('auth.confirmPassword')}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input 

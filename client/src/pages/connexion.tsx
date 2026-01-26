@@ -62,7 +62,7 @@ export default function Connexion() {
           <CardContent className="bg-white pt-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-700">{t('auth.email')}</Label>
+                <Label htmlFor="email" className="text-white">{t('auth.email')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <Input
@@ -79,7 +79,7 @@ export default function Connexion() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-700">{t('auth.password')}</Label>
+                <Label htmlFor="password" className="text-white">{t('auth.password')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <Input
