@@ -255,20 +255,24 @@ export default function ProfilParticulier() {
           </CardHeader>
           <CardContent className="bg-white">
             <div className="space-y-3">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start bg-white border border-gray-200 text-gray-600"
-                data-testid="button-change-password"
-              >
-                {t('profile.changePassword')}
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start bg-white border border-gray-200 text-gray-600"
-                data-testid="button-notifications"
-              >
-                {t('profile.notifications')}
-              </Button>
+              <Link href="/particulier/profil/mot-de-passe">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start bg-white border border-gray-200 text-gray-600"
+                  data-testid="button-change-password"
+                >
+                  {t('profile.changePassword')}
+                </Button>
+              </Link>
+              <Link href="/particulier/profil/notifications">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start bg-white border border-gray-200 text-gray-600"
+                  data-testid="button-notifications"
+                >
+                  {t('profile.notifications')}
+                </Button>
+              </Link>
               <Link href="/">
                 <Button 
                   variant="outline" 

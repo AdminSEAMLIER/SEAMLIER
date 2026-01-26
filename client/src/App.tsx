@@ -35,6 +35,8 @@ import ProfilParticulier from "@/pages/profil-particulier";
 import Connexion from "@/pages/connexion";
 import MentionsLegales from "@/pages/mentions-legales";
 import Confidentialite from "@/pages/confidentialite";
+import ModifierMotDePasse from "@/pages/modifier-mot-de-passe";
+import PreferencesNotifications from "@/pages/preferences-notifications";
 
 function MobileHeader() {
   const { t } = useTranslation();
@@ -141,6 +143,16 @@ function Router() {
       <Route path="/particulier/magazine">
         <ParticulierLayout>
           <Magazine />
+        </ParticulierLayout>
+      </Route>
+      <Route path="/particulier/profil/mot-de-passe">
+        <ParticulierLayout>
+          <ModifierMotDePasse />
+        </ParticulierLayout>
+      </Route>
+      <Route path="/particulier/profil/notifications">
+        <ParticulierLayout>
+          <PreferencesNotifications />
         </ParticulierLayout>
       </Route>
       <Route path="/particulier/profil">
