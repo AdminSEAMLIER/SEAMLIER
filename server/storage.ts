@@ -6,6 +6,7 @@ import {
   type Review, type InsertReview,
   type Conversation, type InsertConversation,
   type Message, type InsertMessage,
+  type Measurements, type InsertMeasurements,
   type TailorWithUser,
   type PortfolioWithTailor,
   type ProductWithTailor,
@@ -40,6 +41,11 @@ export interface IStorage {
   getConversations(userId: string): Promise<ConversationWithParticipant[]>;
   getMessages(conversationId: string): Promise<MessageWithSender[]>;
   createMessage(message: InsertMessage): Promise<Message>;
+  
+  updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
+  
+  getMeasurements(userId: string): Promise<Measurements | undefined>;
+  upsertMeasurements(measurements: InsertMeasurements): Promise<Measurements>;
 }
 
 export class MemStorage implements IStorage {
@@ -50,6 +56,7 @@ export class MemStorage implements IStorage {
   private reviews: Map<string, Review>;
   private conversations: Map<string, Conversation>;
   private messages: Map<string, Message>;
+  private measurements: Map<string, Measurements>;
 
   constructor() {
     this.users = new Map();
@@ -59,6 +66,7 @@ export class MemStorage implements IStorage {
     this.reviews = new Map();
     this.conversations = new Map();
     this.messages = new Map();
+    this.measurements = new Map();
     
     this.seedData();
   }
@@ -273,6 +281,31 @@ export class MemStorage implements IStorage {
     const message: Message = { ...insertMessage, id };
     this.messages.set(id, message);
     return message;
+  }
+
+  async updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    const updatedUser = { ...user, ...updates };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async getMeasurements(userId: string): Promise<Measurements | undefined> {
+    return Array.from(this.measurements.values()).find(m => m.userId === userId);
+  }
+
+  async upsertMeasurements(insertMeasurements: InsertMeasurements): Promise<Measurements> {
+    const existing = await this.getMeasurements(insertMeasurements.userId);
+    if (existing) {
+      const updated: Measurements = { ...existing, ...insertMeasurements, updatedAt: new Date().toISOString() };
+      this.measurements.set(existing.id, updated);
+      return updated;
+    }
+    const id = randomUUID();
+    const measurements: Measurements = { ...insertMeasurements, id, updatedAt: new Date().toISOString() };
+    this.measurements.set(id, measurements);
+    return measurements;
   }
 }
 

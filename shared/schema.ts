@@ -76,6 +76,20 @@ export const messages = pgTable("messages", {
   isRead: boolean("is_read").default(false),
 });
 
+export const measurements = pgTable("measurements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique(),
+  bust: real("bust"),
+  waist: real("waist"),
+  hips: real("hips"),
+  shoulders: real("shoulders"),
+  armLength: real("arm_length"),
+  inseam: real("inseam"),
+  height: real("height"),
+  weight: real("weight"),
+  updatedAt: text("updated_at"),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({ id: true });
 export const insertTailorSchema = createInsertSchema(tailors).omit({ id: true });
 export const insertPortfolioItemSchema = createInsertSchema(portfolioItems).omit({ id: true });
@@ -83,6 +97,7 @@ export const insertProductSchema = createInsertSchema(products).omit({ id: true 
 export const insertReviewSchema = createInsertSchema(reviews).omit({ id: true });
 export const insertConversationSchema = createInsertSchema(conversations).omit({ id: true });
 export const insertMessageSchema = createInsertSchema(messages).omit({ id: true });
+export const insertMeasurementsSchema = createInsertSchema(measurements).omit({ id: true });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -98,6 +113,8 @@ export type InsertConversation = z.infer<typeof insertConversationSchema>;
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Message = typeof messages.$inferSelect;
+export type InsertMeasurements = z.infer<typeof insertMeasurementsSchema>;
+export type Measurements = typeof measurements.$inferSelect;
 
 export type TailorWithUser = Tailor & { user: User };
 export type PortfolioWithTailor = PortfolioItem & { tailor: TailorWithUser };
