@@ -152,7 +152,7 @@ export default function CouturierProfile() {
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
               <span className="font-medium">{tailor.rating?.toFixed(1) || "Nouveau"}</span>
               {tailor.reviewCount && tailor.reviewCount > 0 && (
-                <span className="text-gray-500">({tailor.reviewCount} avis)</span>
+                <span className="text-gray-500">({tailor.reviewCount} Avis)</span>
               )}
             </div>
             
