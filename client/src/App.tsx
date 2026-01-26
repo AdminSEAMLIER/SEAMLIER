@@ -123,11 +123,6 @@ function Router() {
       <Route path="/recherche" component={Recherche} />
       <Route path="/couturier/:id" component={CouturierProfile} />
       
-      <Route path="/particulier">
-        <ParticulierLayout>
-          <Home />
-        </ParticulierLayout>
-      </Route>
       <Route path="/particulier/decouverte">
         <ParticulierLayout>
           <Discovery />
@@ -167,12 +162,12 @@ function Router() {
           </ParticulierLayout>
         )}
       </Route>
-
-      <Route path="/professionnel">
-        <ProfessionnelLayout>
-          <ProDashboard />
-        </ProfessionnelLayout>
+      <Route path="/particulier">
+        <ParticulierLayout>
+          <Home />
+        </ParticulierLayout>
       </Route>
+
       <Route path="/professionnel/demandes">
         <ProfessionnelLayout>
           <ProDemandes />
@@ -196,6 +191,11 @@ function Router() {
       <Route path="/professionnel/profil">
         <ProfessionnelLayout>
           <ProProfil />
+        </ProfessionnelLayout>
+      </Route>
+      <Route path="/professionnel">
+        <ProfessionnelLayout>
+          <ProDashboard />
         </ProfessionnelLayout>
       </Route>
 
