@@ -10,7 +10,8 @@
     "wantFullAccess": "Vous souhaitez contacter un couturier ?",
     "createAccountMessage": "Créez un compte pour envoyer des messages, demander des devis et prendre rendez-vous.",
     "signupAsClient": "S'inscrire en tant que particulier",
-    "signupAsPro": "S'inscrire en tant que professionnel"
+    "signupAsPro": "S'inscrire en tant que professionnel",
+    "backToSearch": "Retour à la recherche"
   },
   "nav": {
     "home": "Accueil",

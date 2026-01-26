@@ -10,7 +10,8 @@
     "wantFullAccess": "Want to contact a tailor?",
     "createAccountMessage": "Create an account to send messages, request quotes, and book appointments.",
     "signupAsClient": "Sign up as a client",
-    "signupAsPro": "Sign up as a professional"
+    "signupAsPro": "Sign up as a professional",
+    "backToSearch": "Back to search"
   },
   "nav": {
     "home": "Home",

@@ -7,11 +7,12 @@ import type { TailorWithUser } from "@shared/schema";
 
 interface TailorCardProps {
   tailor: TailorWithUser;
+  linkPrefix?: string;
 }
 
-export function TailorCard({ tailor }: TailorCardProps) {
+export function TailorCard({ tailor, linkPrefix = "/particulier/tailor" }: TailorCardProps) {
   return (
-    <Link href={`/particulier/tailor/${tailor.id}`}>
+    <Link href={`${linkPrefix}/${tailor.id}`}>
       <Card 
         className="overflow-hidden cursor-pointer border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow"
         data-testid={`card-tailor-${tailor.id}`}

@@ -29,6 +29,7 @@ import ProPlanning from "@/pages/pro-planning";
 import ProProfil from "@/pages/pro-profil";
 import InscriptionParticulier from "@/pages/inscription-particulier";
 import Recherche from "@/pages/recherche";
+import CouturierProfile from "@/pages/couturier-profile";
 import InscriptionProfessionnel from "@/pages/inscription-professionnel";
 import ProfilParticulier from "@/pages/profil-particulier";
 import Connexion from "@/pages/connexion";
@@ -120,6 +121,7 @@ function Router() {
       <Route path="/inscription-particulier" component={InscriptionParticulier} />
       <Route path="/inscription-professionnel" component={InscriptionProfessionnel} />
       <Route path="/recherche" component={Recherche} />
+      <Route path="/couturier/:id" component={CouturierProfile} />
       
       <Route path="/particulier">
         <ParticulierLayout>
