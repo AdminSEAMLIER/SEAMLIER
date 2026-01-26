@@ -49,7 +49,7 @@ export default function TailorProfile() {
 
   if (tailorLoading) {
     return (
-      <div className="min-h-screen pb-20 lg:pb-8 bg-background">
+      <div className="min-h-screen pb-20 lg:pb-8 bg-white">
         <div className="h-64 skeleton-shimmer" />
         <div className="px-4 lg:px-6 -mt-16 max-w-4xl mx-auto">
           <div className="h-24 w-24 rounded-full skeleton-shimmer border-4 border-white" />
@@ -65,7 +65,7 @@ export default function TailorProfile() {
 
   if (!tailor) {
     return (
-      <div className="min-h-screen flex items-center justify-center pb-20 lg:pb-8 bg-background">
+      <div className="min-h-screen flex items-center justify-center pb-20 lg:pb-8 bg-white">
         <div className="text-center">
           <p className="text-gray-500 mb-4">{t('tailorProfile.notFound')}</p>
           <Link href="/particulier">
@@ -80,7 +80,7 @@ export default function TailorProfile() {
   }
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
       <div className="relative h-64">
         <img
           src={tailor.coverImageUrl || `https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&h=400&fit=crop`}
@@ -180,21 +180,23 @@ export default function TailorProfile() {
           )}
 
           <div className="flex gap-3 mt-6">
-            <Button variant="outline" className="flex-1 h-12 bg-white border-[#722F37] text-[#722F37] hover:bg-gray-50" data-testid="button-contact">
-              <MessageCircle className="h-5 w-5 mr-2" />
-              {t('tailorProfile.contact')}
-            </Button>
-            <Button variant="outline" className="flex-1 h-12 border-gray-200" data-testid="button-book">
+            <Link href={`/particulier/messagerie?tailor=${tailorId}`} className="flex-1">
+              <Button className="w-full h-12 bg-[#722F37] hover:bg-[#5a252c] text-white" data-testid="button-contact">
+                <MessageCircle className="h-5 w-5 mr-2" />
+                Envoyer un message
+              </Button>
+            </Link>
+            <Button variant="outline" className="flex-1 h-12 border-[#722F37] text-[#722F37]" data-testid="button-book">
               <Calendar className="h-5 w-5 mr-2" />
-              {t('tailorProfile.book')}
+              Prendre rendez-vous
             </Button>
           </div>
 
           {tailor.hourlyRate && (
-            <Card className="p-4 mt-6 bg-[#722F37] border-none shadow-sm">
+            <Card className="p-4 mt-6 bg-gray-50 border border-gray-200 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-white/80">{t('tailorProfile.hourlyRate')}</span>
-                <span className="font-semibold text-lg text-white">
+                <span className="text-gray-600">{t('tailorProfile.hourlyRate')}</span>
+                <span className="font-semibold text-lg text-[#722F37]">
                   {tailor.hourlyRate.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}/h
                 </span>
               </div>
