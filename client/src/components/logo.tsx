@@ -10,17 +10,17 @@ interface LogoProps {
 
 export function Logo({ className, textClassName, showText = true, iconSize = "h-7 w-7" }: LogoProps) {
   return (
-    <div className={cn("flex items-center gap-0", className)}>
-      <Scissors className={cn(iconSize, "text-current -mr-1")} />
+    <div className={cn("flex items-center gap-1.5", className)}>
+      <Scissors className={cn(iconSize, "text-current")} />
       {showText && (
         <span 
           className={cn(
-            "text-xl",
+            "text-xl font-bold tracking-wide",
             textClassName
           )}
-          style={{ fontFamily: "'Parisienne', cursive" }}
+          style={{ fontFamily: "'Satoshi', sans-serif" }}
         >
-          L'Art de Coudre
+          SEAMLI
         </span>
       )}
     </div>
