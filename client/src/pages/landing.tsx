@@ -74,7 +74,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-100 sticky top-0 z-50 bg-white">
-        <div className="max-w-7xl mx-auto px-3 lg:px-8 py-3 lg:py-4 flex items-center justify-between gap-2">
+        <div className="w-full px-4 lg:px-8 py-3 lg:py-4 flex items-center justify-between gap-2">
           <Logo className="text-[#722F37] shrink-0" textClassName="text-base lg:text-lg text-[#722F37]" />
           <div className="flex items-center gap-2 lg:gap-4">
             <LanguageToggle />
@@ -131,8 +131,8 @@ export default function Landing() {
       </section>
 
       <section className="py-12 px-4 lg:px-8 border-y border-gray-100 bg-white">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-3 gap-8 text-center">
+        <div className="w-full max-w-7xl mx-auto">
+          <div className="grid grid-cols-3 gap-4 lg:gap-8 text-center">
             {stats.map((stat) => (
               <div key={stat.label}>
                 <p className="text-3xl lg:text-4xl font-bold text-[#722F37]">{stat.value}</p>
@@ -144,7 +144,7 @@ export default function Landing() {
       </section>
 
       <section className="py-16 lg:py-24 px-4 lg:px-8 bg-white">
-        <div className="max-w-6xl mx-auto">
+        <div className="w-full max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-4">
               {t('landing.howItWorks')}
@@ -210,7 +210,7 @@ export default function Landing() {
       </section>
 
       <section className="py-16 lg:py-24 px-4 lg:px-8 bg-white">
-        <div className="max-w-6xl mx-auto">
+        <div className="w-full max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-4">
               {t('landing.whyChooseUs')}
@@ -258,7 +258,7 @@ export default function Landing() {
       </section>
 
       <section className="py-16 lg:py-24 px-4 lg:px-8 bg-[#5a1f25]">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="w-full max-w-7xl mx-auto text-center">
           <h2 className="font-serif text-3xl lg:text-4xl text-white mb-4">
             {t('landing.areTailor')}
           </h2>
@@ -275,7 +275,7 @@ export default function Landing() {
       </section>
 
       <footer className="bg-white border-t border-gray-100 py-8 px-4 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-gray-500 text-sm">
               © 2026 SEAMLI. {t('footer.allRightsReserved')}
