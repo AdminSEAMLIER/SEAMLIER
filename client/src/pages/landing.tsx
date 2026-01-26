@@ -74,7 +74,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-100 sticky top-0 z-50 bg-white">
-        <div className="w-full px-4 lg:px-8 py-3 lg:py-4 flex items-center justify-between gap-2">
+        <div className="w-full px-3 md:px-8 py-3 lg:py-4 flex items-center justify-between gap-2">
           <Logo className="text-[#722F37] shrink-0" textClassName="text-base lg:text-lg text-[#722F37]" />
           <div className="flex items-center gap-2 lg:gap-4">
             <LanguageToggle />
@@ -92,7 +92,7 @@ export default function Landing() {
         </div>
       </header>
 
-      <section className="relative py-20 lg:py-28 px-4 lg:px-8 overflow-hidden">
+      <section className="relative py-20 lg:py-28 px-2 md:px-8 overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1537274942065-eda9d00a6293?w=1920&h=800&fit=crop')" }}
@@ -130,7 +130,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="py-12 px-4 lg:px-8 border-y border-gray-100 bg-white">
+      <section className="py-12 px-2 md:px-8 border-y border-gray-100 bg-white">
         <div className="w-full max-w-7xl mx-auto">
           <div className="grid grid-cols-3 gap-4 lg:gap-8 text-center">
             {stats.map((stat) => (
@@ -143,7 +143,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="py-16 lg:py-24 px-4 lg:px-8 bg-white">
+      <section className="py-16 lg:py-24 px-2 md:px-8 bg-white">
         <div className="w-full max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-4">
@@ -172,7 +172,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section id="featured-tailors" className="py-16 lg:py-24 px-4 lg:px-8 bg-gray-50">
+      <section id="featured-tailors" className="py-16 lg:py-24 px-2 md:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-4">
@@ -209,7 +209,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="py-16 lg:py-24 px-4 lg:px-8 bg-white">
+      <section className="py-16 lg:py-24 px-2 md:px-8 bg-white">
         <div className="w-full max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-4">
@@ -257,7 +257,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="py-16 lg:py-24 px-4 lg:px-8 bg-[#5a1f25]">
+      <section className="py-16 lg:py-24 px-2 md:px-8 bg-[#5a1f25]">
         <div className="w-full max-w-7xl mx-auto text-center">
           <h2 className="font-serif text-3xl lg:text-4xl text-white mb-4">
             {t('landing.areTailor')}
@@ -274,7 +274,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <footer className="bg-white border-t border-gray-100 py-8 px-4 lg:px-8">
+      <footer className="bg-white border-t border-gray-100 py-8 px-2 md:px-8">
         <div className="w-full">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-gray-500 text-sm">
