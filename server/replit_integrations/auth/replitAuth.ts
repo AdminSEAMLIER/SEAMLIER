@@ -50,13 +50,14 @@ function updateUserSession(
   user.expires_at = user.claims?.exp;
 }
 
-async function upsertUser(claims: any) {
+async function upsertUser(claims: any, role?: string) {
   await authStorage.upsertUser({
     id: claims["sub"],
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
+    role: role,
   });
 }
 
@@ -72,8 +73,9 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
+    const user: any = {};
     updateUserSession(user, tokens);
+    // Role will be set in callback after session is available
     await upsertUser(tokens.claims());
     verified(null, user);
   };
@@ -103,6 +105,11 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
+    // Store intended role in session before redirecting to auth
+    const role = req.query.role as string;
+    if (role && (role === 'client' || role === 'tailor')) {
+      (req.session as any).intendedRole = role;
+    }
     ensureStrategy(req.hostname);
     passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
@@ -112,9 +119,27 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/callback", (req, res, next) => {
     ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/api/login",
+    passport.authenticate(`replitauth:${req.hostname}`, async (err: any, user: any, info: any) => {
+      if (err) return next(err);
+      if (!user) return res.redirect("/api/login");
+      
+      req.logIn(user, async (loginErr) => {
+        if (loginErr) return next(loginErr);
+        
+        // Check if there's an intended role in session and update user
+        const intendedRole = (req.session as any).intendedRole;
+        if (intendedRole && user.claims?.sub) {
+          await authStorage.updateUserRole(user.claims.sub, intendedRole);
+          delete (req.session as any).intendedRole;
+        }
+        
+        // Redirect based on role
+        const dbUser = await authStorage.getUser(user.claims.sub);
+        if (dbUser?.role === 'tailor') {
+          return res.redirect("/professionnel");
+        }
+        return res.redirect("/particulier");
+      });
     })(req, res, next);
   });
 
