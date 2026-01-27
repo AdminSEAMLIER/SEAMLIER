@@ -273,7 +273,11 @@
     "cancel": "Cancel",
     "city": "City",
     "updated": "Profile updated",
-    "updatedDesc": "Your information has been saved successfully."
+    "updatedDesc": "Your information has been saved successfully.",
+    "photoUpdated": "Photo updated",
+    "photoUpdatedDesc": "Your profile photo has been changed",
+    "imageTooLarge": "Image too large",
+    "imageTooLargeDesc": "Maximum size is 5 MB"
   },
   "tailor": {
     "contact": "Contact",

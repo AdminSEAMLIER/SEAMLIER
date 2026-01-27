@@ -273,7 +273,11 @@
     "cancel": "Annuler",
     "city": "Ville",
     "updated": "Profil mis à jour",
-    "updatedDesc": "Vos informations ont été enregistrées avec succès."
+    "updatedDesc": "Vos informations ont été enregistrées avec succès.",
+    "photoUpdated": "Photo mise à jour",
+    "photoUpdatedDesc": "Votre photo de profil a été modifiée",
+    "imageTooLarge": "Image trop volumineuse",
+    "imageTooLargeDesc": "La taille maximale est de 5 Mo"
   },
   "tailor": {
     "contact": "Contacter",

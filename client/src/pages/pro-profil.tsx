@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, Euro, TrendingUp, Star, Settings, FileText, FolderKanban } from "lucide-react";
@@ -14,6 +14,7 @@ export default function ProProfil() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState({
     fullName: "Sophie Marchand",
     businessName: "Atelier Sophie Couture",
@@ -30,6 +31,34 @@ export default function ProProfil() {
       title: t('profile.updated'),
       description: t('profile.updatedDesc'),
     });
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: t('profile.imageTooLarge'),
+          description: t('profile.imageTooLargeDesc'),
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfile({ ...profile, avatarUrl: reader.result as string });
+        toast({
+          title: t('profile.photoUpdated'),
+          description: t('profile.photoUpdatedDesc'),
+        });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const getInitials = (name: string) => {
@@ -75,7 +104,16 @@ export default function ProProfil() {
                     {getInitials(profile.fullName)}
                   </AvatarFallback>
                 </Avatar>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  data-testid="input-avatar-file"
+                />
                 <button 
+                  onClick={handleAvatarClick}
                   className="absolute bottom-0 right-0 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-50"
                   data-testid="button-change-avatar"
                 >
