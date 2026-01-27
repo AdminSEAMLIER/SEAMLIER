@@ -8,7 +8,6 @@ import { useState } from "react";
 import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
 
 const cities = [
   { name: "Paris", image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=300&fit=crop" },
@@ -24,7 +23,6 @@ export default function Landing() {
   const [, setPageLocation] = useWouterLocation();
   const { toast } = useToast();
   const [location, setLocation] = useState("");
-  const { user, isLoading, isAuthenticated } = useAuth();
 
   const handleSearch = () => {
     if (!location.trim()) {
@@ -80,28 +78,16 @@ export default function Landing() {
           <Logo className="text-[#722F37] shrink-0" textClassName="text-base lg:text-lg text-[#722F37]" />
           <div className="flex items-center gap-2 lg:gap-4">
             <LanguageToggle />
-            {isAuthenticated ? (
-              <>
-                <Link href={user?.role === 'tailor' ? "/professionnel" : "/particulier"}>
-                  <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white px-2 lg:px-4 text-sm lg:text-base" data-testid="button-mon-espace">
-                    {t('landing.mySpace')}
-                  </Button>
-                </Link>
-              </>
-            ) : (
-              <>
-                <a href="/api/login">
-                  <Button variant="ghost" size="sm" className="text-[#722F37] px-2 lg:px-4 text-sm lg:text-base" data-testid="button-connexion-header">
-                    {t('landing.login')}
-                  </Button>
-                </a>
-                <a href="/api/login">
-                  <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white px-2 lg:px-4 text-sm lg:text-base" data-testid="button-inscription-header">
-                    {t('landing.signup')}
-                  </Button>
-                </a>
-              </>
-            )}
+            <a href="/api/login">
+              <Button variant="ghost" size="sm" className="text-[#722F37] px-2 lg:px-4 text-sm lg:text-base" data-testid="button-connexion-header">
+                {t('landing.login')}
+              </Button>
+            </a>
+            <a href="/api/login">
+              <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white px-2 lg:px-4 text-sm lg:text-base" data-testid="button-inscription-header">
+                {t('landing.signup')}
+              </Button>
+            </a>
           </div>
         </div>
       </header>
