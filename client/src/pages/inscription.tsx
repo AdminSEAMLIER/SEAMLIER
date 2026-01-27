@@ -1,0 +1,89 @@
+import { Link } from "wouter";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, User, Briefcase } from "lucide-react";
+import { Logo } from "@/components/logo";
+import { LanguageToggle } from "@/components/language-toggle";
+
+export default function Inscription() {
+  const { t } = useTranslation();
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="border-b border-gray-100 bg-white">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <Link href="/">
+            <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
+          </Link>
+          <LanguageToggle />
+        </div>
+      </header>
+
+      <main className="max-w-2xl mx-auto px-4 py-12">
+        <Link href="/">
+          <Button variant="ghost" className="mb-6 text-gray-600" data-testid="button-back">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t('common.back')}
+          </Button>
+        </Link>
+
+        <div className="text-center mb-10">
+          <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-3">
+            {t('inscription.title')}
+          </h1>
+          <p className="text-gray-600 text-lg">
+            {t('inscription.subtitle')}
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card className="border-2 border-gray-200 hover:border-[#722F37] transition-colors cursor-pointer group">
+            <a href="/api/login?role=client">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 bg-gray-100 group-hover:bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors">
+                  <User className="h-8 w-8 text-[#722F37]" />
+                </div>
+                <h2 className="font-serif text-xl text-[#722F37] mb-3">
+                  {t('inscription.clientTitle')}
+                </h2>
+                <p className="text-gray-600 text-sm mb-6">
+                  {t('inscription.clientDesc')}
+                </p>
+                <Button className="w-full bg-[#722F37] hover:bg-[#5a252c]" data-testid="button-inscription-particulier">
+                  {t('inscription.clientButton')}
+                </Button>
+              </CardContent>
+            </a>
+          </Card>
+
+          <Card className="border-2 border-gray-200 hover:border-[#722F37] transition-colors cursor-pointer group">
+            <a href="/api/login?role=tailor">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 bg-gray-100 group-hover:bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors">
+                  <Briefcase className="h-8 w-8 text-[#722F37]" />
+                </div>
+                <h2 className="font-serif text-xl text-[#722F37] mb-3">
+                  {t('inscription.proTitle')}
+                </h2>
+                <p className="text-gray-600 text-sm mb-6">
+                  {t('inscription.proDesc')}
+                </p>
+                <Button className="w-full bg-[#722F37] hover:bg-[#5a252c]" data-testid="button-inscription-professionnel">
+                  {t('inscription.proButton')}
+                </Button>
+              </CardContent>
+            </a>
+          </Card>
+        </div>
+
+        <p className="text-center text-gray-500 mt-8">
+          {t('inscription.alreadyAccount')}{' '}
+          <a href="/api/login" className="text-[#722F37] hover:underline">
+            {t('inscription.loginLink')}
+          </a>
+        </p>
+      </main>
+    </div>
+  );
+}

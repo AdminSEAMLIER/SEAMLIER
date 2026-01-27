@@ -31,6 +31,7 @@ import InscriptionParticulier from "@/pages/inscription-particulier";
 import Recherche from "@/pages/recherche";
 import CouturierProfile from "@/pages/couturier-profile";
 import InscriptionProfessionnel from "@/pages/inscription-professionnel";
+import Inscription from "@/pages/inscription";
 import ProfilParticulier from "@/pages/profil-particulier";
 import Connexion from "@/pages/connexion";
 import MentionsLegales from "@/pages/mentions-legales";
@@ -111,6 +112,7 @@ function Router() {
       <Route path="/connexion" component={Connexion} />
       <Route path="/mentions-legales" component={MentionsLegales} />
       <Route path="/confidentialite" component={Confidentialite} />
+      <Route path="/inscription" component={Inscription} />
       <Route path="/inscription-particulier" component={InscriptionParticulier} />
       <Route path="/inscription-professionnel" component={InscriptionProfessionnel} />
       <Route path="/recherche" component={Recherche} />

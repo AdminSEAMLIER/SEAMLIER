@@ -83,11 +83,11 @@ export default function Landing() {
                 {t('landing.login')}
               </Button>
             </a>
-            <a href="/api/login">
+            <Link href="/inscription">
               <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white px-2 lg:px-4 text-sm lg:text-base" data-testid="button-inscription-header">
                 {t('landing.signup')}
               </Button>
-            </a>
+            </Link>
           </div>
         </div>
       </header>

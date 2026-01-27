@@ -1,4 +1,16 @@
 {
+  "inscription": {
+    "title": "Créer un compte",
+    "subtitle": "Choisissez votre type de compte pour commencer",
+    "clientTitle": "Particulier",
+    "clientDesc": "Trouvez un couturier, demandez des devis et gérez vos projets de couture",
+    "clientButton": "S'inscrire en tant que particulier",
+    "proTitle": "Professionnel",
+    "proDesc": "Développez votre activité, gérez vos clients et vos projets de couture",
+    "proButton": "S'inscrire en tant que professionnel",
+    "alreadyAccount": "Vous avez déjà un compte ?",
+    "loginLink": "Se connecter"
+  },
   "recherche": {
     "title": "Trouvez votre couturier",
     "subtitle": "Parcourez notre réseau de couturiers qualifiés près de chez vous",
