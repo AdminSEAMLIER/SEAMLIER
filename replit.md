@@ -1,8 +1,8 @@
-# L'art de coudre
+# UNISEAM
 
 ## Overview
 
-L'art de coudre is a service marketplace platform connecting clients with professional tailors and seamstresses. Inspired by apps like Uber and Thumbtack, it enables users to discover tailoring artisans, browse their portfolios, purchase ready-made garments, book appointments, and communicate through in-app messaging. The platform emphasizes a mobile-first, premium visual experience with French language support.
+UNISEAM is a bilingual (French/English) service marketplace platform connecting individuals with professional tailors and seamstresses. The platform enables users to discover tailoring artisans, browse their portfolios, purchase ready-made garments, book appointments, and communicate through in-app messaging. It emphasizes a mobile-first, premium visual experience with complete language switching using react-i18next. Pricing is always by quote, not hourly rates.
 
 ## User Preferences
 
