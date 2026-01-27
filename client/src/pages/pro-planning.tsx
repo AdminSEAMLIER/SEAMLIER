@@ -112,7 +112,7 @@ export default function ProPlanning() {
                         ? 'bg-[#722F37] text-white' 
                         : isToday 
                           ? 'bg-[#722F37]/10 text-[#722F37]' 
-                          : 'hover:bg-gray-100'
+                          : 'hover:bg-gray-100 text-gray-700'
                     }`}
                   >
                     <p className="text-[10px] opacity-70">{day}</p>
