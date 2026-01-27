@@ -494,7 +494,7 @@ export default function ProPlanning() {
             </div>
           )}
 
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 mt-4">
             <Link href="/professionnel/messagerie" className="flex-1">
               <Button 
                 variant="outline" 
@@ -514,7 +514,7 @@ export default function ProPlanning() {
               <Trash2 className="h-4 w-4 mr-2" />
               {t('pro.deleteAppointment')}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
