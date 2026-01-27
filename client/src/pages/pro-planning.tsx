@@ -498,7 +498,7 @@ export default function ProPlanning() {
             <Link href="/professionnel/messagerie" className="flex-1">
               <Button 
                 variant="outline" 
-                className="w-full gap-2"
+                className="w-full gap-2 text-gray-500"
                 data-testid="button-message-client"
               >
                 <MessageSquare className="h-4 w-4" />
