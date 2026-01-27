@@ -258,9 +258,9 @@ export default function Landing() {
             {t('landing.joinNetwork')}
           </p>
           <Link href="/inscription-professionnel">
-            <Button size="lg" variant="outline" className="bg-white text-[#722F37] border-white hover:bg-gray-100" data-testid="button-join-pro">
+            <Button size="sm" variant="outline" className="bg-white/90 text-[#722F37] border-white/50 hover:bg-white text-sm" data-testid="button-join-pro">
               {t('landing.joinAsPro')}
-              <ArrowRight className="h-5 w-5 ml-2" />
+              <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
           </Link>
         </div>
