@@ -303,7 +303,7 @@ export default function ProPlanning() {
                 value={newAppointment.client}
                 onChange={(e) => setNewAppointment({ ...newAppointment, client: e.target.value })}
                 placeholder="Ex: Marie Dupont"
-                className="bg-white"
+                className="bg-white text-gray-700"
                 data-testid="input-client-name"
               />
             </div>
@@ -315,7 +315,7 @@ export default function ProPlanning() {
                 value={newAppointment.project}
                 onChange={(e) => setNewAppointment({ ...newAppointment, project: e.target.value })}
                 placeholder="Ex: Robe de mariée"
-                className="bg-white"
+                className="bg-white text-gray-700"
                 data-testid="input-project-type"
               />
             </div>
@@ -326,7 +326,7 @@ export default function ProPlanning() {
                 value={newAppointment.type}
                 onValueChange={(value) => setNewAppointment({ ...newAppointment, type: value })}
               >
-                <SelectTrigger className="bg-white" data-testid="select-appointment-type">
+                <SelectTrigger className="bg-white text-gray-700" data-testid="select-appointment-type">
                   <SelectValue placeholder={t('pro.selectType')} />
                 </SelectTrigger>
                 <SelectContent className="bg-white">
@@ -347,7 +347,7 @@ export default function ProPlanning() {
                   type="time"
                   value={newAppointment.time}
                   onChange={(e) => setNewAppointment({ ...newAppointment, time: e.target.value })}
-                  className="bg-white"
+                  className="bg-white text-gray-700"
                   data-testid="input-time"
                 />
               </div>
@@ -358,7 +358,7 @@ export default function ProPlanning() {
                   value={newAppointment.duration}
                   onValueChange={(value) => setNewAppointment({ ...newAppointment, duration: value })}
                 >
-                  <SelectTrigger className="bg-white" data-testid="select-duration">
+                  <SelectTrigger className="bg-white text-gray-700" data-testid="select-duration">
                     <SelectValue placeholder={t('pro.selectDuration')} />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
@@ -378,7 +378,7 @@ export default function ProPlanning() {
                 value={newAppointment.location}
                 onValueChange={(value) => setNewAppointment({ ...newAppointment, location: value })}
               >
-                <SelectTrigger className="bg-white" data-testid="select-location">
+                <SelectTrigger className="bg-white text-gray-700" data-testid="select-location">
                   <SelectValue placeholder={t('pro.selectLocation')} />
                 </SelectTrigger>
                 <SelectContent className="bg-white">
