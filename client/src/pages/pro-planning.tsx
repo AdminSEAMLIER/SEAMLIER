@@ -329,9 +329,9 @@ export default function ProPlanning() {
                 <SelectTrigger className="bg-white text-gray-700" data-testid="select-appointment-type">
                   <SelectValue placeholder={t('pro.selectType')} />
                 </SelectTrigger>
-                <SelectContent className="bg-white">
+                <SelectContent className="bg-white text-gray-700">
                   {appointmentTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
+                    <SelectItem key={type.value} value={type.value} className="text-gray-700">
                       {type.label}
                     </SelectItem>
                   ))}
@@ -361,9 +361,9 @@ export default function ProPlanning() {
                   <SelectTrigger className="bg-white text-gray-700" data-testid="select-duration">
                     <SelectValue placeholder={t('pro.selectDuration')} />
                   </SelectTrigger>
-                  <SelectContent className="bg-white">
+                  <SelectContent className="bg-white text-gray-700">
                     {durations.map((d) => (
-                      <SelectItem key={d.value} value={d.value}>
+                      <SelectItem key={d.value} value={d.value} className="text-gray-700">
                         {d.label}
                       </SelectItem>
                     ))}
@@ -381,9 +381,9 @@ export default function ProPlanning() {
                 <SelectTrigger className="bg-white text-gray-700" data-testid="select-location">
                   <SelectValue placeholder={t('pro.selectLocation')} />
                 </SelectTrigger>
-                <SelectContent className="bg-white">
+                <SelectContent className="bg-white text-gray-700">
                   {locations.map((loc) => (
-                    <SelectItem key={loc.value} value={loc.value}>
+                    <SelectItem key={loc.value} value={loc.value} className="text-gray-700">
                       {loc.label}
                     </SelectItem>
                   ))}
