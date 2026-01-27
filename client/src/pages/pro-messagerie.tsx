@@ -4,12 +4,15 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearch } from "wouter";
 
 export default function ProMessagerie() {
   const { t } = useTranslation();
+  const searchString = useSearch();
   const [showChat, setShowChat] = useState(false);
   const [newMessage, setNewMessage] = useState("");
+  const [chatMessages, setChatMessages] = useState<Array<{id: string; sender: string; text: string; time: string}>>([]);
 
   const mockConversations = [
     {
@@ -46,6 +49,7 @@ export default function ProMessagerie() {
     },
   ];
 
+  const [conversations, setConversations] = useState(mockConversations);
   const [selectedConv, setSelectedConv] = useState(mockConversations[0]);
 
   const mockMessages = [
@@ -54,6 +58,66 @@ export default function ProMessagerie() {
     { id: "3", sender: "client", textKey: "pro.mockMessages.perfect", time: "14:25" },
     { id: "4", sender: "client", textKey: "pro.mockMessages.fitting", time: "14:30" },
   ];
+
+  // Check for new conversation from accepted request
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    if (params.get('newConversation') === 'true') {
+      const acceptedRequest = sessionStorage.getItem('acceptedRequest');
+      if (acceptedRequest) {
+        const { clientName, projectType, autoMessage } = JSON.parse(acceptedRequest);
+        
+        // Create new conversation
+        const newConv = {
+          id: `new-${Date.now()}`,
+          name: clientName,
+          lastMessageKey: "",
+          lastMessage: autoMessage,
+          time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+          unread: 0,
+          projectKey: "",
+          projectType: projectType,
+        };
+
+        // Add to conversations list
+        setConversations([newConv, ...mockConversations]);
+        setSelectedConv(newConv as any);
+        
+        // Set the auto message
+        setChatMessages([{
+          id: "auto-1",
+          sender: "pro",
+          text: `${t('pro.acceptanceMessageFull', { projectType })}`,
+          time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        }]);
+        
+        setShowChat(true);
+        
+        // Clear the session storage
+        sessionStorage.removeItem('acceptedRequest');
+      }
+    }
+  }, [searchString, t]);
+
+  const handleSendMessage = () => {
+    if (!newMessage.trim()) return;
+    
+    const now = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    setChatMessages([...chatMessages, {
+      id: `msg-${Date.now()}`,
+      sender: "pro",
+      text: newMessage,
+      time: now,
+    }]);
+    setNewMessage("");
+  };
+
+  const handleSelectConversation = (conv: typeof mockConversations[0]) => {
+    setSelectedConv(conv);
+    // Reset to mock messages for existing conversations
+    setChatMessages([]);
+    setShowChat(true);
+  };
 
   return (
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
@@ -89,14 +153,11 @@ export default function ProMessagerie() {
               </CardContent>
             </Card>
 
-            {mockConversations.map((conv) => (
+            {conversations.map((conv) => (
               <Card 
                 key={conv.id} 
                 className="border border-gray-100 bg-white shadow-sm mb-3 cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => {
-                  setSelectedConv(conv);
-                  setShowChat(true);
-                }}
+                onClick={() => handleSelectConversation(conv)}
               >
                 <CardContent className="p-4 bg-white">
                   <div className="flex gap-3">
@@ -110,8 +171,12 @@ export default function ProMessagerie() {
                         <span className="font-medium text-gray-900 truncate">{conv.name}</span>
                         <span className="text-xs text-gray-400 flex-shrink-0">{conv.time}</span>
                       </div>
-                      <p className="text-sm text-gray-500 truncate">{t(conv.lastMessageKey)}</p>
-                      <span className="text-xs text-[#722F37]">{t(conv.projectKey)}</span>
+                      <p className="text-sm text-gray-500 truncate">
+                        {(conv as any).lastMessage || t(conv.lastMessageKey)}
+                      </p>
+                      <span className="text-xs text-[#722F37]">
+                        {(conv as any).projectType || t(conv.projectKey)}
+                      </span>
                     </div>
                     {conv.unread > 0 && (
                       <span className="w-5 h-5 rounded-full bg-[#722F37] text-white text-xs flex items-center justify-center flex-shrink-0">
@@ -142,31 +207,55 @@ export default function ProMessagerie() {
                 </Avatar>
                 <div>
                   <p className="font-medium text-gray-900">{selectedConv.name}</p>
-                  <p className="text-sm text-[#722F37]">{t(selectedConv.projectKey)}</p>
+                  <p className="text-sm text-[#722F37]">
+                    {(selectedConv as any).projectType || t(selectedConv.projectKey)}
+                  </p>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="p-0 bg-white">
               <div className="h-80 overflow-y-auto p-4 space-y-4 bg-gray-50">
-                {mockMessages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.sender === 'pro' ? 'justify-end' : 'justify-start'}`}
-                  >
+                {chatMessages.length > 0 ? (
+                  chatMessages.map((msg) => (
                     <div
-                      className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                        msg.sender === 'pro'
-                          ? 'bg-[#722F37] text-white'
-                          : 'bg-white border border-gray-200 text-gray-900'
-                      }`}
+                      key={msg.id}
+                      className={`flex ${msg.sender === 'pro' ? 'justify-end' : 'justify-start'}`}
                     >
-                      <p>{t(msg.textKey)}</p>
-                      <p className={`text-xs mt-1 ${msg.sender === 'pro' ? 'text-white/70' : 'text-gray-400'}`}>
-                        {msg.time}
-                      </p>
+                      <div
+                        className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                          msg.sender === 'pro'
+                            ? 'bg-[#722F37] text-white'
+                            : 'bg-white border border-gray-200 text-gray-900'
+                        }`}
+                      >
+                        <p>{msg.text}</p>
+                        <p className={`text-xs mt-1 ${msg.sender === 'pro' ? 'text-white/70' : 'text-gray-400'}`}>
+                          {msg.time}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  mockMessages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`flex ${msg.sender === 'pro' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                          msg.sender === 'pro'
+                            ? 'bg-[#722F37] text-white'
+                            : 'bg-white border border-gray-200 text-gray-900'
+                        }`}
+                      >
+                        <p>{t(msg.textKey)}</p>
+                        <p className={`text-xs mt-1 ${msg.sender === 'pro' ? 'text-white/70' : 'text-gray-400'}`}>
+                          {msg.time}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
 
               <div className="p-4 border-t border-gray-100">
@@ -174,11 +263,17 @@ export default function ProMessagerie() {
                   <Input
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                     placeholder={t('pro.typeMessage')}
                     className="flex-1 border-gray-200"
                     data-testid="input-message"
                   />
-                  <Button className="bg-[#722F37] hover:bg-[#5a252c]" size="icon" data-testid="button-send">
+                  <Button 
+                    className="bg-[#722F37] hover:bg-[#5a252c]" 
+                    size="icon" 
+                    onClick={handleSendMessage}
+                    data-testid="button-send"
+                  >
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>

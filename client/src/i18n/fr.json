@@ -106,7 +106,15 @@
       "availableTuesday": "Bonjour, je voudrais savoir si vous êtes disponible pour l'essayage mardi ?",
       "yesAvailable": "Bonjour ! Oui, je suis disponible mardi après-midi. 15h vous conviendrait ?",
       "perfect": "15h c'est parfait pour moi !"
-    }
+    },
+    "requestAccepted": "Demande acceptée",
+    "redirectingToMessaging": "Redirection vers la messagerie...",
+    "requestDeclined": "Demande refusée",
+    "requestDeclinedDesc": "La demande a été refusée",
+    "accepted": "Acceptée",
+    "noRequests": "Aucune demande en attente",
+    "acceptanceMessage": "Demande acceptée",
+    "acceptanceMessageFull": "Bonjour ! J'ai bien reçu votre demande pour \"{{projectType}}\" et je l'accepte avec plaisir. Nous pouvons maintenant échanger via cette messagerie pour discuter des détails de votre projet. N'hésitez pas à me poser vos questions !"
   },
   "landing": {
     "heroTitle": "Trouvez un couturier près de chez vous",

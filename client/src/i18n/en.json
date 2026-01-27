@@ -106,7 +106,15 @@
       "availableTuesday": "Hello, I wanted to know if you are available for the fitting on Tuesday?",
       "yesAvailable": "Hello! Yes, I am available Tuesday afternoon. Would 3pm work for you?",
       "perfect": "3pm works perfectly for me!"
-    }
+    },
+    "requestAccepted": "Request accepted",
+    "redirectingToMessaging": "Redirecting to messaging...",
+    "requestDeclined": "Request declined",
+    "requestDeclinedDesc": "The request has been declined",
+    "accepted": "Accepted",
+    "noRequests": "No pending requests",
+    "acceptanceMessage": "Request accepted",
+    "acceptanceMessageFull": "Hello! I have received your request for \"{{projectType}}\" and I am happy to accept it. We can now exchange via this messaging system to discuss the details of your project. Feel free to ask me any questions!"
   },
   "landing": {
     "heroTitle": "Find a tailor near you",
