@@ -4,17 +4,43 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+
+interface Appointment {
+  id: string;
+  client: string;
+  typeKey: string;
+  projectKey: string;
+  time: string;
+  duration: string;
+  locationKey: string;
+  date: string;
+}
 
 export default function ProPlanning() {
   const { t, i18n } = useTranslation();
+  const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newAppointment, setNewAppointment] = useState({
+    client: "",
+    project: "",
+    type: "",
+    time: "",
+    duration: "",
+    location: "",
+  });
 
   const weekDaysKeys = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
   const weekDaysFr = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
   const weekDaysEn = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const weekDays = i18n.language === 'fr' ? weekDaysFr : weekDaysEn;
 
-  const mockAppointments = [
+  const [appointments, setAppointments] = useState<Appointment[]>([
     {
       id: "1",
       client: "Claire Beaumont",
@@ -23,6 +49,7 @@ export default function ProPlanning() {
       time: "10:00",
       duration: "1h",
       locationKey: "pro.atWorkshop",
+      date: new Date().toISOString().split('T')[0],
     },
     {
       id: "2",
@@ -32,6 +59,7 @@ export default function ProPlanning() {
       time: "14:00",
       duration: "45min",
       locationKey: "pro.atHome",
+      date: new Date().toISOString().split('T')[0],
     },
     {
       id: "3",
@@ -41,8 +69,9 @@ export default function ProPlanning() {
       time: "16:30",
       duration: "30min",
       locationKey: "pro.video",
+      date: new Date().toISOString().split('T')[0],
     },
-  ];
+  ]);
 
   const formatDate = (date: Date) => {
     const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
@@ -62,6 +91,75 @@ export default function ProPlanning() {
     }
   };
 
+  const appointmentTypes = [
+    { value: "pro.fitting", label: t('pro.fitting') },
+    { value: "pro.measurements", label: t('pro.measurements') },
+    { value: "pro.consultation", label: t('pro.consultation') },
+  ];
+
+  const locations = [
+    { value: "pro.atWorkshop", label: t('pro.atWorkshop') },
+    { value: "pro.atHome", label: t('pro.atHome') },
+    { value: "pro.video", label: t('pro.video') },
+  ];
+
+  const durations = [
+    { value: "30min", label: "30 min" },
+    { value: "45min", label: "45 min" },
+    { value: "1h", label: "1h" },
+    { value: "1h30", label: "1h30" },
+    { value: "2h", label: "2h" },
+  ];
+
+  const handleAddAppointment = () => {
+    if (!newAppointment.client || !newAppointment.type || !newAppointment.time) {
+      return;
+    }
+
+    const appointment: Appointment = {
+      id: Date.now().toString(),
+      client: newAppointment.client,
+      typeKey: newAppointment.type,
+      projectKey: newAppointment.project || "pro.newRequestLabel",
+      time: newAppointment.time,
+      duration: newAppointment.duration || "1h",
+      locationKey: newAppointment.location || "pro.atWorkshop",
+      date: selectedDate.toISOString().split('T')[0],
+    };
+
+    setAppointments([...appointments, appointment]);
+    setIsDialogOpen(false);
+    setNewAppointment({
+      client: "",
+      project: "",
+      type: "",
+      time: "",
+      duration: "",
+      location: "",
+    });
+
+    toast({
+      title: t('pro.appointmentAdded'),
+      description: `${appointment.client} - ${appointment.time}`,
+    });
+  };
+
+  const filteredAppointments = appointments.filter(
+    apt => apt.date === selectedDate.toISOString().split('T')[0]
+  ).sort((a, b) => a.time.localeCompare(b.time));
+
+  const goToPreviousDay = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() - 1);
+    setSelectedDate(newDate);
+  };
+
+  const goToNextDay = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + 1);
+    setSelectedDate(newDate);
+  };
+
   return (
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
       <div className="bg-gray-50 border-b border-gray-100">
@@ -75,7 +173,12 @@ export default function ProPlanning() {
                 {t('nav.planning')}
               </h1>
             </div>
-            <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white" size="sm" data-testid="button-add-appointment">
+            <Button 
+              className="bg-[#722F37] hover:bg-[#5a252c] text-white" 
+              size="sm" 
+              data-testid="button-add-appointment"
+              onClick={() => setIsDialogOpen(true)}
+            >
               <Plus className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">{t('pro.addAppointment')}</span>
             </Button>
@@ -87,11 +190,23 @@ export default function ProPlanning() {
         <Card className="border border-gray-100 bg-white shadow-sm mb-6">
           <CardContent className="p-4 bg-white">
             <div className="flex items-center justify-between mb-4">
-              <Button variant="ghost" size="icon" className="text-gray-600">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-gray-600"
+                onClick={goToPreviousDay}
+                data-testid="button-previous-day"
+              >
                 <ChevronLeft className="h-5 w-5" />
               </Button>
               <h3 className="font-medium text-[#722F37] capitalize text-sm">{formatDate(selectedDate)}</h3>
-              <Button variant="ghost" size="icon" className="text-gray-600">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-gray-600"
+                onClick={goToNextDay}
+                data-testid="button-next-day"
+              >
                 <ChevronRight className="h-5 w-5" />
               </Button>
             </div>
@@ -114,6 +229,7 @@ export default function ProPlanning() {
                           ? 'bg-[#722F37]/10 text-[#722F37]' 
                           : 'hover:bg-gray-100 text-gray-700'
                     }`}
+                    data-testid={`button-day-${index}`}
                   >
                     <p className="text-[10px] opacity-70">{day}</p>
                     <p className="text-sm font-medium">{date.getDate()}</p>
@@ -127,12 +243,12 @@ export default function ProPlanning() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="font-medium text-gray-900">{t('pro.todaysAppointments')}</h3>
-            <p className="text-sm text-gray-500">{mockAppointments.length} {t('pro.appointments')}</p>
+            <p className="text-sm text-gray-500">{filteredAppointments.length} {t('pro.appointments')}</p>
           </div>
         </div>
 
-        {mockAppointments.map((apt) => (
-          <Card key={apt.id} className="border border-gray-100 bg-white shadow-sm mb-3">
+        {filteredAppointments.map((apt) => (
+          <Card key={apt.id} className="border border-gray-100 bg-white shadow-sm mb-3" data-testid={`card-appointment-${apt.id}`}>
             <CardContent className="p-4 bg-white">
               <div className="flex gap-4">
                 <div className="text-center min-w-[50px]">
@@ -146,7 +262,7 @@ export default function ProPlanning() {
                       {t(apt.typeKey)}
                     </Badge>
                   </div>
-                  <p className="font-medium text-gray-900 mb-1">{t(apt.projectKey)}</p>
+                  <p className="font-medium text-gray-900 mb-1">{apt.projectKey.startsWith('pro.') ? t(apt.projectKey) : apt.projectKey}</p>
                   <div className="flex flex-wrap gap-3 text-sm text-gray-500">
                     <span className="flex items-center gap-1">
                       <User className="h-3 w-3" />
@@ -163,7 +279,7 @@ export default function ProPlanning() {
           </Card>
         ))}
 
-        {mockAppointments.length === 0 && (
+        {filteredAppointments.length === 0 && (
           <Card className="border border-gray-100 bg-white shadow-sm">
             <CardContent className="p-8 bg-white text-center">
               <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
@@ -172,6 +288,126 @@ export default function ProPlanning() {
           </Card>
         )}
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-[#722F37]">{t('pro.newAppointment')}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="client">{t('pro.clientName')}</Label>
+              <Input
+                id="client"
+                value={newAppointment.client}
+                onChange={(e) => setNewAppointment({ ...newAppointment, client: e.target.value })}
+                placeholder="Ex: Marie Dupont"
+                data-testid="input-client-name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="project">{t('pro.projectType')}</Label>
+              <Input
+                id="project"
+                value={newAppointment.project}
+                onChange={(e) => setNewAppointment({ ...newAppointment, project: e.target.value })}
+                placeholder="Ex: Robe de mariée"
+                data-testid="input-project-type"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t('pro.appointmentType')}</Label>
+              <Select
+                value={newAppointment.type}
+                onValueChange={(value) => setNewAppointment({ ...newAppointment, type: value })}
+              >
+                <SelectTrigger data-testid="select-appointment-type">
+                  <SelectValue placeholder={t('pro.selectType')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {appointmentTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="time">{t('pro.time')}</Label>
+                <Input
+                  id="time"
+                  type="time"
+                  value={newAppointment.time}
+                  onChange={(e) => setNewAppointment({ ...newAppointment, time: e.target.value })}
+                  data-testid="input-time"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t('pro.duration')}</Label>
+                <Select
+                  value={newAppointment.duration}
+                  onValueChange={(value) => setNewAppointment({ ...newAppointment, duration: value })}
+                >
+                  <SelectTrigger data-testid="select-duration">
+                    <SelectValue placeholder={t('pro.selectDuration')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {durations.map((d) => (
+                      <SelectItem key={d.value} value={d.value}>
+                        {d.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t('pro.location')}</Label>
+              <Select
+                value={newAppointment.location}
+                onValueChange={(value) => setNewAppointment({ ...newAppointment, location: value })}
+              >
+                <SelectTrigger data-testid="select-location">
+                  <SelectValue placeholder={t('pro.selectLocation')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map((loc) => (
+                    <SelectItem key={loc.value} value={loc.value}>
+                      {loc.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDialogOpen(false)}
+              data-testid="button-cancel-appointment"
+            >
+              {t('pro.cancel')}
+            </Button>
+            <Button 
+              className="bg-[#722F37] hover:bg-[#5a252c] text-white"
+              onClick={handleAddAppointment}
+              disabled={!newAppointment.client || !newAppointment.type || !newAppointment.time}
+              data-testid="button-save-appointment"
+            >
+              {t('pro.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
