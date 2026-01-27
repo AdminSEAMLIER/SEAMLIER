@@ -110,6 +110,8 @@
     "clientInfo": "Client",
     "notes": "Notes",
     "scheduleAppointment": "Schedule appointment",
+    "modelPhoto": "Model photo",
+    "addModelPhoto": "Add a photo",
     "consultation": "Consultation",
     "atWorkshop": "Workshop",
     "atHome": "At home",

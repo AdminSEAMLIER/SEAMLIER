@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { FolderKanban, Clock, Euro, User, ChevronRight, Ruler, Calendar, MessageSquare, Phone, Mail } from "lucide-react";
+import { FolderKanban, Clock, Euro, User, ChevronRight, Ruler, Calendar, MessageSquare, Phone, Mail, Camera, Image } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,12 +26,15 @@ interface Project {
   nextStepKey: string;
   measurements: Measurement[];
   notes: string;
+  modelPhoto?: string;
 }
 
 export default function ProProjets() {
   const { t } = useTranslation();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const mockProjects: Project[] = [
     {
@@ -122,6 +125,28 @@ export default function ProProjets() {
     setIsDetailOpen(true);
   };
 
+  const handleAddPhoto = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && selectedProject) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const photoUrl = reader.result as string;
+        const updatedProject = { ...selectedProject, modelPhoto: photoUrl };
+        setSelectedProject(updatedProject);
+        setProjects(prev => 
+          prev.map(p => p.id === selectedProject.id ? updatedProject : p)
+        );
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const allProjects = projects.length > 0 ? projects : mockProjects;
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "in_progress":
@@ -184,7 +209,7 @@ export default function ProProjets() {
           </CardContent>
         </Card>
 
-        {mockProjects.map((project) => (
+        {allProjects.map((project) => (
           <Card 
             key={project.id} 
             className="border border-gray-100 bg-white shadow-sm mb-4 cursor-pointer hover:border-[#722F37]/30 transition-colors"
@@ -263,17 +288,67 @@ export default function ProProjets() {
                 </div>
               </div>
 
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handlePhotoChange}
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                data-testid="input-model-photo"
+              />
+
+              <div className="mb-4">
+                <p className="text-sm text-gray-500 mb-2">{t('pro.modelPhoto')}</p>
+                {selectedProject.modelPhoto ? (
+                  <div className="relative">
+                    <img 
+                      src={selectedProject.modelPhoto} 
+                      alt="Model" 
+                      className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                    />
+                    <button
+                      onClick={handleAddPhoto}
+                      className="absolute bottom-2 right-2 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-50"
+                      data-testid="button-change-model-photo"
+                    >
+                      <Camera className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleAddPhoto}
+                    className="w-full h-32 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-[#722F37]/50 hover:text-[#722F37] transition-colors"
+                    data-testid="button-add-model-photo"
+                  >
+                    <Image className="h-8 w-8 mb-2" />
+                    <span className="text-sm">{t('pro.addModelPhoto')}</span>
+                  </button>
+                )}
+              </div>
+
               <Tabs defaultValue="measurements" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 bg-gray-100">
-                  <TabsTrigger value="measurements" className="data-[state=active]:bg-white" data-testid="tab-measurements">
+                <TabsList className="grid w-full grid-cols-3 bg-gray-100 rounded-lg p-1">
+                  <TabsTrigger 
+                    value="measurements" 
+                    className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm text-gray-600 data-[state=active]:text-gray-900" 
+                    data-testid="tab-measurements"
+                  >
                     <Ruler className="h-4 w-4 mr-1" />
                     {t('pro.measurements')}
                   </TabsTrigger>
-                  <TabsTrigger value="info" className="data-[state=active]:bg-white" data-testid="tab-info">
+                  <TabsTrigger 
+                    value="info" 
+                    className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm text-gray-600 data-[state=active]:text-gray-900" 
+                    data-testid="tab-info"
+                  >
                     <User className="h-4 w-4 mr-1" />
                     {t('pro.clientInfo')}
                   </TabsTrigger>
-                  <TabsTrigger value="notes" className="data-[state=active]:bg-white" data-testid="tab-notes">
+                  <TabsTrigger 
+                    value="notes" 
+                    className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm text-gray-600 data-[state=active]:text-gray-900" 
+                    data-testid="tab-notes"
+                  >
                     <FolderKanban className="h-4 w-4 mr-1" />
                     {t('pro.notes')}
                   </TabsTrigger>
