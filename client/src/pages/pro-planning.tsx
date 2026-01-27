@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Calendar, MapPin, User, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, MapPin, User, Plus, ChevronLeft, ChevronRight, Clock, X, Trash2, MessageSquare } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 
 interface Appointment {
   id: string;
@@ -26,6 +27,8 @@ export default function ProPlanning() {
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [newAppointment, setNewAppointment] = useState({
     client: "",
     project: "",
@@ -144,6 +147,21 @@ export default function ProPlanning() {
     });
   };
 
+  const handleOpenDetail = (apt: Appointment) => {
+    setSelectedAppointment(apt);
+    setIsDetailOpen(true);
+  };
+
+  const handleDeleteAppointment = (id: string) => {
+    setAppointments(appointments.filter(apt => apt.id !== id));
+    setIsDetailOpen(false);
+    setSelectedAppointment(null);
+    toast({
+      title: t('pro.appointmentDeleted'),
+      description: t('pro.appointmentDeletedDesc'),
+    });
+  };
+
   const filteredAppointments = appointments.filter(
     apt => apt.date === selectedDate.toISOString().split('T')[0]
   ).sort((a, b) => a.time.localeCompare(b.time));
@@ -248,7 +266,12 @@ export default function ProPlanning() {
         </div>
 
         {filteredAppointments.map((apt) => (
-          <Card key={apt.id} className="border border-gray-100 bg-white shadow-sm mb-3" data-testid={`card-appointment-${apt.id}`}>
+          <Card 
+            key={apt.id} 
+            className="border border-gray-100 bg-white shadow-sm mb-3 cursor-pointer hover:border-[#722F37]/30 transition-colors" 
+            data-testid={`card-appointment-${apt.id}`}
+            onClick={() => handleOpenDetail(apt)}
+          >
             <CardContent className="p-4 bg-white">
               <div className="flex gap-4">
                 <div className="text-center min-w-[50px]">
@@ -407,6 +430,89 @@ export default function ProPlanning() {
               data-testid="button-save-appointment"
             >
               {t('pro.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="sm:max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-[#722F37]">{t('pro.appointmentDetails')}</DialogTitle>
+          </DialogHeader>
+          
+          {selectedAppointment && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                <div className="text-center min-w-[60px]">
+                  <p className="text-2xl font-bold text-[#722F37]">{selectedAppointment.time}</p>
+                  <p className="text-xs text-gray-500">{selectedAppointment.duration}</p>
+                </div>
+                <div className="flex-1 border-l border-gray-200 pl-4">
+                  <Badge className={`${getTypeColor(selectedAppointment.typeKey)} border-none mb-2`}>
+                    {t(selectedAppointment.typeKey)}
+                  </Badge>
+                  <p className="font-medium text-gray-900">
+                    {selectedAppointment.projectKey.startsWith('pro.') ? t(selectedAppointment.projectKey) : selectedAppointment.projectKey}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-gray-700">
+                  <User className="h-5 w-5 text-gray-400" />
+                  <div>
+                    <p className="text-xs text-gray-500">{t('pro.clientName')}</p>
+                    <p className="font-medium">{selectedAppointment.client}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 text-gray-700">
+                  <MapPin className="h-5 w-5 text-gray-400" />
+                  <div>
+                    <p className="text-xs text-gray-500">{t('pro.location')}</p>
+                    <p className="font-medium">{t(selectedAppointment.locationKey)}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 text-gray-700">
+                  <Clock className="h-5 w-5 text-gray-400" />
+                  <div>
+                    <p className="text-xs text-gray-500">{t('pro.duration')}</p>
+                    <p className="font-medium">{selectedAppointment.duration}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 text-gray-700">
+                  <Calendar className="h-5 w-5 text-gray-400" />
+                  <div>
+                    <p className="text-xs text-gray-500">{t('pro.date')}</p>
+                    <p className="font-medium">{new Date(selectedAppointment.date).toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Link href="/professionnel/messagerie" className="flex-1">
+              <Button 
+                variant="outline" 
+                className="w-full gap-2"
+                data-testid="button-message-client"
+              >
+                <MessageSquare className="h-4 w-4" />
+                {t('pro.messageClient')}
+              </Button>
+            </Link>
+            <Button 
+              variant="outline"
+              className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+              onClick={() => selectedAppointment && handleDeleteAppointment(selectedAppointment.id)}
+              data-testid="button-delete-appointment"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {t('pro.deleteAppointment')}
             </Button>
           </DialogFooter>
         </DialogContent>
