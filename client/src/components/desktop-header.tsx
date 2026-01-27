@@ -1,4 +1,4 @@
-import { Home, Compass, MessageCircle, Ruler, BookOpen, User, Bell, FileText, FolderKanban, Calendar, ArrowLeftRight, Briefcase, Users } from "lucide-react";
+import { Home, Compass, MessageCircle, Ruler, BookOpen, User, Bell, FileText, FolderKanban, Calendar, ArrowLeftRight, Briefcase, Users, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
 import { LanguageToggle } from "./language-toggle";
+import { useAuth } from "@/hooks/use-auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const particulierNavItems = [
   { icon: Home, labelKey: "nav.home", path: "/particulier" },
@@ -32,8 +35,11 @@ interface DesktopHeaderProps {
 export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
   const { t } = useTranslation();
   const [location] = useLocation();
+  const { user, isAuthenticated } = useAuth();
   const navItems = mode === "professionnel" ? proNavItems : particulierNavItems;
   const basePath = mode === "professionnel" ? "/professionnel" : "/particulier";
+  
+  const userInitials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() || 'U' : 'U';
 
   return (
     <header 
@@ -80,6 +86,29 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
           <Button variant="ghost" size="icon" className="text-gray-600" data-testid="button-notifications">
             <Bell className="h-5 w-5" />
           </Button>
+          {isAuthenticated && user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full" data-testid="button-user-menu">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName || ''} />
+                    <AvatarFallback className="bg-[#722F37] text-white text-xs">{userInitials}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="text-gray-700">
+                  <span className="font-medium">{user.firstName} {user.lastName}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a href="/api/logout" className="flex items-center gap-2 text-red-600 cursor-pointer">
+                    <LogOut className="h-4 w-4" />
+                    {t('auth.logout')}
+                  </a>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
     </header>

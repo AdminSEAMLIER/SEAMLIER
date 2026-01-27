@@ -72,8 +72,9 @@ export default function Discovery() {
   const filteredTailors = tailors?.filter((tailor) => {
     const dbValue = getDbValueForFilter(selectedFilter);
     const matchesFilter = selectedFilter === "all" || tailor.specialties?.includes(dbValue);
+    const fullName = `${tailor.user.firstName || ''} ${tailor.user.lastName || ''}`.trim();
     const matchesSearch = !searchQuery || 
-      tailor.user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tailor.user.location?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCity = selectedCity === "all" || 
       tailor.user.location?.toLowerCase().includes(selectedCity.toLowerCase());

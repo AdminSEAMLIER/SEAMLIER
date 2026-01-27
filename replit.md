@@ -62,9 +62,21 @@ server/              # Express backend
 shared/              # Shared code (schema, types)
 ```
 
-## Recent Changes (December 2024)
+## Recent Changes (January 2026)
 
-### Bug Fixes
+### Schema Migration
+- **User Schema**: Migrated from `fullName`/`avatarUrl` to `firstName`/`lastName`/`profileImageUrl` pattern
+- **Database Driver Fix**: Using @neondatabase/serverless v0.10.4 for drizzle-orm compatibility
+- **Portfolio API**: Updated `/api/portfolio` to return `PortfolioWithTailor[]` with proper joins to tailors and users
+
+### Component Updates
+- **TailorCard**: Uses computed fullName from firstName + lastName
+- **PortfolioCard**: Now handles optional tailor.user gracefully (supports both PortfolioItem and PortfolioWithTailor)
+- **ReviewCard**: Updated to use firstName/lastName/profileImageUrl
+- **DesktopHeader**: Added user avatar dropdown with logout option when authenticated
+- **TailorProfile**: Added getFullName()/getInitials() helper functions
+
+### Bug Fixes (December 2024)
 - **Product Detail Page**: Added `/product/:id` route and full product detail page with image, title, price, seller info, and action buttons
 - **Messaging System**: Wired message sending to POST `/api/messages` with useMutation and proper cache invalidation
 - **Marketplace/Search Filtering**: Migrated from malformed server-side filtering to proper client-side filtering using useMemo

@@ -1,108 +1,20 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { isAuthenticated } from "./replit_integrations/auth";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   
-  // Auth routes
-  app.post("/api/auth/register", async (req, res) => {
-    try {
-      const { fullName, email, phone, password, role } = req.body;
-      
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(400).json({ error: "Un compte existe déjà avec cet email" });
-      }
-      
-      // Create user
-      const user = await storage.createUser({
-        username: email.split("@")[0],
-        password: password, // In production, hash this!
-        fullName,
-        email,
-        phone: phone || null,
-        avatarUrl: null,
-        role: role || "client",
-        location: null,
-      });
-      
-      res.status(201).json({ message: "Compte créé avec succès", userId: user.id });
-    } catch (error) {
-      res.status(500).json({ error: "Erreur lors de la création du compte" });
-    }
-  });
-
-  app.post("/api/auth/register-pro", async (req, res) => {
-    try {
-      const { fullName, email, phone, password, location, experience, specialties, bio } = req.body;
-      
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(400).json({ error: "Un compte existe déjà avec cet email" });
-      }
-      
-      // Create user with tailor role
-      const user = await storage.createUser({
-        username: email.split("@")[0],
-        password: password, // In production, hash this!
-        fullName,
-        email,
-        phone: phone || null,
-        avatarUrl: null,
-        role: "tailor",
-        location: location || null,
-      });
-      
-      // Create tailor profile
-      const tailor = await storage.createTailor({
-        userId: user.id,
-        bio: bio || "",
-        specialties: Array.isArray(specialties) ? specialties : [],
-        experience: experience || 0,
-        hourlyRate: null,
-        coverImageUrl: null,
-        isVerified: false,
-        rating: 0,
-        reviewCount: 0,
-        portfolioCount: 0,
-      });
-      
-      res.status(201).json({ 
-        message: "Compte professionnel créé avec succès", 
-        userId: user.id,
-        tailorId: tailor.id 
-      });
-    } catch (error) {
-      console.error("Register pro error:", error);
-      res.status(500).json({ error: "Erreur lors de la création du compte professionnel" });
-    }
-  });
-
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      
-      const user = await storage.getUserByEmail(email);
-      if (!user || user.password !== password) {
-        return res.status(401).json({ error: "Email ou mot de passe incorrect" });
-      }
-      
-      res.json({ message: "Connexion réussie", user: { id: user.id, fullName: user.fullName, email: user.email, role: user.role } });
-    } catch (error) {
-      res.status(500).json({ error: "Erreur lors de la connexion" });
-    }
-  });
-  
+  // Public routes - Tailors
   app.get("/api/tailors", async (req, res) => {
     try {
       const tailors = await storage.getTailors();
       res.json(tailors);
     } catch (error) {
+      console.error("Error fetching tailors:", error);
       res.status(500).json({ error: "Failed to fetch tailors" });
     }
   });
@@ -146,6 +58,7 @@ export async function registerRoutes(
     }
   });
 
+  // Public routes - Portfolio
   app.get("/api/portfolio", async (req, res) => {
     try {
       const portfolio = await storage.getPortfolioItems();
@@ -155,6 +68,7 @@ export async function registerRoutes(
     }
   });
 
+  // Public routes - Products
   app.get("/api/products", async (req, res) => {
     try {
       const products = await storage.getProducts();
@@ -176,21 +90,117 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/user/me", async (req, res) => {
-    const demoUser = await storage.getUser("u6");
-    res.json(demoUser);
+  // Protected routes - User profile
+  app.get("/api/user/me", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
   });
 
-  app.get("/api/conversations", async (req, res) => {
+  app.patch("/api/user/me", isAuthenticated, async (req: any, res) => {
     try {
-      const conversations = await storage.getConversations("u6");
+      const userId = req.user.claims.sub;
+      const { firstName, lastName, phone, location, profileImageUrl } = req.body;
+      const user = await storage.updateUser(userId, { firstName, lastName, phone, location, profileImageUrl });
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
+  // Protected routes - Tailor profile management
+  app.get("/api/user/me/tailor", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) {
+        return res.status(404).json({ error: "Tailor profile not found" });
+      }
+      res.json(tailor);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch tailor profile" });
+    }
+  });
+
+  app.post("/api/user/me/tailor", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const existingTailor = await storage.getTailorByUserId(userId);
+      if (existingTailor) {
+        return res.status(400).json({ error: "Tailor profile already exists" });
+      }
+      
+      await storage.updateUser(userId, { role: "tailor" });
+      
+      const tailor = await storage.createTailor({
+        userId,
+        bio: req.body.bio || "",
+        specialties: req.body.specialties || [],
+        experience: req.body.experience || 0,
+        coverImageUrl: req.body.coverImageUrl || null,
+        isVerified: false,
+        rating: 0,
+        reviewCount: 0,
+        portfolioCount: 0,
+      });
+      
+      res.status(201).json(tailor);
+    } catch (error) {
+      console.error("Error creating tailor profile:", error);
+      res.status(500).json({ error: "Failed to create tailor profile" });
+    }
+  });
+
+  app.patch("/api/user/me/tailor", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) {
+        return res.status(404).json({ error: "Tailor profile not found" });
+      }
+      
+      const { bio, specialties, experience, coverImageUrl } = req.body;
+      const updated = await storage.updateTailor(tailor.id, { bio, specialties, experience, coverImageUrl });
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update tailor profile" });
+    }
+  });
+
+  // Protected routes - Conversations
+  app.get("/api/conversations", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const conversations = await storage.getConversations(userId);
       res.json(conversations);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch conversations" });
     }
   });
 
-  app.get("/api/messages/:conversationId", async (req, res) => {
+  app.post("/api/conversations", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { participantId } = req.body;
+      const conversation = await storage.getOrCreateConversation(userId, participantId);
+      res.json(conversation);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create conversation" });
+    }
+  });
+
+  app.get("/api/messages/:conversationId", isAuthenticated, async (req: any, res) => {
     try {
       const messages = await storage.getMessages(req.params.conversationId);
       res.json(messages);
@@ -199,60 +209,199 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/messages", async (req, res) => {
+  app.post("/api/messages", isAuthenticated, async (req: any, res) => {
     try {
-      const message = await storage.createMessage(req.body);
+      const userId = req.user.claims.sub;
+      const message = await storage.createMessage({
+        ...req.body,
+        senderId: userId,
+      });
       res.status(201).json(message);
     } catch (error) {
       res.status(500).json({ error: "Failed to send message" });
     }
   });
 
-  // User profile routes
-  app.get("/api/users/:id", async (req, res) => {
+  // Protected routes - Measurements
+  app.get("/api/measurements", isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.params.id);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-      // Don't return password
-      const { password, ...safeUser } = user;
-      res.json(safeUser);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch user" });
-    }
-  });
-
-  app.patch("/api/users/:id", async (req, res) => {
-    try {
-      const { fullName, email, phone, location } = req.body;
-      const user = await storage.updateUser(req.params.id, { fullName, email, phone, location });
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-      const { password, ...safeUser } = user;
-      res.json(safeUser);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to update user" });
-    }
-  });
-
-  // Measurements routes
-  app.get("/api/measurements/:userId", async (req, res) => {
-    try {
-      const measurements = await storage.getMeasurements(req.params.userId);
+      const userId = req.user.claims.sub;
+      const measurements = await storage.getMeasurements(userId);
       res.json(measurements || null);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch measurements" });
     }
   });
 
-  app.post("/api/measurements", async (req, res) => {
+  app.post("/api/measurements", isAuthenticated, async (req: any, res) => {
     try {
-      const measurements = await storage.upsertMeasurements(req.body);
+      const userId = req.user.claims.sub;
+      const measurements = await storage.upsertMeasurements({
+        ...req.body,
+        userId,
+      });
       res.status(201).json(measurements);
     } catch (error) {
       res.status(500).json({ error: "Failed to save measurements" });
+    }
+  });
+
+  // Protected routes - Projects (for tailors)
+  app.get("/api/projects", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) {
+        return res.status(403).json({ error: "Not a tailor" });
+      }
+      const projects = await storage.getProjectsByTailor(tailor.id);
+      res.json(projects);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch projects" });
+    }
+  });
+
+  app.get("/api/projects/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const project = await storage.getProject(req.params.id);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      res.json(project);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch project" });
+    }
+  });
+
+  app.post("/api/projects", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) {
+        return res.status(403).json({ error: "Not a tailor" });
+      }
+      const project = await storage.createProject({
+        ...req.body,
+        tailorId: tailor.id,
+      });
+      res.status(201).json(project);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create project" });
+    }
+  });
+
+  app.patch("/api/projects/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const project = await storage.updateProject(req.params.id, req.body);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      res.json(project);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update project" });
+    }
+  });
+
+  // Protected routes - Appointments (for tailors)
+  app.get("/api/appointments", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) {
+        return res.status(403).json({ error: "Not a tailor" });
+      }
+      const appointments = await storage.getAppointmentsByTailor(tailor.id);
+      res.json(appointments);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch appointments" });
+    }
+  });
+
+  app.post("/api/appointments", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) {
+        return res.status(403).json({ error: "Not a tailor" });
+      }
+      const appointment = await storage.createAppointment({
+        ...req.body,
+        tailorId: tailor.id,
+      });
+      res.status(201).json(appointment);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create appointment" });
+    }
+  });
+
+  app.patch("/api/appointments/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const appointment = await storage.updateAppointment(req.params.id, req.body);
+      if (!appointment) {
+        return res.status(404).json({ error: "Appointment not found" });
+      }
+      res.json(appointment);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update appointment" });
+    }
+  });
+
+  app.delete("/api/appointments/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      await storage.deleteAppointment(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete appointment" });
+    }
+  });
+
+  // Portfolio management for tailors
+  app.post("/api/portfolio", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) {
+        return res.status(403).json({ error: "Not a tailor" });
+      }
+      const item = await storage.createPortfolioItem({
+        ...req.body,
+        tailorId: tailor.id,
+      });
+      res.status(201).json(item);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to add portfolio item" });
+    }
+  });
+
+  // Product management for tailors
+  app.post("/api/products", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) {
+        return res.status(403).json({ error: "Not a tailor" });
+      }
+      const product = await storage.createProduct({
+        ...req.body,
+        tailorId: tailor.id,
+      });
+      res.status(201).json(product);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create product" });
+    }
+  });
+
+  // Reviews
+  app.post("/api/reviews", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const review = await storage.createReview({
+        ...req.body,
+        userId,
+      });
+      res.status(201).json(review);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create review" });
     }
   });
 

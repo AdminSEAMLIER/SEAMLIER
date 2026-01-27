@@ -7,11 +7,13 @@ interface ReviewCardProps {
 }
 
 export function ReviewCard({ review }: ReviewCardProps) {
-  const formattedDate = new Date(review.createdAt).toLocaleDateString('fr-FR', {
+  const fullName = `${review.user.firstName || ''} ${review.user.lastName || ''}`.trim() || 'Utilisateur';
+  const initial = review.user.firstName?.[0] || 'U';
+  const formattedDate = review.createdAt ? new Date(review.createdAt).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
     year: 'numeric'
-  });
+  }) : '';
 
   return (
     <div 
@@ -19,15 +21,15 @@ export function ReviewCard({ review }: ReviewCardProps) {
       data-testid={`card-review-${review.id}`}
     >
       <Avatar className="h-10 w-10 flex-shrink-0">
-        <AvatarImage src={review.user.avatarUrl || undefined} />
+        <AvatarImage src={review.user.profileImageUrl || undefined} />
         <AvatarFallback className="bg-gray-100 text-gray-700">
-          {review.user.fullName.charAt(0)}
+          {initial}
         </AvatarFallback>
       </Avatar>
       
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2 mb-1">
-          <h4 className="font-medium text-sm text-gray-900">{review.user.fullName}</h4>
+          <h4 className="font-medium text-sm text-gray-900">{fullName}</h4>
           <span className="text-xs text-gray-500">{formattedDate}</span>
         </div>
         

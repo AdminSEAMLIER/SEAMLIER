@@ -11,6 +11,9 @@ interface TailorCardProps {
 }
 
 export function TailorCard({ tailor, linkPrefix = "/particulier/tailor" }: TailorCardProps) {
+  const fullName = `${tailor.user.firstName || ''} ${tailor.user.lastName || ''}`.trim() || 'Couturier';
+  const initials = `${tailor.user.firstName?.[0] || ''}${tailor.user.lastName?.[0] || ''}`.toUpperCase() || 'C';
+  
   return (
     <Link href={`${linkPrefix}/${tailor.id}`}>
       <Card 
@@ -20,7 +23,7 @@ export function TailorCard({ tailor, linkPrefix = "/particulier/tailor" }: Tailo
         <div className="relative h-40 overflow-hidden">
           <img
             src={tailor.coverImageUrl || `https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=200&fit=crop`}
-            alt={tailor.user.fullName}
+            alt={fullName}
             className="w-full h-full object-cover"
             loading="lazy"
           />
@@ -29,15 +32,15 @@ export function TailorCard({ tailor, linkPrefix = "/particulier/tailor" }: Tailo
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <Avatar className="h-12 w-12 border-2 border-white shadow-sm -mt-8 relative z-10">
-              <AvatarImage src={tailor.user.avatarUrl} alt={tailor.user.fullName} />
+              <AvatarImage src={tailor.user.profileImageUrl || undefined} alt={fullName} />
               <AvatarFallback className="bg-[#722F37] text-white text-sm">
-                {tailor.user.fullName.split(" ").map(n => n[0]).join("")}
+                {initials}
               </AvatarFallback>
             </Avatar>
             
             <div className="flex-1 min-w-0 pt-1">
               <div className="flex items-center gap-1.5">
-                <h3 className="font-semibold text-[#722F37] truncate">{tailor.user.fullName}</h3>
+                <h3 className="font-semibold text-[#722F37] truncate">{fullName}</h3>
                 {tailor.isVerified && (
                   <BadgeCheck className="h-4 w-4 text-[#722F37] flex-shrink-0" fill="currentColor" />
                 )}

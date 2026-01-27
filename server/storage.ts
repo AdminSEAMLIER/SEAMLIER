@@ -1,5 +1,9 @@
+import { db } from "./db";
+import { eq, and, or, desc } from "drizzle-orm";
 import { 
-  type User, type InsertUser, 
+  users, tailors, portfolioItems, products, reviews, 
+  conversations, messages, measurements, projects, appointments,
+  type User, type InsertUser,
   type Tailor, type InsertTailor,
   type PortfolioItem, type InsertPortfolioItem,
   type Product, type InsertProduct,
@@ -7,31 +11,35 @@ import {
   type Conversation, type InsertConversation,
   type Message, type InsertMessage,
   type Measurements, type InsertMeasurements,
+  type Project, type InsertProject,
+  type Appointment, type InsertAppointment,
   type TailorWithUser,
   type PortfolioWithTailor,
   type ProductWithTailor,
   type ReviewWithUser,
   type ConversationWithParticipant,
-  type MessageWithSender
+  type MessageWithSender,
+  type ProjectWithClient,
+  type AppointmentWithClient
 } from "@shared/schema";
-import { randomUUID } from "crypto";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
   
   getTailors(): Promise<TailorWithUser[]>;
   getTailor(id: string): Promise<TailorWithUser | undefined>;
+  getTailorByUserId(userId: string): Promise<Tailor | undefined>;
   createTailor(tailor: InsertTailor): Promise<Tailor>;
+  updateTailor(id: string, updates: Partial<InsertTailor>): Promise<Tailor | undefined>;
   
   getPortfolioItems(): Promise<PortfolioWithTailor[]>;
-  getPortfolioItemsByTailor(tailorId: string): Promise<PortfolioWithTailor[]>;
+  getPortfolioItemsByTailor(tailorId: string): Promise<PortfolioItem[]>;
   createPortfolioItem(item: InsertPortfolioItem): Promise<PortfolioItem>;
   
   getProducts(): Promise<ProductWithTailor[]>;
-  getProductsByTailor(tailorId: string): Promise<ProductWithTailor[]>;
+  getProductsByTailor(tailorId: string): Promise<Product[]>;
   getProduct(id: string): Promise<ProductWithTailor | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
   
@@ -39,274 +47,325 @@ export interface IStorage {
   createReview(review: InsertReview): Promise<Review>;
   
   getConversations(userId: string): Promise<ConversationWithParticipant[]>;
+  getOrCreateConversation(participant1Id: string, participant2Id: string): Promise<Conversation>;
   getMessages(conversationId: string): Promise<MessageWithSender[]>;
   createMessage(message: InsertMessage): Promise<Message>;
   
-  updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
-  
   getMeasurements(userId: string): Promise<Measurements | undefined>;
   upsertMeasurements(measurements: InsertMeasurements): Promise<Measurements>;
+  
+  getProjectsByTailor(tailorId: string): Promise<ProjectWithClient[]>;
+  getProject(id: string): Promise<ProjectWithClient | undefined>;
+  createProject(project: InsertProject): Promise<Project>;
+  updateProject(id: string, updates: Partial<InsertProject>): Promise<Project | undefined>;
+  
+  getAppointmentsByTailor(tailorId: string): Promise<AppointmentWithClient[]>;
+  createAppointment(appointment: InsertAppointment): Promise<Appointment>;
+  updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment | undefined>;
+  deleteAppointment(id: string): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private tailors: Map<string, Tailor>;
-  private portfolioItems: Map<string, PortfolioItem>;
-  private products: Map<string, Product>;
-  private reviews: Map<string, Review>;
-  private conversations: Map<string, Conversation>;
-  private messages: Map<string, Message>;
-  private measurements: Map<string, Measurements>;
-
-  constructor() {
-    this.users = new Map();
-    this.tailors = new Map();
-    this.portfolioItems = new Map();
-    this.products = new Map();
-    this.reviews = new Map();
-    this.conversations = new Map();
-    this.messages = new Map();
-    this.measurements = new Map();
-    
-    this.seedData();
-  }
-
-  private seedData() {
-    const users: User[] = [
-      { id: "u1", username: "marie_couture", password: "hash", fullName: "Marie Dupont", email: "marie@example.com", phone: "0612345678", avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop", role: "tailor", location: "Paris" },
-      { id: "u2", username: "jean_style", password: "hash", fullName: "Jean-Pierre Martin", email: "jean@example.com", phone: "0623456789", avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop", role: "tailor", location: "Lyon" },
-      { id: "u3", username: "aisha_mode", password: "hash", fullName: "Aïsha Konaté", email: "aisha@example.com", phone: "0634567890", avatarUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&h=200&fit=crop", role: "tailor", location: "Paris" },
-      { id: "u4", username: "sophie_atelier", password: "hash", fullName: "Sophie Bernard", email: "sophie@example.com", phone: "0645678901", avatarUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop", role: "tailor", location: "Bordeaux" },
-      { id: "u5", username: "lucas_craft", password: "hash", fullName: "Lucas Moreau", email: "lucas@example.com", phone: "0656789012", avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop", role: "tailor", location: "Marseille" },
-      { id: "u6", username: "client1", password: "hash", fullName: "Claire Petit", email: "claire@example.com", phone: "0667890123", avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop", role: "client", location: "Paris" },
-      { id: "u7", username: "client2", password: "hash", fullName: "Thomas Roux", email: "thomas@example.com", phone: "0678901234", avatarUrl: null, role: "client", location: "Lyon" },
-    ];
-    users.forEach(u => this.users.set(u.id, u));
-
-    const tailors: Tailor[] = [
-      { id: "t1", userId: "u1", bio: "Créatrice passionnée de haute couture depuis 15 ans. Spécialisée dans les robes de mariée et les tenues de soirée sur mesure. Chaque création est unique et réalisée avec les meilleurs tissus.", specialties: ["Haute Couture", "Mariage", "Robes"], experience: 15, hourlyRate: 75, coverImageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop", isVerified: true, rating: 4.9, reviewCount: 47, portfolioCount: 24 },
-      { id: "t2", userId: "u2", bio: "Maître tailleur spécialisé dans les costumes homme. Du costume classique au streetwear élégant, je crée des pièces qui reflètent votre personnalité.", specialties: ["Costumes", "Retouches", "Streetwear"], experience: 20, hourlyRate: 65, coverImageUrl: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&h=600&fit=crop", isVerified: true, rating: 4.8, reviewCount: 38, portfolioCount: 18 },
-      { id: "t3", userId: "u3", bio: "Styliste spécialisée dans la mode africaine contemporaine. Je fusionne les tissus traditionnels avec des coupes modernes pour créer des tenues uniques.", specialties: ["Vêtements Africains", "Robes", "Haute Couture"], experience: 8, hourlyRate: 55, coverImageUrl: "https://images.unsplash.com/photo-1590735213920-68192a487bc2?w=800&h=600&fit=crop", isVerified: true, rating: 4.7, reviewCount: 29, portfolioCount: 32 },
-      { id: "t4", userId: "u4", bio: "Retoucheuse professionnelle avec un œil pour le détail. Transformations, ajustements et réparations de tous types de vêtements.", specialties: ["Retouches", "Costumes", "Robes"], experience: 12, hourlyRate: 45, coverImageUrl: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&h=600&fit=crop", isVerified: false, rating: 4.6, reviewCount: 52, portfolioCount: 15 },
-      { id: "t5", userId: "u5", bio: "Designer créatif spécialisé dans le streetwear et la mode enfant. Des créations fun et originales pour toute la famille.", specialties: ["Streetwear", "Mode Enfant"], experience: 5, hourlyRate: 50, coverImageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop", isVerified: false, rating: 4.5, reviewCount: 18, portfolioCount: 21 },
-    ];
-    tailors.forEach(t => this.tailors.set(t.id, t));
-
-    const portfolioItems: PortfolioItem[] = [
-      { id: "p1", tailorId: "t1", imageUrl: "https://images.unsplash.com/photo-1594552072238-b8a33785b261?w=600&h=600&fit=crop", title: "Robe de mariée en dentelle", description: "Robe sur mesure avec dentelle de Calais", category: "Mariage", likesCount: 156 },
-      { id: "p2", tailorId: "t1", imageUrl: "https://images.unsplash.com/photo-1518657175232-6f728c325f0f?w=600&h=600&fit=crop", title: "Robe de soirée bordeaux", description: "Soie sauvage avec broderies", category: "Haute Couture", likesCount: 89 },
-      { id: "p3", tailorId: "t2", imageUrl: "https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?w=600&h=600&fit=crop", title: "Costume trois pièces", description: "Laine italienne, coupe slim", category: "Costumes", likesCount: 124 },
-      { id: "p4", tailorId: "t2", imageUrl: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600&h=600&fit=crop", title: "Costume de mariage", description: "Costume croisé en lin", category: "Mariage", likesCount: 97 },
-      { id: "p5", tailorId: "t3", imageUrl: "https://images.unsplash.com/photo-1590735213920-68192a487bc2?w=600&h=600&fit=crop", title: "Robe en wax", description: "Création originale en tissu africain", category: "Vêtements Africains", likesCount: 203 },
-      { id: "p6", tailorId: "t3", imageUrl: "https://images.unsplash.com/photo-1544376798-89aa6b82c6cd?w=600&h=600&fit=crop", title: "Ensemble moderne", description: "Fusion contemporaine et tradition", category: "Vêtements Africains", likesCount: 178 },
-      { id: "p7", tailorId: "t4", imageUrl: "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&h=600&fit=crop", title: "Retouche robe vintage", description: "Transformation complète", category: "Retouches", likesCount: 45 },
-      { id: "p8", tailorId: "t5", imageUrl: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&h=600&fit=crop", title: "Collection enfant été", description: "Vêtements colorés et confortables", category: "Mode Enfant", likesCount: 67 },
-    ];
-    portfolioItems.forEach(p => this.portfolioItems.set(p.id, p));
-
-    const products: Product[] = [
-      { id: "prod1", tailorId: "t1", title: "Robe de cocktail sur mesure", description: "Robe élégante réalisée selon vos mesures", price: 450, imageUrl: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&h=800&fit=crop", category: "Robes", inStock: true },
-      { id: "prod2", tailorId: "t1", title: "Voile de mariée brodé", description: "Voile en tulle avec broderies florales", price: 180, imageUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?w=600&h=800&fit=crop", category: "Mariage", inStock: true },
-      { id: "prod3", tailorId: "t2", title: "Costume sur mesure classique", description: "Costume deux pièces en laine fine", price: 650, imageUrl: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&h=800&fit=crop", category: "Costumes", inStock: true },
-      { id: "prod4", tailorId: "t3", title: "Robe Ankara moderne", description: "Robe mi-longue en tissu wax authentique", price: 220, imageUrl: "https://images.unsplash.com/photo-1590735213920-68192a487bc2?w=600&h=800&fit=crop", category: "Vêtements Africains", inStock: true },
-      { id: "prod5", tailorId: "t3", title: "Ensemble bazin", description: "Boubou et pantalon assortis", price: 350, imageUrl: "https://images.unsplash.com/photo-1544376798-89aa6b82c6cd?w=600&h=800&fit=crop", category: "Vêtements Africains", inStock: true },
-      { id: "prod6", tailorId: "t5", title: "T-shirt personnalisé enfant", description: "T-shirt en coton bio avec motif au choix", price: 35, imageUrl: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&h=800&fit=crop", category: "Mode Enfant", inStock: true },
-    ];
-    products.forEach(p => this.products.set(p.id, p));
-
-    const reviews: Review[] = [
-      { id: "r1", tailorId: "t1", userId: "u6", rating: 5, comment: "Marie a réalisé ma robe de mariée et c'était exactement ce que j'imaginais ! Un travail d'une qualité exceptionnelle.", createdAt: "2024-12-15T10:30:00Z" },
-      { id: "r2", tailorId: "t1", userId: "u7", rating: 5, comment: "Professionnelle, à l'écoute et talentueuse. Je recommande vivement.", createdAt: "2024-11-20T14:00:00Z" },
-      { id: "r3", tailorId: "t2", userId: "u6", rating: 4, comment: "Excellent costume, livré dans les temps. Petit ajustement nécessaire mais très réactif.", createdAt: "2024-12-01T09:15:00Z" },
-      { id: "r4", tailorId: "t3", userId: "u7", rating: 5, comment: "Aïsha a créé une robe magnifique pour mon anniversaire. Les finitions sont parfaites !", createdAt: "2024-12-10T16:45:00Z" },
-    ];
-    reviews.forEach(r => this.reviews.set(r.id, r));
-
-    const conversations: Conversation[] = [
-      { id: "c1", participant1Id: "u6", participant2Id: "u1", lastMessageAt: "2024-12-20T15:30:00Z", lastMessagePreview: "Parfait, à bientôt !" },
-      { id: "c2", participant1Id: "u6", participant2Id: "u3", lastMessageAt: "2024-12-19T10:00:00Z", lastMessagePreview: "Merci pour les photos du tissu" },
-    ];
-    conversations.forEach(c => this.conversations.set(c.id, c));
-
-    const messages: Message[] = [
-      { id: "m1", conversationId: "c1", senderId: "u6", content: "Bonjour Marie, je souhaiterais commander une robe de soirée", sentAt: "2024-12-20T14:00:00Z", isRead: true },
-      { id: "m2", conversationId: "c1", senderId: "u1", content: "Bonjour Claire ! Avec plaisir, quel style recherchez-vous ?", sentAt: "2024-12-20T14:30:00Z", isRead: true },
-      { id: "m3", conversationId: "c1", senderId: "u6", content: "Quelque chose d'élégant pour un gala", sentAt: "2024-12-20T15:00:00Z", isRead: true },
-      { id: "m4", conversationId: "c1", senderId: "u1", content: "Parfait, à bientôt !", sentAt: "2024-12-20T15:30:00Z", isRead: true },
-    ];
-    messages.forEach(m => this.messages.set(m.id, m));
-  }
-
+class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(u => u.username === username);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(u => u.email === email);
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+  async updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined> {
+    const [user] = await db.update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
     return user;
   }
 
   async getTailors(): Promise<TailorWithUser[]> {
-    return Array.from(this.tailors.values()).map(tailor => {
-      const user = this.users.get(tailor.userId)!;
-      return { ...tailor, user };
-    });
+    const result = await db.select()
+      .from(tailors)
+      .innerJoin(users, eq(tailors.userId, users.id));
+    
+    return result.map(row => ({
+      ...row.tailors,
+      user: row.users
+    }));
   }
 
   async getTailor(id: string): Promise<TailorWithUser | undefined> {
-    const tailor = this.tailors.get(id);
-    if (!tailor) return undefined;
-    const user = this.users.get(tailor.userId)!;
-    return { ...tailor, user };
+    const [result] = await db.select()
+      .from(tailors)
+      .innerJoin(users, eq(tailors.userId, users.id))
+      .where(eq(tailors.id, id));
+    
+    if (!result) return undefined;
+    return { ...result.tailors, user: result.users };
   }
 
-  async createTailor(insertTailor: InsertTailor): Promise<Tailor> {
-    const id = randomUUID();
-    const tailor: Tailor = { ...insertTailor, id };
-    this.tailors.set(id, tailor);
+  async getTailorByUserId(userId: string): Promise<Tailor | undefined> {
+    const [tailor] = await db.select().from(tailors).where(eq(tailors.userId, userId));
+    return tailor;
+  }
+
+  async createTailor(tailor: InsertTailor): Promise<Tailor> {
+    const [created] = await db.insert(tailors).values(tailor).returning();
+    return created;
+  }
+
+  async updateTailor(id: string, updates: Partial<InsertTailor>): Promise<Tailor | undefined> {
+    const [tailor] = await db.update(tailors)
+      .set(updates)
+      .where(eq(tailors.id, id))
+      .returning();
     return tailor;
   }
 
   async getPortfolioItems(): Promise<PortfolioWithTailor[]> {
-    return Array.from(this.portfolioItems.values()).map(item => {
-      const tailor = this.tailors.get(item.tailorId)!;
-      const user = this.users.get(tailor.userId)!;
-      return { ...item, tailor: { ...tailor, user } };
-    });
+    const result = await db.select()
+      .from(portfolioItems)
+      .innerJoin(tailors, eq(portfolioItems.tailorId, tailors.id))
+      .innerJoin(users, eq(tailors.userId, users.id))
+      .orderBy(desc(portfolioItems.createdAt));
+    
+    return result.map(row => ({
+      ...row.portfolio_items,
+      tailor: { ...row.tailors, user: row.users }
+    }));
   }
 
-  async getPortfolioItemsByTailor(tailorId: string): Promise<PortfolioWithTailor[]> {
-    return Array.from(this.portfolioItems.values())
-      .filter(item => item.tailorId === tailorId)
-      .map(item => {
-        const tailor = this.tailors.get(item.tailorId)!;
-        const user = this.users.get(tailor.userId)!;
-        return { ...item, tailor: { ...tailor, user } };
-      });
+  async getPortfolioItemsByTailor(tailorId: string): Promise<PortfolioItem[]> {
+    return await db.select()
+      .from(portfolioItems)
+      .where(eq(portfolioItems.tailorId, tailorId))
+      .orderBy(desc(portfolioItems.createdAt));
   }
 
-  async createPortfolioItem(insertItem: InsertPortfolioItem): Promise<PortfolioItem> {
-    const id = randomUUID();
-    const item: PortfolioItem = { ...insertItem, id };
-    this.portfolioItems.set(id, item);
-    return item;
+  async createPortfolioItem(item: InsertPortfolioItem): Promise<PortfolioItem> {
+    const [created] = await db.insert(portfolioItems).values(item).returning();
+    return created;
   }
 
   async getProducts(): Promise<ProductWithTailor[]> {
-    return Array.from(this.products.values()).map(product => {
-      const tailor = this.tailors.get(product.tailorId)!;
-      const user = this.users.get(tailor.userId)!;
-      return { ...product, tailor: { ...tailor, user } };
-    });
+    const result = await db.select()
+      .from(products)
+      .innerJoin(tailors, eq(products.tailorId, tailors.id))
+      .innerJoin(users, eq(tailors.userId, users.id));
+    
+    return result.map(row => ({
+      ...row.products,
+      tailor: { ...row.tailors, user: row.users }
+    }));
   }
 
-  async getProductsByTailor(tailorId: string): Promise<ProductWithTailor[]> {
-    return Array.from(this.products.values())
-      .filter(product => product.tailorId === tailorId)
-      .map(product => {
-        const tailor = this.tailors.get(product.tailorId)!;
-        const user = this.users.get(tailor.userId)!;
-        return { ...product, tailor: { ...tailor, user } };
-      });
+  async getProductsByTailor(tailorId: string): Promise<Product[]> {
+    return await db.select()
+      .from(products)
+      .where(eq(products.tailorId, tailorId));
   }
 
   async getProduct(id: string): Promise<ProductWithTailor | undefined> {
-    const product = this.products.get(id);
-    if (!product) return undefined;
-    const tailor = this.tailors.get(product.tailorId)!;
-    const user = this.users.get(tailor.userId)!;
-    return { ...product, tailor: { ...tailor, user } };
+    const [result] = await db.select()
+      .from(products)
+      .innerJoin(tailors, eq(products.tailorId, tailors.id))
+      .innerJoin(users, eq(tailors.userId, users.id))
+      .where(eq(products.id, id));
+    
+    if (!result) return undefined;
+    return { ...result.products, tailor: { ...result.tailors, user: result.users } };
   }
 
-  async createProduct(insertProduct: InsertProduct): Promise<Product> {
-    const id = randomUUID();
-    const product: Product = { ...insertProduct, id };
-    this.products.set(id, product);
-    return product;
+  async createProduct(product: InsertProduct): Promise<Product> {
+    const [created] = await db.insert(products).values(product).returning();
+    return created;
   }
 
   async getReviewsByTailor(tailorId: string): Promise<ReviewWithUser[]> {
-    return Array.from(this.reviews.values())
-      .filter(review => review.tailorId === tailorId)
-      .map(review => {
-        const user = this.users.get(review.userId)!;
-        return { ...review, user };
-      });
+    const result = await db.select()
+      .from(reviews)
+      .innerJoin(users, eq(reviews.userId, users.id))
+      .where(eq(reviews.tailorId, tailorId))
+      .orderBy(desc(reviews.createdAt));
+    
+    return result.map(row => ({
+      ...row.reviews,
+      user: row.users
+    }));
   }
 
-  async createReview(insertReview: InsertReview): Promise<Review> {
-    const id = randomUUID();
-    const review: Review = { ...insertReview, id };
-    this.reviews.set(id, review);
-    return review;
+  async createReview(review: InsertReview): Promise<Review> {
+    const [created] = await db.insert(reviews).values(review).returning();
+    return created;
   }
 
   async getConversations(userId: string): Promise<ConversationWithParticipant[]> {
-    return Array.from(this.conversations.values())
-      .filter(c => c.participant1Id === userId || c.participant2Id === userId)
-      .map(conversation => {
-        const otherParticipantId = conversation.participant1Id === userId 
-          ? conversation.participant2Id 
-          : conversation.participant1Id;
-        const otherParticipant = this.users.get(otherParticipantId)!;
-        const unreadCount = Array.from(this.messages.values())
-          .filter(m => m.conversationId === conversation.id && m.senderId !== userId && !m.isRead)
-          .length;
-        return { ...conversation, otherParticipant, unreadCount };
+    const result = await db.select()
+      .from(conversations)
+      .where(or(
+        eq(conversations.participant1Id, userId),
+        eq(conversations.participant2Id, userId)
+      ))
+      .orderBy(desc(conversations.lastMessageAt));
+    
+    const conversationsWithParticipants: ConversationWithParticipant[] = [];
+    
+    for (const conv of result) {
+      const otherParticipantId = conv.participant1Id === userId 
+        ? conv.participant2Id 
+        : conv.participant1Id;
+      
+      const [otherParticipant] = await db.select()
+        .from(users)
+        .where(eq(users.id, otherParticipantId));
+      
+      const unreadMessages = await db.select()
+        .from(messages)
+        .where(and(
+          eq(messages.conversationId, conv.id),
+          eq(messages.isRead, false)
+        ));
+      
+      conversationsWithParticipants.push({
+        ...conv,
+        otherParticipant,
+        unreadCount: unreadMessages.filter(m => m.senderId !== userId).length
       });
+    }
+    
+    return conversationsWithParticipants;
+  }
+
+  async getOrCreateConversation(participant1Id: string, participant2Id: string): Promise<Conversation> {
+    const [existing] = await db.select()
+      .from(conversations)
+      .where(or(
+        and(eq(conversations.participant1Id, participant1Id), eq(conversations.participant2Id, participant2Id)),
+        and(eq(conversations.participant1Id, participant2Id), eq(conversations.participant2Id, participant1Id))
+      ));
+    
+    if (existing) return existing;
+    
+    const [created] = await db.insert(conversations)
+      .values({ participant1Id, participant2Id })
+      .returning();
+    return created;
   }
 
   async getMessages(conversationId: string): Promise<MessageWithSender[]> {
-    return Array.from(this.messages.values())
-      .filter(m => m.conversationId === conversationId)
-      .map(message => {
-        const sender = this.users.get(message.senderId)!;
-        return { ...message, sender };
+    const result = await db.select()
+      .from(messages)
+      .innerJoin(users, eq(messages.senderId, users.id))
+      .where(eq(messages.conversationId, conversationId))
+      .orderBy(messages.sentAt);
+    
+    return result.map(row => ({
+      ...row.messages,
+      sender: row.users
+    }));
+  }
+
+  async createMessage(message: InsertMessage): Promise<Message> {
+    const [created] = await db.insert(messages).values(message).returning();
+    
+    await db.update(conversations)
+      .set({ 
+        lastMessageAt: new Date(),
+        lastMessagePreview: message.content.substring(0, 100)
       })
-      .sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
-  }
-
-  async createMessage(insertMessage: InsertMessage): Promise<Message> {
-    const id = randomUUID();
-    const message: Message = { ...insertMessage, id };
-    this.messages.set(id, message);
-    return message;
-  }
-
-  async updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined> {
-    const user = this.users.get(id);
-    if (!user) return undefined;
-    const updatedUser = { ...user, ...updates };
-    this.users.set(id, updatedUser);
-    return updatedUser;
+      .where(eq(conversations.id, message.conversationId));
+    
+    return created;
   }
 
   async getMeasurements(userId: string): Promise<Measurements | undefined> {
-    return Array.from(this.measurements.values()).find(m => m.userId === userId);
+    const [result] = await db.select()
+      .from(measurements)
+      .where(eq(measurements.userId, userId));
+    return result;
   }
 
-  async upsertMeasurements(insertMeasurements: InsertMeasurements): Promise<Measurements> {
-    const existing = await this.getMeasurements(insertMeasurements.userId);
+  async upsertMeasurements(data: InsertMeasurements): Promise<Measurements> {
+    const existing = await this.getMeasurements(data.userId);
+    
     if (existing) {
-      const updated: Measurements = { ...existing, ...insertMeasurements, updatedAt: new Date().toISOString() };
-      this.measurements.set(existing.id, updated);
+      const [updated] = await db.update(measurements)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(measurements.userId, data.userId))
+        .returning();
       return updated;
     }
-    const id = randomUUID();
-    const measurements: Measurements = { ...insertMeasurements, id, updatedAt: new Date().toISOString() };
-    this.measurements.set(id, measurements);
-    return measurements;
+    
+    const [created] = await db.insert(measurements).values(data).returning();
+    return created;
+  }
+
+  async getProjectsByTailor(tailorId: string): Promise<ProjectWithClient[]> {
+    const result = await db.select()
+      .from(projects)
+      .innerJoin(users, eq(projects.clientId, users.id))
+      .where(eq(projects.tailorId, tailorId))
+      .orderBy(desc(projects.createdAt));
+    
+    return result.map(row => ({
+      ...row.projects,
+      client: row.users
+    }));
+  }
+
+  async getProject(id: string): Promise<ProjectWithClient | undefined> {
+    const [result] = await db.select()
+      .from(projects)
+      .innerJoin(users, eq(projects.clientId, users.id))
+      .where(eq(projects.id, id));
+    
+    if (!result) return undefined;
+    return { ...result.projects, client: result.users };
+  }
+
+  async createProject(project: InsertProject): Promise<Project> {
+    const [created] = await db.insert(projects).values(project).returning();
+    return created;
+  }
+
+  async updateProject(id: string, updates: Partial<InsertProject>): Promise<Project | undefined> {
+    const [updated] = await db.update(projects)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(projects.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getAppointmentsByTailor(tailorId: string): Promise<AppointmentWithClient[]> {
+    const result = await db.select()
+      .from(appointments)
+      .innerJoin(users, eq(appointments.clientId, users.id))
+      .where(eq(appointments.tailorId, tailorId))
+      .orderBy(appointments.scheduledAt);
+    
+    return result.map(row => ({
+      ...row.appointments,
+      client: row.users
+    }));
+  }
+
+  async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
+    const [created] = await db.insert(appointments).values(appointment).returning();
+    return created;
+  }
+
+  async updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment | undefined> {
+    const [updated] = await db.update(appointments)
+      .set(updates)
+      .where(eq(appointments.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteAppointment(id: string): Promise<void> {
+    await db.delete(appointments).where(eq(appointments.id, id));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

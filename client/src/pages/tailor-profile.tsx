@@ -28,6 +28,16 @@ import {
 } from "lucide-react";
 import type { TailorWithUser, PortfolioWithTailor, ProductWithTailor, ReviewWithUser } from "@shared/schema";
 
+// Helper function to get full name from firstName + lastName
+const getFullName = (user: { firstName?: string | null; lastName?: string | null }) => {
+  return `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Couturier';
+};
+
+// Helper function to get initials
+const getInitials = (user: { firstName?: string | null; lastName?: string | null }) => {
+  return `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`.toUpperCase() || 'C';
+};
+
 export default function TailorProfile() {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -116,7 +126,7 @@ export default function TailorProfile() {
       <div className="relative h-64">
         <img
           src={tailor.coverImageUrl || `https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&h=400&fit=crop`}
-          alt={tailor.user.fullName}
+          alt={getFullName(tailor.user)}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -155,16 +165,16 @@ export default function TailorProfile() {
 
       <div className="px-4 lg:px-6 -mt-12 max-w-4xl mx-auto relative z-10">
         <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
-          <AvatarImage src={tailor.user.avatarUrl || undefined} />
+          <AvatarImage src={tailor.user.profileImageUrl || undefined} />
           <AvatarFallback className="bg-[#722F37] text-white text-3xl">
-            {tailor.user.fullName.charAt(0)}
+            {getInitials(tailor.user)}
           </AvatarFallback>
         </Avatar>
 
         <div className="mt-4">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="font-serif text-2xl lg:text-3xl text-[#722F37]">
-              {tailor.user.fullName}
+              {getFullName(tailor.user)}
             </h1>
             {tailor.isVerified && (
               <BadgeCheck className="h-5 w-5 text-[#722F37]" fill="currentColor" />
@@ -304,7 +314,7 @@ export default function TailorProfile() {
           <DialogHeader>
             <DialogTitle>Prendre rendez-vous</DialogTitle>
             <DialogDescription>
-              Choisissez une date et une heure pour votre rendez-vous avec {tailor?.user.fullName}
+              Choisissez une date et une heure pour votre rendez-vous avec {tailor ? getFullName(tailor.user) : ''}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
