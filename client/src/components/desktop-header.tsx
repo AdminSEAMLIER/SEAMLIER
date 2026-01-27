@@ -75,18 +75,6 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
         </nav>
 
         <div className="flex items-center gap-2">
-          {mode === "professionnel" && (
-            <Link href="/particulier">
-              <Button 
-                className="gap-2 bg-white border-2 border-[#722F37] text-[#722F37] hover:bg-[#722F37]/10" 
-                size="sm"
-                data-testid="button-switch-to-client"
-              >
-                <Users className="h-4 w-4" />
-                {t('landing.clientSpace')}
-              </Button>
-            </Link>
-          )}
           <LanguageToggle />
           <ThemeToggle />
           <Button variant="ghost" size="icon" className="text-gray-600" data-testid="button-notifications">

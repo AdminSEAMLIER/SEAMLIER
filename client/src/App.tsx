@@ -78,20 +78,8 @@ function ParticulierLayout({ children }: { children: React.ReactNode }) {
 }
 
 function ProMobileHeader() {
-  const { t } = useTranslation();
   return (
     <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-50">
-      <Link href="/particulier">
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-[#722F37] gap-1 px-2"
-          data-testid="button-mobile-switch-client"
-        >
-          <Users className="h-4 w-4" />
-          <span className="text-xs">{t('landing.clientSpace')}</span>
-        </Button>
-      </Link>
       <Link href="/professionnel">
         <div className="flex items-center gap-2">
           <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
