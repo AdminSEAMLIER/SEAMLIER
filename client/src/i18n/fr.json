@@ -116,6 +116,11 @@
     "acceptanceMessage": "Demande acceptée",
     "acceptanceMessageFull": "Bonjour ! J'ai bien reçu votre demande pour \"{{projectType}}\" et je l'accepte avec plaisir. Nous pouvons maintenant échanger via cette messagerie pour discuter des détails de votre projet. N'hésitez pas à me poser vos questions !"
   },
+  "features": {
+    "verifiedTailors": "Des couturiers vérifiés",
+    "onTimeDelivery": "Des délais respectés",
+    "secureMessaging": "Une messagerie sécurisée"
+  },
   "landing": {
     "heroTitle": "Trouvez un couturier près de chez vous",
     "heroSubtitle": "Comparez les meilleurs couturiers de votre région et obtenez des devis gratuits pour votre projet",

@@ -66,9 +66,9 @@ export default function Landing() {
   ];
 
   const features = [
-    "Des couturiers vérifiés",
-    "Des délais respectés",
-    "Une messagerie sécurisée",
+    t('features.verifiedTailors'),
+    t('features.onTimeDelivery'),
+    t('features.secureMessaging'),
   ];
 
   return (

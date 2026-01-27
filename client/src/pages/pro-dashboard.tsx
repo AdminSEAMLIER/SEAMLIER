@@ -63,13 +63,13 @@ export default function ProDashboard() {
         <div className="max-w-2xl mx-auto">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-gray-800 text-sm md:text-base font-medium leading-tight">Des couturiers vérifiés</p>
+              <p className="text-gray-800 text-sm md:text-base font-medium leading-tight">{t('features.verifiedTailors')}</p>
             </div>
             <div>
-              <p className="text-gray-800 text-sm md:text-base font-medium leading-tight">Des délais respectés</p>
+              <p className="text-gray-800 text-sm md:text-base font-medium leading-tight">{t('features.onTimeDelivery')}</p>
             </div>
             <div>
-              <p className="text-gray-800 text-sm md:text-base font-medium leading-tight">Une messagerie sécurisée</p>
+              <p className="text-gray-800 text-sm md:text-base font-medium leading-tight">{t('features.secureMessaging')}</p>
             </div>
           </div>
         </div>
