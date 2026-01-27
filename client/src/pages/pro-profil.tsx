@@ -275,28 +275,34 @@ export default function ProProfil() {
           </CardHeader>
           <CardContent className="bg-white">
             <div className="space-y-3">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start bg-white border border-gray-200 text-gray-600"
-                data-testid="button-settings"
-              >
-                <Settings className="h-4 w-4 mr-3" />
-                {t('pro.settings')}
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start bg-white border border-gray-200 text-gray-600"
-                data-testid="button-change-password"
-              >
-                {t('profile.changePassword')}
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start bg-white border border-gray-200 text-gray-600"
-                data-testid="button-notifications"
-              >
-                {t('profile.notifications')}
-              </Button>
+              <Link href="/professionnel/parametres">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start bg-white border border-gray-200 text-gray-600"
+                  data-testid="button-settings"
+                >
+                  <Settings className="h-4 w-4 mr-3" />
+                  {t('pro.settings')}
+                </Button>
+              </Link>
+              <Link href="/professionnel/profil/mot-de-passe">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start bg-white border border-gray-200 text-gray-600"
+                  data-testid="button-change-password"
+                >
+                  {t('profile.changePassword')}
+                </Button>
+              </Link>
+              <Link href="/professionnel/profil/notifications">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start bg-white border border-gray-200 text-gray-600"
+                  data-testid="button-notifications"
+                >
+                  {t('profile.notifications')}
+                </Button>
+              </Link>
               <Link href="/">
                 <Button 
                   variant="outline" 

@@ -37,6 +37,9 @@ import MentionsLegales from "@/pages/mentions-legales";
 import Confidentialite from "@/pages/confidentialite";
 import ModifierMotDePasse from "@/pages/modifier-mot-de-passe";
 import PreferencesNotifications from "@/pages/preferences-notifications";
+import ProParametres from "@/pages/pro-parametres";
+import ProModifierMotDePasse from "@/pages/pro-modifier-mot-de-passe";
+import ProNotifications from "@/pages/pro-notifications";
 
 function MobileHeader() {
   const { t } = useTranslation();
@@ -198,6 +201,21 @@ function Router() {
       <Route path="/professionnel/planning">
         <ProfessionnelLayout>
           <ProPlanning />
+        </ProfessionnelLayout>
+      </Route>
+      <Route path="/professionnel/parametres">
+        <ProfessionnelLayout>
+          <ProParametres />
+        </ProfessionnelLayout>
+      </Route>
+      <Route path="/professionnel/profil/mot-de-passe">
+        <ProfessionnelLayout>
+          <ProModifierMotDePasse />
+        </ProfessionnelLayout>
+      </Route>
+      <Route path="/professionnel/profil/notifications">
+        <ProfessionnelLayout>
+          <ProNotifications />
         </ProfessionnelLayout>
       </Route>
       <Route path="/professionnel/profil">
