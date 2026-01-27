@@ -15,7 +15,7 @@ export function Logo({ className, textClassName }: LogoProps) {
       )}
       style={{ fontFamily: "'Satoshi', sans-serif", fontWeight: 900 }}
     >
-      UNISEAM
+      SEAMLiER
     </span>
   );
 }

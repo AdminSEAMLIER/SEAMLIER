@@ -212,7 +212,7 @@
     "login": "Se connecter",
     "loginSubtitle": "Connectez-vous à votre compte",
     "loginSuccess": "Connexion réussie",
-    "welcomeMessage": "Bienvenue sur UNISEAM !",
+    "welcomeMessage": "Bienvenue sur SEAMLiER !",
     "logout": "Se déconnecter",
     "signup": "Créer mon compte",
     "signupPro": "Créer mon compte professionnel",
@@ -246,8 +246,8 @@
     "joinCommunityShort": "Rejoignez notre communauté de passionnés.",
     "accountCreated": "Compte créé avec succès",
     "proAccountCreated": "Compte professionnel créé",
-    "welcomeDesc": "Bienvenue sur UNISEAM !",
-    "welcomeProDesc2": "Bienvenue sur UNISEAM ! Vous pouvez maintenant gérer votre profil.",
+    "welcomeDesc": "Bienvenue sur SEAMLiER !",
+    "welcomeProDesc2": "Bienvenue sur SEAMLiER ! Vous pouvez maintenant gérer votre profil.",
     "error": "Erreur",
     "errorMessage": "Une erreur est survenue lors de l'inscription",
     "creating": "Création en cours...",
@@ -284,7 +284,7 @@
     "minChars": "Minimum 8 caractères",
     "confirmPasswordPlaceholder": "Confirmez votre mot de passe",
     "testimonialClient": "J'ai trouvé une couturière exceptionnelle pour ma robe de mariée. Le processus était simple et le résultat magnifique !",
-    "testimonialPro": "Grâce à UNISEAM, j'ai pu développer ma clientèle de 40% en seulement 6 mois. La plateforme est intuitive et les demandes sont qualifiées."
+    "testimonialPro": "Grâce à SEAMLiER, j'ai pu développer ma clientèle de 40% en seulement 6 mois. La plateforme est intuitive et les demandes sont qualifiées."
   },
   "profile": {
     "title": "Mon Profil",

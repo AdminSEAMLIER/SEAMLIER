@@ -24,7 +24,7 @@ export default function Confidentialite() {
 
         <div className="prose prose-gray max-w-none">
           <p className="text-gray-600 leading-relaxed mb-8">
-            La présente politique de confidentialité décrit comment UNISEAM SAS collecte, utilise et protège vos données personnelles conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés.
+            La présente politique de confidentialité décrit comment SEAMLiER SAS collecte, utilise et protège vos données personnelles conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés.
           </p>
 
           <section className="mb-8">
@@ -33,9 +33,9 @@ export default function Confidentialite() {
               Le responsable du traitement des données personnelles est :
             </p>
             <ul className="text-gray-600 space-y-2">
-              <li><strong>Société :</strong> UNISEAM SAS</li>
+              <li><strong>Société :</strong> SEAMLiER SAS</li>
               <li><strong>Adresse :</strong> 123 Rue de la Couture, 75001 Paris, France</li>
-              <li><strong>Email :</strong> dpo@uniseam.com</li>
+              <li><strong>Email :</strong> dpo@seamlier.com</li>
             </ul>
           </section>
 
@@ -154,7 +154,7 @@ export default function Confidentialite() {
               <li><strong>Droit de retrait du consentement :</strong> retirer votre consentement à tout moment</li>
             </ul>
             <p className="text-gray-600 leading-relaxed mt-4">
-              Pour exercer ces droits, contactez-nous à : <strong>dpo@uniseam.com</strong>
+              Pour exercer ces droits, contactez-nous à : <strong>dpo@seamlier.com</strong>
             </p>
             <p className="text-gray-600 leading-relaxed mt-2">
               Vous pouvez également introduire une réclamation auprès de la CNIL (Commission Nationale de l'Informatique et des Libertés) : <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer" className="text-[#722F37] hover:underline">www.cnil.fr</a>
@@ -219,7 +219,7 @@ export default function Confidentialite() {
       <footer className="bg-white border-t border-gray-100 py-6 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-gray-500 text-sm">
-            © 2026 UNISEAM. Tous droits réservés.
+            © 2026 SEAMLiER. Tous droits réservés.
           </p>
         </div>
       </footer>

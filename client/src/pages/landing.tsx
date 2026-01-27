@@ -270,7 +270,7 @@ export default function Landing() {
         <div className="w-full">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-gray-500 text-sm">
-              © 2026 UNISEAM. {t('footer.allRightsReserved')}
+              © 2026 SEAMLiER. {t('footer.allRightsReserved')}
             </p>
             <div className="flex items-center gap-6 text-sm text-gray-500">
               <Link href="/mentions-legales" className="hover:text-[#722F37] transition-colors" data-testid="link-mentions">{t('footer.legalNotice')}</Link>

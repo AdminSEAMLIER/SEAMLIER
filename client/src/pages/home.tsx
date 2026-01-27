@@ -232,7 +232,7 @@ export default function Home() {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
             <div>
               <p style={{ fontFamily: "'Satoshi', sans-serif" }} className="text-2xl font-bold text-[#722F37] mb-2">
-                UNISEAM
+                SEAMLiER
               </p>
               <p className="text-gray-600 text-sm">
                 {t('landing.joinNetwork')}
@@ -243,12 +243,12 @@ export default function Home() {
               <Link href="/mentions-legales" className="hover:text-[#722F37]">{t('footer.legalNotice')}</Link>
               <Link href="/confidentialite" className="hover:text-[#722F37]">{t('footer.privacy')}</Link>
               <a href="#" className="hover:text-[#722F37]">{t('footer.terms')}</a>
-              <span>contact@uniseam.com</span>
+              <span>contact@seamlier.com</span>
             </div>
           </div>
           
           <div className="border-t border-gray-200 pt-6 text-center text-sm text-gray-500">
-            <p>&copy; 2026 UNISEAM. {t('footer.allRightsReserved')}</p>
+            <p>&copy; 2026 SEAMLiER. {t('footer.allRightsReserved')}</p>
           </div>
         </div>
       </footer>

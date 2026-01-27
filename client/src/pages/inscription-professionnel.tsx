@@ -424,7 +424,7 @@ export default function InscriptionProfessionnel() {
       <footer className="bg-white border-t border-gray-100 py-6 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-gray-500 text-sm">
-            © 2026 UNISEAM. {t('footer.allRightsReserved')}
+            © 2026 SEAMLiER. {t('footer.allRightsReserved')}
           </p>
         </div>
       </footer>
