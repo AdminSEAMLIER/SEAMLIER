@@ -297,37 +297,39 @@ export default function ProPlanning() {
           
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="client">{t('pro.clientName')}</Label>
+              <Label htmlFor="client" className="text-gray-500">{t('pro.clientName')}</Label>
               <Input
                 id="client"
                 value={newAppointment.client}
                 onChange={(e) => setNewAppointment({ ...newAppointment, client: e.target.value })}
                 placeholder="Ex: Marie Dupont"
+                className="bg-white"
                 data-testid="input-client-name"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="project">{t('pro.projectType')}</Label>
+              <Label htmlFor="project" className="text-gray-500">{t('pro.projectType')}</Label>
               <Input
                 id="project"
                 value={newAppointment.project}
                 onChange={(e) => setNewAppointment({ ...newAppointment, project: e.target.value })}
                 placeholder="Ex: Robe de mariée"
+                className="bg-white"
                 data-testid="input-project-type"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>{t('pro.appointmentType')}</Label>
+              <Label className="text-gray-500">{t('pro.appointmentType')}</Label>
               <Select
                 value={newAppointment.type}
                 onValueChange={(value) => setNewAppointment({ ...newAppointment, type: value })}
               >
-                <SelectTrigger data-testid="select-appointment-type">
+                <SelectTrigger className="bg-white" data-testid="select-appointment-type">
                   <SelectValue placeholder={t('pro.selectType')} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   {appointmentTypes.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label}
@@ -339,26 +341,27 @@ export default function ProPlanning() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="time">{t('pro.time')}</Label>
+                <Label htmlFor="time" className="text-gray-500">{t('pro.time')}</Label>
                 <Input
                   id="time"
                   type="time"
                   value={newAppointment.time}
                   onChange={(e) => setNewAppointment({ ...newAppointment, time: e.target.value })}
+                  className="bg-white"
                   data-testid="input-time"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label>{t('pro.duration')}</Label>
+                <Label className="text-gray-500">{t('pro.duration')}</Label>
                 <Select
                   value={newAppointment.duration}
                   onValueChange={(value) => setNewAppointment({ ...newAppointment, duration: value })}
                 >
-                  <SelectTrigger data-testid="select-duration">
+                  <SelectTrigger className="bg-white" data-testid="select-duration">
                     <SelectValue placeholder={t('pro.selectDuration')} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     {durations.map((d) => (
                       <SelectItem key={d.value} value={d.value}>
                         {d.label}
@@ -370,15 +373,15 @@ export default function ProPlanning() {
             </div>
 
             <div className="space-y-2">
-              <Label>{t('pro.location')}</Label>
+              <Label className="text-gray-500">{t('pro.location')}</Label>
               <Select
                 value={newAppointment.location}
                 onValueChange={(value) => setNewAppointment({ ...newAppointment, location: value })}
               >
-                <SelectTrigger data-testid="select-location">
+                <SelectTrigger className="bg-white" data-testid="select-location">
                   <SelectValue placeholder={t('pro.selectLocation')} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   {locations.map((loc) => (
                     <SelectItem key={loc.value} value={loc.value}>
                       {loc.label}
