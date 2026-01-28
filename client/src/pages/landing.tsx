@@ -33,15 +33,7 @@ export default function Landing() {
       });
       return;
     }
-    // Scroll to featured tailors section when a city is entered
-    const tailorsSection = document.getElementById('featured-tailors');
-    if (tailorsSection) {
-      tailorsSection.scrollIntoView({ behavior: 'smooth' });
-    }
-    toast({
-      title: t('landing.searchSuccess'),
-      description: t('landing.searchingIn', { city: location.trim() }),
-    });
+    setPageLocation(`/recherche?ville=${encodeURIComponent(location.trim())}`);
   };
 
   const steps = [

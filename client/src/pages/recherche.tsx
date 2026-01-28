@@ -40,8 +40,9 @@ export default function Recherche() {
   });
 
   const filteredTailors = tailors?.filter((tailor) => {
+    const fullName = `${tailor.user.firstName || ''} ${tailor.user.lastName || ''}`.trim();
     const matchesSearch = !searchQuery || 
-      tailor.user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tailor.user.location?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
