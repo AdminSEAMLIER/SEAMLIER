@@ -10,7 +10,7 @@ import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Briefcase, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
@@ -43,20 +43,9 @@ import ProModifierMotDePasse from "@/pages/pro-modifier-mot-de-passe";
 import ProNotifications from "@/pages/pro-notifications";
 
 function MobileHeader() {
-  const { t } = useTranslation();
   return (
     <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-50">
-      <Link href="/professionnel">
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-[#722F37] gap-1 px-2"
-          data-testid="button-mobile-switch-pro"
-        >
-          <Briefcase className="h-4 w-4" />
-          <span className="text-xs">Pro</span>
-        </Button>
-      </Link>
+      <div className="w-10" />
       <Link href="/particulier">
         <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
       </Link>
