@@ -161,18 +161,11 @@ export default function Recherche() {
           <p className="text-gray-600 mb-4">
             {t('recherche.createAccountMessage')}
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/inscription-particulier">
-              <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white">
-                {t('recherche.signupAsClient')}
-              </Button>
-            </Link>
-            <Link href="/inscription-professionnel">
-              <Button variant="outline" className="border-[#722F37] text-[#722F37] hover:bg-[#722F37] hover:text-white">
-                {t('recherche.signupAsPro')}
-              </Button>
-            </Link>
-          </div>
+          <Link href="/inscription-particulier">
+            <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white">
+              {t('recherche.signupAsClient')}
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
