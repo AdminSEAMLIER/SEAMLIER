@@ -24,7 +24,7 @@ export default function Confidentialite() {
 
         <div className="prose prose-gray max-w-none">
           <p className="text-gray-600 leading-relaxed mb-8">
-            La présente politique de confidentialité décrit comment SEAMLiER SAS collecte, utilise et protège vos données personnelles conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés.
+            La présente politique de confidentialité décrit comment SEAMLIER SAS collecte, utilise et protège vos données personnelles conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés.
           </p>
 
           <section className="mb-8">
@@ -33,7 +33,7 @@ export default function Confidentialite() {
               Le responsable du traitement des données personnelles est :
             </p>
             <ul className="text-gray-600 space-y-2">
-              <li><strong>Société :</strong> SEAMLiER SAS</li>
+              <li><strong>Société :</strong> SEAMLIER SAS</li>
               <li><strong>Adresse :</strong> 123 Rue de la Couture, 75001 Paris, France</li>
               <li><strong>Email :</strong> dpo@seamlier.com</li>
             </ul>
@@ -219,7 +219,7 @@ export default function Confidentialite() {
       <footer className="bg-white border-t border-gray-100 py-6 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-gray-500 text-sm">
-            © 2026 SEAMLiER. Tous droits réservés.
+            © 2026 SEAMLIER. Tous droits réservés.
           </p>
         </div>
       </footer>

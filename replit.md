@@ -1,8 +1,8 @@
-# SEAMLiER
+# SEAMLIER
 
 ## Overview
 
-SEAMLiER is a bilingual (French/English) service marketplace platform connecting individuals with professional tailors and seamstresses. The platform enables users to discover tailoring artisans, browse their portfolios, purchase ready-made garments, book appointments, and communicate through in-app messaging. It emphasizes a mobile-first, premium visual experience with complete language switching using react-i18next. Pricing is always by quote, not hourly rates.
+SEAMLIER is a bilingual (French/English) service marketplace platform connecting individuals with professional tailors and seamstresses. The platform enables users to discover tailoring artisans, browse their portfolios, purchase ready-made garments, book appointments, and communicate through in-app messaging. It emphasizes a mobile-first, premium visual experience with complete language switching using react-i18next. Pricing is always by quote, not hourly rates.
 
 ## User Preferences
 
