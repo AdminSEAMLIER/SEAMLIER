@@ -12,6 +12,7 @@ export default function ProDemandes() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [acceptedRequests, setAcceptedRequests] = useState<string[]>([]);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'new' | 'pending'>('all');
 
   const mockRequests = [
     {
@@ -100,7 +101,14 @@ export default function ProDemandes() {
     return t(request.dateKey);
   };
 
-  const filteredRequests = mockRequests.filter(r => !acceptedRequests.includes(r.id));
+  const baseRequests = mockRequests.filter(r => !acceptedRequests.includes(r.id));
+  
+  const filteredRequests = baseRequests.filter(r => {
+    if (activeFilter === 'all') return true;
+    if (activeFilter === 'new') return r.status === 'new';
+    if (activeFilter === 'pending') return r.status === 'pending';
+    return true;
+  });
 
   return (
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
@@ -124,14 +132,41 @@ export default function ProDemandes() {
         <Card className="border border-gray-100 bg-white shadow-sm mb-6">
           <CardContent className="p-4 bg-white">
             <div className="flex gap-2 overflow-x-auto pb-1">
-              <Button variant="default" className="bg-white border-2 border-[#722F37] text-[#722F37] hover:bg-[#722F37]/10" size="sm">
-                {t('pro.allRequests')} ({filteredRequests.length})
+              <Button 
+                variant="default" 
+                className={activeFilter === 'all' 
+                  ? "bg-[#722F37] text-white hover:bg-[#5a252c]" 
+                  : "bg-white border-2 border-gray-200 text-gray-600 hover:border-[#722F37] hover:text-[#722F37]"
+                } 
+                size="sm"
+                onClick={() => setActiveFilter('all')}
+                data-testid="filter-all"
+              >
+                {t('pro.allRequests')} ({baseRequests.length})
               </Button>
-              <Button variant="outline" size="sm" className="border-gray-200 text-gray-600">
-                {t('pro.newRequests')} ({filteredRequests.filter(r => r.status === 'new').length})
+              <Button 
+                variant="default" 
+                className={activeFilter === 'new' 
+                  ? "bg-[#722F37] text-white hover:bg-[#5a252c]" 
+                  : "bg-white border-2 border-gray-200 text-gray-600 hover:border-[#722F37] hover:text-[#722F37]"
+                } 
+                size="sm"
+                onClick={() => setActiveFilter('new')}
+                data-testid="filter-new"
+              >
+                {t('pro.newRequests')} ({baseRequests.filter(r => r.status === 'new').length})
               </Button>
-              <Button variant="outline" size="sm" className="border-gray-200 text-gray-600">
-                {t('pro.pendingRequests')} ({filteredRequests.filter(r => r.status === 'pending').length})
+              <Button 
+                variant="default" 
+                className={activeFilter === 'pending' 
+                  ? "bg-[#722F37] text-white hover:bg-[#5a252c]" 
+                  : "bg-white border-2 border-gray-200 text-gray-600 hover:border-[#722F37] hover:text-[#722F37]"
+                } 
+                size="sm"
+                onClick={() => setActiveFilter('pending')}
+                data-testid="filter-pending"
+              >
+                {t('pro.pendingRequests')} ({baseRequests.filter(r => r.status === 'pending').length})
               </Button>
             </div>
           </CardContent>
