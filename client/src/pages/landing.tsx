@@ -266,7 +266,7 @@ export default function Landing() {
             </p>
             <div className="flex items-center gap-6 text-sm text-gray-500">
               <Link href="/mentions-legales" className="hover:text-[#722F37] transition-colors" data-testid="link-mentions">{t('footer.legalNotice')}</Link>
-              <a href="#" className="hover:text-[#722F37] transition-colors" data-testid="link-cgv">{t('footer.terms')}</a>
+              <Link href="/cgv" className="hover:text-[#722F37] transition-colors" data-testid="link-cgv">{t('footer.terms')}</Link>
               <Link href="/confidentialite" className="hover:text-[#722F37] transition-colors" data-testid="link-privacy">{t('footer.privacy')}</Link>
               <a href="#" className="hover:text-[#722F37] transition-colors" data-testid="link-contact">{t('footer.contact')}</a>
             </div>
