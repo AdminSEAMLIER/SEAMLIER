@@ -35,42 +35,42 @@ export default function Connexion() {
           </div>
 
           <div className="space-y-4">
-            <Card className="border-2 border-gray-200 hover:border-[#722F37] transition-colors cursor-pointer group">
-              <a href="/api/login?role=client">
-                <CardContent className="p-6 text-center">
-                  <div className="w-14 h-14 bg-gray-100 group-hover:bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors">
-                    <User className="h-7 w-7 text-[#722F37]" />
-                  </div>
-                  <h2 className="font-serif text-sm text-[#722F37] mb-1">
-                    {t('auth.loginAsClient')}
-                  </h2>
-                  <p className="text-gray-500 text-xs mb-3">
-                    {t('auth.loginAsClientDesc')}
-                  </p>
+            <Card className="border-2 border-gray-200">
+              <CardContent className="p-6 text-center">
+                <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <User className="h-7 w-7 text-[#722F37]" />
+                </div>
+                <h2 className="font-serif text-sm text-[#722F37] mb-1">
+                  {t('auth.loginAsClient')}
+                </h2>
+                <p className="text-gray-500 text-xs mb-3">
+                  {t('auth.loginAsClientDesc')}
+                </p>
+                <a href="/api/login?role=client">
                   <Button className="w-full bg-[#722F37] hover:bg-[#5a252c]" data-testid="button-login-particulier">
                     {t('auth.loginAsClientButton')}
                   </Button>
-                </CardContent>
-              </a>
+                </a>
+              </CardContent>
             </Card>
 
-            <Card className="border-2 border-gray-200 hover:border-[#722F37] transition-colors cursor-pointer group">
-              <a href="/api/login?role=tailor">
-                <CardContent className="p-6 text-center">
-                  <div className="w-14 h-14 bg-gray-100 group-hover:bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors">
-                    <Briefcase className="h-7 w-7 text-[#722F37]" />
-                  </div>
-                  <h2 className="font-serif text-sm text-[#722F37] mb-1">
-                    {t('auth.loginAsPro')}
-                  </h2>
-                  <p className="text-gray-500 text-xs mb-3">
-                    {t('auth.loginAsProDesc')}
-                  </p>
+            <Card className="border-2 border-gray-200">
+              <CardContent className="p-6 text-center">
+                <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Briefcase className="h-7 w-7 text-[#722F37]" />
+                </div>
+                <h2 className="font-serif text-sm text-[#722F37] mb-1">
+                  {t('auth.loginAsPro')}
+                </h2>
+                <p className="text-gray-500 text-xs mb-3">
+                  {t('auth.loginAsProDesc')}
+                </p>
+                <a href="/api/login?role=tailor">
                   <Button className="w-full bg-[#722F37] hover:bg-[#5a252c]" data-testid="button-login-professionnel">
                     {t('auth.loginAsProButton')}
                   </Button>
-                </CardContent>
-              </a>
+                </a>
+              </CardContent>
             </Card>
           </div>
 

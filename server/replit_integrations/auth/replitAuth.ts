@@ -203,3 +203,35 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     return;
   }
 };
+
+// Middleware to require tailor role
+export const requireTailor: RequestHandler = async (req, res, next) => {
+  const user = req.user as any;
+  
+  if (!req.isAuthenticated() || !user.claims?.sub) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  
+  const dbUser = await authStorage.getUser(user.claims.sub);
+  if (!dbUser || dbUser.role !== 'tailor') {
+    return res.status(403).json({ message: "Access denied. Professional account required." });
+  }
+  
+  return next();
+};
+
+// Middleware to require client role
+export const requireClient: RequestHandler = async (req, res, next) => {
+  const user = req.user as any;
+  
+  if (!req.isAuthenticated() || !user.claims?.sub) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  
+  const dbUser = await authStorage.getUser(user.claims.sub);
+  if (!dbUser || dbUser.role !== 'client') {
+    return res.status(403).json({ message: "Access denied. Client account required." });
+  }
+  
+  return next();
+};
