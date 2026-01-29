@@ -1,63 +1,42 @@
 import { useTranslation } from "react-i18next";
-import { MessageSquare, Search, Send } from "lucide-react";
+import { MessageSquare, Search, Send, Users } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState, useEffect } from "react";
 import { useSearch } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+
+interface Conversation {
+  id: string;
+  name: string;
+  lastMessage: string;
+  time: string;
+  unread: number;
+  projectType: string;
+}
+
+interface Message {
+  id: string;
+  sender: string;
+  text: string;
+  time: string;
+}
 
 export default function ProMessagerie() {
   const { t } = useTranslation();
   const searchString = useSearch();
   const [showChat, setShowChat] = useState(false);
   const [newMessage, setNewMessage] = useState("");
-  const [chatMessages, setChatMessages] = useState<Array<{id: string; sender: string; text: string; time: string}>>([]);
+  const [chatMessages, setChatMessages] = useState<Message[]>([]);
+  const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
 
-  const mockConversations = [
-    {
-      id: "1",
-      name: "Claire Beaumont",
-      lastMessageKey: "pro.mockMessages.fitting",
-      time: "14:30",
-      unread: 2,
-      projectKey: "pro.weddingDress",
-    },
-    {
-      id: "2",
-      name: "Marc Lefebvre",
-      lastMessageKey: "pro.mockMessages.fabrics",
-      time: "11:20",
-      unread: 0,
-      projectKey: "pro.suit3Piece",
-    },
-    {
-      id: "3",
-      name: "Julie Moreau",
-      lastMessageKey: "pro.mockMessages.thanks",
-      time: t('pro.yesterday'),
-      unread: 0,
-      projectKey: "pro.alterations",
-    },
-    {
-      id: "4",
-      name: "Marie Dupont",
-      lastMessageKey: "pro.mockMessages.interested",
-      time: t('pro.yesterday'),
-      unread: 1,
-      projectKey: "pro.newRequestLabel",
-    },
-  ];
-
-  const [conversations, setConversations] = useState(mockConversations);
-  const [selectedConv, setSelectedConv] = useState(mockConversations[0]);
-
-  const mockMessages = [
-    { id: "1", sender: "client", textKey: "pro.mockMessages.availableTuesday", time: "14:00" },
-    { id: "2", sender: "pro", textKey: "pro.mockMessages.yesAvailable", time: "14:15" },
-    { id: "3", sender: "client", textKey: "pro.mockMessages.perfect", time: "14:25" },
-    { id: "4", sender: "client", textKey: "pro.mockMessages.fitting", time: "14:30" },
-  ];
+  // Fetch real conversations from API (empty for now)
+  const { data: conversations = [], isLoading } = useQuery<Conversation[]>({
+    queryKey: ["/api/pro/conversations"],
+    enabled: false, // Disabled until API is implemented
+  });
 
   // Check for new conversation from accepted request
   useEffect(() => {
@@ -67,23 +46,16 @@ export default function ProMessagerie() {
       if (acceptedRequest) {
         const { clientName, projectType, autoMessage } = JSON.parse(acceptedRequest);
         
-        // Create new conversation
-        const newConv = {
+        const newConv: Conversation = {
           id: `new-${Date.now()}`,
           name: clientName,
-          lastMessageKey: "",
           lastMessage: autoMessage,
           time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
           unread: 0,
-          projectKey: "",
           projectType: projectType,
         };
 
-        // Add to conversations list
-        setConversations([newConv, ...mockConversations]);
-        setSelectedConv(newConv as any);
-        
-        // Set the auto message
+        setSelectedConv(newConv);
         setChatMessages([{
           id: "auto-1",
           sender: "pro",
@@ -92,8 +64,6 @@ export default function ProMessagerie() {
         }]);
         
         setShowChat(true);
-        
-        // Clear the session storage
         sessionStorage.removeItem('acceptedRequest');
       }
     }
@@ -112,9 +82,8 @@ export default function ProMessagerie() {
     setNewMessage("");
   };
 
-  const handleSelectConversation = (conv: typeof mockConversations[0]) => {
+  const handleSelectConversation = (conv: Conversation) => {
     setSelectedConv(conv);
-    // Reset to mock messages for existing conversations
     setChatMessages([]);
     setShowChat(true);
   };
@@ -153,42 +122,59 @@ export default function ProMessagerie() {
               </CardContent>
             </Card>
 
-            {conversations.map((conv) => (
-              <Card 
-                key={conv.id} 
-                className="border border-gray-100 bg-white shadow-sm mb-3 cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleSelectConversation(conv)}
-              >
-                <CardContent className="p-4 bg-white">
-                  <div className="flex gap-3">
-                    <Avatar className="h-12 w-12 border border-gray-100 flex-shrink-0">
-                      <AvatarFallback className="bg-[#722F37]/10 text-[#722F37]">
-                        {conv.name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-medium text-gray-900 truncate">{conv.name}</span>
-                        <span className="text-xs text-gray-400 flex-shrink-0">{conv.time}</span>
-                      </div>
-                      <p className="text-sm text-gray-500 truncate">
-                        {(conv as any).lastMessage || t(conv.lastMessageKey)}
-                      </p>
-                      <span className="text-xs text-[#722F37]">
-                        {(conv as any).projectType || t(conv.projectKey)}
-                      </span>
-                    </div>
-                    {conv.unread > 0 && (
-                      <span className="w-5 h-5 rounded-full bg-[#722F37] text-white text-xs flex items-center justify-center flex-shrink-0">
-                        {conv.unread}
-                      </span>
-                    )}
-                  </div>
+            {isLoading ? (
+              <Card className="border border-gray-100 bg-white shadow-sm">
+                <CardContent className="p-8 bg-white text-center">
+                  <p className="text-gray-500">{t('common.loading')}</p>
                 </CardContent>
               </Card>
-            ))}
+            ) : conversations.length === 0 ? (
+              <Card className="border border-gray-100 bg-white shadow-sm">
+                <CardContent className="p-12 bg-white text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="font-serif text-xl text-[#722F37] mb-2">
+                    {t('pro.noMessagesTitle')}
+                  </h3>
+                  <p className="text-gray-500 mb-2">{t('pro.noMessagesDesc')}</p>
+                  <p className="text-gray-400 text-sm">{t('pro.noMessagesHint')}</p>
+                </CardContent>
+              </Card>
+            ) : (
+              conversations.map((conv) => (
+                <Card 
+                  key={conv.id} 
+                  className="border border-gray-100 bg-white shadow-sm mb-3 cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => handleSelectConversation(conv)}
+                >
+                  <CardContent className="p-4 bg-white">
+                    <div className="flex gap-3">
+                      <Avatar className="h-12 w-12 border border-gray-100 flex-shrink-0">
+                        <AvatarFallback className="bg-[#722F37]/10 text-[#722F37]">
+                          {conv.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium text-gray-900 truncate">{conv.name}</span>
+                          <span className="text-xs text-gray-400 flex-shrink-0">{conv.time}</span>
+                        </div>
+                        <p className="text-sm text-gray-500 truncate">{conv.lastMessage}</p>
+                        <span className="text-xs text-[#722F37]">{conv.projectType}</span>
+                      </div>
+                      {conv.unread > 0 && (
+                        <span className="w-5 h-5 rounded-full bg-[#722F37] text-white text-xs flex items-center justify-center flex-shrink-0">
+                          {conv.unread}
+                        </span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </>
-        ) : (
+        ) : selectedConv && (
           <Card className="border border-gray-100 bg-white shadow-sm">
             <CardHeader className="border-b border-gray-100">
               <div className="flex items-center gap-3">
@@ -207,9 +193,7 @@ export default function ProMessagerie() {
                 </Avatar>
                 <div>
                   <p className="font-medium text-gray-900">{selectedConv.name}</p>
-                  <p className="text-sm text-[#722F37]">
-                    {(selectedConv as any).projectType || t(selectedConv.projectKey)}
-                  </p>
+                  <p className="text-sm text-[#722F37]">{selectedConv.projectType}</p>
                 </div>
               </div>
             </CardHeader>
@@ -236,25 +220,9 @@ export default function ProMessagerie() {
                     </div>
                   ))
                 ) : (
-                  mockMessages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex ${msg.sender === 'pro' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                          msg.sender === 'pro'
-                            ? 'bg-[#722F37] text-white'
-                            : 'bg-white border border-gray-200 text-gray-900'
-                        }`}
-                      >
-                        <p>{t(msg.textKey)}</p>
-                        <p className={`text-xs mt-1 ${msg.sender === 'pro' ? 'text-white/70' : 'text-gray-400'}`}>
-                          {msg.time}
-                        </p>
-                      </div>
-                    </div>
-                  ))
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-400 text-sm">{t('pro.startConversation')}</p>
+                  </div>
                 )}
               </div>
 

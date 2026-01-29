@@ -1,11 +1,24 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
-import { FileText, Clock, MapPin, Euro, CheckCircle, XCircle, MessageSquare } from "lucide-react";
+import { FileText, Clock, MapPin, Euro, CheckCircle, XCircle, MessageSquare, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+
+interface Request {
+  id: string;
+  clientName: string;
+  clientLocation: string;
+  type: string;
+  description: string;
+  budget: string;
+  deadline: string;
+  status: string;
+  createdAt: string;
+}
 
 export default function ProDemandes() {
   const { t } = useTranslation();
@@ -14,45 +27,13 @@ export default function ProDemandes() {
   const [acceptedRequests, setAcceptedRequests] = useState<string[]>([]);
   const [activeFilter, setActiveFilter] = useState<'all' | 'new' | 'pending'>('all');
 
-  const mockRequests = [
-    {
-      id: "1",
-      clientName: "Marie Dupont",
-      clientLocation: "Paris 16e",
-      typeKey: "pro.eveningDress",
-      descriptionKey: "pro.eveningDressDesc",
-      budget: "800 - 1200€",
-      deadline: "15/02/2026",
-      status: "new",
-      dateKey: "pro.hoursAgo",
-      dateCount: 2,
-    },
-    {
-      id: "2",
-      clientName: "Sophie Martin",
-      clientLocation: "Paris 8e",
-      typeKey: "pro.suitAlterations",
-      descriptionKey: "pro.suitAlterationsDesc",
-      budget: "150 - 250€",
-      deadline: "20/01/2026",
-      status: "new",
-      dateKey: "pro.hoursAgo",
-      dateCount: 5,
-    },
-    {
-      id: "3",
-      clientName: "Jean Durand",
-      clientLocation: "Neuilly",
-      typeKey: "pro.customShirts",
-      descriptionKey: "pro.customShirtsDesc",
-      budget: "400 - 600€",
-      deadline: "01/03/2026",
-      status: "pending",
-      dateKey: "pro.yesterday",
-    },
-  ];
+  // Fetch real requests from API (empty for now)
+  const { data: requests = [], isLoading } = useQuery<Request[]>({
+    queryKey: ["/api/pro/requests"],
+    enabled: false, // Disabled until API is implemented
+  });
 
-  const handleAccept = (request: typeof mockRequests[0]) => {
+  const handleAccept = (request: Request) => {
     setAcceptedRequests([...acceptedRequests, request.id]);
     
     toast({
@@ -60,14 +41,12 @@ export default function ProDemandes() {
       description: t('pro.redirectingToMessaging'),
     });
 
-    // Store the accepted request info in sessionStorage to pass to messaging
     sessionStorage.setItem('acceptedRequest', JSON.stringify({
       clientName: request.clientName,
-      projectType: t(request.typeKey),
+      projectType: request.type,
       autoMessage: t('pro.acceptanceMessage')
     }));
 
-    // Redirect to messaging after a brief delay
     setTimeout(() => {
       setLocation('/professionnel/messagerie?newConversation=true');
     }, 500);
@@ -94,14 +73,7 @@ export default function ProDemandes() {
     }
   };
 
-  const getDateText = (request: typeof mockRequests[0]) => {
-    if (request.dateCount) {
-      return t(request.dateKey, { count: request.dateCount });
-    }
-    return t(request.dateKey);
-  };
-
-  const baseRequests = mockRequests.filter(r => !acceptedRequests.includes(r.id));
+  const baseRequests = requests.filter(r => !acceptedRequests.includes(r.id));
   
   const filteredRequests = baseRequests.filter(r => {
     if (activeFilter === 'all') return true;
@@ -172,11 +144,23 @@ export default function ProDemandes() {
           </CardContent>
         </Card>
 
-        {filteredRequests.length === 0 ? (
+        {isLoading ? (
           <Card className="border border-gray-100 bg-white shadow-sm">
             <CardContent className="p-8 bg-white text-center">
-              <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">{t('pro.noRequests')}</p>
+              <p className="text-gray-500">{t('common.loading')}</p>
+            </CardContent>
+          </Card>
+        ) : filteredRequests.length === 0 ? (
+          <Card className="border border-gray-100 bg-white shadow-sm">
+            <CardContent className="p-12 bg-white text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className="font-serif text-xl text-[#722F37] mb-2">
+                {t('pro.noRequestsTitle')}
+              </h3>
+              <p className="text-gray-500 mb-2">{t('pro.noRequestsDesc')}</p>
+              <p className="text-gray-400 text-sm">{t('pro.noRequestsHint')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -186,7 +170,7 @@ export default function ProDemandes() {
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h3 className="font-semibold text-[#722F37]">{t(request.typeKey)}</h3>
+                      <h3 className="font-semibold text-[#722F37]">{request.type}</h3>
                       {getStatusBadge(request.status, request.id)}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
@@ -198,10 +182,10 @@ export default function ProDemandes() {
                       </span>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-400 flex-shrink-0">{getDateText(request)}</span>
+                  <span className="text-xs text-gray-400 flex-shrink-0">{request.createdAt}</span>
                 </div>
 
-                <p className="text-gray-600 text-sm mb-4">{t(request.descriptionKey)}</p>
+                <p className="text-gray-600 text-sm mb-4">{request.description}</p>
 
                 <div className="flex flex-wrap gap-4 text-sm mb-4">
                   <div className="flex items-center gap-1 text-gray-600">

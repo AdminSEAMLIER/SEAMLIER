@@ -149,8 +149,25 @@ export default function Recherche() {
           </div>
         ) : (
           <div className="text-center py-16">
-            <p className="text-gray-500 text-lg mb-4">{t('recherche.noResults')}</p>
-            <p className="text-gray-400">{t('recherche.tryAnotherCity')}</p>
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Search className="h-10 w-10 text-gray-300" />
+            </div>
+            <p className="text-gray-500 text-xl mb-2">{t('recherche.noResults')}</p>
+            <p className="text-gray-400 mb-8">{t('recherche.tryAnotherCity')}</p>
+            
+            <div className="max-w-md mx-auto p-6 bg-[#f8f5f5] rounded-lg">
+              <h3 className="font-serif text-lg text-[#722F37] mb-2">
+                {t('recherche.beFirstPro')}
+              </h3>
+              <p className="text-gray-600 text-sm mb-4">
+                {t('recherche.beFirstProDesc')}
+              </p>
+              <Link href="/inscription-professionnel">
+                <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white">
+                  {t('recherche.joinAsPro')}
+                </Button>
+              </Link>
+            </div>
           </div>
         )}
 
