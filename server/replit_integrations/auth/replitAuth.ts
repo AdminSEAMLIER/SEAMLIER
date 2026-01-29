@@ -111,11 +111,15 @@ export async function setupAuth(app: Express) {
     if (role && (role === 'client' || role === 'tailor')) {
       (req.session as any).intendedRole = role;
     }
-    ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      prompt: "login consent",
-      scope: ["openid", "email", "profile", "offline_access"],
-    })(req, res, next);
+    // Force save session before OAuth redirect
+    req.session.save((err) => {
+      if (err) console.error("Session save error:", err);
+      ensureStrategy(req.hostname);
+      passport.authenticate(`replitauth:${req.hostname}`, {
+        prompt: "login consent",
+        scope: ["openid", "email", "profile", "offline_access"],
+      })(req, res, next);
+    });
   });
 
   app.get("/api/callback", (req, res, next) => {
@@ -129,13 +133,18 @@ export async function setupAuth(app: Express) {
         
         // Check if there's an intended role in session and update user
         const intendedRole = (req.session as any).intendedRole;
+        console.log("Auth callback - intendedRole from session:", intendedRole);
+        
         if (intendedRole && user.claims?.sub) {
+          console.log("Updating user role to:", intendedRole);
           await authStorage.updateUserRole(user.claims.sub, intendedRole);
           delete (req.session as any).intendedRole;
         }
         
         // Redirect based on role
         const dbUser = await authStorage.getUser(user.claims.sub);
+        console.log("User from DB after update:", dbUser?.role);
+        
         if (dbUser?.role === 'tailor') {
           // Check if tailor has completed profile setup
           const tailorProfile = await storage.getTailorByUserId(user.claims.sub);
