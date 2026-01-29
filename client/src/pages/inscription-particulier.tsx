@@ -110,7 +110,7 @@ export default function InscriptionParticulier() {
       <main className="max-w-6xl mx-auto px-4 py-8 lg:py-16">
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           <div className="hidden lg:block">
-            <h1 className="font-serif text-4xl text-[#722F37] mb-4">
+            <h1 className="font-serif text-xl lg:text-2xl text-[#722F37] mb-4">
               {t('auth.createAccount')}
             </h1>
             <p className="text-gray-600 text-lg mb-8">
@@ -138,7 +138,7 @@ export default function InscriptionParticulier() {
 
           <div>
             <div className="lg:hidden mb-8">
-              <h1 className="font-serif text-3xl text-[#722F37] mb-2">
+              <h1 className="font-serif text-xl text-[#722F37] mb-2">
                 {t('auth.createAccount')}
               </h1>
               <p className="text-gray-600">

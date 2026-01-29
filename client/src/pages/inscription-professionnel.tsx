@@ -43,7 +43,7 @@ export default function InscriptionProfessionnel() {
           <div className="w-16 h-16 bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <Scissors className="h-8 w-8 text-[#722F37]" />
           </div>
-          <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-4">
+          <h1 className="font-serif text-xl lg:text-2xl text-[#722F37] mb-4">
             {t('auth.joinOurNetwork')}
           </h1>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
@@ -91,7 +91,7 @@ export default function InscriptionProfessionnel() {
 
         <Card className="border border-gray-100 shadow-sm bg-gray-50">
           <CardContent className="p-8 text-center">
-            <h2 className="font-serif text-2xl text-[#722F37] mb-3">
+            <h2 className="font-serif text-lg text-[#722F37] mb-3">
               {t('auth.readyToStart')}
             </h2>
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
