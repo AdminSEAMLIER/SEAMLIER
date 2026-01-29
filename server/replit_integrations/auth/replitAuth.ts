@@ -3,6 +3,7 @@ import { Strategy, type VerifyFunction } from "openid-client/passport";
 
 import passport from "passport";
 import session from "express-session";
+import cookieParser from "cookie-parser";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
@@ -64,6 +65,7 @@ async function upsertUser(claims: any, role?: string) {
 
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
+  app.use(cookieParser());
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
@@ -106,20 +108,21 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    // Store intended role in session before redirecting to auth
+    // Store intended role in a cookie before redirecting to auth
     const role = req.query.role as string;
     if (role && (role === 'client' || role === 'tailor')) {
-      (req.session as any).intendedRole = role;
+      res.cookie('intended_role', role, { 
+        httpOnly: true, 
+        secure: true, 
+        maxAge: 5 * 60 * 1000, // 5 minutes
+        sameSite: 'lax'
+      });
     }
-    // Force save session before OAuth redirect
-    req.session.save((err) => {
-      if (err) console.error("Session save error:", err);
-      ensureStrategy(req.hostname);
-      passport.authenticate(`replitauth:${req.hostname}`, {
-        prompt: "login consent",
-        scope: ["openid", "email", "profile", "offline_access"],
-      })(req, res, next);
-    });
+    ensureStrategy(req.hostname);
+    passport.authenticate(`replitauth:${req.hostname}`, {
+      prompt: "login consent",
+      scope: ["openid", "email", "profile", "offline_access"],
+    })(req, res, next);
   });
 
   app.get("/api/callback", (req, res, next) => {
@@ -131,14 +134,15 @@ export async function setupAuth(app: Express) {
       req.logIn(user, async (loginErr) => {
         if (loginErr) return next(loginErr);
         
-        // Check if there's an intended role in session and update user
-        const intendedRole = (req.session as any).intendedRole;
-        console.log("Auth callback - intendedRole from session:", intendedRole);
+        // Check if there's an intended role in cookie and update user
+        const intendedRole = req.cookies?.intended_role;
+        console.log("Auth callback - intendedRole from cookie:", intendedRole);
         
         if (intendedRole && user.claims?.sub) {
           console.log("Updating user role to:", intendedRole);
           await authStorage.updateUserRole(user.claims.sub, intendedRole);
-          delete (req.session as any).intendedRole;
+          // Clear the cookie
+          res.clearCookie('intended_role');
         }
         
         // Redirect based on role
