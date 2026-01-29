@@ -28,11 +28,11 @@ export default function Inscription() {
           </Button>
         </Link>
 
-        <div className="text-center mb-8">
-          <h1 className="font-serif text-lg lg:text-xl text-[#722F37] mb-2">
+        <div className="text-center mb-6">
+          <h1 className="font-serif text-base lg:text-lg text-[#722F37] mb-1">
             {t('inscription.title')}
           </h1>
-          <p className="text-gray-600 text-sm">
+          <p className="text-gray-600 text-xs">
             {t('inscription.subtitle')}
           </p>
         </div>
@@ -44,10 +44,10 @@ export default function Inscription() {
                 <div className="w-16 h-16 bg-gray-100 group-hover:bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors">
                   <User className="h-8 w-8 text-[#722F37]" />
                 </div>
-                <h2 className="font-serif text-base text-[#722F37] mb-2">
+                <h2 className="font-serif text-sm text-[#722F37] mb-1">
                   {t('inscription.clientTitle')}
                 </h2>
-                <p className="text-gray-600 text-xs mb-4">
+                <p className="text-gray-500 text-xs mb-3">
                   {t('inscription.clientDesc')}
                 </p>
                 <Button className="w-full bg-[#722F37] hover:bg-[#5a252c]" data-testid="button-inscription-particulier">
@@ -63,10 +63,10 @@ export default function Inscription() {
                 <div className="w-16 h-16 bg-gray-100 group-hover:bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors">
                   <Briefcase className="h-8 w-8 text-[#722F37]" />
                 </div>
-                <h2 className="font-serif text-base text-[#722F37] mb-2">
+                <h2 className="font-serif text-sm text-[#722F37] mb-1">
                   {t('inscription.proTitle')}
                 </h2>
-                <p className="text-gray-600 text-xs mb-4">
+                <p className="text-gray-500 text-xs mb-3">
                   {t('inscription.proDesc')}
                 </p>
                 <Button className="w-full bg-[#722F37] hover:bg-[#5a252c]" data-testid="button-inscription-professionnel">
