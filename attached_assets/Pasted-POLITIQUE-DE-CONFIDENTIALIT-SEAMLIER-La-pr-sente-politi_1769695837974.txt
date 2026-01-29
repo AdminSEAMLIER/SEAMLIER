@@ -1,0 +1,50 @@
+POLITIQUE DE CONFIDENTIALITÉ – SEAMLIER
+La présente politique de confidentialité décrit comment SEAMLIER collecte, utilise et protège vos données personnelles conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés.
+
+1. Responsable du traitement
+Le responsable du traitement des données personnelles est l'enseigne SEAMLIER.
+
+Contact : contact@seamlier.fr
+
+2. Données collectées
+Nous collectons uniquement les données strictement nécessaires à la fourniture de nos services premium de couture locale :
+
+Identification : Prénom, nom, adresse email, numéro de téléphone.
+
+Données spécifiques (Particuliers) : Mensurations corporelles, historique des projets, messages échangés avec les couturiers.
+
+Données spécifiques (Professionnels) : Spécialités, portfolio, expérience professionnelle.
+
+Données de connexion : Adresse IP, type de navigateur, date et heure de connexion.
+
+3. Finalités du traitement
+Vos données personnelles sont traitées pour les finalités suivantes :
+
+Création et gestion de votre compte utilisateur.
+
+Mise en relation directe entre particuliers et professionnels de la couture.
+
+Gestion de l'outil métier (suivi des mesures et des projets).
+
+Sécurisation des échanges et de la plateforme.
+
+4. Base légale du traitement
+Le traitement de vos données repose sur l'exécution du contrat (pour la fourniture de nos services de marketplace) et sur votre consentement explicite recueilli lors de la création de votre compte.
+
+5. Destinataires des données
+Vos données personnelles ne sont jamais vendues à des tiers. Elles sont uniquement partagées avec :
+
+Le couturier ou le client concerné dans le cadre d'une mise en relation.
+
+Notre prestataire technique pour l'hébergement du site (o2switch).
+
+6. Durée de conservation
+Vos données sont conservées pendant toute la durée de votre inscription sur la plateforme. Vous pouvez demander leur suppression totale à tout moment.
+
+7. Vos Droits
+Conformément au RGPD, vous disposez d’un droit d’accès, de rectification, de portabilité et d’effacement de vos données. Pour exercer ces droits, contactez-nous à l'adresse unique : contact@seamlier.fr.
+
+8. Sécurité
+Nous mettons en œuvre des mesures techniques appropriées (chiffrement SSL) pour protéger vos données contre tout accès non autorisé, notamment pour la protection de vos données de mesures corporelles.
+
+Dernière mise à jour : Janvier 2026 © SEAMLIER – L'art de la couture locale et simplifiée.
