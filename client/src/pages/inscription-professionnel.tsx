@@ -120,13 +120,6 @@ export default function InscriptionProfessionnel() {
           </CardContent>
         </Card>
 
-        <div className="mt-8 p-6 bg-white rounded-lg border border-gray-100 text-center">
-          <p className="text-gray-600 italic mb-3">
-            "{t('auth.testimonialPro')}"
-          </p>
-          <p className="text-[#722F37] font-medium">— Sophie M., Lyon</p>
-        </div>
-
         <p className="text-center text-gray-500 mt-8">
           {t('auth.areYouClient')}{" "}
           <Link href="/inscription-particulier" className="text-[#722F37] font-medium hover:underline" data-testid="link-client-signup">
