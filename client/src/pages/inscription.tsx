@@ -29,10 +29,10 @@ export default function Inscription() {
         </Link>
 
         <div className="text-center mb-10">
-          <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-3">
+          <h1 className="font-serif text-2xl lg:text-3xl text-[#722F37] mb-3">
             {t('inscription.title')}
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 text-base">
             {t('inscription.subtitle')}
           </p>
         </div>
@@ -44,7 +44,7 @@ export default function Inscription() {
                 <div className="w-16 h-16 bg-gray-100 group-hover:bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors">
                   <User className="h-8 w-8 text-[#722F37]" />
                 </div>
-                <h2 className="font-serif text-xl text-[#722F37] mb-3">
+                <h2 className="font-serif text-lg text-[#722F37] mb-3">
                   {t('inscription.clientTitle')}
                 </h2>
                 <p className="text-gray-600 text-sm mb-6">
@@ -63,7 +63,7 @@ export default function Inscription() {
                 <div className="w-16 h-16 bg-gray-100 group-hover:bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors">
                   <Briefcase className="h-8 w-8 text-[#722F37]" />
                 </div>
-                <h2 className="font-serif text-xl text-[#722F37] mb-3">
+                <h2 className="font-serif text-lg text-[#722F37] mb-3">
                   {t('inscription.proTitle')}
                 </h2>
                 <p className="text-gray-600 text-sm mb-6">
