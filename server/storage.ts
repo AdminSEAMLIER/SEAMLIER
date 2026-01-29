@@ -85,14 +85,24 @@ class DatabaseStorage implements IStorage {
   }
 
   async getTailors(): Promise<TailorWithUser[]> {
-    const result = await db.select()
-      .from(tailors)
-      .innerJoin(users, eq(tailors.userId, users.id));
-    
-    return result.map(row => ({
-      ...row.tailors,
-      user: row.users
-    }));
+    try {
+      const result = await db.select()
+        .from(tailors)
+        .innerJoin(users, eq(tailors.userId, users.id));
+      
+      if (!result || !Array.isArray(result)) {
+        return [];
+      }
+      
+      return result.map(row => ({
+        ...row.tailors,
+        user: row.users
+      }));
+    } catch (error) {
+      // Handle edge case where Neon driver throws on empty tables
+      console.error("getTailors error:", error);
+      return [];
+    }
   }
 
   async getTailor(id: string): Promise<TailorWithUser | undefined> {
@@ -124,16 +134,25 @@ class DatabaseStorage implements IStorage {
   }
 
   async getPortfolioItems(): Promise<PortfolioWithTailor[]> {
-    const result = await db.select()
-      .from(portfolioItems)
-      .innerJoin(tailors, eq(portfolioItems.tailorId, tailors.id))
-      .innerJoin(users, eq(tailors.userId, users.id))
-      .orderBy(desc(portfolioItems.createdAt));
-    
-    return result.map(row => ({
-      ...row.portfolio_items,
-      tailor: { ...row.tailors, user: row.users }
-    }));
+    try {
+      const result = await db.select()
+        .from(portfolioItems)
+        .innerJoin(tailors, eq(portfolioItems.tailorId, tailors.id))
+        .innerJoin(users, eq(tailors.userId, users.id))
+        .orderBy(desc(portfolioItems.createdAt));
+      
+      if (!result || !Array.isArray(result)) {
+        return [];
+      }
+      
+      return result.map(row => ({
+        ...row.portfolio_items,
+        tailor: { ...row.tailors, user: row.users }
+      }));
+    } catch (error) {
+      console.error("getPortfolioItems error:", error);
+      return [];
+    }
   }
 
   async getPortfolioItemsByTailor(tailorId: string): Promise<PortfolioItem[]> {
@@ -149,15 +168,24 @@ class DatabaseStorage implements IStorage {
   }
 
   async getProducts(): Promise<ProductWithTailor[]> {
-    const result = await db.select()
-      .from(products)
-      .innerJoin(tailors, eq(products.tailorId, tailors.id))
-      .innerJoin(users, eq(tailors.userId, users.id));
-    
-    return result.map(row => ({
-      ...row.products,
-      tailor: { ...row.tailors, user: row.users }
-    }));
+    try {
+      const result = await db.select()
+        .from(products)
+        .innerJoin(tailors, eq(products.tailorId, tailors.id))
+        .innerJoin(users, eq(tailors.userId, users.id));
+      
+      if (!result || !Array.isArray(result)) {
+        return [];
+      }
+      
+      return result.map(row => ({
+        ...row.products,
+        tailor: { ...row.tailors, user: row.users }
+      }));
+    } catch (error) {
+      console.error("getProducts error:", error);
+      return [];
+    }
   }
 
   async getProductsByTailor(tailorId: string): Promise<Product[]> {
@@ -188,6 +216,10 @@ class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(reviews.userId, users.id))
       .where(eq(reviews.tailorId, tailorId))
       .orderBy(desc(reviews.createdAt));
+    
+    if (!result || !Array.isArray(result)) {
+      return [];
+    }
     
     return result.map(row => ({
       ...row.reviews,
@@ -260,6 +292,10 @@ class DatabaseStorage implements IStorage {
       .where(eq(messages.conversationId, conversationId))
       .orderBy(messages.sentAt);
     
+    if (!result || !Array.isArray(result)) {
+      return [];
+    }
+    
     return result.map(row => ({
       ...row.messages,
       sender: row.users
@@ -308,6 +344,10 @@ class DatabaseStorage implements IStorage {
       .where(eq(projects.tailorId, tailorId))
       .orderBy(desc(projects.createdAt));
     
+    if (!result || !Array.isArray(result)) {
+      return [];
+    }
+    
     return result.map(row => ({
       ...row.projects,
       client: row.users
@@ -343,6 +383,10 @@ class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(appointments.clientId, users.id))
       .where(eq(appointments.tailorId, tailorId))
       .orderBy(appointments.scheduledAt);
+    
+    if (!result || !Array.isArray(result)) {
+      return [];
+    }
     
     return result.map(row => ({
       ...row.appointments,
