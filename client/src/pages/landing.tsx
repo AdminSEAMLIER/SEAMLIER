@@ -268,7 +268,6 @@ export default function Landing() {
               <Link href="/mentions-legales" className="hover:text-[#722F37] transition-colors" data-testid="link-mentions">{t('footer.legalNotice')}</Link>
               <Link href="/cgv" className="hover:text-[#722F37] transition-colors" data-testid="link-cgv">{t('footer.terms')}</Link>
               <Link href="/confidentialite" className="hover:text-[#722F37] transition-colors" data-testid="link-privacy">{t('footer.privacy')}</Link>
-              <a href="#" className="hover:text-[#722F37] transition-colors" data-testid="link-contact">{t('footer.contact')}</a>
             </div>
           </div>
         </div>
