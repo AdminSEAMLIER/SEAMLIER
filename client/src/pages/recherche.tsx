@@ -59,15 +59,15 @@ export default function Recherche() {
             </Link>
             <Logo className="text-[#722F37] shrink-0" textClassName="text-base lg:text-lg text-[#722F37]" />
           </div>
-          <div className="flex items-center gap-2 lg:gap-4">
+          <div className="flex items-center gap-1 md:gap-2 lg:gap-4">
             <LanguageToggle />
             <Link href="/connexion">
-              <Button variant="ghost" size="sm" className="text-[#722F37] px-2 lg:px-4 text-sm lg:text-base" data-testid="button-connexion-header">
+              <Button variant="ghost" size="sm" className="text-[#722F37] px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9" data-testid="button-connexion-header">
                 {t('landing.login')}
               </Button>
             </Link>
             <Link href="/inscription-particulier">
-              <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white px-2 lg:px-4 text-sm lg:text-base" data-testid="button-inscription-header">
+              <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9" data-testid="button-inscription-header">
                 {t('landing.signup')}
               </Button>
             </Link>
