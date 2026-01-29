@@ -7,6 +7,7 @@ import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { authStorage } from "./storage";
+import { storage } from "../../storage";
 
 const getOidcConfig = memoize(
   async () => {
@@ -136,6 +137,12 @@ export async function setupAuth(app: Express) {
         // Redirect based on role
         const dbUser = await authStorage.getUser(user.claims.sub);
         if (dbUser?.role === 'tailor') {
+          // Check if tailor has completed profile setup
+          const tailorProfile = await storage.getTailorByUserId(user.claims.sub);
+          if (!tailorProfile) {
+            // New tailor - redirect to setup page
+            return res.redirect("/professionnel/setup");
+          }
           return res.redirect("/professionnel");
         }
         return res.redirect("/particulier");

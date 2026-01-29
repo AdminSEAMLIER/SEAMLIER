@@ -81,6 +81,13 @@ shared/              # Shared code (schema, types)
 - **Messaging System**: Wired message sending to POST `/api/messages` with useMutation and proper cache invalidation
 - **Marketplace/Search Filtering**: Migrated from malformed server-side filtering to proper client-side filtering using useMemo
 
+### Professional Registration Flow (January 2026)
+- **Replit Auth Integration**: Professionals authenticate via Replit Auth with `?role=tailor`
+- **Profile Setup Page**: New professionals redirected to `/professionnel/setup` to complete profile
+- **Data Storage**: User location saved to users table, specialties/experience/bio saved to tailors table
+- **Search Integration**: New tailors automatically appear in search results after completing setup
+- **Auth Callback Logic**: Checks for existing tailor profile; redirects to setup if missing
+
 ### Complete Feature Set
 - Discovery page with hero section and featured tailors
 - Search page with specialty, location, rating, and price filters
@@ -89,6 +96,7 @@ shared/              # Shared code (schema, types)
 - Profile page with user info and menu options
 - Individual tailor profiles with tabs (Portfolio, Boutique, Avis)
 - Individual product detail pages
+- Professional registration with profile setup flow
 
 ## External Dependencies
 

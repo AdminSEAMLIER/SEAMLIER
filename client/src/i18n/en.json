@@ -248,6 +248,7 @@
     "proAccountCreated": "Professional account created",
     "welcomeDesc": "Welcome to SEAMLIER!",
     "welcomeProDesc2": "Welcome to SEAMLIER! You can now manage your profile.",
+    "profileCreated": "Profile created successfully",
     "error": "Error",
     "errorMessage": "An error occurred during registration",
     "creating": "Creating...",
@@ -263,6 +264,15 @@
       "messaging": "Direct messaging with your clients",
       "portfolio": "Manage your portfolio and creations"
     },
+    "proSteps": {
+      "step1": "Create your account with Replit",
+      "step2": "Complete your professional profile",
+      "step3": "Start receiving requests"
+    },
+    "whyJoinUs": "Why join us?",
+    "readyToStart": "Ready to grow your business?",
+    "createAccountInSeconds": "Create your account in seconds and start receiving client requests.",
+    "startRegistration": "Create my professional account",
     "joinOurNetwork": "Join our network",
     "developActivity": "Grow your business by joining the leading platform connecting you with individuals.",
     "developActivityShort": "Grow your tailoring business.",
@@ -400,6 +410,25 @@
     "next": "Next",
     "submit": "Submit",
     "cm": "cm"
+  },
+  "proSetup": {
+    "title": "Set up your profile",
+    "subtitle": "Tell us about your business so clients can find you",
+    "city": "City",
+    "cityPlaceholder": "Paris, Lyon, Marseille...",
+    "specialties": "Specialties",
+    "specialtiesPlaceholder": "Haute couture, Wedding dresses, Alterations...",
+    "specialtiesHint": "Separate your specialties with commas",
+    "experience": "Years of experience",
+    "experiencePlaceholder": "Select your experience",
+    "exp1": "Less than 1 year",
+    "exp3": "1 to 3 years",
+    "exp5": "3 to 5 years",
+    "exp10": "5 to 10 years",
+    "exp15": "More than 10 years",
+    "bio": "About (optional)",
+    "bioPlaceholder": "Describe your background, expertise and what makes you unique...",
+    "submit": "Create my professional profile"
   },
   "marketplace": {
     "title": "Shop",

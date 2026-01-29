@@ -248,6 +248,7 @@
     "proAccountCreated": "Compte professionnel créé",
     "welcomeDesc": "Bienvenue sur SEAMLIER !",
     "welcomeProDesc2": "Bienvenue sur SEAMLIER ! Vous pouvez maintenant gérer votre profil.",
+    "profileCreated": "Profil créé avec succès",
     "error": "Erreur",
     "errorMessage": "Une erreur est survenue lors de l'inscription",
     "creating": "Création en cours...",
@@ -263,6 +264,15 @@
       "messaging": "Messagerie directe avec vos clients",
       "portfolio": "Gérez votre portfolio et vos créations"
     },
+    "proSteps": {
+      "step1": "Créez votre compte avec Replit",
+      "step2": "Complétez votre profil professionnel",
+      "step3": "Commencez à recevoir des demandes"
+    },
+    "whyJoinUs": "Pourquoi nous rejoindre ?",
+    "readyToStart": "Prêt à développer votre activité ?",
+    "createAccountInSeconds": "Créez votre compte en quelques secondes et commencez à recevoir des demandes de clients.",
+    "startRegistration": "Créer mon compte professionnel",
     "joinOurNetwork": "Rejoignez notre réseau",
     "developActivity": "Développez votre activité en rejoignant la première plateforme de mise en relation avec des particuliers.",
     "developActivityShort": "Développez votre activité de couturier.",
@@ -400,6 +410,25 @@
     "next": "Suivant",
     "submit": "Envoyer",
     "cm": "cm"
+  },
+  "proSetup": {
+    "title": "Configurez votre profil",
+    "subtitle": "Parlez-nous de votre activité pour que les clients puissent vous trouver",
+    "city": "Ville",
+    "cityPlaceholder": "Paris, Lyon, Marseille...",
+    "specialties": "Spécialités",
+    "specialtiesPlaceholder": "Haute couture, Robes de mariée, Retouches...",
+    "specialtiesHint": "Séparez vos spécialités par des virgules",
+    "experience": "Années d'expérience",
+    "experiencePlaceholder": "Sélectionnez votre expérience",
+    "exp1": "Moins de 1 an",
+    "exp3": "1 à 3 ans",
+    "exp5": "3 à 5 ans",
+    "exp10": "5 à 10 ans",
+    "exp15": "Plus de 10 ans",
+    "bio": "Présentation (optionnel)",
+    "bioPlaceholder": "Décrivez votre parcours, votre savoir-faire et ce qui vous distingue...",
+    "submit": "Créer mon profil professionnel"
   },
   "marketplace": {
     "title": "Boutique",

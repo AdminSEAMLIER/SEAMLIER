@@ -41,6 +41,7 @@ import PreferencesNotifications from "@/pages/preferences-notifications";
 import ProParametres from "@/pages/pro-parametres";
 import ProModifierMotDePasse from "@/pages/pro-modifier-mot-de-passe";
 import ProNotifications from "@/pages/pro-notifications";
+import ProSetup from "@/pages/pro-setup";
 
 function MobileHeader() {
   return (
@@ -104,6 +105,7 @@ function Router() {
       <Route path="/inscription" component={Inscription} />
       <Route path="/inscription-particulier" component={InscriptionParticulier} />
       <Route path="/inscription-professionnel" component={InscriptionProfessionnel} />
+      <Route path="/professionnel/setup" component={ProSetup} />
       <Route path="/recherche" component={Recherche} />
       <Route path="/couturier/:id" component={CouturierProfile} />
       

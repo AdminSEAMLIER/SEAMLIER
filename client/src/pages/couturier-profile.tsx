@@ -112,7 +112,7 @@ export default function CouturierProfile() {
       <div className="relative h-48 md:h-64">
         <img
           src={tailor.coverImageUrl || `https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&h=400&fit=crop`}
-          alt={tailor.user.fullName}
+          alt={`${tailor.user.firstName || ''} ${tailor.user.lastName || ''}`.trim()}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -121,16 +121,16 @@ export default function CouturierProfile() {
       <div className="px-4 lg:px-6 -mt-16 relative z-10 max-w-4xl mx-auto">
         <div className="flex items-end gap-4">
           <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
-            <AvatarImage src={tailor.user.avatarUrl} alt={tailor.user.fullName} />
+            <AvatarImage src={tailor.user.profileImageUrl || undefined} alt={`${tailor.user.firstName || ''} ${tailor.user.lastName || ''}`.trim()} />
             <AvatarFallback className="bg-[#722F37] text-white text-2xl">
-              {tailor.user.fullName.split(" ").map(n => n[0]).join("")}
+              {`${tailor.user.firstName?.[0] || ''}${tailor.user.lastName?.[0] || ''}`.toUpperCase()}
             </AvatarFallback>
           </Avatar>
           
           <div className="flex-1 pt-4">
             <div className="flex items-center gap-2">
               <h1 className="font-serif text-2xl lg:text-3xl text-gray-700">
-                {tailor.user.fullName}
+                {`${tailor.user.firstName || ''} ${tailor.user.lastName || ''}`.trim() || 'Couturier'}
               </h1>
               {tailor.isVerified && (
                 <BadgeCheck className="h-6 w-6 text-[#722F37]" fill="currentColor" />
