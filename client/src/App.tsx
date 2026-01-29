@@ -36,6 +36,7 @@ import ProfilParticulier from "@/pages/profil-particulier";
 import Connexion from "@/pages/connexion";
 import MentionsLegales from "@/pages/mentions-legales";
 import Confidentialite from "@/pages/confidentialite";
+import CGV from "@/pages/cgv";
 import ModifierMotDePasse from "@/pages/modifier-mot-de-passe";
 import PreferencesNotifications from "@/pages/preferences-notifications";
 import ProParametres from "@/pages/pro-parametres";
@@ -102,6 +103,7 @@ function Router() {
       <Route path="/connexion" component={Connexion} />
       <Route path="/mentions-legales" component={MentionsLegales} />
       <Route path="/confidentialite" component={Confidentialite} />
+      <Route path="/cgv" component={CGV} />
       <Route path="/inscription" component={Inscription} />
       <Route path="/inscription-particulier" component={InscriptionParticulier} />
       <Route path="/inscription-professionnel" component={InscriptionProfessionnel} />
