@@ -1,3 +1,4 @@
+import CheckoutButton from "@/components/checkout-button";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -61,8 +62,8 @@ export default function Home() {
           <p className="text-white/90 text-base lg:text-lg mb-8 max-w-2xl mx-auto">
             {t('landing.heroSubtitle')}
           </p>
-          
-          <div className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
+
+          <div className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto mb-6">
             <div className="relative flex-1">
               <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input
@@ -80,9 +81,15 @@ export default function Home() {
               </Button>
             </Link>
           </div>
+
+          {/* AJOUT DU BOUTON STRIPE ICI POUR LE TEST */}
+          <div className="max-w-xs mx-auto">
+            <CheckoutButton />
+          </div>
         </div>
       </section>
 
+      {/* Reste du code inchangé... */}
       <section className="py-8 px-4 lg:px-8 border-y border-gray-100 bg-white">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-3 gap-4 text-center">
@@ -238,7 +245,7 @@ export default function Home() {
                 {t('landing.joinNetwork')}
               </p>
             </div>
-            
+
             <div className="flex flex-wrap gap-6 text-sm text-gray-600">
               <Link href="/mentions-legales" className="hover:text-[#722F37]">{t('footer.legalNotice')}</Link>
               <Link href="/confidentialite" className="hover:text-[#722F37]">{t('footer.privacy')}</Link>
@@ -246,7 +253,7 @@ export default function Home() {
               <span>contact@seamlier.com</span>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-200 pt-6 text-center text-sm text-gray-500">
             <p>&copy; 2026 SEAMLIER. {t('footer.allRightsReserved')}</p>
           </div>
