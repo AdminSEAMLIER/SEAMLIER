@@ -20,7 +20,8 @@ import Discovery from "@/pages/discovery";
 import Messages from "@/pages/messages";
 import Mesures from "@/pages/mesures";
 import Magazine from "@/pages/magazine"; 
-import MagazineDetail from "@/pages/magazine-detail"; // <--- AJOUTÉ : Import de la page de lecture
+import MagazineDetail from "@/pages/magazine-detail"; 
+import AdminMagazine from "@/pages/admin-magazine"; // <--- AJOUTÉ : Import de l'admin
 import TailorProfile from "@/pages/tailor-profile";
 import ProductDetail from "@/pages/product-detail";
 import ProDashboard from "@/pages/pro-dashboard";
@@ -107,6 +108,9 @@ function ProfessionnelLayout({ children }: { children: React.ReactNode }) {
 function Router() {
   return (
     <Switch>
+      {/* --- ACCÈS ADMIN SECRET --- */}
+      <Route path="/access/gestion/seamlier" component={AdminMagazine} />
+
       {/* Routes Publiques */}
       <Route path="/" component={Landing} />
       <Route path="/connexion" component={Connexion} />
@@ -133,14 +137,13 @@ function Router() {
         <ParticulierLayout><Mesures /></ParticulierLayout>
       </Route>
 
-      {/* --- SECTION MAGAZINE --- */}
+      {/* SECTION MAGAZINE */}
       <Route path="/particulier/magazine">
         <ParticulierLayout><Magazine /></ParticulierLayout>
       </Route>
       <Route path="/particulier/magazine/:id">
         <ParticulierLayout><MagazineDetail /></ParticulierLayout>
       </Route>
-      {/* ------------------------ */}
 
       <Route path="/particulier/profil">
         <ParticulierLayout><ProfilParticulier /></ParticulierLayout>
