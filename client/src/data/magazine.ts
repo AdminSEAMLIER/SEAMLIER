@@ -1,0 +1,42 @@
+export const articles = [
+  {
+    id: 1,
+    title: "Les tendances couture printemps 2026",
+    category: "Tendances",
+    date: "2 jan. 2026",
+    image: "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&h=400&fit=crop",
+    excerpt: "Découvrez les tendances qui marqueront la saison printemps-été 2026 dans l'univers de la couture sur mesure.",
+  },
+  {
+    id: 2,
+    title: "Comment choisir son tissu",
+    category: "Conseils",
+    date: "28 déc. 2025",
+    image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&h=400&fit=crop",
+    excerpt: "Guide complet pour bien choisir vos tissus selon l'occasion, la saison et votre morphologie.",
+  },
+  {
+    id: 3,
+    title: "Portrait : Marie Dupont, couturière passionnée",
+    category: "Portrait",
+    date: "25 déc. 2025",
+    image: "https://images.unsplash.com/photo-1590735213920-68192a487bc2?w=600&h=400&fit=crop",
+    excerpt: "Rencontre avec Marie Dupont, artisane couturière qui perpétue un savoir-faire traditionnel depuis 20 ans.",
+  },
+  {
+    id: 4,
+    title: "Entretenir ses vêtements sur mesure",
+    category: "Conseils",
+    date: "20 déc. 2025",
+    image: "https://images.unsplash.com/photo-1489274495757-95c7c837b101?w=600&h=400&fit=crop",
+    excerpt: "Nos astuces pour préserver la qualité et la longévité de vos pièces sur mesure.",
+  },
+  {
+    id: 5,
+    title: "Robe de mariée : les étapes de la création",
+    category: "Mariage",
+    date: "15 déc. 2025",
+    image: "https://images.unsplash.com/photo-1594552072238-b8a33785b261?w=600&h=400&fit=crop",
+    excerpt: "De la première consultation à l'essayage final, découvrez les étapes de création d'une robe de mariée unique.",
+  },
+];

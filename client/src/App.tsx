@@ -10,15 +10,17 @@ import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
+
+// Imports des pages
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import Discovery from "@/pages/discovery";
 import Messages from "@/pages/messages";
 import Mesures from "@/pages/mesures";
-import Magazine from "@/pages/magazine";
+import Magazine from "@/pages/magazine"; 
+import MagazineDetail from "@/pages/magazine-detail"; // <--- AJOUTÉ : Import de la page de lecture
 import TailorProfile from "@/pages/tailor-profile";
 import ProductDetail from "@/pages/product-detail";
 import ProDashboard from "@/pages/pro-dashboard";
@@ -44,6 +46,8 @@ import ProModifierMotDePasse from "@/pages/pro-modifier-mot-de-passe";
 import ProNotifications from "@/pages/pro-notifications";
 import ProSetup from "@/pages/pro-setup";
 
+// --- Headers Mobiles ---
+
 function MobileHeader() {
   return (
     <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -53,19 +57,6 @@ function MobileHeader() {
       </Link>
       <LanguageToggle />
     </div>
-  );
-}
-
-function ParticulierLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      <DesktopHeader mode="particulier" />
-      <MobileHeader />
-      <main className="lg:pt-16">
-        {children}
-      </main>
-      <BottomNav />
-    </>
   );
 }
 
@@ -83,6 +74,21 @@ function ProMobileHeader() {
   );
 }
 
+// --- Layouts ---
+
+function ParticulierLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <DesktopHeader mode="particulier" />
+      <MobileHeader />
+      <main className="lg:pt-16">
+        {children}
+      </main>
+      <BottomNav />
+    </>
+  );
+}
+
 function ProfessionnelLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
@@ -96,9 +102,12 @@ function ProfessionnelLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+// --- Router Principal ---
+
 function Router() {
   return (
     <Switch>
+      {/* Routes Publiques */}
       <Route path="/" component={Landing} />
       <Route path="/connexion" component={Connexion} />
       <Route path="/mentions-legales" component={MentionsLegales} />
@@ -107,111 +116,83 @@ function Router() {
       <Route path="/inscription" component={Inscription} />
       <Route path="/inscription-particulier" component={InscriptionParticulier} />
       <Route path="/inscription-professionnel" component={InscriptionProfessionnel} />
-      <Route path="/professionnel/setup" component={ProSetup} />
       <Route path="/recherche" component={Recherche} />
       <Route path="/couturier/:id" component={CouturierProfile} />
-      
+
+      {/* Espace Particulier */}
+      <Route path="/particulier">
+        <ParticulierLayout><Home /></ParticulierLayout>
+      </Route>
       <Route path="/particulier/decouverte">
-        <ParticulierLayout>
-          <Discovery />
-        </ParticulierLayout>
+        <ParticulierLayout><Discovery /></ParticulierLayout>
       </Route>
       <Route path="/particulier/messages">
-        <ParticulierLayout>
-          <Messages />
-        </ParticulierLayout>
+        <ParticulierLayout><Messages /></ParticulierLayout>
       </Route>
       <Route path="/particulier/mesures">
-        <ParticulierLayout>
-          <Mesures />
-        </ParticulierLayout>
+        <ParticulierLayout><Mesures /></ParticulierLayout>
       </Route>
+
+      {/* --- SECTION MAGAZINE --- */}
       <Route path="/particulier/magazine">
-        <ParticulierLayout>
-          <Magazine />
-        </ParticulierLayout>
+        <ParticulierLayout><Magazine /></ParticulierLayout>
+      </Route>
+      <Route path="/particulier/magazine/:id">
+        <ParticulierLayout><MagazineDetail /></ParticulierLayout>
+      </Route>
+      {/* ------------------------ */}
+
+      <Route path="/particulier/profil">
+        <ParticulierLayout><ProfilParticulier /></ParticulierLayout>
       </Route>
       <Route path="/particulier/profil/mot-de-passe">
-        <ParticulierLayout>
-          <ModifierMotDePasse />
-        </ParticulierLayout>
+        <ParticulierLayout><ModifierMotDePasse /></ParticulierLayout>
       </Route>
       <Route path="/particulier/profil/notifications">
-        <ParticulierLayout>
-          <PreferencesNotifications />
-        </ParticulierLayout>
-      </Route>
-      <Route path="/particulier/profil">
-        <ParticulierLayout>
-          <ProfilParticulier />
-        </ParticulierLayout>
+        <ParticulierLayout><PreferencesNotifications /></ParticulierLayout>
       </Route>
       <Route path="/particulier/tailor/:id">
         {(params) => (
-          <ParticulierLayout>
-            <TailorProfile />
-          </ParticulierLayout>
+          <ParticulierLayout><TailorProfile id={params.id} /></ParticulierLayout>
         )}
       </Route>
       <Route path="/particulier/product/:id">
         {(params) => (
-          <ParticulierLayout>
-            <ProductDetail />
-          </ParticulierLayout>
+          <ParticulierLayout><ProductDetail id={params.id} /></ParticulierLayout>
         )}
       </Route>
-      <Route path="/particulier">
-        <ParticulierLayout>
-          <Home />
-        </ParticulierLayout>
-      </Route>
 
+      {/* Espace Professionnel */}
+      <Route path="/professionnel">
+        <ProfessionnelLayout><ProDashboard /></ProfessionnelLayout>
+      </Route>
+      <Route path="/professionnel/setup" component={ProSetup} />
       <Route path="/professionnel/demandes">
-        <ProfessionnelLayout>
-          <ProDemandes />
-        </ProfessionnelLayout>
+        <ProfessionnelLayout><ProDemandes /></ProfessionnelLayout>
       </Route>
       <Route path="/professionnel/projets">
-        <ProfessionnelLayout>
-          <ProProjets />
-        </ProfessionnelLayout>
+        <ProfessionnelLayout><ProProjets /></ProfessionnelLayout>
       </Route>
       <Route path="/professionnel/messagerie">
-        <ProfessionnelLayout>
-          <ProMessagerie />
-        </ProfessionnelLayout>
+        <ProfessionnelLayout><ProMessagerie /></ProfessionnelLayout>
       </Route>
       <Route path="/professionnel/planning">
-        <ProfessionnelLayout>
-          <ProPlanning />
-        </ProfessionnelLayout>
-      </Route>
-      <Route path="/professionnel/parametres">
-        <ProfessionnelLayout>
-          <ProParametres />
-        </ProfessionnelLayout>
-      </Route>
-      <Route path="/professionnel/profil/mot-de-passe">
-        <ProfessionnelLayout>
-          <ProModifierMotDePasse />
-        </ProfessionnelLayout>
-      </Route>
-      <Route path="/professionnel/profil/notifications">
-        <ProfessionnelLayout>
-          <ProNotifications />
-        </ProfessionnelLayout>
+        <ProfessionnelLayout><ProPlanning /></ProfessionnelLayout>
       </Route>
       <Route path="/professionnel/profil">
-        <ProfessionnelLayout>
-          <ProProfil />
-        </ProfessionnelLayout>
+        <ProfessionnelLayout><ProProfil /></ProfessionnelLayout>
       </Route>
-      <Route path="/professionnel">
-        <ProfessionnelLayout>
-          <ProDashboard />
-        </ProfessionnelLayout>
+      <Route path="/professionnel/parametres">
+        <ProfessionnelLayout><ProParametres /></ProfessionnelLayout>
+      </Route>
+      <Route path="/professionnel/profil/mot-de-passe">
+        <ProfessionnelLayout><ProModifierMotDePasse /></ProfessionnelLayout>
+      </Route>
+      <Route path="/professionnel/profil/notifications">
+        <ProfessionnelLayout><ProNotifications /></ProfessionnelLayout>
       </Route>
 
+      {/* 404 */}
       <Route component={NotFound} />
     </Switch>
   );

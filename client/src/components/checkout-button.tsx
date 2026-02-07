@@ -1,50 +1,55 @@
 import { loadStripe } from "@stripe/stripe-js";
-import { useState } from "react";
-
-// On utilise la clé publique configurée dans ton .env
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+import { useState, useEffect } from "react";
 
 export default function CheckoutButton() {
   const [loading, setLoading] = useState(false);
+  const [stripePromise, setStripePromise] = useState<any>(null);
+
+  useEffect(() => {
+    // Récupère la clé depuis les variables d'environnement Vite
+    const key = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+    if (key) {
+      setStripePromise(loadStripe(key));
+    }
+  }, []);
 
   const handleCheckout = async () => {
+    if (!stripePromise) {
+      alert("Configuration en cours, veuillez patienter...");
+      return;
+    }
+
     setLoading(true);
     try {
-      // 1. Demande au serveur de créer la session de paiement
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
 
       const session = await response.json();
-
-      if (!response.ok) {
-        throw new Error(session.error || "Erreur serveur");
-      }
-
-      // 2. Redirection vers la page de paiement Stripe
       const stripe = await stripePromise;
-      if (stripe) {
-        const { error } = await stripe.redirectToCheckout({
-          sessionId: session.id,
-        });
-        if (error) throw error;
+
+      if (stripe && session.id) {
+        await stripe.redirectToCheckout({ sessionId: session.id });
       }
-    } catch (err: any) {
-      console.error("Détails de l'erreur:", err);
-      alert("Erreur de paiement : " + err.message);
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors du lancement du paiement.");
     } finally {
       setLoading(false);
     }
   };
 
+  // Ne rien afficher si la clé n'est pas encore détectée (évite le plantage)
+  if (!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY) return null;
+
   return (
     <button 
       onClick={handleCheckout}
       disabled={loading}
-      className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed w-full"
+      className="h-12 px-8 bg-[#722F37] text-white rounded-md font-bold hover:bg-[#5a252c] transition-all w-full shadow-lg"
     >
-      {loading ? "Chargement..." : "Acheter maintenant - 20€"}
+      {loading ? "Chargement..." : "Soutenir SEAMLIER - 20€"}
     </button>
   );
 }
