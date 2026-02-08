@@ -21,7 +21,7 @@ import Messages from "@/pages/messages";
 import Mesures from "@/pages/mesures";
 import Magazine from "@/pages/magazine"; 
 import MagazineDetail from "@/pages/magazine-detail"; 
-import AdminDashboard from "@/pages/admin-magazine"; // <--- CORRIGÉ : On importe AdminDashboard
+import AdminDashboard from "@/pages/admin-magazine";
 import TailorProfile from "@/pages/tailor-profile";
 import ProductDetail from "@/pages/product-detail";
 import ProDashboard from "@/pages/pro-dashboard";
@@ -82,10 +82,88 @@ function ParticulierLayout({ children }: { children: React.ReactNode }) {
     <>
       <DesktopHeader mode="particulier" />
       <MobileHeader />
-      <main className="lg:pt-16">
+      <main className="lg:pt-16 pb-20 lg:pb-0">
         {children}
       </main>
       <BottomNav />
     </>
+  );
+}
+
+function ProLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <DesktopHeader mode="professionnel" />
+      <ProMobileHeader />
+      <main className="lg:pt-16 pb-20 lg:pb-0">
+        {children}
+      </main>
+      <ProBottomNav />
+    </>
+  );
+}
+
+// --- Navigation (Router) ---
+
+function Router() {
+  return (
+    <Switch>
+      {/* Pages d'accueil et Authentification */}
+      <Route path="/" component={Landing} />
+      <Route path="/connexion" component={Connexion} />
+      <Route path="/inscription" component={Inscription} />
+      <Route path="/cgv" component={CGV} />
+
+      {/* Univers Particulier */}
+      <Route path="/particulier">
+        <ParticulierLayout><Home /></ParticulierLayout>
+      </Route>
+      <Route path="/discovery">
+        <ParticulierLayout><Discovery /></ParticulierLayout>
+      </Route>
+      <Route path="/mesures">
+        <ParticulierLayout><Mesures /></ParticulierLayout>
+      </Route>
+      <Route path="/magazine">
+        <ParticulierLayout><Magazine /></ParticulierLayout>
+      </Route>
+
+      {/* Univers Professionnel (Burgundy) */}
+      <Route path="/professionnel">
+        <ProLayout><ProDashboard /></ProLayout>
+      </Route>
+      <Route path="/pro-projets">
+        <ProLayout><ProProjets /></ProLayout>
+      </Route>
+      <Route path="/pro-messagerie">
+        <ProLayout><ProMessagerie /></ProLayout>
+      </Route>
+      <Route path="/pro-planning">
+        <ProLayout><ProPlanning /></ProLayout>
+      </Route>
+      <Route path="/pro-parametres">
+        <ProLayout><ProParametres /></ProLayout>
+      </Route>
+
+      {/* L'Espace Administrateur Secret (Empire SEAMLiER) */}
+      <Route path="/admin/seamlier" component={AdminDashboard} />
+      <Route path="/access/gestion/seamlier" component={AdminDashboard} />
+
+      {/* Erreur 404 */}
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
+// --- Exportation Finale (L'entrée du site) ---
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Router />
+        <Toaster />
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
