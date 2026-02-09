@@ -12,7 +12,8 @@ import {
   Calendar, FileText, Send, Eye, Trash2,
   CheckCircle, XCircle, ChevronRight,
   ArrowUpRight, X, Upload, MapPin, Pencil,
-  User, Building2, Phone, CreditCard, Briefcase, Hash
+  User, Building2, Phone, CreditCard, Briefcase, Hash,
+  Globe, Bell, Palette, Shield, Database, Key, ToggleLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -180,6 +181,25 @@ export default function AdminDashboard() {
   const [artisanDossierId, setArtisanDossierId] = useState<string | null>(null);
   const [artisanDossierMode, setArtisanDossierMode] = useState<"view" | "edit" | null>(null);
   const [artisanEditForm, setArtisanEditForm] = useState<Partial<Artisan>>({});
+
+  const [settingsPlatformName, setSettingsPlatformName] = useState("SEAMLiER");
+  const [settingsContactEmail, setSettingsContactEmail] = useState("contact@seamlier.fr");
+  const [settingsSupportEmail, setSettingsSupportEmail] = useState("support@seamlier.fr");
+  const [settingsPhone, setSettingsPhone] = useState("+33 1 23 45 67 89");
+  const [settingsAddress, setSettingsAddress] = useState("15 Rue de la Paix, 75002 Paris");
+  const [settingsCommission, setSettingsCommission] = useState("12");
+  const [settingsCurrency, setSettingsCurrency] = useState("EUR");
+  const [settingsLanguage, setSettingsLanguage] = useState("fr");
+  const [settingsNotifNewArtisan, setSettingsNotifNewArtisan] = useState(true);
+  const [settingsNotifNewProject, setSettingsNotifNewProject] = useState(true);
+  const [settingsNotifMessages, setSettingsNotifMessages] = useState(true);
+  const [settingsNotifPayments, setSettingsNotifPayments] = useState(true);
+  const [settingsAutoApprove, setSettingsAutoApprove] = useState(false);
+  const [settingsMaintenanceMode, setSettingsMaintenanceMode] = useState(false);
+  const [settingsMaxUploadSize, setSettingsMaxUploadSize] = useState("10");
+  const [settingsMinOrderAmount, setSettingsMinOrderAmount] = useState("50");
+  const [settingsSiretRequired, setSettingsSiretRequired] = useState(true);
+  const [settingsIdRequired, setSettingsIdRequired] = useState(true);
 
   useEffect(() => {
     try {
@@ -607,7 +627,7 @@ export default function AdminDashboard() {
           <SidebarFooter className="p-4 space-y-1">
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton data-testid="button-admin-settings">
+                <SidebarMenuButton onClick={() => setActiveTab("settings")} data-testid="button-admin-settings" className={cn(activeTab === "settings" && "bg-[#722F37] text-white")}>
                   <Settings size={18} />
                   <span>Paramètres</span>
                 </SidebarMenuButton>
@@ -1733,6 +1753,165 @@ export default function AdminDashboard() {
                       </table>
                     </div>
                   </Card>
+                </>
+              )}
+
+              {activeTab === "settings" && (
+                <>
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900" data-testid="text-settings-title">Paramètres</h2>
+                      <p className="text-xs text-gray-500 mt-0.5">Configuration générale de la plateforme</p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-5 md:grid-cols-2" data-testid="settings-grid">
+                    <Card className="border-none shadow-sm" data-testid="card-settings-platform">
+                      <CardContent className="p-5">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="w-8 h-8 rounded-md bg-[#722F37]/10 flex items-center justify-center">
+                            <Globe size={16} className="text-[#722F37]" />
+                          </div>
+                          <h3 className="font-bold text-sm text-gray-800">Plateforme</h3>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Nom de la plateforme</label>
+                            <Input value={settingsPlatformName} onChange={(e) => setSettingsPlatformName(e.target.value)} className="mt-1 h-9 text-sm" data-testid="input-settings-platform-name" />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Email de contact</label>
+                            <Input value={settingsContactEmail} onChange={(e) => setSettingsContactEmail(e.target.value)} className="mt-1 h-9 text-sm" data-testid="input-settings-contact-email" />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Email support</label>
+                            <Input value={settingsSupportEmail} onChange={(e) => setSettingsSupportEmail(e.target.value)} className="mt-1 h-9 text-sm" data-testid="input-settings-support-email" />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Téléphone</label>
+                            <Input value={settingsPhone} onChange={(e) => setSettingsPhone(e.target.value)} className="mt-1 h-9 text-sm" data-testid="input-settings-phone" />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Adresse</label>
+                            <Input value={settingsAddress} onChange={(e) => setSettingsAddress(e.target.value)} className="mt-1 h-9 text-sm" data-testid="input-settings-address" />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Langue par défaut</label>
+                            <select value={settingsLanguage} onChange={(e) => setSettingsLanguage(e.target.value)} className="mt-1 w-full h-9 text-sm border border-gray-200 rounded-md px-3 bg-white" data-testid="select-settings-language">
+                              <option value="fr">Français</option>
+                              <option value="en">English</option>
+                            </select>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-none shadow-sm" data-testid="card-settings-financial">
+                      <CardContent className="p-5">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="w-8 h-8 rounded-md bg-green-50 flex items-center justify-center">
+                            <CreditCard size={16} className="text-green-600" />
+                          </div>
+                          <h3 className="font-bold text-sm text-gray-800">Financier</h3>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Commission plateforme (%)</label>
+                            <Input type="number" min="0" max="100" value={settingsCommission} onChange={(e) => setSettingsCommission(e.target.value)} className="mt-1 h-9 text-sm" data-testid="input-settings-commission" />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Devise</label>
+                            <select value={settingsCurrency} onChange={(e) => setSettingsCurrency(e.target.value)} className="mt-1 w-full h-9 text-sm border border-gray-200 rounded-md px-3 bg-white" data-testid="select-settings-currency">
+                              <option value="EUR">EUR (€)</option>
+                              <option value="USD">USD ($)</option>
+                              <option value="GBP">GBP (£)</option>
+                              <option value="XOF">XOF (CFA)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Montant minimum de commande (€)</label>
+                            <Input type="number" min="0" value={settingsMinOrderAmount} onChange={(e) => setSettingsMinOrderAmount(e.target.value)} className="mt-1 h-9 text-sm" data-testid="input-settings-min-order" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-none shadow-sm" data-testid="card-settings-notifications">
+                      <CardContent className="p-5">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="w-8 h-8 rounded-md bg-blue-50 flex items-center justify-center">
+                            <Bell size={16} className="text-blue-600" />
+                          </div>
+                          <h3 className="font-bold text-sm text-gray-800">Notifications</h3>
+                        </div>
+                        <div className="space-y-3">
+                          {[
+                            { label: "Nouvel artisan inscrit", val: settingsNotifNewArtisan, set: setSettingsNotifNewArtisan, tid: "toggle-notif-artisan" },
+                            { label: "Nouveau projet créé", val: settingsNotifNewProject, set: setSettingsNotifNewProject, tid: "toggle-notif-project" },
+                            { label: "Messages reçus", val: settingsNotifMessages, set: setSettingsNotifMessages, tid: "toggle-notif-messages" },
+                            { label: "Paiements reçus", val: settingsNotifPayments, set: setSettingsNotifPayments, tid: "toggle-notif-payments" },
+                          ].map((n) => (
+                            <div key={n.tid} className="flex items-center justify-between py-1.5">
+                              <span className="text-sm text-gray-700">{n.label}</span>
+                              <button
+                                onClick={() => n.set(!n.val)}
+                                className={cn("w-10 h-5 rounded-full transition-colors relative", n.val ? "bg-[#722F37]" : "bg-gray-300")}
+                                data-testid={n.tid}
+                              >
+                                <span className={cn("block w-4 h-4 bg-white rounded-full shadow-sm absolute top-0.5 transition-transform", n.val ? "translate-x-5" : "translate-x-0.5")} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-none shadow-sm" data-testid="card-settings-security">
+                      <CardContent className="p-5">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="w-8 h-8 rounded-md bg-amber-50 flex items-center justify-center">
+                            <Shield size={16} className="text-amber-600" />
+                          </div>
+                          <h3 className="font-bold text-sm text-gray-800">Sécurité & Validation</h3>
+                        </div>
+                        <div className="space-y-3">
+                          {[
+                            { label: "SIRET obligatoire", val: settingsSiretRequired, set: setSettingsSiretRequired, tid: "toggle-siret-required" },
+                            { label: "Pièce d'identité obligatoire", val: settingsIdRequired, set: setSettingsIdRequired, tid: "toggle-id-required" },
+                            { label: "Approbation automatique", val: settingsAutoApprove, set: setSettingsAutoApprove, tid: "toggle-auto-approve" },
+                            { label: "Mode maintenance", val: settingsMaintenanceMode, set: setSettingsMaintenanceMode, tid: "toggle-maintenance" },
+                          ].map((s) => (
+                            <div key={s.tid} className="flex items-center justify-between py-1.5">
+                              <span className="text-sm text-gray-700">{s.label}</span>
+                              <button
+                                onClick={() => s.set(!s.val)}
+                                className={cn("w-10 h-5 rounded-full transition-colors relative", s.val ? "bg-[#722F37]" : "bg-gray-300")}
+                                data-testid={s.tid}
+                              >
+                                <span className={cn("block w-4 h-4 bg-white rounded-full shadow-sm absolute top-0.5 transition-transform", s.val ? "translate-x-5" : "translate-x-0.5")} />
+                              </button>
+                            </div>
+                          ))}
+                          <div className="pt-2">
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Taille max upload (Mo)</label>
+                            <Input type="number" min="1" max="100" value={settingsMaxUploadSize} onChange={(e) => setSettingsMaxUploadSize(e.target.value)} className="mt-1 h-9 text-sm" data-testid="input-settings-max-upload" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div className="mt-5 flex justify-end">
+                    <Button
+                      className="bg-[#722F37] hover:bg-[#5a252c] text-white font-bold text-sm"
+                      onClick={() => {
+                        toast({ title: "Paramètres sauvegardés", description: "Les modifications ont été enregistrées avec succès." });
+                      }}
+                      data-testid="button-save-settings"
+                    >
+                      Sauvegarder les paramètres
+                    </Button>
+                  </div>
                 </>
               )}
 
