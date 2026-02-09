@@ -37,7 +37,7 @@ export default function Inscription() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid sm:grid-cols-2 gap-6">
           <Card className="border-2 border-gray-200 hover:border-[#722F37] transition-colors cursor-pointer group">
             <a href="/api/login?role=client">
               <CardContent className="p-8 text-center">
@@ -50,7 +50,7 @@ export default function Inscription() {
                 <p className="text-gray-500 text-xs mb-3">
                   {t('inscription.clientDesc')}
                 </p>
-                <Button className="w-full bg-[#722F37] hover:bg-[#5a252c]" data-testid="button-inscription-particulier">
+                <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-xs px-3 whitespace-nowrap" data-testid="button-inscription-particulier">
                   {t('inscription.clientButton')}
                 </Button>
               </CardContent>
@@ -69,7 +69,7 @@ export default function Inscription() {
                 <p className="text-gray-500 text-xs mb-3">
                   {t('inscription.proDesc')}
                 </p>
-                <Button className="w-full bg-[#722F37] hover:bg-[#5a252c]" data-testid="button-inscription-professionnel">
+                <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-xs px-3 whitespace-nowrap" data-testid="button-inscription-professionnel">
                   {t('inscription.proButton')}
                 </Button>
               </CardContent>
