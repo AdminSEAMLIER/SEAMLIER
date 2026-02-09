@@ -12,7 +12,7 @@ import {
   Calendar, FileText, Send, Eye, Trash2,
   CheckCircle, XCircle, ChevronRight,
   ArrowUpRight, X, Upload, MapPin, Pencil,
-  User
+  User, Building2, Phone, CreditCard, Briefcase, Hash
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -110,6 +110,23 @@ type CouturierData = {
   specialty: string;
   status: "Vérifié" | "En attente" | "Non vérifié";
   selected: boolean;
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  nationality: string;
+  idType: string;
+  idNumber: string;
+  phone: string;
+  email: string;
+  address: string;
+  siret: string;
+  companyName: string;
+  legalForm: string;
+  tvaNumber: string;
+  iban: string;
+  registrationDate: string;
+  yearsExperience: number;
+  bio: string;
 };
 
 type Article = {
@@ -142,6 +159,9 @@ export default function AdminDashboard() {
   const [newArticleCategory, setNewArticleCategory] = useState("");
   const [newArticleContent, setNewArticleContent] = useState("");
   const [selectedCouturier, setSelectedCouturier] = useState<string | null>(null);
+  const [couturierDialogMode, setCouturierDialogMode] = useState<"view" | "edit" | null>(null);
+  const [couturierDialogId, setCouturierDialogId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<CouturierData>>({});
 
   useEffect(() => {
     try {
@@ -208,13 +228,48 @@ export default function AdminDashboard() {
   ]);
 
   const [couturiers, setCouturiers] = useState<CouturierData[]>([
-    { id: "c1", name: "Marc Antoine", location: "Paris, 75003", specialty: "Tailleur Homme", status: "Vérifié", selected: false },
-    { id: "c2", name: "Hélène Beaumont", location: "Lyon, 69002", specialty: "Robe de Mariée", status: "En attente", selected: false },
-    { id: "c3", name: "Lucie Valentin", location: "Marseille, 13001", specialty: "Retouches Premium", status: "Vérifié", selected: false },
-    { id: "c4", name: "Pierre Delacroix", location: "Bordeaux, 33000", specialty: "Haute Couture", status: "En attente", selected: false },
-    { id: "c5", name: "Amina Kouyaté", location: "Paris, 75020", specialty: "Couture Africaine", status: "Vérifié", selected: false },
-    { id: "c6", name: "Fatou Diallo", location: "Toulouse, 31000", specialty: "Couture Traditionnelle", status: "Non vérifié", selected: false },
-    { id: "c7", name: "Olivier Masse", location: "Nice, 06000", specialty: "Costume Sur Mesure", status: "Vérifié", selected: false },
+    { id: "c1", name: "Marc Antoine", location: "Paris, 75003", specialty: "Tailleur Homme", status: "Vérifié", selected: false,
+      firstName: "Marc", lastName: "Antoine", birthDate: "15/03/1985", nationality: "Française", idType: "CNI", idNumber: "850315 123 456 78",
+      phone: "+33 6 12 34 56 78", email: "marc.antoine@atelier-ma.fr", address: "12 Rue du Temple, 75003 Paris",
+      siret: "823 456 789 00012", companyName: "Atelier Marc Antoine", legalForm: "SARL", tvaNumber: "FR 12 823456789",
+      iban: "FR76 3000 4012 3400 0100 0567 890", registrationDate: "15/01/2026", yearsExperience: 18,
+      bio: "Tailleur homme spécialisé dans le costume sur mesure et la chemise. Formation aux Arts et Métiers de Paris." },
+    { id: "c2", name: "Hélène Beaumont", location: "Lyon, 69002", specialty: "Robe de Mariée", status: "En attente", selected: false,
+      firstName: "Hélène", lastName: "Beaumont", birthDate: "22/07/1990", nationality: "Française", idType: "CNI", idNumber: "900722 654 321 09",
+      phone: "+33 6 98 76 54 32", email: "helene@beaumont-couture.fr", address: "45 Rue de la République, 69002 Lyon",
+      siret: "912 345 678 00023", companyName: "Beaumont Couture", legalForm: "Auto-entrepreneur", tvaNumber: "N/A",
+      iban: "FR76 2004 1010 0505 0002 3456 789", registrationDate: "05/02/2026", yearsExperience: 8,
+      bio: "Créatrice de robes de mariée sur mesure. Diplômée de l'École de la Chambre Syndicale de la Couture Parisienne." },
+    { id: "c3", name: "Lucie Valentin", location: "Marseille, 13001", specialty: "Retouches Premium", status: "Vérifié", selected: false,
+      firstName: "Lucie", lastName: "Valentin", birthDate: "10/11/1982", nationality: "Française", idType: "CNI", idNumber: "821110 987 654 32",
+      phone: "+33 6 55 44 33 22", email: "lucie@valentin-retouches.fr", address: "8 Cours Julien, 13001 Marseille",
+      siret: "734 567 890 00034", companyName: "Valentin Retouches Premium", legalForm: "EI", tvaNumber: "FR 34 734567890",
+      iban: "FR76 1234 5678 9012 3456 7890 123", registrationDate: "20/12/2025", yearsExperience: 22,
+      bio: "Retoucheuse experte, 22 ans d'expérience en haute couture et prêt-à-porter de luxe. Clientèle internationale." },
+    { id: "c4", name: "Pierre Delacroix", location: "Bordeaux, 33000", specialty: "Haute Couture", status: "En attente", selected: false,
+      firstName: "Pierre", lastName: "Delacroix", birthDate: "03/05/1978", nationality: "Française", idType: "Passeport", idNumber: "19FR78543",
+      phone: "+33 6 11 22 33 44", email: "pierre@maison-delacroix.fr", address: "27 Cours de l'Intendance, 33000 Bordeaux",
+      siret: "645 678 901 00045", companyName: "Maison Delacroix", legalForm: "SAS", tvaNumber: "FR 45 645678901",
+      iban: "FR76 4321 0987 6543 2109 8765 432", registrationDate: "08/02/2026", yearsExperience: 25,
+      bio: "Maître tailleur haute couture. Ancien collaborateur de grandes maisons parisiennes. Spécialiste du sur-mesure d'exception." },
+    { id: "c5", name: "Amina Kouyaté", location: "Paris, 75020", specialty: "Couture Africaine", status: "Vérifié", selected: false,
+      firstName: "Amina", lastName: "Kouyaté", birthDate: "18/09/1988", nationality: "Française", idType: "CNI", idNumber: "880918 456 789 01",
+      phone: "+33 6 77 88 99 00", email: "amina@kouyate-wax.fr", address: "15 Rue des Pyrénées, 75020 Paris",
+      siret: "556 789 012 00056", companyName: "Amina K. Créations", legalForm: "Auto-entrepreneur", tvaNumber: "N/A",
+      iban: "FR76 5678 9012 3456 7890 1234 567", registrationDate: "10/01/2026", yearsExperience: 12,
+      bio: "Créatrice spécialisée en wax et tissus africains. Mélange de couture traditionnelle et design contemporain." },
+    { id: "c6", name: "Fatou Diallo", location: "Toulouse, 31000", specialty: "Couture Traditionnelle", status: "Non vérifié", selected: false,
+      firstName: "Fatou", lastName: "Diallo", birthDate: "25/12/1992", nationality: "Française", idType: "Titre de séjour", idNumber: "TS-2024-876543",
+      phone: "+33 6 33 22 11 00", email: "fatou.diallo@gmail.com", address: "3 Place du Capitole, 31000 Toulouse",
+      siret: "En cours d'immatriculation", companyName: "Fatou Couture", legalForm: "Auto-entrepreneur", tvaNumber: "N/A",
+      iban: "FR76 8901 2345 6789 0123 4567 890", registrationDate: "01/02/2026", yearsExperience: 6,
+      bio: "Couturière traditionnelle, spécialisée dans les tenues de cérémonie et les boubous brodés." },
+    { id: "c7", name: "Olivier Masse", location: "Nice, 06000", specialty: "Costume Sur Mesure", status: "Vérifié", selected: false,
+      firstName: "Olivier", lastName: "Masse", birthDate: "07/01/1975", nationality: "Française", idType: "CNI", idNumber: "750107 321 654 98",
+      phone: "+33 6 44 55 66 77", email: "olivier@masse-tailor.fr", address: "22 Promenade des Anglais, 06000 Nice",
+      siret: "467 890 123 00067", companyName: "Masse Tailor", legalForm: "SARL", tvaNumber: "FR 67 467890123",
+      iban: "FR76 6789 0123 4567 8901 2345 678", registrationDate: "12/11/2025", yearsExperience: 28,
+      bio: "Tailleur de renom sur la Côte d'Azur. Spécialiste du costume italien et britannique. Clientèle internationale." },
   ]);
 
   const [articles, setArticles] = useState<Article[]>([
@@ -324,6 +379,33 @@ export default function AdminDashboard() {
     ));
     setSelectedCouturier(id);
   };
+
+  const openCouturierDialog = (id: string, mode: "view" | "edit") => {
+    const c = couturiers.find(ct => ct.id === id);
+    if (!c) return;
+    setCouturierDialogId(id);
+    setCouturierDialogMode(mode);
+    if (mode === "edit") {
+      setEditForm({ ...c });
+    }
+  };
+
+  const closeCouturierDialog = () => {
+    setCouturierDialogId(null);
+    setCouturierDialogMode(null);
+    setEditForm({});
+  };
+
+  const saveCouturierEdit = () => {
+    if (!couturierDialogId) return;
+    setCouturiers(prev => prev.map(c =>
+      c.id === couturierDialogId ? { ...c, ...editForm, name: `${editForm.firstName || c.firstName} ${editForm.lastName || c.lastName}` } : c
+    ));
+    toast({ title: "Profil mis à jour", description: "Les informations du couturier ont été enregistrées." });
+    closeCouturierDialog();
+  };
+
+  const dialogCouturier = couturiers.find(c => c.id === couturierDialogId);
 
   const totalRevenue = projects.filter(p => p.status === "Libéré").reduce((sum, p) => sum + parseInt(p.amount.replace(/[^\d]/g, "")), 0);
   const pendingProjects = projects.filter(p => p.status === "Bloqué").length;
@@ -896,10 +978,10 @@ export default function AdminDashboard() {
                               </td>
                               <td className="px-5 py-3 text-right">
                                 <div className="flex justify-end gap-2">
-                                  <Button size="sm" variant="outline" className="h-8 text-[11px]" data-testid={`button-edit-couturier-${c.id}`}>
+                                  <Button size="sm" variant="outline" className="h-8 text-[11px]" onClick={() => openCouturierDialog(c.id, "edit")} data-testid={`button-edit-couturier-${c.id}`}>
                                     <Pencil size={14} className="mr-1" /> Editer
                                   </Button>
-                                  <Button size="sm" variant="outline" className="h-8 text-[11px]" data-testid={`button-view-couturier-${c.id}`}>
+                                  <Button size="sm" variant="outline" className="h-8 text-[11px]" onClick={() => openCouturierDialog(c.id, "view")} data-testid={`button-view-couturier-${c.id}`}>
                                     <Eye size={14} className="mr-1" /> Voir
                                   </Button>
                                 </div>
@@ -944,6 +1026,241 @@ export default function AdminDashboard() {
                           <Button variant="outline" size="sm" onClick={() => setSelectedMeasure(null)} data-testid="button-close-measure-detail">Fermer</Button>
                         </div>
                       </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog open={!!couturierDialogId && !!couturierDialogMode} onOpenChange={(open) => !open && closeCouturierDialog()}>
+                    <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" data-testid="dialog-couturier-detail">
+                      {dialogCouturier && couturierDialogMode === "view" && (
+                        <>
+                          <DialogHeader>
+                            <DialogTitle className="font-serif text-lg flex items-center gap-3" data-testid="text-couturier-dialog-name">
+                              <div className="w-10 h-10 rounded-full bg-[#722F37]/10 flex items-center justify-center text-[#722F37] font-bold flex-shrink-0">{dialogCouturier.firstName[0]}{dialogCouturier.lastName[0]}</div>
+                              {dialogCouturier.firstName} {dialogCouturier.lastName}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-5 pt-2">
+                            <div className="flex items-center justify-between gap-3 flex-wrap">
+                              <Badge className={cn("text-[10px] border-none font-bold", dialogCouturier.status === "Vérifié" ? "bg-green-100 text-green-700" : dialogCouturier.status === "En attente" ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500")} data-testid="badge-couturier-dialog-status">{dialogCouturier.status}</Badge>
+                              <span className="text-xs text-gray-400" data-testid="text-couturier-registration">Inscrit le {dialogCouturier.registrationDate}</span>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-1">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                                <User size={14} /> Carte d'identité
+                              </p>
+                              <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-couturier-identity">
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Prénom</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-couturier-firstname">{dialogCouturier.firstName}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Nom</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-couturier-lastname">{dialogCouturier.lastName}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Date de naissance</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-couturier-birthdate">{dialogCouturier.birthDate}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Nationalité</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-couturier-nationality">{dialogCouturier.nationality}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Type de pièce</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-couturier-idtype">{dialogCouturier.idType}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">N° pièce</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-couturier-idnumber">{dialogCouturier.idNumber}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-1">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                                <Building2 size={14} /> Informations Entreprise
+                              </p>
+                              <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-couturier-business">
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Raison sociale</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-couturier-company">{dialogCouturier.companyName}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Forme juridique</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-couturier-legalform">{dialogCouturier.legalForm}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">SIRET</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-couturier-siret">{dialogCouturier.siret}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">N° TVA</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-couturier-tva">{dialogCouturier.tvaNumber}</span>
+                                </div>
+                                <div className="col-span-2 flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Adresse</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-couturier-address">{dialogCouturier.address}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">IBAN</span>
+                                  <span className="text-sm font-semibold text-gray-900 text-[11px]" data-testid="text-couturier-iban">{dialogCouturier.iban}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Spécialité</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-couturier-specialty">{dialogCouturier.specialty}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-1">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                                <Phone size={14} /> Contact & Profil
+                              </p>
+                              <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-couturier-contact">
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Téléphone</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-couturier-phone">{dialogCouturier.phone}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Email</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-couturier-email">{dialogCouturier.email}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Expérience</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-couturier-experience">{dialogCouturier.yearsExperience} ans</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Localisation</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-couturier-location">{dialogCouturier.location}</span>
+                                </div>
+                                <div className="col-span-2 py-1.5">
+                                  <span className="text-xs text-gray-500">Bio</span>
+                                  <p className="text-sm text-gray-700 mt-1 leading-relaxed" data-testid="text-couturier-bio">{dialogCouturier.bio}</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-between items-center pt-2 border-t border-gray-100 gap-3 flex-wrap">
+                              <Button variant="outline" size="sm" onClick={() => { closeCouturierDialog(); openCouturierDialog(dialogCouturier.id, "edit"); }} data-testid="button-switch-to-edit">
+                                <Pencil size={14} className="mr-1" /> Editer
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={closeCouturierDialog} data-testid="button-close-couturier-dialog">Fermer</Button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {dialogCouturier && couturierDialogMode === "edit" && (
+                        <>
+                          <DialogHeader>
+                            <DialogTitle className="font-serif text-lg flex items-center gap-3" data-testid="text-couturier-edit-title">
+                              <Pencil size={20} className="text-[#722F37]" />
+                              Éditer - {dialogCouturier.firstName} {dialogCouturier.lastName}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-5 pt-2">
+                            <div>
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                                <User size={14} /> Identité
+                              </p>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Prénom</label>
+                                  <Input value={editForm.firstName || ""} onChange={e => setEditForm(p => ({ ...p, firstName: e.target.value }))} className="h-9 text-sm" data-testid="input-edit-firstname" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Nom</label>
+                                  <Input value={editForm.lastName || ""} onChange={e => setEditForm(p => ({ ...p, lastName: e.target.value }))} className="h-9 text-sm" data-testid="input-edit-lastname" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Date de naissance</label>
+                                  <Input value={editForm.birthDate || ""} onChange={e => setEditForm(p => ({ ...p, birthDate: e.target.value }))} className="h-9 text-sm" data-testid="input-edit-birthdate" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Nationalité</label>
+                                  <Input value={editForm.nationality || ""} onChange={e => setEditForm(p => ({ ...p, nationality: e.target.value }))} className="h-9 text-sm" data-testid="input-edit-nationality" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Type de pièce d'identité</label>
+                                  <Input value={editForm.idType || ""} onChange={e => setEditForm(p => ({ ...p, idType: e.target.value }))} className="h-9 text-sm" data-testid="input-edit-idtype" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">N° pièce d'identité</label>
+                                  <Input value={editForm.idNumber || ""} onChange={e => setEditForm(p => ({ ...p, idNumber: e.target.value }))} className="h-9 text-sm" data-testid="input-edit-idnumber" />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                                <Building2 size={14} /> Entreprise
+                              </p>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Raison sociale</label>
+                                  <Input value={editForm.companyName || ""} onChange={e => setEditForm(p => ({ ...p, companyName: e.target.value }))} className="h-9 text-sm" data-testid="input-edit-company" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Forme juridique</label>
+                                  <Input value={editForm.legalForm || ""} onChange={e => setEditForm(p => ({ ...p, legalForm: e.target.value }))} className="h-9 text-sm" data-testid="input-edit-legalform" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">SIRET</label>
+                                  <Input value={editForm.siret || ""} onChange={e => setEditForm(p => ({ ...p, siret: e.target.value }))} className="h-9 text-sm" data-testid="input-edit-siret" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">N° TVA</label>
+                                  <Input value={editForm.tvaNumber || ""} onChange={e => setEditForm(p => ({ ...p, tvaNumber: e.target.value }))} className="h-9 text-sm" data-testid="input-edit-tva" />
+                                </div>
+                                <div className="col-span-2 space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Adresse</label>
+                                  <Input value={editForm.address || ""} onChange={e => setEditForm(p => ({ ...p, address: e.target.value }))} className="h-9 text-sm" data-testid="input-edit-address" />
+                                </div>
+                                <div className="col-span-2 space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">IBAN</label>
+                                  <Input value={editForm.iban || ""} onChange={e => setEditForm(p => ({ ...p, iban: e.target.value }))} className="h-9 text-sm" data-testid="input-edit-iban" />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                                <Phone size={14} /> Contact & Profil
+                              </p>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Téléphone</label>
+                                  <Input value={editForm.phone || ""} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} className="h-9 text-sm" data-testid="input-edit-phone" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Email</label>
+                                  <Input value={editForm.email || ""} onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))} className="h-9 text-sm" data-testid="input-edit-email" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Spécialité</label>
+                                  <Input value={editForm.specialty || ""} onChange={e => setEditForm(p => ({ ...p, specialty: e.target.value }))} className="h-9 text-sm" data-testid="input-edit-specialty" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Localisation</label>
+                                  <Input value={editForm.location || ""} onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))} className="h-9 text-sm" data-testid="input-edit-location" />
+                                </div>
+                                <div className="col-span-2 space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Bio</label>
+                                  <Textarea value={editForm.bio || ""} onChange={e => setEditForm(p => ({ ...p, bio: e.target.value }))} className="min-h-[80px] text-sm" data-testid="input-edit-bio" />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+                              <Button variant="outline" size="sm" onClick={closeCouturierDialog} data-testid="button-cancel-edit">Annuler</Button>
+                              <Button size="sm" className="bg-[#722F37] font-bold" onClick={saveCouturierEdit} data-testid="button-save-couturier">
+                                <CheckCircle size={14} className="mr-1" /> Enregistrer
+                              </Button>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </DialogContent>
                   </Dialog>
                 </>
