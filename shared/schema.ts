@@ -160,6 +160,8 @@ export const adminArtisans = pgTable("admin_artisans", {
   yearsExperience: integer("years_experience"),
   bio: text("bio"),
   joinDate: text("join_date"),
+  subscriptionPlan: text("subscription_plan").default("Mensuel"),
+  paymentStatus: text("payment_status").default("En attente"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

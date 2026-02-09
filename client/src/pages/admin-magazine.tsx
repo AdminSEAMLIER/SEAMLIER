@@ -78,6 +78,8 @@ type Artisan = {
   iban: string;
   yearsExperience: number;
   bio: string;
+  subscriptionPlan: string;
+  paymentStatus: string;
 };
 
 type ReplyMessage = {
@@ -190,6 +192,7 @@ export default function AdminDashboard() {
     siret: "", companyName: "", legalForm: "", status: "En attente" as "Vérifié" | "En attente" | "Rejeté",
     birthDate: "", nationality: "", idType: "", idNumber: "", address: "",
     tvaNumber: "", iban: "", yearsExperience: 0, bio: "",
+    subscriptionPlan: "Mensuel", paymentStatus: "En attente",
   });
 
   const [settingsPlatformName, setSettingsPlatformName] = useState("SEAMLiER");
@@ -208,6 +211,8 @@ export default function AdminDashboard() {
   const [settingsMaintenanceMode, setSettingsMaintenanceMode] = useState(false);
   const [settingsMaxUploadSize, setSettingsMaxUploadSize] = useState("10");
   const [settingsMinOrderAmount, setSettingsMinOrderAmount] = useState("30");
+  const [settingsSubscriptionPrice, setSettingsSubscriptionPrice] = useState("29");
+  const [settingsTrialDays, setSettingsTrialDays] = useState("30");
   const [settingsSiretRequired, setSettingsSiretRequired] = useState(true);
   const [settingsIdRequired, setSettingsIdRequired] = useState(true);
   const settingsLoaded = useRef(false);
@@ -255,6 +260,8 @@ export default function AdminDashboard() {
       iban: a.iban || "",
       yearsExperience: a.yearsExperience || 0,
       bio: a.bio || "",
+      subscriptionPlan: a.subscriptionPlan || "Mensuel",
+      paymentStatus: a.paymentStatus || "En attente",
     })),
   [dbArtisans]);
 
@@ -272,6 +279,7 @@ export default function AdminDashboard() {
         siret: "", companyName: "", legalForm: "", status: "En attente",
         birthDate: "", nationality: "", idType: "", idNumber: "", address: "",
         tvaNumber: "", iban: "", yearsExperience: 0, bio: "",
+        subscriptionPlan: "Mensuel", paymentStatus: "En attente",
       });
     },
     onError: () => {
@@ -324,6 +332,8 @@ export default function AdminDashboard() {
       if (dbSettings.minOrderAmount) setSettingsMinOrderAmount(dbSettings.minOrderAmount);
       if (dbSettings.siretRequired) setSettingsSiretRequired(dbSettings.siretRequired === "true");
       if (dbSettings.idRequired) setSettingsIdRequired(dbSettings.idRequired === "true");
+      if (dbSettings.subscriptionPrice) setSettingsSubscriptionPrice(dbSettings.subscriptionPrice);
+      if (dbSettings.trialDays) setSettingsTrialDays(dbSettings.trialDays);
     }
   }, [dbSettings]);
 
@@ -1538,6 +1548,25 @@ export default function AdminDashboard() {
                           <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Adresse</label>
                           <Input value={newArtisan.address} onChange={e => setNewArtisan({...newArtisan, address: e.target.value})} className="mt-1 h-9 text-sm" data-testid="input-new-artisan-address" />
                         </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Plan d'abonnement</label>
+                            <select value={newArtisan.subscriptionPlan} onChange={e => setNewArtisan({...newArtisan, subscriptionPlan: e.target.value})} className="mt-1 w-full h-9 text-sm border border-gray-200 rounded-md px-3 bg-white" data-testid="select-new-artisan-subscription">
+                              <option value="Mensuel">Mensuel</option>
+                              <option value="Annuel">Annuel</option>
+                              <option value="Essai gratuit">Essai gratuit</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Statut de paiement</label>
+                            <select value={newArtisan.paymentStatus} onChange={e => setNewArtisan({...newArtisan, paymentStatus: e.target.value})} className="mt-1 w-full h-9 text-sm border border-gray-200 rounded-md px-3 bg-white" data-testid="select-new-artisan-payment-status">
+                              <option value="En attente">En attente</option>
+                              <option value="Payé">Payé</option>
+                              <option value="En retard">En retard</option>
+                              <option value="Expiré">Expiré</option>
+                            </select>
+                          </div>
+                        </div>
                         <div>
                           <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Bio / Présentation</label>
                           <Textarea value={newArtisan.bio} onChange={e => setNewArtisan({...newArtisan, bio: e.target.value})} className="mt-1 text-sm" rows={2} data-testid="input-new-artisan-bio" />
@@ -1568,6 +1597,7 @@ export default function AdminDashboard() {
                         <Badge className="bg-green-50 text-green-700 border-none px-3 py-1" data-testid="badge-verified-artisans">{artisans.filter(a => a.status === "Vérifié").length} vérifiés</Badge>
                         <Badge className="bg-amber-50 text-amber-700 border-none px-3 py-1" data-testid="badge-pending-artisans">{artisans.filter(a => a.status === "En attente").length} en attente</Badge>
                         <Badge className="bg-red-50 text-red-600 border-none px-3 py-1" data-testid="badge-rejected-artisans">{artisans.filter(a => a.status === "Rejeté").length} rejetés</Badge>
+                        <Badge className="bg-purple-50 text-purple-700 border-none px-3 py-1" data-testid="badge-paid-artisans">{artisans.filter(a => a.paymentStatus === "Payé").length} abonnés à jour</Badge>
                       </div>
                       <div className="flex gap-2 items-center flex-wrap">
                         <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white font-bold text-xs" onClick={() => setShowAddArtisan(true)} data-testid="button-add-artisan">
@@ -1588,6 +1618,7 @@ export default function AdminDashboard() {
                             <th className="px-5 py-3 font-bold">Ville</th>
                             <th className="px-5 py-3 font-bold">Email</th>
                             <th className="px-5 py-3 font-bold">Inscription</th>
+                            <th className="px-5 py-3 font-bold text-center">Abonnement</th>
                             <th className="px-5 py-3 font-bold text-center">Statut</th>
                             <th className="px-5 py-3 text-right font-bold">Actions</th>
                           </tr>
@@ -1605,6 +1636,12 @@ export default function AdminDashboard() {
                               <td className="px-5 py-3 text-sm text-gray-600">{a.city}</td>
                               <td className="px-5 py-3 text-xs text-gray-500">{a.email}</td>
                               <td className="px-5 py-3 text-xs text-gray-500">{a.joinDate}</td>
+                              <td className="px-5 py-3 text-center">
+                                <div className="flex flex-col items-center gap-1">
+                                  <Badge className={cn("text-[10px] border-none font-bold", a.paymentStatus === "Payé" ? "bg-green-100 text-green-700" : a.paymentStatus === "En retard" ? "bg-red-100 text-red-600" : a.paymentStatus === "Expiré" ? "bg-gray-200 text-gray-500" : "bg-amber-100 text-amber-700")} data-testid={`badge-artisan-payment-${a.id}`}>{a.paymentStatus}</Badge>
+                                  <span className="text-[9px] text-gray-400">{a.subscriptionPlan}</span>
+                                </div>
+                              </td>
                               <td className="px-5 py-3 text-center">
                                 <Badge className={cn("text-[10px] border-none font-bold", a.status === "Vérifié" ? "bg-green-100 text-green-700" : a.status === "Rejeté" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700")} data-testid={`badge-artisan-status-${a.id}`}>{a.status}</Badge>
                               </td>
@@ -1630,10 +1667,10 @@ export default function AdminDashboard() {
                             </tr>
                           ))}
                           {artisansLoading && (
-                            <tr><td colSpan={7} className="px-5 py-8 text-center text-sm text-gray-400">Chargement...</td></tr>
+                            <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-gray-400">Chargement...</td></tr>
                           )}
                           {!artisansLoading && filteredArtisans.length === 0 && (
-                            <tr><td colSpan={7} className="px-5 py-8 text-center text-sm text-gray-400">
+                            <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-gray-400">
                               {artisans.length === 0 ? "Aucun artisan. Cliquez sur \"Ajouter un artisan\" pour commencer." : "Aucun résultat"}
                             </td></tr>
                           )}
@@ -1757,6 +1794,22 @@ export default function AdminDashboard() {
                               </div>
                             </div>
 
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-1">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                                <CreditCard size={14} /> Abonnement
+                              </p>
+                              <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-artisan-subscription">
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Plan</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-subscription-plan">{dossierArtisan.subscriptionPlan}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Statut de paiement</span>
+                                  <Badge className={cn("text-[10px] border-none font-bold", dossierArtisan.paymentStatus === "Payé" ? "bg-green-100 text-green-700" : dossierArtisan.paymentStatus === "En retard" ? "bg-red-100 text-red-600" : dossierArtisan.paymentStatus === "Expiré" ? "bg-gray-200 text-gray-500" : "bg-amber-100 text-amber-700")} data-testid="badge-artisan-dossier-payment">{dossierArtisan.paymentStatus}</Badge>
+                                </div>
+                              </div>
+                            </div>
+
                             <div className="flex justify-between items-center pt-2 border-t border-gray-100 gap-3 flex-wrap">
                               <Button variant="outline" size="sm" onClick={() => { closeArtisanDossier(); openArtisanDossier(dossierArtisan.id, "edit"); }} data-testid="button-artisan-switch-to-edit">
                                 <Pencil size={14} className="mr-1" /> Editer
@@ -1864,6 +1917,31 @@ export default function AdminDashboard() {
                                 <div className="col-span-2 space-y-1">
                                   <label className="text-[11px] font-medium text-gray-500">Bio</label>
                                   <Textarea value={artisanEditForm.bio || ""} onChange={e => setArtisanEditForm(p => ({ ...p, bio: e.target.value }))} className="min-h-[80px] text-sm" data-testid="input-artisan-edit-bio" />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                                <CreditCard size={14} /> Abonnement
+                              </p>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Plan d'abonnement</label>
+                                  <select value={artisanEditForm.subscriptionPlan || "Mensuel"} onChange={e => setArtisanEditForm(p => ({ ...p, subscriptionPlan: e.target.value }))} className="w-full h-9 text-sm border border-gray-200 rounded-md px-3 bg-white" data-testid="select-artisan-edit-subscription">
+                                    <option value="Mensuel">Mensuel</option>
+                                    <option value="Annuel">Annuel</option>
+                                    <option value="Essai gratuit">Essai gratuit</option>
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Statut de paiement</label>
+                                  <select value={artisanEditForm.paymentStatus || "En attente"} onChange={e => setArtisanEditForm(p => ({ ...p, paymentStatus: e.target.value }))} className="w-full h-9 text-sm border border-gray-200 rounded-md px-3 bg-white" data-testid="select-artisan-edit-payment-status">
+                                    <option value="En attente">En attente</option>
+                                    <option value="Payé">Payé</option>
+                                    <option value="En retard">En retard</option>
+                                    <option value="Expiré">Expiré</option>
+                                  </select>
                                 </div>
                               </div>
                             </div>
@@ -2045,6 +2123,35 @@ export default function AdminDashboard() {
                       </CardContent>
                     </Card>
 
+                    <Card className="border-none shadow-sm" data-testid="card-settings-subscriptions">
+                      <CardContent className="p-5">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="w-8 h-8 rounded-md bg-purple-50 flex items-center justify-center">
+                            <CreditCard size={16} className="text-purple-600" />
+                          </div>
+                          <h3 className="font-bold text-sm text-gray-800">Gestion des Forfaits</h3>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Prix abonnement mensuel (€)</label>
+                            <Input type="number" min="0" value={settingsSubscriptionPrice} onChange={(e) => setSettingsSubscriptionPrice(e.target.value)} className="mt-1 h-9 text-sm" data-testid="input-settings-subscription-price" />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Période d'essai gratuit (jours)</label>
+                            <Input type="number" min="0" value={settingsTrialDays} onChange={(e) => setSettingsTrialDays(e.target.value)} className="mt-1 h-9 text-sm" data-testid="input-settings-trial-days" />
+                          </div>
+                          <div className="bg-purple-50/50 rounded-md p-3 mt-2">
+                            <p className="text-xs text-gray-600">
+                              <span className="font-bold text-purple-700">Forfait actuel :</span> {settingsSubscriptionPrice} €/mois
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Essai gratuit de {settingsTrialDays} jours pour les nouveaux artisans
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
                     <Card className="border-none shadow-sm" data-testid="card-settings-notifications">
                       <CardContent className="p-5">
                         <div className="flex items-center gap-2 mb-4">
@@ -2134,6 +2241,8 @@ export default function AdminDashboard() {
                           minOrderAmount: settingsMinOrderAmount,
                           siretRequired: String(settingsSiretRequired),
                           idRequired: String(settingsIdRequired),
+                          subscriptionPrice: settingsSubscriptionPrice,
+                          trialDays: settingsTrialDays,
                         });
                       }}
                       data-testid="button-save-settings"
