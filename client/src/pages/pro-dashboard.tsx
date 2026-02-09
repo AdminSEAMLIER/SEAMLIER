@@ -48,21 +48,26 @@ export default function ProDashboard() {
   });
 
   const subscriptionPrice = settings?.subscriptionPrice || "29";
+
+  // TODO: Replace with real data from /api/professionnel/plan when artisan plan API is implemented
   const currentPlan = "Starter" as "Starter" | "Pro";
   const measureCount = 0;
   const limitPercent = Math.min(100, (measureCount / STARTER_LIMIT) * 100);
 
+  const conversationCount = conversations?.length ?? 0;
+  const productCount = products?.length ?? 0;
+
   const stats = [
     { label: t('pro.thisMonth'), value: "0€", icon: Euro },
-    { label: t('pro.activeProjects'), value: "0", icon: FolderKanban },
-    { label: t('pro.newRequests'), value: "0", icon: FileText },
+    { label: t('pro.activeProjects'), value: String(productCount), icon: FolderKanban },
+    { label: t('pro.newRequests'), value: String(conversationCount), icon: FileText },
     { label: t('pro.averageRating'), value: "-", icon: Star },
   ];
 
   const quickLinks = [
     { label: t('nav.requests'), icon: FileText, href: "/professionnel/demandes", count: 0 },
-    { label: t('nav.projects'), icon: FolderKanban, href: "/professionnel/projets", count: 0 },
-    { label: t('nav.messaging'), icon: MessageSquare, href: "/professionnel/messagerie", count: 0 },
+    { label: t('nav.projects'), icon: FolderKanban, href: "/professionnel/projets", count: productCount },
+    { label: t('nav.messaging'), icon: MessageSquare, href: "/professionnel/messagerie", count: conversationCount },
     { label: t('nav.planning'), icon: Calendar, href: "/professionnel/planning", count: 0 },
   ];
 
@@ -223,7 +228,7 @@ export default function ProDashboard() {
                         {conv.otherParticipant ? `${conv.otherParticipant.firstName} ${conv.otherParticipant.lastName}` : "Client"}
                       </p>
                       <p className="text-sm text-gray-500 truncate">
-                        ...
+                        {conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleDateString() : ""}
                       </p>
                     </div>
                   </div>

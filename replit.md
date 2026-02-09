@@ -92,8 +92,15 @@ shared/              # Shared code (schema, types)
 - **Starter Plan**: 0€/mois, 15% commission artisan, 10% frais client, Mesures limitées à 10 fiches
 - **Pro Plan**: 29€/mois (configurable), 0% commission artisan, 10% frais client, Mesures illimitées
 - **Admin Dashboard**: Plan selection in add/edit artisan forms, plan details with commission breakdown
-- **Mesures Tab**: Starter limit indicator with progress bar, upgrade-to-Pro modal when limit reached
 - **Settings**: Plans & Tarification card with side-by-side plan comparison, configurable Pro pricing
+
+### Production Readiness (February 2026)
+- **Pro Dashboard**: Starter limit gauge (0/10 fiches with progress bar), upgrade-to-Pro modal, plan status card
+- **Admin Dashboard Cleanup**: All mock data removed, empty states for all sections, real data from DB only
+- **Role Separation**: Admin sees global metrics and artisan management; Pro dashboard shows individual artisan limits
+- **Sessions**: PostgreSQL session store with httpOnly/secure cookies (1-week TTL)
+- **Build**: Vite frontend (670KB / 183KB gzip) + esbuild server bundle
+- **Business Constants**: Starter=15% artisan com + 10 mesures, Pro=0% com + unlimited, Client=10% fees, Min order=30€
 
 ### Complete Feature Set
 - Discovery page with hero section and featured tailors
@@ -104,6 +111,8 @@ shared/              # Shared code (schema, types)
 - Individual tailor profiles with tabs (Portfolio, Boutique, Avis)
 - Individual product detail pages
 - Professional registration with profile setup flow
+- Admin dashboard at `/admin/seamlier` with 10 tabs (artisans, settings, etc.)
+- Pro dashboard at `/professionnel` with Starter limit gauge and upgrade path
 
 ## External Dependencies
 
