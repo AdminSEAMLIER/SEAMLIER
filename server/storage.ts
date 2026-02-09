@@ -3,6 +3,7 @@ import { eq, and, or, desc } from "drizzle-orm";
 import { 
   users, tailors, portfolioItems, products, reviews, 
   conversations, messages, measurements, projects, appointments,
+  adminArtisans, adminSettings,
   type User, type InsertUser,
   type Tailor, type InsertTailor,
   type PortfolioItem, type InsertPortfolioItem,
@@ -13,6 +14,8 @@ import {
   type Measurements, type InsertMeasurements,
   type Project, type InsertProject,
   type Appointment, type InsertAppointment,
+  type AdminArtisan, type InsertAdminArtisan,
+  type AdminSetting, type InsertAdminSetting,
   type TailorWithUser,
   type PortfolioWithTailor,
   type ProductWithTailor,
@@ -63,6 +66,16 @@ export interface IStorage {
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment | undefined>;
   deleteAppointment(id: string): Promise<void>;
+
+  getAdminArtisans(): Promise<AdminArtisan[]>;
+  getAdminArtisan(id: string): Promise<AdminArtisan | undefined>;
+  createAdminArtisan(artisan: InsertAdminArtisan): Promise<AdminArtisan>;
+  updateAdminArtisan(id: string, updates: Partial<InsertAdminArtisan>): Promise<AdminArtisan | undefined>;
+  deleteAdminArtisan(id: string): Promise<void>;
+
+  getAdminSettings(): Promise<AdminSetting[]>;
+  getAdminSetting(key: string): Promise<AdminSetting | undefined>;
+  upsertAdminSetting(key: string, value: string): Promise<AdminSetting>;
 }
 
 class DatabaseStorage implements IStorage {
@@ -409,6 +422,74 @@ class DatabaseStorage implements IStorage {
 
   async deleteAppointment(id: string): Promise<void> {
     await db.delete(appointments).where(eq(appointments.id, id));
+  }
+
+  async getAdminArtisans(): Promise<AdminArtisan[]> {
+    try {
+      return await db.select().from(adminArtisans).orderBy(desc(adminArtisans.createdAt));
+    } catch (error) {
+      console.error("getAdminArtisans error:", error);
+      return [];
+    }
+  }
+
+  async getAdminArtisan(id: string): Promise<AdminArtisan | undefined> {
+    const [artisan] = await db.select().from(adminArtisans).where(eq(adminArtisans.id, id));
+    return artisan;
+  }
+
+  async createAdminArtisan(artisan: InsertAdminArtisan): Promise<AdminArtisan> {
+    const [created] = await db.insert(adminArtisans).values(artisan).returning();
+    return created;
+  }
+
+  async updateAdminArtisan(id: string, updates: Partial<InsertAdminArtisan>): Promise<AdminArtisan | undefined> {
+    const [updated] = await db.update(adminArtisans)
+      .set(updates)
+      .where(eq(adminArtisans.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteAdminArtisan(id: string): Promise<void> {
+    await db.delete(adminArtisans).where(eq(adminArtisans.id, id));
+  }
+
+  async getAdminSettings(): Promise<AdminSetting[]> {
+    try {
+      return await db.select().from(adminSettings);
+    } catch (error) {
+      console.error("getAdminSettings error:", error);
+      return [];
+    }
+  }
+
+  async getAdminSetting(key: string): Promise<AdminSetting | undefined> {
+    try {
+      const result = await db.select().from(adminSettings).where(eq(adminSettings.key, key));
+      return result?.[0];
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  async upsertAdminSetting(key: string, value: string): Promise<AdminSetting> {
+    try {
+      const existing = await this.getAdminSetting(key);
+      if (existing) {
+        const [updated] = await db.update(adminSettings)
+          .set({ value, updatedAt: new Date() })
+          .where(eq(adminSettings.key, key))
+          .returning();
+        return updated;
+      }
+    } catch (error) {
+      // Fall through to insert
+    }
+    const [created] = await db.insert(adminSettings)
+      .values({ key, value })
+      .returning();
+    return created;
   }
 }
 

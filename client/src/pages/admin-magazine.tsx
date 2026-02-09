@@ -1,4 +1,6 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +24,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   SidebarProvider,
@@ -181,13 +184,20 @@ export default function AdminDashboard() {
   const [artisanDossierId, setArtisanDossierId] = useState<string | null>(null);
   const [artisanDossierMode, setArtisanDossierMode] = useState<"view" | "edit" | null>(null);
   const [artisanEditForm, setArtisanEditForm] = useState<Partial<Artisan>>({});
+  const [showAddArtisan, setShowAddArtisan] = useState(false);
+  const [newArtisan, setNewArtisan] = useState({
+    firstName: "", lastName: "", specialty: "", city: "", email: "", phone: "",
+    siret: "", companyName: "", legalForm: "", status: "En attente" as "Vérifié" | "En attente" | "Rejeté",
+    birthDate: "", nationality: "", idType: "", idNumber: "", address: "",
+    tvaNumber: "", iban: "", yearsExperience: 0, bio: "",
+  });
 
   const [settingsPlatformName, setSettingsPlatformName] = useState("SEAMLiER");
   const [settingsContactEmail, setSettingsContactEmail] = useState("contact@seamlier.fr");
   const [settingsSupportEmail, setSettingsSupportEmail] = useState("support@seamlier.fr");
   const [settingsPhone, setSettingsPhone] = useState("+33 1 23 45 67 89");
   const [settingsAddress, setSettingsAddress] = useState("15 Rue de la Paix, 75002 Paris");
-  const [settingsCommission, setSettingsCommission] = useState("12");
+  const [settingsCommission, setSettingsCommission] = useState("10");
   const [settingsCurrency, setSettingsCurrency] = useState("EUR");
   const [settingsLanguage, setSettingsLanguage] = useState("fr");
   const [settingsNotifNewArtisan, setSettingsNotifNewArtisan] = useState(true);
@@ -197,9 +207,10 @@ export default function AdminDashboard() {
   const [settingsAutoApprove, setSettingsAutoApprove] = useState(false);
   const [settingsMaintenanceMode, setSettingsMaintenanceMode] = useState(false);
   const [settingsMaxUploadSize, setSettingsMaxUploadSize] = useState("10");
-  const [settingsMinOrderAmount, setSettingsMinOrderAmount] = useState("50");
+  const [settingsMinOrderAmount, setSettingsMinOrderAmount] = useState("30");
   const [settingsSiretRequired, setSettingsSiretRequired] = useState(true);
   const [settingsIdRequired, setSettingsIdRequired] = useState(true);
+  const settingsLoaded = useRef(false);
 
   useEffect(() => {
     try {
@@ -215,38 +226,120 @@ export default function AdminDashboard() {
     { id: "5", client: "Claire Petit", artisan: "Atelier Couture Paris", status: "Libéré", amount: "3 500 €", date: "01/02/2026", description: "Collection capsule 5 pièces" },
   ]);
 
-  const [artisans, setArtisans] = useState<Artisan[]>([
-    { id: "1", name: "Marc Antoine", specialty: "Tailleur Homme", status: "Vérifié", joinDate: "15/01/2026", email: "marc.antoine@atelier-ma.fr", city: "Paris",
-      firstName: "Marc", lastName: "Antoine", birthDate: "15/03/1985", nationality: "Française", idType: "CNI", idNumber: "850315 123 456 78",
-      phone: "+33 6 12 34 56 78", address: "12 Rue du Temple, 75003 Paris",
-      siret: "823 456 789 00012", companyName: "Atelier Marc Antoine", legalForm: "SARL", tvaNumber: "FR 12 823456789",
-      iban: "FR76 3000 4012 3400 0100 0567 890", yearsExperience: 18,
-      bio: "Tailleur homme spécialisé dans le costume sur mesure et la chemise. Formation aux Arts et Métiers de Paris." },
-    { id: "2", name: "Hélène Beaumont", specialty: "Robe de Mariée", status: "En attente", joinDate: "05/02/2026", email: "helene@beaumont-couture.fr", city: "Lyon",
-      firstName: "Hélène", lastName: "Beaumont", birthDate: "22/07/1990", nationality: "Française", idType: "CNI", idNumber: "900722 654 321 09",
-      phone: "+33 6 98 76 54 32", address: "45 Rue de la République, 69002 Lyon",
-      siret: "912 345 678 00023", companyName: "Beaumont Couture", legalForm: "Auto-entrepreneur", tvaNumber: "N/A",
-      iban: "FR76 2004 1010 0505 0002 3456 789", yearsExperience: 8,
-      bio: "Créatrice de robes de mariée sur mesure. Diplômée de l'École de la Chambre Syndicale de la Couture Parisienne." },
-    { id: "3", name: "Lucie Valentin", specialty: "Retouches Premium", status: "Vérifié", joinDate: "20/12/2025", email: "lucie@valentin-retouches.fr", city: "Marseille",
-      firstName: "Lucie", lastName: "Valentin", birthDate: "10/11/1982", nationality: "Française", idType: "CNI", idNumber: "821110 987 654 32",
-      phone: "+33 6 55 44 33 22", address: "8 Cours Julien, 13001 Marseille",
-      siret: "734 567 890 00034", companyName: "Valentin Retouches Premium", legalForm: "EI", tvaNumber: "FR 34 734567890",
-      iban: "FR76 1234 5678 9012 3456 7890 123", yearsExperience: 22,
-      bio: "Retoucheuse experte, 22 ans d'expérience en haute couture et prêt-à-porter de luxe. Clientèle internationale." },
-    { id: "4", name: "Pierre Delacroix", specialty: "Haute Couture", status: "En attente", joinDate: "08/02/2026", email: "pierre@maison-delacroix.fr", city: "Bordeaux",
-      firstName: "Pierre", lastName: "Delacroix", birthDate: "03/05/1978", nationality: "Française", idType: "Passeport", idNumber: "19FR78543",
-      phone: "+33 6 11 22 33 44", address: "27 Cours de l'Intendance, 33000 Bordeaux",
-      siret: "645 678 901 00045", companyName: "Maison Delacroix", legalForm: "SAS", tvaNumber: "FR 45 645678901",
-      iban: "FR76 4321 0987 6543 2109 8765 432", yearsExperience: 25,
-      bio: "Maître tailleur haute couture. Ancien collaborateur de grandes maisons parisiennes. Spécialiste du sur-mesure d'exception." },
-    { id: "5", name: "Amina Kouyaté", specialty: "Couture Africaine", status: "Vérifié", joinDate: "10/01/2026", email: "amina@kouyate-wax.fr", city: "Paris",
-      firstName: "Amina", lastName: "Kouyaté", birthDate: "18/09/1988", nationality: "Française", idType: "CNI", idNumber: "880918 456 789 01",
-      phone: "+33 6 77 88 99 00", address: "15 Rue des Pyrénées, 75020 Paris",
-      siret: "556 789 012 00056", companyName: "Amina K. Créations", legalForm: "Auto-entrepreneur", tvaNumber: "N/A",
-      iban: "FR76 5678 9012 3456 7890 1234 567", yearsExperience: 12,
-      bio: "Créatrice spécialisée en wax et tissus africains. Mélange de couture traditionnelle et design contemporain." },
-  ]);
+  const { data: dbArtisans = [], isLoading: artisansLoading } = useQuery<any[]>({
+    queryKey: ["/api/admin/artisans"],
+    enabled: isAuthenticated,
+  });
+
+  const artisans: Artisan[] = useMemo(() =>
+    dbArtisans.map((a: any) => ({
+      id: a.id,
+      name: `${a.firstName} ${a.lastName}`,
+      firstName: a.firstName || "",
+      lastName: a.lastName || "",
+      specialty: a.specialty || "",
+      status: (a.status || "En attente") as Artisan["status"],
+      joinDate: a.joinDate || new Date(a.createdAt).toLocaleDateString("fr-FR"),
+      email: a.email || "",
+      city: a.city || "",
+      phone: a.phone || "",
+      birthDate: a.birthDate || "",
+      nationality: a.nationality || "",
+      idType: a.idType || "",
+      idNumber: a.idNumber || "",
+      address: a.address || "",
+      siret: a.siret || "",
+      companyName: a.companyName || "",
+      legalForm: a.legalForm || "",
+      tvaNumber: a.tvaNumber || "",
+      iban: a.iban || "",
+      yearsExperience: a.yearsExperience || 0,
+      bio: a.bio || "",
+    })),
+  [dbArtisans]);
+
+  const createArtisanMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("POST", "/api/admin/artisans", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/artisans"] });
+      toast({ title: "Artisan ajouté", description: "L'artisan a été ajouté avec succès." });
+      setShowAddArtisan(false);
+      setNewArtisan({
+        firstName: "", lastName: "", specialty: "", city: "", email: "", phone: "",
+        siret: "", companyName: "", legalForm: "", status: "En attente",
+        birthDate: "", nationality: "", idType: "", idNumber: "", address: "",
+        tvaNumber: "", iban: "", yearsExperience: 0, bio: "",
+      });
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible d'ajouter l'artisan.", variant: "destructive" });
+    },
+  });
+
+  const updateArtisanMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const res = await apiRequest("PUT", `/api/admin/artisans/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/artisans"] });
+    },
+  });
+
+  const deleteArtisanMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/admin/artisans/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/artisans"] });
+    },
+  });
+
+  const { data: dbSettings } = useQuery<Record<string, string>>({
+    queryKey: ["/api/admin/settings"],
+    enabled: isAuthenticated,
+  });
+
+  useEffect(() => {
+    if (dbSettings && !settingsLoaded.current) {
+      settingsLoaded.current = true;
+      if (dbSettings.platformName) setSettingsPlatformName(dbSettings.platformName);
+      if (dbSettings.contactEmail) setSettingsContactEmail(dbSettings.contactEmail);
+      if (dbSettings.supportEmail) setSettingsSupportEmail(dbSettings.supportEmail);
+      if (dbSettings.phone) setSettingsPhone(dbSettings.phone);
+      if (dbSettings.address) setSettingsAddress(dbSettings.address);
+      if (dbSettings.commission) setSettingsCommission(dbSettings.commission);
+      if (dbSettings.currency) setSettingsCurrency(dbSettings.currency);
+      if (dbSettings.language) setSettingsLanguage(dbSettings.language);
+      if (dbSettings.notifNewArtisan) setSettingsNotifNewArtisan(dbSettings.notifNewArtisan === "true");
+      if (dbSettings.notifNewProject) setSettingsNotifNewProject(dbSettings.notifNewProject === "true");
+      if (dbSettings.notifMessages) setSettingsNotifMessages(dbSettings.notifMessages === "true");
+      if (dbSettings.notifPayments) setSettingsNotifPayments(dbSettings.notifPayments === "true");
+      if (dbSettings.autoApprove) setSettingsAutoApprove(dbSettings.autoApprove === "true");
+      if (dbSettings.maintenanceMode) setSettingsMaintenanceMode(dbSettings.maintenanceMode === "true");
+      if (dbSettings.maxUploadSize) setSettingsMaxUploadSize(dbSettings.maxUploadSize);
+      if (dbSettings.minOrderAmount) setSettingsMinOrderAmount(dbSettings.minOrderAmount);
+      if (dbSettings.siretRequired) setSettingsSiretRequired(dbSettings.siretRequired === "true");
+      if (dbSettings.idRequired) setSettingsIdRequired(dbSettings.idRequired === "true");
+    }
+  }, [dbSettings]);
+
+  const saveSettingsMutation = useMutation({
+    mutationFn: async (data: Record<string, string>) => {
+      const res = await apiRequest("POST", "/api/admin/settings", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
+      toast({ title: "Paramètres sauvegardés", description: "Les modifications ont été enregistrées avec succès." });
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de sauvegarder les paramètres.", variant: "destructive" });
+    },
+  });
 
   const [messages, setMessages] = useState<Message[]>([
     { id: "1", from: "Marie Lefebvre", subject: "Problème de livraison", preview: "Bonjour, je n'ai toujours pas reçu ma commande depuis 2 semaines...", date: "09/02/2026", read: false, type: "support", replies: [] },
@@ -369,19 +462,17 @@ export default function AdminDashboard() {
   };
 
   const approveArtisan = (id: string) => {
-    setArtisans(prev => prev.map(a =>
-      a.id === id ? { ...a, status: "Vérifié" as const } : a
-    ));
     const artisan = artisans.find(a => a.id === id);
-    toast({ title: "Artisan approuvé", description: `${artisan?.name} est maintenant vérifié.` });
+    updateArtisanMutation.mutate({ id, data: { status: "Vérifié" } }, {
+      onSuccess: () => toast({ title: "Artisan approuvé", description: `${artisan?.name} est maintenant vérifié.` }),
+    });
   };
 
   const rejectArtisan = (id: string) => {
-    setArtisans(prev => prev.map(a =>
-      a.id === id ? { ...a, status: "Rejeté" as const } : a
-    ));
     const artisan = artisans.find(a => a.id === id);
-    toast({ title: "Artisan rejeté", description: `${artisan?.name} a été rejeté.`, variant: "destructive" });
+    updateArtisanMutation.mutate({ id, data: { status: "Rejeté" } }, {
+      onSuccess: () => toast({ title: "Artisan rejeté", description: `${artisan?.name} a été rejeté.`, variant: "destructive" }),
+    });
   };
 
   const markMessageRead = (id: string) => {
@@ -488,11 +579,12 @@ export default function AdminDashboard() {
 
   const saveArtisanEdit = () => {
     if (!artisanDossierId) return;
-    setArtisans(prev => prev.map(a =>
-      a.id === artisanDossierId ? { ...a, ...artisanEditForm, name: `${artisanEditForm.firstName || a.firstName} ${artisanEditForm.lastName || a.lastName}`, city: artisanEditForm.city || a.city, email: artisanEditForm.email || a.email } : a
-    ));
-    toast({ title: "Dossier mis à jour", description: "Les informations de l'artisan ont été enregistrées." });
-    closeArtisanDossier();
+    updateArtisanMutation.mutate({ id: artisanDossierId, data: artisanEditForm }, {
+      onSuccess: () => {
+        toast({ title: "Dossier mis à jour", description: "Les informations de l'artisan ont été enregistrées." });
+        closeArtisanDossier();
+      },
+    });
   };
 
   const dossierArtisan = artisans.find(a => a.id === artisanDossierId);
@@ -1363,6 +1455,113 @@ export default function AdminDashboard() {
                     <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Gestion des Artisans</h1>
                     <p className="text-gray-500 mt-1 text-sm">Validation et suivi des professionnels</p>
                   </div>
+
+                  <Dialog open={showAddArtisan} onOpenChange={setShowAddArtisan}>
+                    <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" data-testid="dialog-add-artisan">
+                      <DialogHeader>
+                        <DialogTitle className="text-lg font-bold text-[#722F37]">Ajouter un artisan</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 py-2">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Prénom *</label>
+                            <Input value={newArtisan.firstName} onChange={e => setNewArtisan({...newArtisan, firstName: e.target.value})} className="mt-1 h-9 text-sm" data-testid="input-new-artisan-firstname" />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Nom *</label>
+                            <Input value={newArtisan.lastName} onChange={e => setNewArtisan({...newArtisan, lastName: e.target.value})} className="mt-1 h-9 text-sm" data-testid="input-new-artisan-lastname" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Spécialité *</label>
+                            <select value={newArtisan.specialty} onChange={e => setNewArtisan({...newArtisan, specialty: e.target.value})} className="mt-1 w-full h-9 text-sm border border-gray-200 rounded-md px-3 bg-white" data-testid="select-new-artisan-specialty">
+                              <option value="">Choisir...</option>
+                              <option value="Tailleur Homme">Tailleur Homme</option>
+                              <option value="Robe de Mariée">Robe de Mariée</option>
+                              <option value="Retouches Premium">Retouches Premium</option>
+                              <option value="Haute Couture">Haute Couture</option>
+                              <option value="Couture Africaine">Couture Africaine</option>
+                              <option value="Couture Traditionnelle">Couture Traditionnelle</option>
+                              <option value="Prêt-à-porter">Prêt-à-porter</option>
+                              <option value="Accessoires">Accessoires</option>
+                              <option value="Autre">Autre</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Ville *</label>
+                            <Input value={newArtisan.city} onChange={e => setNewArtisan({...newArtisan, city: e.target.value})} className="mt-1 h-9 text-sm" data-testid="input-new-artisan-city" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Email</label>
+                            <Input value={newArtisan.email} onChange={e => setNewArtisan({...newArtisan, email: e.target.value})} className="mt-1 h-9 text-sm" data-testid="input-new-artisan-email" />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Téléphone</label>
+                            <Input value={newArtisan.phone} onChange={e => setNewArtisan({...newArtisan, phone: e.target.value})} className="mt-1 h-9 text-sm" data-testid="input-new-artisan-phone" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">SIRET</label>
+                            <Input value={newArtisan.siret} onChange={e => setNewArtisan({...newArtisan, siret: e.target.value})} className="mt-1 h-9 text-sm" data-testid="input-new-artisan-siret" />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Statut</label>
+                            <select value={newArtisan.status} onChange={e => setNewArtisan({...newArtisan, status: e.target.value as any})} className="mt-1 w-full h-9 text-sm border border-gray-200 rounded-md px-3 bg-white" data-testid="select-new-artisan-status">
+                              <option value="En attente">En attente</option>
+                              <option value="Vérifié">Vérifié</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Raison sociale</label>
+                            <Input value={newArtisan.companyName} onChange={e => setNewArtisan({...newArtisan, companyName: e.target.value})} className="mt-1 h-9 text-sm" data-testid="input-new-artisan-company" />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Forme juridique</label>
+                            <select value={newArtisan.legalForm} onChange={e => setNewArtisan({...newArtisan, legalForm: e.target.value})} className="mt-1 w-full h-9 text-sm border border-gray-200 rounded-md px-3 bg-white" data-testid="select-new-artisan-legalform">
+                              <option value="">Choisir...</option>
+                              <option value="Auto-entrepreneur">Auto-entrepreneur</option>
+                              <option value="EI">EI</option>
+                              <option value="SARL">SARL</option>
+                              <option value="SAS">SAS</option>
+                              <option value="SASU">SASU</option>
+                              <option value="EURL">EURL</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Adresse</label>
+                          <Input value={newArtisan.address} onChange={e => setNewArtisan({...newArtisan, address: e.target.value})} className="mt-1 h-9 text-sm" data-testid="input-new-artisan-address" />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Bio / Présentation</label>
+                          <Textarea value={newArtisan.bio} onChange={e => setNewArtisan({...newArtisan, bio: e.target.value})} className="mt-1 text-sm" rows={2} data-testid="input-new-artisan-bio" />
+                        </div>
+                      </div>
+                      <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={() => setShowAddArtisan(false)} data-testid="button-cancel-add-artisan">Annuler</Button>
+                        <Button
+                          className="bg-[#722F37] hover:bg-[#5a252c] text-white font-bold"
+                          disabled={!newArtisan.firstName || !newArtisan.lastName || !newArtisan.specialty || !newArtisan.city || createArtisanMutation.isPending}
+                          onClick={() => {
+                            createArtisanMutation.mutate({
+                              ...newArtisan,
+                              joinDate: new Date().toLocaleDateString("fr-FR"),
+                            });
+                          }}
+                          data-testid="button-confirm-add-artisan"
+                        >
+                          {createArtisanMutation.isPending ? "Ajout..." : "Ajouter"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+
                   <Card className="border-none shadow-sm overflow-hidden bg-white">
                     <div className="p-5 border-b border-gray-50 flex items-center justify-between gap-4 flex-wrap">
                       <div className="flex gap-2 flex-wrap">
@@ -1370,9 +1569,14 @@ export default function AdminDashboard() {
                         <Badge className="bg-amber-50 text-amber-700 border-none px-3 py-1" data-testid="badge-pending-artisans">{artisans.filter(a => a.status === "En attente").length} en attente</Badge>
                         <Badge className="bg-red-50 text-red-600 border-none px-3 py-1" data-testid="badge-rejected-artisans">{artisans.filter(a => a.status === "Rejeté").length} rejetés</Badge>
                       </div>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                        <Input placeholder="Nom, spécialité ou ville..." value={artisanSearch} onChange={e => setArtisanSearch(e.target.value)} className="pl-10 w-72 h-9 text-sm" data-testid="input-search-artisans" />
+                      <div className="flex gap-2 items-center flex-wrap">
+                        <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white font-bold text-xs" onClick={() => setShowAddArtisan(true)} data-testid="button-add-artisan">
+                          <PlusCircle size={14} className="mr-1" /> Ajouter un artisan
+                        </Button>
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                          <Input placeholder="Nom, spécialité ou ville..." value={artisanSearch} onChange={e => setArtisanSearch(e.target.value)} className="pl-10 w-72 h-9 text-sm" data-testid="input-search-artisans" />
+                        </div>
                       </div>
                     </div>
                     <div className="overflow-x-auto">
@@ -1425,8 +1629,13 @@ export default function AdminDashboard() {
                               </td>
                             </tr>
                           ))}
-                          {filteredArtisans.length === 0 && (
-                            <tr><td colSpan={7} className="px-5 py-8 text-center text-sm text-gray-400">Aucun résultat</td></tr>
+                          {artisansLoading && (
+                            <tr><td colSpan={7} className="px-5 py-8 text-center text-sm text-gray-400">Chargement...</td></tr>
+                          )}
+                          {!artisansLoading && filteredArtisans.length === 0 && (
+                            <tr><td colSpan={7} className="px-5 py-8 text-center text-sm text-gray-400">
+                              {artisans.length === 0 ? "Aucun artisan. Cliquez sur \"Ajouter un artisan\" pour commencer." : "Aucun résultat"}
+                            </td></tr>
                           )}
                         </tbody>
                       </table>
@@ -1904,12 +2113,32 @@ export default function AdminDashboard() {
                   <div className="mt-5 flex justify-end">
                     <Button
                       className="bg-[#722F37] hover:bg-[#5a252c] text-white font-bold text-sm"
+                      disabled={saveSettingsMutation.isPending}
                       onClick={() => {
-                        toast({ title: "Paramètres sauvegardés", description: "Les modifications ont été enregistrées avec succès." });
+                        saveSettingsMutation.mutate({
+                          platformName: settingsPlatformName,
+                          contactEmail: settingsContactEmail,
+                          supportEmail: settingsSupportEmail,
+                          phone: settingsPhone,
+                          address: settingsAddress,
+                          commission: settingsCommission,
+                          currency: settingsCurrency,
+                          language: settingsLanguage,
+                          notifNewArtisan: String(settingsNotifNewArtisan),
+                          notifNewProject: String(settingsNotifNewProject),
+                          notifMessages: String(settingsNotifMessages),
+                          notifPayments: String(settingsNotifPayments),
+                          autoApprove: String(settingsAutoApprove),
+                          maintenanceMode: String(settingsMaintenanceMode),
+                          maxUploadSize: settingsMaxUploadSize,
+                          minOrderAmount: settingsMinOrderAmount,
+                          siretRequired: String(settingsSiretRequired),
+                          idRequired: String(settingsIdRequired),
+                        });
                       }}
                       data-testid="button-save-settings"
                     >
-                      Sauvegarder les paramètres
+                      {saveSettingsMutation.isPending ? "Enregistrement..." : "Sauvegarder les paramètres"}
                     </Button>
                   </div>
                 </>

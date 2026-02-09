@@ -138,6 +138,38 @@ export const appointments = pgTable("appointments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const adminArtisans = pgTable("admin_artisans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
+  specialty: text("specialty").notNull(),
+  status: text("status").notNull().default("En attente"),
+  city: text("city").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  birthDate: text("birth_date"),
+  nationality: text("nationality"),
+  idType: text("id_type"),
+  idNumber: text("id_number"),
+  address: text("address"),
+  siret: text("siret"),
+  companyName: text("company_name"),
+  legalForm: text("legal_form"),
+  tvaNumber: text("tva_number"),
+  iban: text("iban"),
+  yearsExperience: integer("years_experience"),
+  bio: text("bio"),
+  joinDate: text("join_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const adminSettings = pgTable("admin_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: varchar("key").notNull().unique(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertTailorSchema = createInsertSchema(tailors).omit({ id: true, createdAt: true });
@@ -149,6 +181,8 @@ export const insertMessageSchema = createInsertSchema(messages).omit({ id: true,
 export const insertMeasurementsSchema = createInsertSchema(measurements).omit({ id: true, updatedAt: true });
 export const insertProjectSchema = createInsertSchema(projects).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertAppointmentSchema = createInsertSchema(appointments).omit({ id: true, createdAt: true });
+export const insertAdminArtisanSchema = createInsertSchema(adminArtisans).omit({ id: true, createdAt: true });
+export const insertAdminSettingSchema = createInsertSchema(adminSettings).omit({ id: true, updatedAt: true });
 
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -172,6 +206,10 @@ export type InsertProject = z.infer<typeof insertProjectSchema>;
 export type Project = typeof projects.$inferSelect;
 export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
 export type Appointment = typeof appointments.$inferSelect;
+export type InsertAdminArtisan = z.infer<typeof insertAdminArtisanSchema>;
+export type AdminArtisan = typeof adminArtisans.$inferSelect;
+export type InsertAdminSetting = z.infer<typeof insertAdminSettingSchema>;
+export type AdminSetting = typeof adminSettings.$inferSelect;
 
 // Composite types
 export type TailorWithUser = Tailor & { user: User };

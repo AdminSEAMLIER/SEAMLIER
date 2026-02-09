@@ -405,5 +405,77 @@ export async function registerRoutes(
     }
   });
 
+  // Admin routes - Artisans (no auth required, admin auth is client-side)
+  app.get("/api/admin/artisans", async (req, res) => {
+    try {
+      const artisans = await storage.getAdminArtisans();
+      res.json(artisans);
+    } catch (error) {
+      console.error("Error fetching admin artisans:", error);
+      res.status(500).json({ error: "Failed to fetch artisans" });
+    }
+  });
+
+  app.post("/api/admin/artisans", async (req, res) => {
+    try {
+      const artisan = await storage.createAdminArtisan(req.body);
+      res.status(201).json(artisan);
+    } catch (error) {
+      console.error("Error creating admin artisan:", error);
+      res.status(500).json({ error: "Failed to create artisan" });
+    }
+  });
+
+  app.put("/api/admin/artisans/:id", async (req, res) => {
+    try {
+      const artisan = await storage.updateAdminArtisan(req.params.id, req.body);
+      if (!artisan) {
+        return res.status(404).json({ error: "Artisan not found" });
+      }
+      res.json(artisan);
+    } catch (error) {
+      console.error("Error updating admin artisan:", error);
+      res.status(500).json({ error: "Failed to update artisan" });
+    }
+  });
+
+  app.delete("/api/admin/artisans/:id", async (req, res) => {
+    try {
+      await storage.deleteAdminArtisan(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting admin artisan:", error);
+      res.status(500).json({ error: "Failed to delete artisan" });
+    }
+  });
+
+  // Admin routes - Settings
+  app.get("/api/admin/settings", async (req, res) => {
+    try {
+      const settings = await storage.getAdminSettings();
+      const settingsMap: Record<string, string> = {};
+      for (const s of settings) {
+        settingsMap[s.key] = s.value;
+      }
+      res.json(settingsMap);
+    } catch (error) {
+      console.error("Error fetching admin settings:", error);
+      res.status(500).json({ error: "Failed to fetch settings" });
+    }
+  });
+
+  app.post("/api/admin/settings", async (req, res) => {
+    try {
+      const entries = Object.entries(req.body) as [string, string][];
+      for (const [key, value] of entries) {
+        await storage.upsertAdminSetting(key, value);
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error saving admin settings:", error);
+      res.status(500).json({ error: "Failed to save settings" });
+    }
+  });
+
   return httpServer;
 }
