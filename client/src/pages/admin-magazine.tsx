@@ -59,6 +59,21 @@ type Artisan = {
   joinDate: string;
   email: string;
   city: string;
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  nationality: string;
+  idType: string;
+  idNumber: string;
+  phone: string;
+  address: string;
+  siret: string;
+  companyName: string;
+  legalForm: string;
+  tvaNumber: string;
+  iban: string;
+  yearsExperience: number;
+  bio: string;
 };
 
 type ReplyMessage = {
@@ -162,6 +177,9 @@ export default function AdminDashboard() {
   const [couturierDialogMode, setCouturierDialogMode] = useState<"view" | "edit" | null>(null);
   const [couturierDialogId, setCouturierDialogId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<CouturierData>>({});
+  const [artisanDossierId, setArtisanDossierId] = useState<string | null>(null);
+  const [artisanDossierMode, setArtisanDossierMode] = useState<"view" | "edit" | null>(null);
+  const [artisanEditForm, setArtisanEditForm] = useState<Partial<Artisan>>({});
 
   useEffect(() => {
     try {
@@ -178,11 +196,36 @@ export default function AdminDashboard() {
   ]);
 
   const [artisans, setArtisans] = useState<Artisan[]>([
-    { id: "1", name: "Marc Antoine", specialty: "Tailleur Homme", status: "Vérifié", joinDate: "15/01/2026", email: "marc@atelier.fr", city: "Paris" },
-    { id: "2", name: "Hélène B.", specialty: "Robe de Mariée", status: "En attente", joinDate: "05/02/2026", email: "helene@couture.fr", city: "Lyon" },
-    { id: "3", name: "Lucie V.", specialty: "Retouches Premium", status: "Vérifié", joinDate: "20/12/2025", email: "lucie@retouche.fr", city: "Marseille" },
-    { id: "4", name: "Pierre D.", specialty: "Haute Couture", status: "En attente", joinDate: "08/02/2026", email: "pierre@mode.fr", city: "Bordeaux" },
-    { id: "5", name: "Amina K.", specialty: "Couture Africaine", status: "Vérifié", joinDate: "10/01/2026", email: "amina@wax.fr", city: "Paris" },
+    { id: "1", name: "Marc Antoine", specialty: "Tailleur Homme", status: "Vérifié", joinDate: "15/01/2026", email: "marc.antoine@atelier-ma.fr", city: "Paris",
+      firstName: "Marc", lastName: "Antoine", birthDate: "15/03/1985", nationality: "Française", idType: "CNI", idNumber: "850315 123 456 78",
+      phone: "+33 6 12 34 56 78", address: "12 Rue du Temple, 75003 Paris",
+      siret: "823 456 789 00012", companyName: "Atelier Marc Antoine", legalForm: "SARL", tvaNumber: "FR 12 823456789",
+      iban: "FR76 3000 4012 3400 0100 0567 890", yearsExperience: 18,
+      bio: "Tailleur homme spécialisé dans le costume sur mesure et la chemise. Formation aux Arts et Métiers de Paris." },
+    { id: "2", name: "Hélène Beaumont", specialty: "Robe de Mariée", status: "En attente", joinDate: "05/02/2026", email: "helene@beaumont-couture.fr", city: "Lyon",
+      firstName: "Hélène", lastName: "Beaumont", birthDate: "22/07/1990", nationality: "Française", idType: "CNI", idNumber: "900722 654 321 09",
+      phone: "+33 6 98 76 54 32", address: "45 Rue de la République, 69002 Lyon",
+      siret: "912 345 678 00023", companyName: "Beaumont Couture", legalForm: "Auto-entrepreneur", tvaNumber: "N/A",
+      iban: "FR76 2004 1010 0505 0002 3456 789", yearsExperience: 8,
+      bio: "Créatrice de robes de mariée sur mesure. Diplômée de l'École de la Chambre Syndicale de la Couture Parisienne." },
+    { id: "3", name: "Lucie Valentin", specialty: "Retouches Premium", status: "Vérifié", joinDate: "20/12/2025", email: "lucie@valentin-retouches.fr", city: "Marseille",
+      firstName: "Lucie", lastName: "Valentin", birthDate: "10/11/1982", nationality: "Française", idType: "CNI", idNumber: "821110 987 654 32",
+      phone: "+33 6 55 44 33 22", address: "8 Cours Julien, 13001 Marseille",
+      siret: "734 567 890 00034", companyName: "Valentin Retouches Premium", legalForm: "EI", tvaNumber: "FR 34 734567890",
+      iban: "FR76 1234 5678 9012 3456 7890 123", yearsExperience: 22,
+      bio: "Retoucheuse experte, 22 ans d'expérience en haute couture et prêt-à-porter de luxe. Clientèle internationale." },
+    { id: "4", name: "Pierre Delacroix", specialty: "Haute Couture", status: "En attente", joinDate: "08/02/2026", email: "pierre@maison-delacroix.fr", city: "Bordeaux",
+      firstName: "Pierre", lastName: "Delacroix", birthDate: "03/05/1978", nationality: "Française", idType: "Passeport", idNumber: "19FR78543",
+      phone: "+33 6 11 22 33 44", address: "27 Cours de l'Intendance, 33000 Bordeaux",
+      siret: "645 678 901 00045", companyName: "Maison Delacroix", legalForm: "SAS", tvaNumber: "FR 45 645678901",
+      iban: "FR76 4321 0987 6543 2109 8765 432", yearsExperience: 25,
+      bio: "Maître tailleur haute couture. Ancien collaborateur de grandes maisons parisiennes. Spécialiste du sur-mesure d'exception." },
+    { id: "5", name: "Amina Kouyaté", specialty: "Couture Africaine", status: "Vérifié", joinDate: "10/01/2026", email: "amina@kouyate-wax.fr", city: "Paris",
+      firstName: "Amina", lastName: "Kouyaté", birthDate: "18/09/1988", nationality: "Française", idType: "CNI", idNumber: "880918 456 789 01",
+      phone: "+33 6 77 88 99 00", address: "15 Rue des Pyrénées, 75020 Paris",
+      siret: "556 789 012 00056", companyName: "Amina K. Créations", legalForm: "Auto-entrepreneur", tvaNumber: "N/A",
+      iban: "FR76 5678 9012 3456 7890 1234 567", yearsExperience: 12,
+      bio: "Créatrice spécialisée en wax et tissus africains. Mélange de couture traditionnelle et design contemporain." },
   ]);
 
   const [messages, setMessages] = useState<Message[]>([
@@ -406,6 +449,33 @@ export default function AdminDashboard() {
   };
 
   const dialogCouturier = couturiers.find(c => c.id === couturierDialogId);
+
+  const openArtisanDossier = (id: string, mode: "view" | "edit") => {
+    const a = artisans.find(ar => ar.id === id);
+    if (!a) return;
+    setArtisanDossierId(id);
+    setArtisanDossierMode(mode);
+    if (mode === "edit") {
+      setArtisanEditForm({ ...a });
+    }
+  };
+
+  const closeArtisanDossier = () => {
+    setArtisanDossierId(null);
+    setArtisanDossierMode(null);
+    setArtisanEditForm({});
+  };
+
+  const saveArtisanEdit = () => {
+    if (!artisanDossierId) return;
+    setArtisans(prev => prev.map(a =>
+      a.id === artisanDossierId ? { ...a, ...artisanEditForm, name: `${artisanEditForm.firstName || a.firstName} ${artisanEditForm.lastName || a.lastName}`, city: artisanEditForm.city || a.city, email: artisanEditForm.email || a.email } : a
+    ));
+    toast({ title: "Dossier mis à jour", description: "Les informations de l'artisan ont été enregistrées." });
+    closeArtisanDossier();
+  };
+
+  const dossierArtisan = artisans.find(a => a.id === artisanDossierId);
 
   const totalRevenue = projects.filter(p => p.status === "Libéré").reduce((sum, p) => sum + parseInt(p.amount.replace(/[^\d]/g, "")), 0);
   const pendingProjects = projects.filter(p => p.status === "Bloqué").length;
@@ -1317,6 +1387,9 @@ export default function AdminDashboard() {
                               <td className="px-5 py-3 text-right">
                                 {a.status === "En attente" ? (
                                   <div className="flex justify-end gap-2">
+                                    <Button size="sm" variant="outline" className="h-8 text-[11px]" onClick={() => openArtisanDossier(a.id, "view")} data-testid={`button-dossier-${a.id}`}>
+                                      <Eye size={14} className="mr-1" /> Dossier
+                                    </Button>
                                     <Button size="sm" className="bg-[#722F37] h-8 text-[11px] font-bold" onClick={() => approveArtisan(a.id)} data-testid={`button-approve-${a.id}`}>
                                       <CheckCircle size={14} className="mr-1" /> Approuver
                                     </Button>
@@ -1325,7 +1398,9 @@ export default function AdminDashboard() {
                                     </Button>
                                   </div>
                                 ) : (
-                                  <Button size="sm" variant="outline" className="h-8 text-[11px]" data-testid={`button-dossier-${a.id}`}>Dossier</Button>
+                                  <Button size="sm" variant="outline" className="h-8 text-[11px]" onClick={() => openArtisanDossier(a.id, "view")} data-testid={`button-dossier-${a.id}`}>
+                                    <Eye size={14} className="mr-1" /> Dossier
+                                  </Button>
                                 )}
                               </td>
                             </tr>
@@ -1337,6 +1412,244 @@ export default function AdminDashboard() {
                       </table>
                     </div>
                   </Card>
+
+                  <Dialog open={!!artisanDossierId && !!artisanDossierMode} onOpenChange={(open) => !open && closeArtisanDossier()}>
+                    <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" data-testid="dialog-artisan-dossier">
+                      {dossierArtisan && artisanDossierMode === "view" && (
+                        <>
+                          <DialogHeader>
+                            <DialogTitle className="font-serif text-lg flex items-center gap-3" data-testid="text-artisan-dossier-name">
+                              <div className="w-10 h-10 rounded-full bg-[#722F37]/10 flex items-center justify-center text-[#722F37] font-bold flex-shrink-0">{dossierArtisan.firstName[0]}{dossierArtisan.lastName[0]}</div>
+                              {dossierArtisan.firstName} {dossierArtisan.lastName}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-5 pt-2">
+                            <div className="flex items-center justify-between gap-3 flex-wrap">
+                              <div className="flex gap-2 flex-wrap">
+                                <Badge className={cn("text-[10px] border-none font-bold", dossierArtisan.status === "Vérifié" ? "bg-green-100 text-green-700" : dossierArtisan.status === "Rejeté" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700")} data-testid="badge-artisan-dossier-status">{dossierArtisan.status}</Badge>
+                                <Badge variant="outline" className="text-[10px]" data-testid="badge-artisan-dossier-specialty">{dossierArtisan.specialty}</Badge>
+                              </div>
+                              <span className="text-xs text-gray-400" data-testid="text-artisan-joindate">Inscrit le {dossierArtisan.joinDate}</span>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-1">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                                <User size={14} /> Carte d'identité
+                              </p>
+                              <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-artisan-identity">
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Prénom</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-firstname">{dossierArtisan.firstName}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Nom</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-lastname">{dossierArtisan.lastName}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Date de naissance</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-birthdate">{dossierArtisan.birthDate}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Nationalité</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-nationality">{dossierArtisan.nationality}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Type de pièce</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-idtype">{dossierArtisan.idType}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">N° pièce</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-idnumber">{dossierArtisan.idNumber}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-1">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                                <Building2 size={14} /> Informations Entreprise
+                              </p>
+                              <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-artisan-business">
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Raison sociale</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-company">{dossierArtisan.companyName}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Forme juridique</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-legalform">{dossierArtisan.legalForm}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">SIRET</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-siret">{dossierArtisan.siret}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">N° TVA</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-tva">{dossierArtisan.tvaNumber}</span>
+                                </div>
+                                <div className="col-span-2 flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Adresse</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-address">{dossierArtisan.address}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">IBAN</span>
+                                  <span className="text-sm font-semibold text-gray-900 text-[11px]" data-testid="text-artisan-iban">{dossierArtisan.iban}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Spécialité</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-specialty">{dossierArtisan.specialty}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-1">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                                <Phone size={14} /> Contact & Profil
+                              </p>
+                              <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-artisan-contact">
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Téléphone</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-phone">{dossierArtisan.phone}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Email</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-email">{dossierArtisan.email}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Expérience</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-experience">{dossierArtisan.yearsExperience} ans</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Ville</span>
+                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-city">{dossierArtisan.city}</span>
+                                </div>
+                                <div className="col-span-2 py-1.5">
+                                  <span className="text-xs text-gray-500">Bio</span>
+                                  <p className="text-sm text-gray-700 mt-1 leading-relaxed" data-testid="text-artisan-bio">{dossierArtisan.bio}</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-between items-center pt-2 border-t border-gray-100 gap-3 flex-wrap">
+                              <Button variant="outline" size="sm" onClick={() => { closeArtisanDossier(); openArtisanDossier(dossierArtisan.id, "edit"); }} data-testid="button-artisan-switch-to-edit">
+                                <Pencil size={14} className="mr-1" /> Editer
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={closeArtisanDossier} data-testid="button-close-artisan-dossier">Fermer</Button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {dossierArtisan && artisanDossierMode === "edit" && (
+                        <>
+                          <DialogHeader>
+                            <DialogTitle className="font-serif text-lg flex items-center gap-3" data-testid="text-artisan-edit-title">
+                              <Pencil size={20} className="text-[#722F37]" />
+                              Éditer - {dossierArtisan.firstName} {dossierArtisan.lastName}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-5 pt-2">
+                            <div>
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                                <User size={14} /> Identité
+                              </p>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Prénom</label>
+                                  <Input value={artisanEditForm.firstName || ""} onChange={e => setArtisanEditForm(p => ({ ...p, firstName: e.target.value }))} className="h-9 text-sm" data-testid="input-artisan-edit-firstname" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Nom</label>
+                                  <Input value={artisanEditForm.lastName || ""} onChange={e => setArtisanEditForm(p => ({ ...p, lastName: e.target.value }))} className="h-9 text-sm" data-testid="input-artisan-edit-lastname" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Date de naissance</label>
+                                  <Input value={artisanEditForm.birthDate || ""} onChange={e => setArtisanEditForm(p => ({ ...p, birthDate: e.target.value }))} className="h-9 text-sm" data-testid="input-artisan-edit-birthdate" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Nationalité</label>
+                                  <Input value={artisanEditForm.nationality || ""} onChange={e => setArtisanEditForm(p => ({ ...p, nationality: e.target.value }))} className="h-9 text-sm" data-testid="input-artisan-edit-nationality" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Type de pièce d'identité</label>
+                                  <Input value={artisanEditForm.idType || ""} onChange={e => setArtisanEditForm(p => ({ ...p, idType: e.target.value }))} className="h-9 text-sm" data-testid="input-artisan-edit-idtype" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">N° pièce d'identité</label>
+                                  <Input value={artisanEditForm.idNumber || ""} onChange={e => setArtisanEditForm(p => ({ ...p, idNumber: e.target.value }))} className="h-9 text-sm" data-testid="input-artisan-edit-idnumber" />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                                <Building2 size={14} /> Entreprise
+                              </p>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Raison sociale</label>
+                                  <Input value={artisanEditForm.companyName || ""} onChange={e => setArtisanEditForm(p => ({ ...p, companyName: e.target.value }))} className="h-9 text-sm" data-testid="input-artisan-edit-company" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Forme juridique</label>
+                                  <Input value={artisanEditForm.legalForm || ""} onChange={e => setArtisanEditForm(p => ({ ...p, legalForm: e.target.value }))} className="h-9 text-sm" data-testid="input-artisan-edit-legalform" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">SIRET</label>
+                                  <Input value={artisanEditForm.siret || ""} onChange={e => setArtisanEditForm(p => ({ ...p, siret: e.target.value }))} className="h-9 text-sm" data-testid="input-artisan-edit-siret" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">N° TVA</label>
+                                  <Input value={artisanEditForm.tvaNumber || ""} onChange={e => setArtisanEditForm(p => ({ ...p, tvaNumber: e.target.value }))} className="h-9 text-sm" data-testid="input-artisan-edit-tva" />
+                                </div>
+                                <div className="col-span-2 space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Adresse</label>
+                                  <Input value={artisanEditForm.address || ""} onChange={e => setArtisanEditForm(p => ({ ...p, address: e.target.value }))} className="h-9 text-sm" data-testid="input-artisan-edit-address" />
+                                </div>
+                                <div className="col-span-2 space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">IBAN</label>
+                                  <Input value={artisanEditForm.iban || ""} onChange={e => setArtisanEditForm(p => ({ ...p, iban: e.target.value }))} className="h-9 text-sm" data-testid="input-artisan-edit-iban" />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                                <Phone size={14} /> Contact & Profil
+                              </p>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Téléphone</label>
+                                  <Input value={artisanEditForm.phone || ""} onChange={e => setArtisanEditForm(p => ({ ...p, phone: e.target.value }))} className="h-9 text-sm" data-testid="input-artisan-edit-phone" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Email</label>
+                                  <Input value={artisanEditForm.email || ""} onChange={e => setArtisanEditForm(p => ({ ...p, email: e.target.value }))} className="h-9 text-sm" data-testid="input-artisan-edit-email" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Spécialité</label>
+                                  <Input value={artisanEditForm.specialty || ""} onChange={e => setArtisanEditForm(p => ({ ...p, specialty: e.target.value }))} className="h-9 text-sm" data-testid="input-artisan-edit-specialty" />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Ville</label>
+                                  <Input value={artisanEditForm.city || ""} onChange={e => setArtisanEditForm(p => ({ ...p, city: e.target.value }))} className="h-9 text-sm" data-testid="input-artisan-edit-city" />
+                                </div>
+                                <div className="col-span-2 space-y-1">
+                                  <label className="text-[11px] font-medium text-gray-500">Bio</label>
+                                  <Textarea value={artisanEditForm.bio || ""} onChange={e => setArtisanEditForm(p => ({ ...p, bio: e.target.value }))} className="min-h-[80px] text-sm" data-testid="input-artisan-edit-bio" />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+                              <Button variant="outline" size="sm" onClick={closeArtisanDossier} data-testid="button-artisan-cancel-edit">Annuler</Button>
+                              <Button size="sm" className="bg-[#722F37] font-bold" onClick={saveArtisanEdit} data-testid="button-save-artisan-dossier">
+                                <CheckCircle size={14} className="mr-1" /> Enregistrer
+                              </Button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </DialogContent>
+                  </Dialog>
                 </>
               )}
 
