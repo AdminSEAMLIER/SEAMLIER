@@ -50,7 +50,7 @@ export default function Inscription() {
                 <p className="text-gray-500 text-xs mb-3">
                   {t('inscription.clientDesc')}
                 </p>
-                <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-xs px-3 whitespace-nowrap" data-testid="button-inscription-particulier">
+                <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-xs px-2" data-testid="button-inscription-particulier">
                   {t('inscription.clientButton')}
                 </Button>
               </CardContent>
@@ -69,7 +69,7 @@ export default function Inscription() {
                 <p className="text-gray-500 text-xs mb-3">
                   {t('inscription.proDesc')}
                 </p>
-                <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-xs px-3 whitespace-nowrap" data-testid="button-inscription-professionnel">
+                <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-xs px-2" data-testid="button-inscription-professionnel">
                   {t('inscription.proButton')}
                 </Button>
               </CardContent>
