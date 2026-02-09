@@ -16,6 +16,12 @@ import {
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   SidebarProvider,
   Sidebar,
   SidebarContent,
@@ -70,12 +76,18 @@ type PlanningEvent = {
   status: "Confirmé" | "En attente" | "Annulé";
 };
 
+type MeasureDetail = {
+  label: string;
+  value: string;
+};
+
 type MeasureProfile = {
   id: string;
   client: string;
   lastUpdate: string;
   status: "Complet" | "Incomplet" | "En attente";
   measurements: number;
+  details: MeasureDetail[];
 };
 
 type Article = {
@@ -97,6 +109,7 @@ export default function AdminDashboard() {
   const [messageSearch, setMessageSearch] = useState("");
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [selectedMeasure, setSelectedMeasure] = useState<MeasureProfile | null>(null);
   const [showNewArticle, setShowNewArticle] = useState(false);
   const [newArticleTitle, setNewArticleTitle] = useState("");
   const [newArticleCategory, setNewArticleCategory] = useState("");
@@ -134,11 +147,30 @@ export default function AdminDashboard() {
   ]);
 
   const [measureProfiles] = useState<MeasureProfile[]>([
-    { id: "1", client: "Marie Lefebvre", lastUpdate: "10/02/2026", status: "Complet", measurements: 12 },
-    { id: "2", client: "Jean Durand", lastUpdate: "08/02/2026", status: "Complet", measurements: 10 },
-    { id: "3", client: "Sophie Martin", lastUpdate: "05/02/2026", status: "Incomplet", measurements: 5 },
-    { id: "4", client: "Lucas Bernard", lastUpdate: "01/02/2026", status: "En attente", measurements: 0 },
-    { id: "5", client: "Claire Petit", lastUpdate: "12/01/2026", status: "Complet", measurements: 14 },
+    { id: "1", client: "Marie Lefebvre", lastUpdate: "10/02/2026", status: "Complet", measurements: 12, details: [
+      { label: "Tour de poitrine", value: "88 cm" }, { label: "Tour de taille", value: "68 cm" }, { label: "Tour de hanches", value: "96 cm" },
+      { label: "Longueur dos", value: "40 cm" }, { label: "Largeur épaules", value: "38 cm" }, { label: "Longueur bras", value: "58 cm" },
+      { label: "Tour de cou", value: "34 cm" }, { label: "Longueur jambe ext.", value: "105 cm" }, { label: "Longueur jambe int.", value: "78 cm" },
+      { label: "Tour de cuisse", value: "54 cm" }, { label: "Tour de mollet", value: "36 cm" }, { label: "Tour de poignet", value: "15 cm" },
+    ]},
+    { id: "2", client: "Jean Durand", lastUpdate: "08/02/2026", status: "Complet", measurements: 10, details: [
+      { label: "Tour de poitrine", value: "102 cm" }, { label: "Tour de taille", value: "88 cm" }, { label: "Tour de hanches", value: "100 cm" },
+      { label: "Longueur dos", value: "44 cm" }, { label: "Largeur épaules", value: "46 cm" }, { label: "Longueur bras", value: "64 cm" },
+      { label: "Tour de cou", value: "40 cm" }, { label: "Longueur jambe ext.", value: "110 cm" }, { label: "Longueur jambe int.", value: "82 cm" },
+      { label: "Tour de cuisse", value: "58 cm" },
+    ]},
+    { id: "3", client: "Sophie Martin", lastUpdate: "05/02/2026", status: "Incomplet", measurements: 5, details: [
+      { label: "Tour de poitrine", value: "92 cm" }, { label: "Tour de taille", value: "72 cm" }, { label: "Tour de hanches", value: "98 cm" },
+      { label: "Longueur dos", value: "39 cm" }, { label: "Largeur épaules", value: "37 cm" },
+    ]},
+    { id: "4", client: "Lucas Bernard", lastUpdate: "01/02/2026", status: "En attente", measurements: 0, details: [] },
+    { id: "5", client: "Claire Petit", lastUpdate: "12/01/2026", status: "Complet", measurements: 14, details: [
+      { label: "Tour de poitrine", value: "86 cm" }, { label: "Tour de taille", value: "66 cm" }, { label: "Tour de hanches", value: "94 cm" },
+      { label: "Longueur dos", value: "38 cm" }, { label: "Largeur épaules", value: "36 cm" }, { label: "Longueur bras", value: "56 cm" },
+      { label: "Tour de cou", value: "33 cm" }, { label: "Longueur jambe ext.", value: "102 cm" }, { label: "Longueur jambe int.", value: "76 cm" },
+      { label: "Tour de cuisse", value: "52 cm" }, { label: "Tour de mollet", value: "34 cm" }, { label: "Tour de poignet", value: "14.5 cm" },
+      { label: "Carrure devant", value: "34 cm" }, { label: "Hauteur buste", value: "42 cm" },
+    ]},
   ]);
 
   const [articles, setArticles] = useState<Article[]>([
@@ -694,7 +726,7 @@ export default function AdminDashboard() {
                                   <Badge className={cn("text-[10px] border-none font-bold", mp.status === "Complet" ? "bg-green-100 text-green-700" : mp.status === "Incomplet" ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500")} data-testid={`badge-measure-status-${mp.id}`}>{mp.status}</Badge>
                                 </td>
                                 <td className="px-5 py-3 text-right">
-                                  <Button size="sm" variant="outline" className="h-8 text-[11px]" data-testid={`button-view-measure-${mp.id}`}>
+                                  <Button size="sm" variant="outline" className="h-8 text-[11px]" onClick={() => setSelectedMeasure(mp)} data-testid={`button-view-measure-${mp.id}`}>
                                     <Eye size={14} className="mr-1" /> Voir
                                   </Button>
                                 </td>
@@ -705,6 +737,42 @@ export default function AdminDashboard() {
                       </div>
                     </Card>
                   </div>
+
+                  <Dialog open={!!selectedMeasure} onOpenChange={(open) => !open && setSelectedMeasure(null)}>
+                    <DialogContent className="max-w-lg" data-testid="dialog-measure-detail">
+                      <DialogHeader>
+                        <DialogTitle className="font-serif text-lg flex items-center gap-3" data-testid="text-measure-client">
+                          <Ruler size={20} className="text-[#722F37]" />
+                          {selectedMeasure?.client}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 pt-2">
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <Badge className={cn("text-[10px] border-none font-bold", selectedMeasure?.status === "Complet" ? "bg-green-100 text-green-700" : selectedMeasure?.status === "Incomplet" ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500")} data-testid="badge-measure-detail-status">{selectedMeasure?.status}</Badge>
+                          <span className="text-xs text-gray-400" data-testid="text-measure-update">MAJ : {selectedMeasure?.lastUpdate}</span>
+                        </div>
+                        {selectedMeasure?.details && selectedMeasure.details.length > 0 ? (
+                          <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-measure-details">
+                            {selectedMeasure.details.map((d, i) => (
+                              <div key={i} className="flex justify-between items-center py-1.5 border-b border-gray-50" data-testid={`measure-detail-${i}`}>
+                                <span className="text-sm text-gray-500">{d.label}</span>
+                                <span className="text-sm font-semibold text-gray-900">{d.value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8">
+                            <Ruler className="mx-auto text-gray-200 h-12 w-12 mb-3" />
+                            <p className="text-sm text-gray-400" data-testid="text-no-measures">Aucune mesure enregistrée</p>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center pt-2 border-t border-gray-100 gap-3 flex-wrap">
+                          <span className="text-xs text-gray-400">{selectedMeasure?.measurements} mesure{(selectedMeasure?.measurements ?? 0) > 1 ? "s" : ""} enregistrée{(selectedMeasure?.measurements ?? 0) > 1 ? "s" : ""}</span>
+                          <Button variant="outline" size="sm" onClick={() => setSelectedMeasure(null)} data-testid="button-close-measure-detail">Fermer</Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </>
               )}
 
