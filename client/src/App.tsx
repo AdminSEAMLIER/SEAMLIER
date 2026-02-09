@@ -147,6 +147,10 @@ function Router() {
 
       {/* L'Espace Administrateur Secret (Empire SEAMLiER) */}
       <Route path="/admin/seamlier" component={AdminDashboard} />
+      <Route path="/admin/projets" component={ProProjets} />
+      <Route path="/admin/messagerie" component={ProMessagerie} />
+      <Route path="/admin/planning" component={ProPlanning} />
+      <Route path="/admin/artisans" component={Recherche} />
       <Route path="/access/gestion/seamlier" component={AdminDashboard} />
 
       {/* Erreur 404 */}
