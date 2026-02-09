@@ -1,8 +1,16 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   Home, 
   FileText, 
@@ -12,12 +20,20 @@ import {
   Euro,
   TrendingUp,
   Star,
-  ArrowRight
+  ArrowRight,
+  Ruler,
+  ArrowUpRight,
+  ShieldAlert,
+  CheckCircle,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { Product, ConversationWithParticipant } from "@shared/schema";
+
+const STARTER_LIMIT = 10;
 
 export default function ProDashboard() {
   const { t } = useTranslation();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   
   const { data: products } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -27,18 +43,27 @@ export default function ProDashboard() {
     queryKey: ["/api/conversations"],
   });
 
+  const { data: settings } = useQuery<Record<string, string>>({
+    queryKey: ["/api/admin/settings"],
+  });
+
+  const subscriptionPrice = settings?.subscriptionPrice || "29";
+  const currentPlan = "Starter" as "Starter" | "Pro";
+  const measureCount = 0;
+  const limitPercent = Math.min(100, (measureCount / STARTER_LIMIT) * 100);
+
   const stats = [
-    { label: t('pro.thisMonth'), value: "4,250€", icon: Euro },
-    { label: t('pro.activeProjects'), value: "3", icon: FolderKanban },
-    { label: t('pro.newRequests'), value: "5", icon: FileText },
-    { label: t('pro.averageRating'), value: "4.9", icon: Star },
+    { label: t('pro.thisMonth'), value: "0€", icon: Euro },
+    { label: t('pro.activeProjects'), value: "0", icon: FolderKanban },
+    { label: t('pro.newRequests'), value: "0", icon: FileText },
+    { label: t('pro.averageRating'), value: "-", icon: Star },
   ];
 
   const quickLinks = [
-    { label: t('nav.requests'), icon: FileText, href: "/professionnel/demandes", count: 5 },
-    { label: t('nav.projects'), icon: FolderKanban, href: "/professionnel/projets", count: 3 },
-    { label: t('nav.messaging'), icon: MessageSquare, href: "/professionnel/messagerie", count: 2 },
-    { label: t('nav.planning'), icon: Calendar, href: "/professionnel/planning", count: 4 },
+    { label: t('nav.requests'), icon: FileText, href: "/professionnel/demandes", count: 0 },
+    { label: t('nav.projects'), icon: FolderKanban, href: "/professionnel/projets", count: 0 },
+    { label: t('nav.messaging'), icon: MessageSquare, href: "/professionnel/messagerie", count: 0 },
+    { label: t('nav.planning'), icon: Calendar, href: "/professionnel/planning", count: 0 },
   ];
 
   return (
@@ -49,7 +74,7 @@ export default function ProDashboard() {
             <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
               <Home className="h-5 w-5 text-[#722F37]" />
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]" data-testid="text-pro-welcome">
               {t('pro.welcome')}
             </h1>
           </div>
@@ -59,28 +84,82 @@ export default function ProDashboard() {
         </div>
       </div>
 
-      <section className="py-6 px-4 lg:px-6 border-b border-gray-100 bg-white">
-        <div className="max-w-2xl mx-auto">
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-gray-800 text-sm md:text-base font-medium leading-tight">{t('features.verifiedTailors')}</p>
-            </div>
-            <div>
-              <p className="text-gray-800 text-sm md:text-base font-medium leading-tight">{t('features.onTimeDelivery')}</p>
-            </div>
-            <div>
-              <p className="text-gray-800 text-sm md:text-base font-medium leading-tight">{t('features.secureMessaging')}</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <div className="max-w-2xl mx-auto px-4 lg:px-6 py-6 space-y-6">
 
-      <div className="max-w-2xl mx-auto px-4 lg:px-6 py-6">
-        <Card className="border border-gray-100 bg-white shadow-sm mb-6">
+        {currentPlan === "Starter" && (
+          <Card className="border border-gray-100 bg-white shadow-sm" data-testid="card-starter-limit">
+            <CardContent className="p-5 bg-white space-y-4">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Ruler className="h-5 w-5 text-[#722F37]" />
+                  <span className="font-semibold text-gray-900">Outil Mesures</span>
+                  <Badge className="bg-blue-50 text-blue-700 border-none text-[10px]">Starter</Badge>
+                </div>
+                <span className={cn(
+                  "text-sm font-bold",
+                  measureCount >= STARTER_LIMIT ? "text-red-600" : measureCount >= 7 ? "text-amber-600" : "text-green-600"
+                )} data-testid="text-pro-measure-count">
+                  {measureCount} / {STARTER_LIMIT} fiches
+                </span>
+              </div>
+
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div
+                  className={cn(
+                    "h-2.5 rounded-full transition-all",
+                    measureCount >= STARTER_LIMIT ? "bg-red-500" : measureCount >= 7 ? "bg-amber-500" : "bg-green-500"
+                  )}
+                  style={{ width: `${limitPercent}%` }}
+                  data-testid="progress-pro-starter-limit"
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <p className="text-xs text-gray-500">
+                  Plan Starter : 15% commission artisan
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs text-purple-700 border-purple-200"
+                  onClick={() => setShowUpgradeModal(true)}
+                  data-testid="button-pro-upgrade"
+                >
+                  <ArrowUpRight className="h-3 w-3 mr-1" />
+                  Passer au Pro
+                </Button>
+              </div>
+
+              {measureCount >= STARTER_LIMIT && (
+                <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg">
+                  <ShieldAlert className="h-5 w-5 text-red-500 flex-shrink-0" />
+                  <p className="text-sm text-red-700">
+                    Limite atteinte. Passez au plan Pro pour des mesures illimitées et 0% de commission.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {currentPlan === "Pro" && (
+          <Card className="border border-purple-200 bg-purple-50/30 shadow-sm" data-testid="card-pro-plan-active">
+            <CardContent className="p-4 bg-transparent flex items-center gap-3 flex-wrap">
+              <CheckCircle className="h-5 w-5 text-purple-600 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-purple-800">Plan Pro actif</p>
+                <p className="text-xs text-purple-600">0% commission - Mesures illimitées</p>
+              </div>
+              <Badge className="bg-purple-100 text-purple-700 border-none">PRO</Badge>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card className="border border-gray-100 bg-white shadow-sm">
           <CardContent className="p-6 bg-white">
             <div className="grid grid-cols-2 gap-4">
               {stats.map((stat) => (
-                <div key={stat.label} className="p-4 bg-gray-50 rounded-lg text-center">
+                <div key={stat.label} className="p-4 bg-gray-50 rounded-lg text-center" data-testid={`stat-${stat.label.replace(/\s/g, "-").toLowerCase()}`}>
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <stat.icon className="h-5 w-5 text-[#722F37]" />
                   </div>
@@ -92,7 +171,7 @@ export default function ProDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border border-gray-100 bg-white shadow-sm mb-6">
+        <Card className="border border-gray-100 bg-white shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg text-[#722F37]">{t('pro.quickActions')}</CardTitle>
           </CardHeader>
@@ -100,7 +179,7 @@ export default function ProDashboard() {
             <div className="grid grid-cols-2 gap-3">
               {quickLinks.map((link) => (
                 <Link key={link.href} href={link.href}>
-                  <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-testid={`link-${link.label.toLowerCase()}`}>
+                  <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-testid={`link-pro-${link.label.replace(/\s/g, "-").toLowerCase()}`}>
                     <div className="relative">
                       <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
                         <link.icon className="h-5 w-5 text-[#722F37]" />
@@ -119,11 +198,11 @@ export default function ProDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border border-gray-100 bg-white shadow-sm mb-6">
+        <Card className="border border-gray-100 bg-white shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between gap-2">
             <CardTitle className="text-lg text-[#722F37]">{t('pro.recentMessages')}</CardTitle>
             <Link href="/professionnel/messagerie">
-              <Button variant="ghost" size="sm" className="text-[#722F37]">
+              <Button variant="ghost" size="sm" className="text-[#722F37]" data-testid="button-pro-view-messages">
                 {t('landing.viewAll')}
                 <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
@@ -136,15 +215,15 @@ export default function ProDashboard() {
                   <div key={conv.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
                     <div className="w-10 h-10 rounded-full bg-[#722F37]/10 flex items-center justify-center">
                       <span className="text-[#722F37] font-medium">
-                        {conv.participant?.fullName?.charAt(0) || "?"}
+                        {conv.otherParticipant?.firstName?.charAt(0) || "?"}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900 truncate">
-                        {conv.participant?.fullName || "Client"}
+                        {conv.otherParticipant ? `${conv.otherParticipant.firstName} ${conv.otherParticipant.lastName}` : "Client"}
                       </p>
                       <p className="text-sm text-gray-500 truncate">
-                        {conv.lastMessage || "..."}
+                        ...
                       </p>
                     </div>
                   </div>
@@ -170,13 +249,62 @@ export default function ProDashboard() {
               </div>
               <div className="flex-1">
                 <p className="text-sm text-gray-500">{t('pro.thisMonth')}</p>
-                <p className="text-2xl font-bold text-[#722F37]">4,250€</p>
+                <p className="text-2xl font-bold text-[#722F37]" data-testid="text-pro-revenue">0€</p>
               </div>
-              <span className="text-sm text-green-600 font-medium">+12%</span>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+        <DialogContent className="sm:max-w-md bg-white" data-testid="dialog-pro-upgrade">
+          <DialogHeader>
+            <DialogTitle className="text-[#722F37] font-serif text-xl">Passer au Plan Pro</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-600">
+            Boostez votre activité avec le plan Pro et profitez de tous les avantages.
+          </p>
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            <div className="border border-gray-200 rounded-lg p-3">
+              <Badge className="bg-blue-50 text-blue-700 border-none text-[10px] font-bold mb-2">STARTER</Badge>
+              <p className="text-sm font-bold text-gray-500 line-through">Votre plan actuel</p>
+              <ul className="mt-2 space-y-1 text-xs text-gray-600">
+                <li className="text-red-500 font-bold">15% commission</li>
+                <li>{STARTER_LIMIT} fiches max</li>
+                <li>10% frais client</li>
+              </ul>
+            </div>
+            <div className="border-2 border-purple-300 rounded-lg p-3 bg-purple-50/30">
+              <Badge className="bg-purple-100 text-purple-700 border-none text-[10px] font-bold mb-2">PRO</Badge>
+              <p className="text-sm font-bold">{subscriptionPrice}€/mois</p>
+              <ul className="mt-2 space-y-1 text-xs text-gray-700">
+                <li className="font-bold text-green-600">0% commission</li>
+                <li className="font-bold text-green-600">Mesures illimitées</li>
+                <li>10% frais client</li>
+              </ul>
+            </div>
+          </div>
+          <div className="flex gap-2 mt-4">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowUpgradeModal(false)}
+              data-testid="button-close-pro-upgrade"
+            >
+              Plus tard
+            </Button>
+            <Button
+              className="flex-1 bg-[#722F37] text-white"
+              onClick={() => {
+                setShowUpgradeModal(false);
+              }}
+              data-testid="button-confirm-pro-upgrade"
+            >
+              Contacter l'équipe
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

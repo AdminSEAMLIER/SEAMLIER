@@ -224,13 +224,7 @@ export default function AdminDashboard() {
     } catch {}
   }, [isAuthenticated]);
 
-  const [projects, setProjects] = useState<Project[]>([
-    { id: "1", client: "Marie Lefebvre", artisan: "Atelier Couture Paris", status: "Bloqué", amount: "250 €", date: "12/02/2026", description: "Retouche robe de soirée" },
-    { id: "2", client: "Jean Durand", artisan: "Magda Styliste", status: "Libéré", amount: "1 200 €", date: "10/02/2026", description: "Costume sur mesure" },
-    { id: "3", client: "Sophie Martin", artisan: "La Main d'Or", status: "Bloqué", amount: "450 €", date: "08/02/2026", description: "Robe de mariée - ajustements" },
-    { id: "4", client: "Lucas Bernard", artisan: "Fils & Aiguilles", status: "Bloqué", amount: "180 €", date: "06/02/2026", description: "Ourlet pantalon x3" },
-    { id: "5", client: "Claire Petit", artisan: "Atelier Couture Paris", status: "Libéré", amount: "3 500 €", date: "01/02/2026", description: "Collection capsule 5 pièces" },
-  ]);
+  const [projects, setProjects] = useState<Project[]>([]);
 
   const { data: dbArtisans = [], isLoading: artisansLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/artisans"],
@@ -352,98 +346,15 @@ export default function AdminDashboard() {
     },
   });
 
-  const [messages, setMessages] = useState<Message[]>([
-    { id: "1", from: "Marie Lefebvre", subject: "Problème de livraison", preview: "Bonjour, je n'ai toujours pas reçu ma commande depuis 2 semaines...", date: "09/02/2026", read: false, type: "support", replies: [] },
-    { id: "2", from: "Jean Durand", subject: "Signalement artisan", preview: "Je souhaite signaler un comportement inapproprié de la part de...", date: "08/02/2026", read: false, type: "signalement", replies: [] },
-    { id: "3", from: "Atelier Paris", subject: "Demande de mise en avant", preview: "Bonjour l'équipe, serait-il possible de mettre mon profil en avant...", date: "07/02/2026", read: true, type: "info", replies: [] },
-    { id: "4", from: "Claire Petit", subject: "Remboursement séquestre", preview: "Suite à l'annulation du projet, je souhaite récupérer...", date: "06/02/2026", read: true, type: "support", replies: [] },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
 
-  const [planningEvents] = useState<PlanningEvent[]>([
-    { id: "1", title: "Essayage robe", client: "Marie L.", artisan: "Atelier Paris", date: "15/02/2026", time: "10:00", status: "Confirmé" },
-    { id: "2", title: "Prise de mesures", client: "Jean D.", artisan: "Magda Styliste", date: "16/02/2026", time: "14:00", status: "Confirmé" },
-    { id: "3", title: "Livraison finale", client: "Sophie M.", artisan: "La Main d'Or", date: "17/02/2026", time: "11:00", status: "En attente" },
-    { id: "4", title: "Consultation initiale", client: "Lucas B.", artisan: "Fils & Aiguilles", date: "18/02/2026", time: "09:30", status: "Confirmé" },
-    { id: "5", title: "Retouche express", client: "Claire P.", artisan: "Amina K.", date: "19/02/2026", time: "16:00", status: "Annulé" },
-  ]);
+  const [planningEvents] = useState<PlanningEvent[]>([]);
 
-  const [measureProfiles] = useState<MeasureProfile[]>([
-    { id: "1", client: "Marie Lefebvre", lastUpdate: "10/02/2026", status: "Complet", measurements: 12, details: [
-      { label: "Tour de poitrine", value: "88 cm" }, { label: "Tour de taille", value: "68 cm" }, { label: "Tour de hanches", value: "96 cm" },
-      { label: "Longueur dos", value: "40 cm" }, { label: "Largeur épaules", value: "38 cm" }, { label: "Longueur bras", value: "58 cm" },
-      { label: "Tour de cou", value: "34 cm" }, { label: "Longueur jambe ext.", value: "105 cm" }, { label: "Longueur jambe int.", value: "78 cm" },
-      { label: "Tour de cuisse", value: "54 cm" }, { label: "Tour de mollet", value: "36 cm" }, { label: "Tour de poignet", value: "15 cm" },
-    ]},
-    { id: "2", client: "Jean Durand", lastUpdate: "08/02/2026", status: "Complet", measurements: 10, details: [
-      { label: "Tour de poitrine", value: "102 cm" }, { label: "Tour de taille", value: "88 cm" }, { label: "Tour de hanches", value: "100 cm" },
-      { label: "Longueur dos", value: "44 cm" }, { label: "Largeur épaules", value: "46 cm" }, { label: "Longueur bras", value: "64 cm" },
-      { label: "Tour de cou", value: "40 cm" }, { label: "Longueur jambe ext.", value: "110 cm" }, { label: "Longueur jambe int.", value: "82 cm" },
-      { label: "Tour de cuisse", value: "58 cm" },
-    ]},
-    { id: "3", client: "Sophie Martin", lastUpdate: "05/02/2026", status: "Incomplet", measurements: 5, details: [
-      { label: "Tour de poitrine", value: "92 cm" }, { label: "Tour de taille", value: "72 cm" }, { label: "Tour de hanches", value: "98 cm" },
-      { label: "Longueur dos", value: "39 cm" }, { label: "Largeur épaules", value: "37 cm" },
-    ]},
-    { id: "4", client: "Lucas Bernard", lastUpdate: "01/02/2026", status: "En attente", measurements: 0, details: [] },
-    { id: "5", client: "Claire Petit", lastUpdate: "12/01/2026", status: "Complet", measurements: 14, details: [
-      { label: "Tour de poitrine", value: "86 cm" }, { label: "Tour de taille", value: "66 cm" }, { label: "Tour de hanches", value: "94 cm" },
-      { label: "Longueur dos", value: "38 cm" }, { label: "Largeur épaules", value: "36 cm" }, { label: "Longueur bras", value: "56 cm" },
-      { label: "Tour de cou", value: "33 cm" }, { label: "Longueur jambe ext.", value: "102 cm" }, { label: "Longueur jambe int.", value: "76 cm" },
-      { label: "Tour de cuisse", value: "52 cm" }, { label: "Tour de mollet", value: "34 cm" }, { label: "Tour de poignet", value: "14.5 cm" },
-      { label: "Carrure devant", value: "34 cm" }, { label: "Hauteur buste", value: "42 cm" },
-    ]},
-  ]);
+  const [measureProfiles] = useState<MeasureProfile[]>([]);
 
-  const [couturiers, setCouturiers] = useState<CouturierData[]>([
-    { id: "c1", name: "Marc Antoine", location: "Paris, 75003", specialty: "Tailleur Homme", status: "Vérifié", selected: false,
-      firstName: "Marc", lastName: "Antoine", birthDate: "15/03/1985", nationality: "Française", idType: "CNI", idNumber: "850315 123 456 78",
-      phone: "+33 6 12 34 56 78", email: "marc.antoine@atelier-ma.fr", address: "12 Rue du Temple, 75003 Paris",
-      siret: "823 456 789 00012", companyName: "Atelier Marc Antoine", legalForm: "SARL", tvaNumber: "FR 12 823456789",
-      iban: "FR76 3000 4012 3400 0100 0567 890", registrationDate: "15/01/2026", yearsExperience: 18,
-      bio: "Tailleur homme spécialisé dans le costume sur mesure et la chemise. Formation aux Arts et Métiers de Paris." },
-    { id: "c2", name: "Hélène Beaumont", location: "Lyon, 69002", specialty: "Robe de Mariée", status: "En attente", selected: false,
-      firstName: "Hélène", lastName: "Beaumont", birthDate: "22/07/1990", nationality: "Française", idType: "CNI", idNumber: "900722 654 321 09",
-      phone: "+33 6 98 76 54 32", email: "helene@beaumont-couture.fr", address: "45 Rue de la République, 69002 Lyon",
-      siret: "912 345 678 00023", companyName: "Beaumont Couture", legalForm: "Auto-entrepreneur", tvaNumber: "N/A",
-      iban: "FR76 2004 1010 0505 0002 3456 789", registrationDate: "05/02/2026", yearsExperience: 8,
-      bio: "Créatrice de robes de mariée sur mesure. Diplômée de l'École de la Chambre Syndicale de la Couture Parisienne." },
-    { id: "c3", name: "Lucie Valentin", location: "Marseille, 13001", specialty: "Retouches Premium", status: "Vérifié", selected: false,
-      firstName: "Lucie", lastName: "Valentin", birthDate: "10/11/1982", nationality: "Française", idType: "CNI", idNumber: "821110 987 654 32",
-      phone: "+33 6 55 44 33 22", email: "lucie@valentin-retouches.fr", address: "8 Cours Julien, 13001 Marseille",
-      siret: "734 567 890 00034", companyName: "Valentin Retouches Premium", legalForm: "EI", tvaNumber: "FR 34 734567890",
-      iban: "FR76 1234 5678 9012 3456 7890 123", registrationDate: "20/12/2025", yearsExperience: 22,
-      bio: "Retoucheuse experte, 22 ans d'expérience en haute couture et prêt-à-porter de luxe. Clientèle internationale." },
-    { id: "c4", name: "Pierre Delacroix", location: "Bordeaux, 33000", specialty: "Haute Couture", status: "En attente", selected: false,
-      firstName: "Pierre", lastName: "Delacroix", birthDate: "03/05/1978", nationality: "Française", idType: "Passeport", idNumber: "19FR78543",
-      phone: "+33 6 11 22 33 44", email: "pierre@maison-delacroix.fr", address: "27 Cours de l'Intendance, 33000 Bordeaux",
-      siret: "645 678 901 00045", companyName: "Maison Delacroix", legalForm: "SAS", tvaNumber: "FR 45 645678901",
-      iban: "FR76 4321 0987 6543 2109 8765 432", registrationDate: "08/02/2026", yearsExperience: 25,
-      bio: "Maître tailleur haute couture. Ancien collaborateur de grandes maisons parisiennes. Spécialiste du sur-mesure d'exception." },
-    { id: "c5", name: "Amina Kouyaté", location: "Paris, 75020", specialty: "Couture Africaine", status: "Vérifié", selected: false,
-      firstName: "Amina", lastName: "Kouyaté", birthDate: "18/09/1988", nationality: "Française", idType: "CNI", idNumber: "880918 456 789 01",
-      phone: "+33 6 77 88 99 00", email: "amina@kouyate-wax.fr", address: "15 Rue des Pyrénées, 75020 Paris",
-      siret: "556 789 012 00056", companyName: "Amina K. Créations", legalForm: "Auto-entrepreneur", tvaNumber: "N/A",
-      iban: "FR76 5678 9012 3456 7890 1234 567", registrationDate: "10/01/2026", yearsExperience: 12,
-      bio: "Créatrice spécialisée en wax et tissus africains. Mélange de couture traditionnelle et design contemporain." },
-    { id: "c6", name: "Fatou Diallo", location: "Toulouse, 31000", specialty: "Couture Traditionnelle", status: "Non vérifié", selected: false,
-      firstName: "Fatou", lastName: "Diallo", birthDate: "25/12/1992", nationality: "Française", idType: "Titre de séjour", idNumber: "TS-2024-876543",
-      phone: "+33 6 33 22 11 00", email: "fatou.diallo@gmail.com", address: "3 Place du Capitole, 31000 Toulouse",
-      siret: "En cours d'immatriculation", companyName: "Fatou Couture", legalForm: "Auto-entrepreneur", tvaNumber: "N/A",
-      iban: "FR76 8901 2345 6789 0123 4567 890", registrationDate: "01/02/2026", yearsExperience: 6,
-      bio: "Couturière traditionnelle, spécialisée dans les tenues de cérémonie et les boubous brodés." },
-    { id: "c7", name: "Olivier Masse", location: "Nice, 06000", specialty: "Costume Sur Mesure", status: "Vérifié", selected: false,
-      firstName: "Olivier", lastName: "Masse", birthDate: "07/01/1975", nationality: "Française", idType: "CNI", idNumber: "750107 321 654 98",
-      phone: "+33 6 44 55 66 77", email: "olivier@masse-tailor.fr", address: "22 Promenade des Anglais, 06000 Nice",
-      siret: "467 890 123 00067", companyName: "Masse Tailor", legalForm: "SARL", tvaNumber: "FR 67 467890123",
-      iban: "FR76 6789 0123 4567 8901 2345 678", registrationDate: "12/11/2025", yearsExperience: 28,
-      bio: "Tailleur de renom sur la Côte d'Azur. Spécialiste du costume italien et britannique. Clientèle internationale." },
-  ]);
+  const [couturiers, setCouturiers] = useState<CouturierData[]>([]);
 
-  const [articles, setArticles] = useState<Article[]>([
-    { id: "1", title: "Les tendances couture printemps 2026", category: "Tendances", status: "Publié", date: "02/01/2026", views: 1240 },
-    { id: "2", title: "Comment choisir son tissu", category: "Conseils", status: "Publié", date: "28/12/2025", views: 890 },
-    { id: "3", title: "Portrait : Marie Dupont", category: "Portrait", status: "Brouillon", date: "25/12/2025", views: 0 },
-  ]);
+  const [articles, setArticles] = useState<Article[]>([]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1077,28 +988,7 @@ export default function AdminDashboard() {
                   </div>
 
                   {(() => {
-                    const STARTER_LIMIT = 10;
-                    const starterArtisanCount = artisans.filter(a => a.subscriptionPlan === "Starter").length;
-                    const totalFiches = measureProfiles.length;
-                    const isOverLimit = totalFiches >= STARTER_LIMIT && starterArtisanCount > 0;
-                    return isOverLimit ? (
-                      <Card className="border-none shadow-sm bg-amber-50" data-testid="card-measures-limit-warning">
-                        <CardContent className="p-4 flex items-center justify-between gap-4 flex-wrap">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                              <ShieldAlert size={20} className="text-amber-600" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-bold text-amber-800">Limite Starter atteinte</p>
-                              <p className="text-xs text-amber-600">Les artisans au plan Starter sont limités à {STARTER_LIMIT} fiches clients. {totalFiches} fiches actuellement enregistrées.</p>
-                            </div>
-                          </div>
-                          <Button size="sm" className="bg-purple-600 text-white font-bold text-xs" onClick={() => setShowUpgradeModal(true)} data-testid="button-upgrade-to-pro">
-                            <ArrowUpRight size={14} className="mr-1" /> Passer au plan Pro
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ) : null;
+                    return null;
                   })()}
 
                   <div className="grid lg:grid-cols-3 gap-6">
@@ -1110,19 +1000,15 @@ export default function AdminDashboard() {
                           <div className="flex justify-between text-sm"><span className="text-gray-500">Incomplets</span><span className="font-bold text-amber-600" data-testid="text-incomplete-profiles">{measureProfiles.filter(m => m.status === "Incomplet").length}</span></div>
                           <div className="flex justify-between text-sm"><span className="text-gray-500">En attente</span><span className="font-bold text-gray-400" data-testid="text-waiting-profiles">{measureProfiles.filter(m => m.status === "En attente").length}</span></div>
                           <div className="flex justify-between text-sm pt-2 border-t border-gray-50"><span className="text-gray-500">Total mesures</span><span className="font-bold text-[#722F37]" data-testid="text-total-measures">{measureProfiles.reduce((s, m) => s + m.measurements, 0)}</span></div>
-                          <div className="pt-2 border-t border-gray-50 space-y-2">
+                          <div className="pt-2 border-t border-gray-50 space-y-1">
                             <div className="flex justify-between text-sm">
-                              <span className="text-gray-500">Limite Starter</span>
-                              <span className={cn("font-bold", measureProfiles.length >= 10 ? "text-red-600" : "text-green-600")} data-testid="text-starter-limit">{measureProfiles.length} / 10 fiches</span>
+                              <span className="text-gray-500">Artisans Starter</span>
+                              <span className="font-bold text-gray-700" data-testid="text-starter-artisan-count">{artisans.filter(a => a.subscriptionPlan === "Starter").length}</span>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div className={cn("h-2 rounded-full transition-all", measureProfiles.length >= 10 ? "bg-red-500" : measureProfiles.length >= 7 ? "bg-amber-500" : "bg-green-500")} style={{ width: `${Math.min(100, (measureProfiles.length / 10) * 100)}%` }} data-testid="progress-starter-limit" />
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-500">Artisans Pro</span>
+                              <span className="font-bold text-purple-600" data-testid="text-pro-artisan-count">{artisans.filter(a => a.subscriptionPlan === "Pro").length}</span>
                             </div>
-                            {measureProfiles.length >= 10 && (
-                              <Button size="sm" variant="outline" className="w-full text-xs text-purple-700 border-purple-200" onClick={() => setShowUpgradeModal(true)} data-testid="button-stats-upgrade-pro">
-                                <ArrowUpRight size={12} className="mr-1" /> Passer au plan Pro
-                              </Button>
-                            )}
                           </div>
                         </div>
                       </CardContent>
