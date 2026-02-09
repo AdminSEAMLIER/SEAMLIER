@@ -175,6 +175,7 @@ export default function AdminDashboard() {
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [selectedMeasure, setSelectedMeasure] = useState<MeasureProfile | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showNewArticle, setShowNewArticle] = useState(false);
   const [newArticleTitle, setNewArticleTitle] = useState("");
   const [newArticleCategory, setNewArticleCategory] = useState("");
@@ -192,7 +193,7 @@ export default function AdminDashboard() {
     siret: "", companyName: "", legalForm: "", status: "En attente" as "Vérifié" | "En attente" | "Rejeté",
     birthDate: "", nationality: "", idType: "", idNumber: "", address: "",
     tvaNumber: "", iban: "", yearsExperience: 0, bio: "",
-    subscriptionPlan: "Mensuel", paymentStatus: "En attente",
+    subscriptionPlan: "Starter", paymentStatus: "En attente",
   });
 
   const [settingsPlatformName, setSettingsPlatformName] = useState("SEAMLiER");
@@ -260,7 +261,7 @@ export default function AdminDashboard() {
       iban: a.iban || "",
       yearsExperience: a.yearsExperience || 0,
       bio: a.bio || "",
-      subscriptionPlan: a.subscriptionPlan || "Mensuel",
+      subscriptionPlan: a.subscriptionPlan || "Starter",
       paymentStatus: a.paymentStatus || "En attente",
     })),
   [dbArtisans]);
@@ -279,7 +280,7 @@ export default function AdminDashboard() {
         siret: "", companyName: "", legalForm: "", status: "En attente",
         birthDate: "", nationality: "", idType: "", idNumber: "", address: "",
         tvaNumber: "", iban: "", yearsExperience: 0, bio: "",
-        subscriptionPlan: "Mensuel", paymentStatus: "En attente",
+        subscriptionPlan: "Starter", paymentStatus: "En attente",
       });
     },
     onError: () => {
@@ -1075,6 +1076,31 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
+                  {(() => {
+                    const STARTER_LIMIT = 10;
+                    const starterArtisanCount = artisans.filter(a => a.subscriptionPlan === "Starter").length;
+                    const totalFiches = measureProfiles.length;
+                    const isOverLimit = totalFiches >= STARTER_LIMIT && starterArtisanCount > 0;
+                    return isOverLimit ? (
+                      <Card className="border-none shadow-sm bg-amber-50" data-testid="card-measures-limit-warning">
+                        <CardContent className="p-4 flex items-center justify-between gap-4 flex-wrap">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                              <ShieldAlert size={20} className="text-amber-600" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-amber-800">Limite Starter atteinte</p>
+                              <p className="text-xs text-amber-600">Les artisans au plan Starter sont limités à {STARTER_LIMIT} fiches clients. {totalFiches} fiches actuellement enregistrées.</p>
+                            </div>
+                          </div>
+                          <Button size="sm" className="bg-purple-600 text-white font-bold text-xs" onClick={() => setShowUpgradeModal(true)} data-testid="button-upgrade-to-pro">
+                            <ArrowUpRight size={14} className="mr-1" /> Passer au plan Pro
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ) : null;
+                  })()}
+
                   <div className="grid lg:grid-cols-3 gap-6">
                     <Card className="border-none shadow-sm">
                       <CardContent className="p-5">
@@ -1084,6 +1110,20 @@ export default function AdminDashboard() {
                           <div className="flex justify-between text-sm"><span className="text-gray-500">Incomplets</span><span className="font-bold text-amber-600" data-testid="text-incomplete-profiles">{measureProfiles.filter(m => m.status === "Incomplet").length}</span></div>
                           <div className="flex justify-between text-sm"><span className="text-gray-500">En attente</span><span className="font-bold text-gray-400" data-testid="text-waiting-profiles">{measureProfiles.filter(m => m.status === "En attente").length}</span></div>
                           <div className="flex justify-between text-sm pt-2 border-t border-gray-50"><span className="text-gray-500">Total mesures</span><span className="font-bold text-[#722F37]" data-testid="text-total-measures">{measureProfiles.reduce((s, m) => s + m.measurements, 0)}</span></div>
+                          <div className="pt-2 border-t border-gray-50 space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-500">Limite Starter</span>
+                              <span className={cn("font-bold", measureProfiles.length >= 10 ? "text-red-600" : "text-green-600")} data-testid="text-starter-limit">{measureProfiles.length} / 10 fiches</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div className={cn("h-2 rounded-full transition-all", measureProfiles.length >= 10 ? "bg-red-500" : measureProfiles.length >= 7 ? "bg-amber-500" : "bg-green-500")} style={{ width: `${Math.min(100, (measureProfiles.length / 10) * 100)}%` }} data-testid="progress-starter-limit" />
+                            </div>
+                            {measureProfiles.length >= 10 && (
+                              <Button size="sm" variant="outline" className="w-full text-xs text-purple-700 border-purple-200" onClick={() => setShowUpgradeModal(true)} data-testid="button-stats-upgrade-pro">
+                                <ArrowUpRight size={12} className="mr-1" /> Passer au plan Pro
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -1216,6 +1256,51 @@ export default function AdminDashboard() {
                         <div className="flex justify-between items-center pt-2 border-t border-gray-100 gap-3 flex-wrap">
                           <span className="text-xs text-gray-400">{selectedMeasure?.measurements} mesure{(selectedMeasure?.measurements ?? 0) > 1 ? "s" : ""} enregistrée{(selectedMeasure?.measurements ?? 0) > 1 ? "s" : ""}</span>
                           <Button variant="outline" size="sm" onClick={() => setSelectedMeasure(null)} data-testid="button-close-measure-detail">Fermer</Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+                    <DialogContent className="max-w-md" data-testid="dialog-upgrade-pro">
+                      <DialogHeader>
+                        <DialogTitle className="font-serif text-lg flex items-center gap-3" data-testid="text-upgrade-title">
+                          <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                            <ArrowUpRight size={20} className="text-purple-700" />
+                          </div>
+                          Passez au plan Pro
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 pt-2">
+                        <p className="text-sm text-gray-600">
+                          Vous avez atteint la limite de <span className="font-bold">10 fiches clients</span> du plan Starter.
+                          Passez au plan Pro pour profiter de fonctionnalités illimitées.
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="border border-gray-200 rounded-md p-3 opacity-60">
+                            <Badge className="bg-blue-100 text-blue-700 border-none text-[10px] font-bold mb-2">STARTER</Badge>
+                            <p className="text-sm font-bold">0€/mois</p>
+                            <ul className="mt-2 space-y-1 text-xs text-gray-500">
+                              <li>15% commission</li>
+                              <li>10 fiches max</li>
+                              <li>10% frais client</li>
+                            </ul>
+                          </div>
+                          <div className="border-2 border-purple-300 rounded-md p-3 bg-purple-50/30 relative">
+                            <Badge className="bg-purple-100 text-purple-700 border-none text-[10px] font-bold mb-2">PRO</Badge>
+                            <p className="text-sm font-bold">{settingsSubscriptionPrice}€/mois</p>
+                            <ul className="mt-2 space-y-1 text-xs text-gray-700">
+                              <li className="font-bold text-green-600">0% commission</li>
+                              <li className="font-bold text-green-600">Mesures illimitées</li>
+                              <li>10% frais client</li>
+                            </ul>
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+                          <Button variant="outline" size="sm" onClick={() => setShowUpgradeModal(false)} data-testid="button-close-upgrade-modal">Plus tard</Button>
+                          <Button size="sm" className="bg-purple-600 text-white font-bold" onClick={() => { setShowUpgradeModal(false); toast({ title: "Demande envoyée", description: "La demande de passage au plan Pro a été enregistrée." }); }} data-testid="button-confirm-upgrade-pro">
+                            <ArrowUpRight size={14} className="mr-1" /> Passer au plan Pro
+                          </Button>
                         </div>
                       </div>
                     </DialogContent>
@@ -1550,22 +1635,40 @@ export default function AdminDashboard() {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Plan d'abonnement</label>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Plan</label>
                             <select value={newArtisan.subscriptionPlan} onChange={e => setNewArtisan({...newArtisan, subscriptionPlan: e.target.value})} className="mt-1 w-full h-9 text-sm border border-gray-200 rounded-md px-3 bg-white" data-testid="select-new-artisan-subscription">
-                              <option value="Mensuel">Mensuel</option>
-                              <option value="Annuel">Annuel</option>
-                              <option value="Essai gratuit">Essai gratuit</option>
+                              <option value="Starter">Starter (0€/mois)</option>
+                              <option value="Pro">Pro ({settingsSubscriptionPrice}€/mois)</option>
                             </select>
                           </div>
-                          <div>
-                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Statut de paiement</label>
-                            <select value={newArtisan.paymentStatus} onChange={e => setNewArtisan({...newArtisan, paymentStatus: e.target.value})} className="mt-1 w-full h-9 text-sm border border-gray-200 rounded-md px-3 bg-white" data-testid="select-new-artisan-payment-status">
-                              <option value="En attente">En attente</option>
-                              <option value="Payé">Payé</option>
-                              <option value="En retard">En retard</option>
-                              <option value="Expiré">Expiré</option>
-                            </select>
-                          </div>
+                          {newArtisan.subscriptionPlan === "Pro" && (
+                            <div>
+                              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Statut de paiement</label>
+                              <select value={newArtisan.paymentStatus} onChange={e => setNewArtisan({...newArtisan, paymentStatus: e.target.value})} className="mt-1 w-full h-9 text-sm border border-gray-200 rounded-md px-3 bg-white" data-testid="select-new-artisan-payment-status">
+                                <option value="En attente">En attente</option>
+                                <option value="Payé">Payé</option>
+                                <option value="En retard">En retard</option>
+                                <option value="Expiré">Expiré</option>
+                              </select>
+                            </div>
+                          )}
+                        </div>
+                        <div className="bg-gray-50 rounded-md p-3 text-xs text-gray-600 space-y-1">
+                          <p className="font-bold text-gray-700">Détails du plan {newArtisan.subscriptionPlan} :</p>
+                          {newArtisan.subscriptionPlan === "Starter" ? (
+                            <>
+                              <p>Commission artisan : <span className="font-bold text-[#722F37]">15%</span></p>
+                              <p>Frais de service client : <span className="font-bold">10%</span></p>
+                              <p>Outil Mesures : <span className="font-bold">10 fiches max</span></p>
+                            </>
+                          ) : (
+                            <>
+                              <p>Abonnement : <span className="font-bold text-[#722F37]">{settingsSubscriptionPrice}€/mois</span></p>
+                              <p>Commission artisan : <span className="font-bold text-green-600">0%</span></p>
+                              <p>Frais de service client : <span className="font-bold">10%</span></p>
+                              <p>Outil Mesures : <span className="font-bold text-green-600">Illimité</span></p>
+                            </>
+                          )}
                         </div>
                         <div>
                           <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Bio / Présentation</label>
@@ -1597,7 +1700,8 @@ export default function AdminDashboard() {
                         <Badge className="bg-green-50 text-green-700 border-none px-3 py-1" data-testid="badge-verified-artisans">{artisans.filter(a => a.status === "Vérifié").length} vérifiés</Badge>
                         <Badge className="bg-amber-50 text-amber-700 border-none px-3 py-1" data-testid="badge-pending-artisans">{artisans.filter(a => a.status === "En attente").length} en attente</Badge>
                         <Badge className="bg-red-50 text-red-600 border-none px-3 py-1" data-testid="badge-rejected-artisans">{artisans.filter(a => a.status === "Rejeté").length} rejetés</Badge>
-                        <Badge className="bg-purple-50 text-purple-700 border-none px-3 py-1" data-testid="badge-paid-artisans">{artisans.filter(a => a.paymentStatus === "Payé").length} abonnés à jour</Badge>
+                        <Badge className="bg-purple-50 text-purple-700 border-none px-3 py-1" data-testid="badge-pro-artisans">{artisans.filter(a => a.subscriptionPlan === "Pro").length} Pro</Badge>
+                        <Badge className="bg-blue-50 text-blue-700 border-none px-3 py-1" data-testid="badge-starter-artisans">{artisans.filter(a => a.subscriptionPlan === "Starter").length} Starter</Badge>
                       </div>
                       <div className="flex gap-2 items-center flex-wrap">
                         <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white font-bold text-xs" onClick={() => setShowAddArtisan(true)} data-testid="button-add-artisan">
@@ -1638,8 +1742,11 @@ export default function AdminDashboard() {
                               <td className="px-5 py-3 text-xs text-gray-500">{a.joinDate}</td>
                               <td className="px-5 py-3 text-center">
                                 <div className="flex flex-col items-center gap-1">
-                                  <Badge className={cn("text-[10px] border-none font-bold", a.paymentStatus === "Payé" ? "bg-green-100 text-green-700" : a.paymentStatus === "En retard" ? "bg-red-100 text-red-600" : a.paymentStatus === "Expiré" ? "bg-gray-200 text-gray-500" : "bg-amber-100 text-amber-700")} data-testid={`badge-artisan-payment-${a.id}`}>{a.paymentStatus}</Badge>
-                                  <span className="text-[9px] text-gray-400">{a.subscriptionPlan}</span>
+                                  <Badge className={cn("text-[10px] border-none font-bold", a.subscriptionPlan === "Pro" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700")} data-testid={`badge-artisan-plan-${a.id}`}>{a.subscriptionPlan}</Badge>
+                                  <span className="text-[9px] text-gray-400">{a.subscriptionPlan === "Pro" ? `${settingsSubscriptionPrice}€/mois · 0% com.` : "0€ · 15% com."}</span>
+                                  {a.subscriptionPlan === "Pro" && (
+                                    <Badge className={cn("text-[9px] border-none", a.paymentStatus === "Payé" ? "bg-green-100 text-green-700" : a.paymentStatus === "En retard" ? "bg-red-100 text-red-600" : a.paymentStatus === "Expiré" ? "bg-gray-200 text-gray-500" : "bg-amber-100 text-amber-700")} data-testid={`badge-artisan-payment-${a.id}`}>{a.paymentStatus}</Badge>
+                                  )}
                                 </div>
                               </td>
                               <td className="px-5 py-3 text-center">
@@ -1801,12 +1908,30 @@ export default function AdminDashboard() {
                               <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-artisan-subscription">
                                 <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
                                   <span className="text-xs text-gray-500">Plan</span>
-                                  <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-subscription-plan">{dossierArtisan.subscriptionPlan}</span>
+                                  <Badge className={cn("text-[10px] border-none font-bold", dossierArtisan.subscriptionPlan === "Pro" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700")} data-testid="text-artisan-subscription-plan">{dossierArtisan.subscriptionPlan}</Badge>
                                 </div>
                                 <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
-                                  <span className="text-xs text-gray-500">Statut de paiement</span>
-                                  <Badge className={cn("text-[10px] border-none font-bold", dossierArtisan.paymentStatus === "Payé" ? "bg-green-100 text-green-700" : dossierArtisan.paymentStatus === "En retard" ? "bg-red-100 text-red-600" : dossierArtisan.paymentStatus === "Expiré" ? "bg-gray-200 text-gray-500" : "bg-amber-100 text-amber-700")} data-testid="badge-artisan-dossier-payment">{dossierArtisan.paymentStatus}</Badge>
+                                  <span className="text-xs text-gray-500">Tarif mensuel</span>
+                                  <span className="text-sm font-semibold text-gray-900">{dossierArtisan.subscriptionPlan === "Pro" ? `${settingsSubscriptionPrice}€/mois` : "0€/mois"}</span>
                                 </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Commission artisan</span>
+                                  <span className={cn("text-sm font-semibold", dossierArtisan.subscriptionPlan === "Pro" ? "text-green-600" : "text-[#722F37]")}>{dossierArtisan.subscriptionPlan === "Pro" ? "0%" : "15%"}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Frais service client</span>
+                                  <span className="text-sm font-semibold text-gray-900">10%</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                  <span className="text-xs text-gray-500">Outil Mesures</span>
+                                  <span className={cn("text-sm font-semibold", dossierArtisan.subscriptionPlan === "Pro" ? "text-green-600" : "text-gray-900")}>{dossierArtisan.subscriptionPlan === "Pro" ? "Illimité" : "10 fiches max"}</span>
+                                </div>
+                                {dossierArtisan.subscriptionPlan === "Pro" && (
+                                  <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                                    <span className="text-xs text-gray-500">Statut de paiement</span>
+                                    <Badge className={cn("text-[10px] border-none font-bold", dossierArtisan.paymentStatus === "Payé" ? "bg-green-100 text-green-700" : dossierArtisan.paymentStatus === "En retard" ? "bg-red-100 text-red-600" : dossierArtisan.paymentStatus === "Expiré" ? "bg-gray-200 text-gray-500" : "bg-amber-100 text-amber-700")} data-testid="badge-artisan-dossier-payment">{dossierArtisan.paymentStatus}</Badge>
+                                  </div>
+                                )}
                               </div>
                             </div>
 
@@ -1927,22 +2052,38 @@ export default function AdminDashboard() {
                               </p>
                               <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1">
-                                  <label className="text-[11px] font-medium text-gray-500">Plan d'abonnement</label>
-                                  <select value={artisanEditForm.subscriptionPlan || "Mensuel"} onChange={e => setArtisanEditForm(p => ({ ...p, subscriptionPlan: e.target.value }))} className="w-full h-9 text-sm border border-gray-200 rounded-md px-3 bg-white" data-testid="select-artisan-edit-subscription">
-                                    <option value="Mensuel">Mensuel</option>
-                                    <option value="Annuel">Annuel</option>
-                                    <option value="Essai gratuit">Essai gratuit</option>
+                                  <label className="text-[11px] font-medium text-gray-500">Plan</label>
+                                  <select value={artisanEditForm.subscriptionPlan || "Starter"} onChange={e => setArtisanEditForm(p => ({ ...p, subscriptionPlan: e.target.value }))} className="w-full h-9 text-sm border border-gray-200 rounded-md px-3 bg-white" data-testid="select-artisan-edit-subscription">
+                                    <option value="Starter">Starter (0€/mois)</option>
+                                    <option value="Pro">Pro ({settingsSubscriptionPrice}€/mois)</option>
                                   </select>
                                 </div>
-                                <div className="space-y-1">
-                                  <label className="text-[11px] font-medium text-gray-500">Statut de paiement</label>
-                                  <select value={artisanEditForm.paymentStatus || "En attente"} onChange={e => setArtisanEditForm(p => ({ ...p, paymentStatus: e.target.value }))} className="w-full h-9 text-sm border border-gray-200 rounded-md px-3 bg-white" data-testid="select-artisan-edit-payment-status">
-                                    <option value="En attente">En attente</option>
-                                    <option value="Payé">Payé</option>
-                                    <option value="En retard">En retard</option>
-                                    <option value="Expiré">Expiré</option>
-                                  </select>
-                                </div>
+                                {(artisanEditForm.subscriptionPlan || "Starter") === "Pro" && (
+                                  <div className="space-y-1">
+                                    <label className="text-[11px] font-medium text-gray-500">Statut de paiement</label>
+                                    <select value={artisanEditForm.paymentStatus || "En attente"} onChange={e => setArtisanEditForm(p => ({ ...p, paymentStatus: e.target.value }))} className="w-full h-9 text-sm border border-gray-200 rounded-md px-3 bg-white" data-testid="select-artisan-edit-payment-status">
+                                      <option value="En attente">En attente</option>
+                                      <option value="Payé">Payé</option>
+                                      <option value="En retard">En retard</option>
+                                      <option value="Expiré">Expiré</option>
+                                    </select>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="bg-gray-50 rounded-md p-3 mt-3 text-xs text-gray-600 space-y-1">
+                                <p className="font-bold text-gray-700">Détails du plan {artisanEditForm.subscriptionPlan || "Starter"} :</p>
+                                {(artisanEditForm.subscriptionPlan || "Starter") === "Starter" ? (
+                                  <>
+                                    <p>Commission artisan : <span className="font-bold text-[#722F37]">15%</span> | Frais client : <span className="font-bold">10%</span></p>
+                                    <p>Mesures : <span className="font-bold">10 fiches max</span></p>
+                                  </>
+                                ) : (
+                                  <>
+                                    <p>Abonnement : <span className="font-bold text-[#722F37]">{settingsSubscriptionPrice}€/mois</span></p>
+                                    <p>Commission artisan : <span className="font-bold text-green-600">0%</span> | Frais client : <span className="font-bold">10%</span></p>
+                                    <p>Mesures : <span className="font-bold text-green-600">Illimité</span></p>
+                                  </>
+                                )}
                               </div>
                             </div>
 
@@ -2129,24 +2270,40 @@ export default function AdminDashboard() {
                           <div className="w-8 h-8 rounded-md bg-purple-50 flex items-center justify-center">
                             <CreditCard size={16} className="text-purple-600" />
                           </div>
-                          <h3 className="font-bold text-sm text-gray-800">Gestion des Forfaits</h3>
+                          <h3 className="font-bold text-sm text-gray-800">Plans & Tarification</h3>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="border border-blue-200 rounded-md p-3 bg-blue-50/30">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Badge className="bg-blue-100 text-blue-700 border-none text-[10px] font-bold">STARTER</Badge>
+                              </div>
+                              <p className="text-lg font-bold text-gray-900">0€<span className="text-xs font-normal text-gray-500">/mois</span></p>
+                              <div className="mt-2 space-y-1 text-xs text-gray-600">
+                                <p>Commission artisan : <span className="font-bold text-[#722F37]">15%</span></p>
+                                <p>Frais service client : <span className="font-bold">10%</span></p>
+                                <p>Mesures : <span className="font-bold">10 fiches max</span></p>
+                              </div>
+                            </div>
+                            <div className="border border-purple-200 rounded-md p-3 bg-purple-50/30">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Badge className="bg-purple-100 text-purple-700 border-none text-[10px] font-bold">PRO</Badge>
+                              </div>
+                              <p className="text-lg font-bold text-gray-900">{settingsSubscriptionPrice}€<span className="text-xs font-normal text-gray-500">/mois</span></p>
+                              <div className="mt-2 space-y-1 text-xs text-gray-600">
+                                <p>Commission artisan : <span className="font-bold text-green-600">0%</span></p>
+                                <p>Frais service client : <span className="font-bold">10%</span></p>
+                                <p>Mesures : <span className="font-bold text-green-600">Illimité</span></p>
+                              </div>
+                            </div>
+                          </div>
                           <div>
-                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Prix abonnement mensuel (€)</label>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Prix abonnement Pro (€)</label>
                             <Input type="number" min="0" value={settingsSubscriptionPrice} onChange={(e) => setSettingsSubscriptionPrice(e.target.value)} className="mt-1 h-9 text-sm" data-testid="input-settings-subscription-price" />
                           </div>
                           <div>
                             <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Période d'essai gratuit (jours)</label>
                             <Input type="number" min="0" value={settingsTrialDays} onChange={(e) => setSettingsTrialDays(e.target.value)} className="mt-1 h-9 text-sm" data-testid="input-settings-trial-days" />
-                          </div>
-                          <div className="bg-purple-50/50 rounded-md p-3 mt-2">
-                            <p className="text-xs text-gray-600">
-                              <span className="font-bold text-purple-700">Forfait actuel :</span> {settingsSubscriptionPrice} €/mois
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              Essai gratuit de {settingsTrialDays} jours pour les nouveaux artisans
-                            </p>
                           </div>
                         </div>
                       </CardContent>

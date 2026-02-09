@@ -439,16 +439,32 @@ class DatabaseStorage implements IStorage {
   }
 
   async createAdminArtisan(artisan: InsertAdminArtisan): Promise<AdminArtisan> {
-    const [created] = await db.insert(adminArtisans).values(artisan).returning();
-    return created;
+    const result = await db.insert(adminArtisans).values(artisan).returning();
+    if (result.length > 0) {
+      return result[0];
+    }
+    const all = await db.select().from(adminArtisans)
+      .where(
+        and(
+          eq(adminArtisans.firstName, artisan.firstName),
+          eq(adminArtisans.lastName, artisan.lastName)
+        )
+      )
+      .orderBy(desc(adminArtisans.createdAt))
+      .limit(1);
+    return all[0];
   }
 
   async updateAdminArtisan(id: string, updates: Partial<InsertAdminArtisan>): Promise<AdminArtisan | undefined> {
-    const [updated] = await db.update(adminArtisans)
+    const result = await db.update(adminArtisans)
       .set(updates)
       .where(eq(adminArtisans.id, id))
       .returning();
-    return updated;
+    if (result.length > 0) {
+      return result[0];
+    }
+    const [artisan] = await db.select().from(adminArtisans).where(eq(adminArtisans.id, id));
+    return artisan;
   }
 
   async deleteAdminArtisan(id: string): Promise<void> {

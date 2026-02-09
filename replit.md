@@ -88,6 +88,13 @@ shared/              # Shared code (schema, types)
 - **Search Integration**: New tailors automatically appear in search results after completing setup
 - **Auth Callback Logic**: Checks for existing tailor profile; redirects to setup if missing
 
+### Artisan Subscription Plans (February 2026)
+- **Starter Plan**: 0€/mois, 15% commission artisan, 10% frais client, Mesures limitées à 10 fiches
+- **Pro Plan**: 29€/mois (configurable), 0% commission artisan, 10% frais client, Mesures illimitées
+- **Admin Dashboard**: Plan selection in add/edit artisan forms, plan details with commission breakdown
+- **Mesures Tab**: Starter limit indicator with progress bar, upgrade-to-Pro modal when limit reached
+- **Settings**: Plans & Tarification card with side-by-side plan comparison, configurable Pro pricing
+
 ### Complete Feature Set
 - Discovery page with hero section and featured tailors
 - Search page with specialty, location, rating, and price filters
