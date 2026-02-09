@@ -1,17 +1,18 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Lock, LayoutDashboard, BookOpen, Users,
+  Lock, LayoutDashboard, Users, Mail,
   ShoppingBag, Ruler, LogOut, PlusCircle,
   TrendingUp, Clock, ShieldCheck,
   ShieldAlert, Search, Settings, MessageSquare,
   Calendar, FileText, Send, Eye, Trash2,
   CheckCircle, XCircle, ChevronRight,
-  ArrowUpRight, X
+  ArrowUpRight, X, Upload, MapPin, Pencil,
+  User
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,10 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
+const ADMIN_AUTH_KEY = "seamlier_admin_auth";
+const ADMIN_EMAIL = "admin@seamlier.fr";
+const ADMIN_PASSWORD = "seamlier2026";
+
 type Project = {
   id: string;
   client: string;
@@ -56,6 +61,13 @@ type Artisan = {
   city: string;
 };
 
+type ReplyMessage = {
+  id: string;
+  text: string;
+  date: string;
+  sender: "admin";
+};
+
 type Message = {
   id: string;
   from: string;
@@ -64,6 +76,7 @@ type Message = {
   date: string;
   read: boolean;
   type: "support" | "signalement" | "info";
+  replies: ReplyMessage[];
 };
 
 type PlanningEvent = {
@@ -90,6 +103,15 @@ type MeasureProfile = {
   details: MeasureDetail[];
 };
 
+type CouturierData = {
+  id: string;
+  name: string;
+  location: string;
+  specialty: string;
+  status: "Vérifié" | "En attente" | "Non vérifié";
+  selected: boolean;
+};
+
 type Article = {
   id: string;
   title: string;
@@ -101,8 +123,13 @@ type Article = {
 
 export default function AdminDashboard() {
   const { toast } = useToast();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [accessCode, setAccessCode] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    try {
+      return localStorage.getItem(ADMIN_AUTH_KEY) === "true";
+    } catch { return false; }
+  });
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
   const [projectSearch, setProjectSearch] = useState("");
   const [artisanSearch, setArtisanSearch] = useState("");
@@ -114,6 +141,13 @@ export default function AdminDashboard() {
   const [newArticleTitle, setNewArticleTitle] = useState("");
   const [newArticleCategory, setNewArticleCategory] = useState("");
   const [newArticleContent, setNewArticleContent] = useState("");
+  const [selectedCouturier, setSelectedCouturier] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ADMIN_AUTH_KEY, isAuthenticated ? "true" : "false");
+    } catch {}
+  }, [isAuthenticated]);
 
   const [projects, setProjects] = useState<Project[]>([
     { id: "1", client: "Marie Lefebvre", artisan: "Atelier Couture Paris", status: "Bloqué", amount: "250 €", date: "12/02/2026", description: "Retouche robe de soirée" },
@@ -132,10 +166,10 @@ export default function AdminDashboard() {
   ]);
 
   const [messages, setMessages] = useState<Message[]>([
-    { id: "1", from: "Marie Lefebvre", subject: "Problème de livraison", preview: "Bonjour, je n'ai toujours pas reçu ma commande depuis 2 semaines...", date: "09/02/2026", read: false, type: "support" },
-    { id: "2", from: "Jean Durand", subject: "Signalement artisan", preview: "Je souhaite signaler un comportement inapproprié de la part de...", date: "08/02/2026", read: false, type: "signalement" },
-    { id: "3", from: "Atelier Paris", subject: "Demande de mise en avant", preview: "Bonjour l'équipe, serait-il possible de mettre mon profil en avant...", date: "07/02/2026", read: true, type: "info" },
-    { id: "4", from: "Claire Petit", subject: "Remboursement séquestre", preview: "Suite à l'annulation du projet, je souhaite récupérer...", date: "06/02/2026", read: true, type: "support" },
+    { id: "1", from: "Marie Lefebvre", subject: "Problème de livraison", preview: "Bonjour, je n'ai toujours pas reçu ma commande depuis 2 semaines...", date: "09/02/2026", read: false, type: "support", replies: [] },
+    { id: "2", from: "Jean Durand", subject: "Signalement artisan", preview: "Je souhaite signaler un comportement inapproprié de la part de...", date: "08/02/2026", read: false, type: "signalement", replies: [] },
+    { id: "3", from: "Atelier Paris", subject: "Demande de mise en avant", preview: "Bonjour l'équipe, serait-il possible de mettre mon profil en avant...", date: "07/02/2026", read: true, type: "info", replies: [] },
+    { id: "4", from: "Claire Petit", subject: "Remboursement séquestre", preview: "Suite à l'annulation du projet, je souhaite récupérer...", date: "06/02/2026", read: true, type: "support", replies: [] },
   ]);
 
   const [planningEvents] = useState<PlanningEvent[]>([
@@ -173,6 +207,16 @@ export default function AdminDashboard() {
     ]},
   ]);
 
+  const [couturiers, setCouturiers] = useState<CouturierData[]>([
+    { id: "c1", name: "Marc Antoine", location: "Paris, 75003", specialty: "Tailleur Homme", status: "Vérifié", selected: false },
+    { id: "c2", name: "Hélène Beaumont", location: "Lyon, 69002", specialty: "Robe de Mariée", status: "En attente", selected: false },
+    { id: "c3", name: "Lucie Valentin", location: "Marseille, 13001", specialty: "Retouches Premium", status: "Vérifié", selected: false },
+    { id: "c4", name: "Pierre Delacroix", location: "Bordeaux, 33000", specialty: "Haute Couture", status: "En attente", selected: false },
+    { id: "c5", name: "Amina Kouyaté", location: "Paris, 75020", specialty: "Couture Africaine", status: "Vérifié", selected: false },
+    { id: "c6", name: "Fatou Diallo", location: "Toulouse, 31000", specialty: "Couture Traditionnelle", status: "Non vérifié", selected: false },
+    { id: "c7", name: "Olivier Masse", location: "Nice, 06000", specialty: "Costume Sur Mesure", status: "Vérifié", selected: false },
+  ]);
+
   const [articles, setArticles] = useState<Article[]>([
     { id: "1", title: "Les tendances couture printemps 2026", category: "Tendances", status: "Publié", date: "02/01/2026", views: 1240 },
     { id: "2", title: "Comment choisir son tissu", category: "Conseils", status: "Publié", date: "28/12/2025", views: 890 },
@@ -181,13 +225,19 @@ export default function AdminDashboard() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (accessCode === "seamlier2026") {
+    if (loginEmail === ADMIN_EMAIL && loginPassword === ADMIN_PASSWORD) {
       setIsAuthenticated(true);
-      toast({ title: "Accès autorisé", description: "Bienvenue sur l'interface de gestion." });
+      toast({ title: "Accès autorisé", description: "Bienvenue sur la console d'administration." });
     } else {
-      toast({ title: "Erreur", description: "Code invalide.", variant: "destructive" });
+      toast({ title: "Erreur d'authentification", description: "Email ou mot de passe incorrect.", variant: "destructive" });
     }
   };
+
+  const handleLogout = useCallback(() => {
+    setIsAuthenticated(false);
+    try { localStorage.removeItem(ADMIN_AUTH_KEY); } catch {}
+    toast({ title: "Déconnexion", description: "Vous avez été déconnecté." });
+  }, [toast]);
 
   const toggleSequestre = (id: string) => {
     setProjects(prev => prev.map(p =>
@@ -224,9 +274,18 @@ export default function AdminDashboard() {
   };
 
   const sendReply = () => {
-    if (!replyText.trim()) return;
-    toast({ title: "Réponse envoyée", description: "Le message a été envoyé avec succès." });
+    if (!replyText.trim() || !selectedMessage) return;
+    const newReply: ReplyMessage = {
+      id: String(Date.now()),
+      text: replyText.trim(),
+      date: new Date().toLocaleDateString("fr-FR") + " " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+      sender: "admin",
+    };
+    setMessages(prev => prev.map(m =>
+      m.id === selectedMessage ? { ...m, replies: [...m.replies, newReply] } : m
+    ));
     setReplyText("");
+    toast({ title: "Réponse envoyée", description: "Le message a été envoyé avec succès." });
   };
 
   const publishArticle = (id: string) => {
@@ -259,6 +318,13 @@ export default function AdminDashboard() {
     toast({ title: "Article créé", description: "Le brouillon a été enregistré." });
   };
 
+  const toggleCouturierSelect = (id: string) => {
+    setCouturiers(prev => prev.map(c =>
+      c.id === id ? { ...c, selected: !c.selected } : c
+    ));
+    setSelectedCouturier(id);
+  };
+
   const totalRevenue = projects.filter(p => p.status === "Libéré").reduce((sum, p) => sum + parseInt(p.amount.replace(/[^\d]/g, "")), 0);
   const pendingProjects = projects.filter(p => p.status === "Bloqué").length;
   const verifiedArtisans = artisans.filter(a => a.status === "Vérifié").length;
@@ -288,19 +354,39 @@ export default function AdminDashboard() {
         <Card className="w-full max-w-md shadow-2xl border-none">
           <div className="p-8 text-center space-y-1">
             <Lock className="mx-auto text-[#722F37] h-12 w-12 mb-4" />
-            <h2 className="font-serif text-2xl uppercase tracking-widest text-[#722F37]">SEAMLIER</h2>
-            <p className="text-sm text-gray-500 italic font-medium">Administration</p>
+            <h2 className="font-serif text-2xl uppercase tracking-widest text-[#722F37]">SEAMLiER</h2>
+            <p className="text-sm text-gray-500 italic font-medium">Console d'Administration</p>
           </div>
           <div className="px-8 pb-8">
             <form onSubmit={handleLogin} className="space-y-4">
-              <Input
-                type="password"
-                placeholder="Code secret"
-                value={accessCode}
-                onChange={(e) => setAccessCode(e.target.value)}
-                className="text-center tracking-[0.5em] font-bold h-12 border-gray-200"
-                data-testid="input-admin-code"
-              />
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    type="email"
+                    placeholder="admin@seamlier.fr"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    className="pl-10 h-12 border-gray-200"
+                    data-testid="input-admin-email"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Mot de passe</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    type="password"
+                    placeholder="Mot de passe"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    className="pl-10 h-12 border-gray-200"
+                    data-testid="input-admin-password"
+                  />
+                </div>
+              </div>
               <Button type="submit" className="w-full bg-[#722F37] h-12" data-testid="button-admin-login">
                 Connexion
               </Button>
@@ -338,8 +424,8 @@ export default function AdminDashboard() {
       <div className="flex h-screen w-full bg-gray-50">
         <Sidebar collapsible="none" className="border-r border-gray-100">
           <SidebarHeader className="p-6 border-b border-gray-50">
-            <h2 className="text-2xl font-serif font-black text-[#722F37] tracking-tighter" data-testid="text-admin-logo">SEAMLIER</h2>
-            <p className="text-[10px] uppercase tracking-widest text-gray-400 mt-1 font-bold">Administration</p>
+            <h2 className="text-2xl font-serif font-black text-[#722F37] tracking-tighter" data-testid="text-admin-logo">SEAMLiER</h2>
+            <p className="text-[10px] uppercase tracking-widest text-gray-400 mt-1 font-bold">Console d'Administration</p>
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
@@ -375,7 +461,7 @@ export default function AdminDashboard() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => setIsAuthenticated(false)} data-testid="button-admin-logout" className="text-red-500">
+                <SidebarMenuButton onClick={handleLogout} data-testid="button-admin-logout" className="text-red-500">
                   <LogOut size={18} />
                   <span>Déconnexion</span>
                 </SidebarMenuButton>
@@ -388,9 +474,15 @@ export default function AdminDashboard() {
           <header className="h-14 bg-white border-b border-gray-100 flex items-center justify-between px-6 flex-shrink-0">
             <div className="flex items-center gap-3">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
-              <Badge variant="outline" className="text-[#722F37] border-[#722F37]/20 bg-[#722F37]/5 px-3 py-1" data-testid="badge-admin-mode">Mode Administrateur</Badge>
+              <span className="text-sm font-medium text-gray-700 hidden md:inline" data-testid="text-admin-console-title">Console d'Administration SEAMLiER</span>
+              <Badge variant="outline" className="text-[#722F37] border-[#722F37]/20 bg-[#722F37]/5 px-3 py-1 md:hidden" data-testid="badge-admin-mode">Admin</Badge>
             </div>
-            <span className="text-sm font-medium text-gray-700" data-testid="text-admin-user">Administrateur</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-gray-400 hidden sm:inline" data-testid="text-admin-email">{ADMIN_EMAIL}</span>
+              <Button variant="ghost" size="sm" className="text-red-500" onClick={handleLogout} data-testid="button-header-logout">
+                <LogOut size={16} className="mr-1.5" /> Déconnexion
+              </Button>
+            </div>
           </header>
 
           <main className="flex-1 overflow-auto p-6 lg:p-8 bg-gray-50">
@@ -401,7 +493,7 @@ export default function AdminDashboard() {
                 <>
                   <div>
                     <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Tableau de Bord</h1>
-                    <p className="text-gray-500 mt-1 text-sm">Vue globale de la marketplace SEAMLIER</p>
+                    <p className="text-gray-500 mt-1 text-sm">Vue globale de la marketplace SEAMLiER</p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                     {stats.map((stat) => (
@@ -593,15 +685,32 @@ export default function AdminDashboard() {
                               <Badge className={cn("text-[10px] border-none", currentMessage.type === "support" ? "bg-blue-50 text-blue-600" : currentMessage.type === "signalement" ? "bg-red-50 text-red-600" : "bg-gray-100 text-gray-600")} data-testid="badge-message-type">{currentMessage.type}</Badge>
                             </div>
                           </div>
-                          <div className="flex-1 p-5 overflow-y-auto">
+                          <div className="flex-1 p-5 overflow-y-auto space-y-3" data-testid="message-thread">
                             <div className="bg-gray-50 rounded-lg p-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                                  <User size={12} className="text-gray-500" />
+                                </div>
+                                <span className="text-xs font-semibold text-gray-600">{currentMessage.from}</span>
+                                <span className="text-[10px] text-gray-400">{currentMessage.date}</span>
+                              </div>
                               <p className="text-sm text-gray-700 leading-relaxed" data-testid="text-message-content">{currentMessage.preview}</p>
                             </div>
+                            {currentMessage.replies.map((reply) => (
+                              <div key={reply.id} className="bg-[#722F37]/5 rounded-lg p-4 ml-6" data-testid={`reply-message-${reply.id}`}>
+                                <div className="flex items-center gap-2 mb-2">
+                                  <div className="w-6 h-6 rounded-full bg-[#722F37]/20 flex items-center justify-center flex-shrink-0">
+                                    <ShieldCheck size={12} className="text-[#722F37]" />
+                                  </div>
+                                  <span className="text-xs font-semibold text-[#722F37]">Admin SEAMLiER</span>
+                                  <span className="text-[10px] text-gray-400">{reply.date}</span>
+                                </div>
+                                <p className="text-sm text-gray-700 leading-relaxed" data-testid={`text-reply-content-${reply.id}`}>{reply.text}</p>
+                              </div>
+                            ))}
                           </div>
                           <div className="p-4 border-t border-gray-50">
-                            <div className="flex gap-3">
-                              <Textarea placeholder="Répondre..." value={replyText} onChange={e => setReplyText(e.target.value)} className="min-h-[80px] text-sm" data-testid="input-admin-reply" />
-                            </div>
+                            <Textarea placeholder="Répondre..." value={replyText} onChange={e => setReplyText(e.target.value)} className="min-h-[80px] text-sm" data-testid="input-admin-reply" />
                             <div className="flex justify-end mt-3">
                               <Button className="bg-[#722F37]" onClick={sendReply} data-testid="button-send-reply">
                                 <Send size={16} className="mr-2" /> Envoyer
@@ -685,14 +794,17 @@ export default function AdminDashboard() {
               {/* ===== MEASURES ===== */}
               {activeTab === "measures" && (
                 <>
-                  <div>
-                    <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Mesures & Fit Passport</h1>
-                    <p className="text-gray-500 mt-1 text-sm">Gestion des profils de mesures clients</p>
+                  <div className="flex justify-between items-end gap-4 flex-wrap">
+                    <div>
+                      <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Mesures & Fit Passport</h1>
+                      <p className="text-gray-500 mt-1 text-sm">Gestion des profils de mesures et données couturiers</p>
+                    </div>
                   </div>
+
                   <div className="grid lg:grid-cols-3 gap-6">
                     <Card className="border-none shadow-sm">
                       <CardContent className="p-5">
-                        <CardTitle className="text-base font-serif mb-4">Statistiques</CardTitle>
+                        <CardTitle className="text-base font-serif mb-4">Statistiques Mesures</CardTitle>
                         <div className="space-y-3">
                           <div className="flex justify-between text-sm"><span className="text-gray-500">Profils complets</span><span className="font-bold text-green-600" data-testid="text-complete-profiles">{measureProfiles.filter(m => m.status === "Complet").length}</span></div>
                           <div className="flex justify-between text-sm"><span className="text-gray-500">Incomplets</span><span className="font-bold text-amber-600" data-testid="text-incomplete-profiles">{measureProfiles.filter(m => m.status === "Incomplet").length}</span></div>
@@ -737,6 +849,67 @@ export default function AdminDashboard() {
                       </div>
                     </Card>
                   </div>
+
+                  <Card className="border-none shadow-sm bg-white overflow-hidden">
+                    <div className="p-5 border-b border-gray-50 flex items-center justify-between gap-4 flex-wrap">
+                      <div>
+                        <CardTitle className="text-base font-serif">Base Couturiers</CardTitle>
+                        <p className="text-xs text-gray-400 mt-1">Données couturiers pour l'import</p>
+                      </div>
+                      <Button className="bg-[#722F37] font-bold" data-testid="button-import-data" onClick={() => toast({ title: "Import", description: "Fonctionnalité d'import en préparation." })}>
+                        <Upload size={16} className="mr-2" /> Importer Data
+                      </Button>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left" data-testid="table-couturiers">
+                        <thead>
+                          <tr className="text-[11px] uppercase tracking-wider text-gray-400 bg-gray-50/30">
+                            <th className="px-5 py-3 font-bold w-10"></th>
+                            <th className="px-5 py-3 font-bold">Nom du Couturier</th>
+                            <th className="px-5 py-3 font-bold">Localisation</th>
+                            <th className="px-5 py-3 font-bold">Spécialité</th>
+                            <th className="px-5 py-3 font-bold text-center">Vérification</th>
+                            <th className="px-5 py-3 text-right font-bold">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {couturiers.map(c => (
+                            <tr key={c.id} className={cn("transition-colors", selectedCouturier === c.id ? "bg-[#722F37]/5" : "hover:bg-gray-50/50")} data-testid={`row-couturier-${c.id}`}>
+                              <td className="px-5 py-3">
+                                <input type="checkbox" checked={c.selected} onChange={() => toggleCouturierSelect(c.id)} className="rounded border-gray-300 text-[#722F37] focus:ring-[#722F37]" data-testid={`checkbox-couturier-${c.id}`} />
+                              </td>
+                              <td className="px-5 py-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-[#722F37]/5 flex items-center justify-center text-[#722F37] font-bold text-xs flex-shrink-0">{c.name[0]}</div>
+                                  <span className="text-sm font-semibold">{c.name}</span>
+                                </div>
+                              </td>
+                              <td className="px-5 py-3">
+                                <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                                  <MapPin size={12} className="text-gray-400" />
+                                  {c.location}
+                                </div>
+                              </td>
+                              <td className="px-5 py-3 text-sm text-gray-600">{c.specialty}</td>
+                              <td className="px-5 py-3 text-center">
+                                <Badge className={cn("text-[10px] border-none font-bold", c.status === "Vérifié" ? "bg-green-100 text-green-700" : c.status === "En attente" ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500")} data-testid={`badge-couturier-status-${c.id}`}>{c.status}</Badge>
+                              </td>
+                              <td className="px-5 py-3 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button size="sm" variant="outline" className="h-8 text-[11px]" data-testid={`button-edit-couturier-${c.id}`}>
+                                    <Pencil size={14} className="mr-1" /> Editer
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="h-8 text-[11px]" data-testid={`button-view-couturier-${c.id}`}>
+                                    <Eye size={14} className="mr-1" /> Voir
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </Card>
 
                   <Dialog open={!!selectedMeasure} onOpenChange={(open) => !open && setSelectedMeasure(null)}>
                     <DialogContent className="max-w-lg" data-testid="dialog-measure-detail">
@@ -856,7 +1029,7 @@ export default function AdminDashboard() {
                   <div className="flex justify-between items-end gap-4 flex-wrap">
                     <div>
                       <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Gestion du Magazine</h1>
-                      <p className="text-gray-500 mt-1 text-sm">Contenu éditorial SEAMLIER</p>
+                      <p className="text-gray-500 mt-1 text-sm">Contenu éditorial SEAMLiER</p>
                     </div>
                     <Button className="bg-[#722F37] font-bold" onClick={() => setShowNewArticle(true)} data-testid="button-new-article">
                       <PlusCircle size={18} className="mr-2" /> Nouvel Article
