@@ -102,7 +102,7 @@ export default function InscriptionProfessionnel() {
               size="lg" 
               className="bg-[#722F37] hover:bg-[#5a252c] text-white px-8"
               data-testid="button-start-registration"
-              onClick={() => setLocation('/connexion?role=tailor')}
+              onClick={() => setLocation('/connexion')}
             >
               {t('auth.startRegistration')}
               <ArrowRight className="h-5 w-5 ml-2" />

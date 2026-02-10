@@ -1,5 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { User } from "@shared/models/auth";
+import { useLocation } from "wouter";
+
+interface User {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  profileImageUrl?: string;
+}
 
 async function fetchUser(): Promise<User | null> {
   const response = await fetch("/api/auth/user", {
@@ -17,23 +26,29 @@ async function fetchUser(): Promise<User | null> {
   return response.json();
 }
 
-async function logout(): Promise<void> {
-  window.location.href = "/api/logout";
+async function logoutRequest(): Promise<void> {
+  await fetch("/api/logout", {
+    method: "POST",
+    credentials: "include",
+  });
 }
 
 export function useAuth() {
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
+
   const { data: user, isLoading } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
     queryFn: fetchUser,
     retry: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
   const logoutMutation = useMutation({
-    mutationFn: logout,
+    mutationFn: logoutRequest,
     onSuccess: () => {
       queryClient.setQueryData(["/api/auth/user"], null);
+      setLocation("/connexion");
     },
   });
 

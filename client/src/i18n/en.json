@@ -223,7 +223,7 @@
   },
   "auth": {
     "login": "Log in",
-    "loginSubtitle": "Choose your space to log in",
+    "loginSubtitle": "Log in to your account",
     "loginAsClient": "Log in as individual",
     "loginAsClientDesc": "Access your projects and chat with your tailors",
     "loginAsClientButton": "Client Login",
@@ -269,6 +269,12 @@
     "welcomeProDesc2": "Welcome to SEAMLIER! You can now manage your profile.",
     "profileCreated": "Profile created successfully",
     "error": "Error",
+    "fillAllFields": "Please fill in all fields",
+    "welcomeBack": "Welcome back!",
+    "invalidCredentials": "Invalid email or password",
+    "serverError": "Server is not responding, please try again",
+    "loggingIn": "Logging in...",
+    "loginButton": "Log in",
     "errorMessage": "An error occurred during registration",
     "creating": "Creating...",
     "benefits": {

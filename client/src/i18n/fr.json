@@ -223,7 +223,7 @@
   },
   "auth": {
     "login": "Se connecter",
-    "loginSubtitle": "Choisissez votre espace pour vous connecter",
+    "loginSubtitle": "Connectez-vous à votre compte",
     "loginAsClient": "Se connecter en tant que particulier",
     "loginAsClientDesc": "Accédez à vos projets et échangez avec vos couturiers",
     "loginAsClientButton": "Connexion Particulier",
@@ -269,6 +269,12 @@
     "welcomeProDesc2": "Bienvenue sur SEAMLIER ! Vous pouvez maintenant gérer votre profil.",
     "profileCreated": "Profil créé avec succès",
     "error": "Erreur",
+    "fillAllFields": "Veuillez remplir tous les champs",
+    "welcomeBack": "Bon retour parmi nous !",
+    "invalidCredentials": "Email ou mot de passe incorrect",
+    "serverError": "Le serveur ne répond pas, veuillez réessayer",
+    "loggingIn": "Connexion en cours...",
+    "loginButton": "Se connecter",
     "errorMessage": "Une erreur est survenue lors de l'inscription",
     "creating": "Création en cours...",
     "benefits": {

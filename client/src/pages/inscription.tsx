@@ -11,8 +11,8 @@ export default function Inscription() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
 
-  const handleSignup = (role: string) => {
-    setLocation(`/connexion?role=${role}`);
+  const handleSignup = () => {
+    setLocation('/connexion');
   };
 
   return (
@@ -46,7 +46,7 @@ export default function Inscription() {
         <div className="grid sm:grid-cols-2 gap-6">
           <Card
             className="border-2 border-gray-200 hover:border-[#722F37] transition-colors cursor-pointer group"
-            onClick={() => handleSignup('client')}
+            onClick={handleSignup}
             data-testid="card-inscription-particulier"
           >
             <CardContent className="p-8 text-center">
@@ -67,7 +67,7 @@ export default function Inscription() {
 
           <Card
             className="border-2 border-gray-200 hover:border-[#722F37] transition-colors cursor-pointer group"
-            onClick={() => handleSignup('tailor')}
+            onClick={handleSignup}
             data-testid="card-inscription-professionnel"
           >
             <CardContent className="p-8 text-center">

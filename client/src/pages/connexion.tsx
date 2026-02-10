@@ -1,25 +1,72 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, User, Briefcase } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
-import { useEffect } from "react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Connexion() {
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const role = params.get('role');
-    if (role === 'client' || role === 'tailor') {
-      window.location.href = `/api/login?role=${role}`;
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      toast({
+        title: t('auth.error'),
+        description: t('auth.fillAllFields'),
+        variant: "destructive",
+      });
+      return;
     }
-  }, []);
 
-  const handleLogin = (role: string) => {
-    window.location.href = `/api/login?role=${role}`;
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast({
+          title: t('auth.loginSuccess'),
+          description: t('auth.welcomeBack'),
+        });
+        if (data.role === 'tailor') {
+          setLocation('/professionnel');
+        } else {
+          setLocation('/particulier');
+        }
+      } else {
+        toast({
+          title: t('auth.error'),
+          description: data.message || t('auth.invalidCredentials'),
+          variant: "destructive",
+        });
+      }
+    } catch {
+      toast({
+        title: t('auth.error'),
+        description: t('auth.serverError'),
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -47,55 +94,68 @@ export default function Connexion() {
             </p>
           </div>
 
-          <div className="space-y-4">
-            <Card className="border-2 border-gray-200 cursor-pointer" onClick={() => handleLogin('client')} data-testid="card-login-particulier">
-              <CardContent className="p-6 text-center">
-                <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <User className="h-7 w-7 text-[#722F37]" />
+          <Card className="border border-gray-200">
+            <CardContent className="p-6">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm text-gray-700">{t('auth.email')}</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder={t('auth.emailPlaceholder')}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                      data-testid="input-email"
+                    />
+                  </div>
                 </div>
-                <h2 className="font-serif text-sm text-[#722F37] mb-1">
-                  {t('auth.loginAsClient')}
-                </h2>
-                <p className="text-gray-500 text-xs mb-3">
-                  {t('auth.loginAsClientDesc')}
-                </p>
-                <Button 
-                  className="w-full bg-[#722F37] hover:bg-[#5a252c]" 
-                  data-testid="button-login-particulier"
-                >
-                  {t('auth.loginAsClientButton')}
-                </Button>
-              </CardContent>
-            </Card>
 
-            <Card className="border-2 border-gray-200 cursor-pointer" onClick={() => handleLogin('tailor')} data-testid="card-login-professionnel">
-              <CardContent className="p-6 text-center">
-                <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Briefcase className="h-7 w-7 text-[#722F37]" />
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm text-gray-700">{t('auth.password')}</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder={t('auth.passwordPlaceholder')}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10 pr-10"
+                      data-testid="input-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      data-testid="button-toggle-password"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
-                <h2 className="font-serif text-sm text-[#722F37] mb-1">
-                  {t('auth.loginAsPro')}
-                </h2>
-                <p className="text-gray-500 text-xs mb-3">
-                  {t('auth.loginAsProDesc')}
-                </p>
-                <Button 
-                  className="w-full bg-[#722F37] hover:bg-[#5a252c]" 
-                  data-testid="button-login-professionnel"
+
+                <Button
+                  type="submit"
+                  className="w-full bg-[#722F37] hover:bg-[#5a252c]"
+                  disabled={isLoading}
+                  data-testid="button-login-submit"
                 >
-                  {t('auth.loginAsProButton')}
+                  {isLoading ? t('auth.loggingIn') : t('auth.loginButton')}
                 </Button>
-              </CardContent>
-            </Card>
-          </div>
+              </form>
+            </CardContent>
+          </Card>
 
           <div className="mt-6 pt-6 border-t border-gray-200 text-center">
             <p className="text-gray-500 text-xs mb-3">
               {t('auth.noAccount')}
             </p>
             <Link href="/inscription">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="bg-white border-[#722F37] text-[#722F37] text-sm"
                 data-testid="button-inscription"
               >

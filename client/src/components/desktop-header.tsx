@@ -35,7 +35,7 @@ interface DesktopHeaderProps {
 export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
   const { t } = useTranslation();
   const [location] = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const navItems = mode === "professionnel" ? proNavItems : particulierNavItems;
   const basePath = mode === "professionnel" ? "/professionnel" : "/particulier";
   
@@ -102,7 +102,7 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   className="flex items-center gap-2 text-red-600 cursor-pointer"
-                  onClick={() => window.location.href = '/api/logout'}
+                  onClick={() => logout()}
                 >
                   <LogOut className="h-4 w-4" />
                   {t('auth.logout')}
