@@ -249,7 +249,7 @@ export default function Landing() {
           <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
             {t('landing.joinNetwork')}
           </p>
-          <Link href="/inscription-professionnel">
+          <Link href="/professionnel">
             <Button size="sm" variant="outline" className="bg-white/90 text-[#722F37] border-white/50 hover:bg-white text-sm" data-testid="button-join-pro">
               {t('landing.joinAsPro')}
               <ArrowRight className="h-4 w-4 ml-1" />

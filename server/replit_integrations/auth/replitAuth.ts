@@ -150,15 +150,13 @@ export async function setupAuth(app: Express) {
         console.log("User from DB after update:", dbUser?.role);
         
         if (dbUser?.role === 'tailor') {
-          // Check if tailor has completed profile setup
           const tailorProfile = await storage.getTailorByUserId(user.claims.sub);
           if (!tailorProfile) {
-            // New tailor - redirect to setup page
             return res.redirect("/professionnel/setup");
           }
-          return res.redirect("/professionnel");
+          return res.redirect("/professionnel/dashboard");
         }
-        return res.redirect("/particulier");
+        return res.redirect("/particulier/accueil");
       });
     })(req, res, next);
   });

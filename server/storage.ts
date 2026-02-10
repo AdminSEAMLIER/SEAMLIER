@@ -29,6 +29,7 @@ import {
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
   
   getTailors(): Promise<TailorWithUser[]>;
@@ -80,13 +81,35 @@ export interface IStorage {
 
 class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    try {
+      const result = await db.select().from(users).where(eq(users.id, id));
+      if (!result || !Array.isArray(result) || result.length === 0) return undefined;
+      return result[0];
+    } catch (error) {
+      console.error("getUser error:", error);
+      return undefined;
+    }
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
+    try {
+      const result = await db.select().from(users).where(eq(users.email, email));
+      if (!result || !Array.isArray(result) || result.length === 0) return undefined;
+      return result[0];
+    } catch (error) {
+      console.error("getUserByEmail error:", error);
+      return undefined;
+    }
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const result = await db.insert(users).values(user).returning();
+    if (!result || !Array.isArray(result) || result.length === 0) {
+      const created = await this.getUserByEmail(user.email!);
+      if (!created) throw new Error("Failed to create user");
+      return created;
+    }
+    return result[0];
   }
 
   async updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined> {

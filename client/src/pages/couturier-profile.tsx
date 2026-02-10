@@ -100,7 +100,7 @@ export default function CouturierProfile() {
                 {t('landing.login')}
               </Button>
             </Link>
-            <Link href="/inscription-particulier">
+            <Link href="/inscription">
               <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9">
                 {t('landing.signup')}
               </Button>

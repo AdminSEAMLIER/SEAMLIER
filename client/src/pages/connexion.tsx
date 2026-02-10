@@ -9,6 +9,7 @@ import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 export default function Connexion() {
   const { t } = useTranslation();
@@ -42,6 +43,7 @@ export default function Connexion() {
       const data = await response.json();
 
       if (response.ok && data.success) {
+        await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
         toast({
           title: t('auth.loginSuccess'),
           description: t('auth.welcomeBack'),

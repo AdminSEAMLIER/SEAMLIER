@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Eye, EyeOff, Check } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { LanguageToggle } from "@/components/language-toggle";
 
 const inscriptionSchema = z.object({
@@ -64,7 +64,8 @@ export default function InscriptionParticulier() {
       });
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({
         title: t('auth.accountCreated'),
         description: t('auth.welcomeDesc'),
@@ -304,7 +305,7 @@ export default function InscriptionParticulier() {
 
             <p className="text-center text-sm text-gray-500 mt-6">
               {t('auth.areYouTailor')}{" "}
-              <Link href="/inscription-professionnel" className="text-[#722F37] font-medium hover:underline" data-testid="link-pro-signup">
+              <Link href="/professionnel" className="text-[#722F37] font-medium hover:underline" data-testid="link-pro-signup">
                 {t('auth.createProAccount')}
               </Link>
             </p>

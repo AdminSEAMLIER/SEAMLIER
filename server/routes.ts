@@ -2,12 +2,114 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated } from "./replit_integrations/auth";
+import bcrypt from "bcryptjs";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
+
+  // ===== Custom Auth Endpoints =====
+
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const { fullName, email, phone, password, role } = req.body;
+
+      if (!email || !password || !fullName) {
+        return res.status(400).json({ success: false, message: "Tous les champs obligatoires doivent être remplis." });
+      }
+
+      const existing = await storage.getUserByEmail(email);
+      if (existing) {
+        return res.status(409).json({ success: false, message: "Un compte avec cet email existe déjà." });
+      }
+
+      const nameParts = fullName.trim().split(/\s+/);
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(" ") || "";
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const user = await storage.createUser({
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        phone: phone || null,
+        role: role || "client",
+      });
+
+      (req.session as any).userId = user.id;
+
+      const { password: _, ...safeUser } = user;
+      res.status(201).json({ success: true, user: safeUser });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ success: false, message: "Erreur lors de l'inscription." });
+    }
+  });
+
+  app.post("/api/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ success: false, message: "Email et mot de passe requis." });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user || !user.password) {
+        return res.status(401).json({ success: false, message: "Email ou mot de passe incorrect." });
+      }
+
+      const validPassword = await bcrypt.compare(password, user.password);
+      if (!validPassword) {
+        return res.status(401).json({ success: false, message: "Email ou mot de passe incorrect." });
+      }
+
+      (req.session as any).userId = user.id;
+
+      const { password: _, ...safeUser } = user;
+      res.json({ success: true, role: user.role, user: safeUser });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ success: false, message: "Erreur lors de la connexion." });
+    }
+  });
+
+  app.get("/api/auth/user", async (req, res) => {
+    try {
+      const sessionUserId = (req.session as any)?.userId;
+      const passportUser = (req.user as any)?.claims?.sub;
+      const userId = sessionUserId || passportUser;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Non authentifié" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ message: "Utilisateur introuvable" });
+      }
+
+      const { password: _, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Get user error:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
+  app.post("/api/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Erreur lors de la déconnexion" });
+      }
+      res.clearCookie("connect.sid");
+      res.json({ success: true });
+    });
+  });
+
   // Public routes - Tailors
   app.get("/api/tailors", async (req, res) => {
     try {

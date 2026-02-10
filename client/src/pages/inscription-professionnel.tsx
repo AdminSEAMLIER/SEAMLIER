@@ -122,7 +122,7 @@ export default function InscriptionProfessionnel() {
 
         <p className="text-center text-gray-500 mt-8">
           {t('auth.areYouClient')}{" "}
-          <Link href="/inscription-particulier" className="text-[#722F37] font-medium hover:underline" data-testid="link-client-signup">
+          <Link href="/particulier" className="text-[#722F37] font-medium hover:underline" data-testid="link-client-signup">
             {t('auth.createClientAccount')}
           </Link>
         </p>

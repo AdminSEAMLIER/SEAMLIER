@@ -27,10 +27,17 @@ async function fetchUser(): Promise<User | null> {
 }
 
 async function logoutRequest(): Promise<void> {
-  await fetch("/api/logout", {
-    method: "POST",
-    credentials: "include",
-  });
+  try {
+    await fetch("/api/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch {
+    // Fallback to GET logout for OIDC sessions
+    await fetch("/api/logout", {
+      credentials: "include",
+    });
+  }
 }
 
 export function useAuth() {

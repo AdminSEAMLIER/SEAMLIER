@@ -66,7 +66,7 @@ export default function Recherche() {
                 {t('landing.login')}
               </Button>
             </Link>
-            <Link href="/inscription-particulier">
+            <Link href="/inscription">
               <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9" data-testid="button-inscription-header">
                 {t('landing.signup')}
               </Button>
@@ -162,7 +162,7 @@ export default function Recherche() {
               <p className="text-gray-600 text-sm mb-4">
                 {t('recherche.beFirstProDesc')}
               </p>
-              <Link href="/inscription-professionnel">
+              <Link href="/professionnel">
                 <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white">
                   {t('recherche.joinAsPro')}
                 </Button>
@@ -178,7 +178,7 @@ export default function Recherche() {
           <p className="text-gray-600 mb-4">
             {t('recherche.createAccountMessage')}
           </p>
-          <Link href="/inscription-particulier">
+          <Link href="/inscription">
             <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white">
               {t('recherche.signupAsClient')}
             </Button>
