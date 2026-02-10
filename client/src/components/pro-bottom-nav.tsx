@@ -8,7 +8,7 @@ export function ProBottomNav() {
   const [location] = useLocation();
 
   const navItems = [
-    { icon: Home, labelKey: "nav.proHome", href: "/professionnel" },
+    { icon: Home, labelKey: "nav.proHome", href: "/professionnel/dashboard" },
     { icon: FileText, labelKey: "nav.requests", href: "/professionnel/demandes" },
     { icon: FolderKanban, labelKey: "nav.projects", href: "/professionnel/projets" },
     { icon: MessageSquare, labelKey: "nav.messaging", href: "/professionnel/messagerie" },
@@ -23,7 +23,7 @@ export function ProBottomNav() {
       <div className="flex items-center justify-around h-full max-w-lg mx-auto px-2">
         {navItems.map((item) => {
           const isActive = location === item.href || 
-            (item.href !== "/professionnel" && location.startsWith(item.href));
+            (item.href !== "/professionnel/dashboard" && location.startsWith(item.href));
           
           return (
             <Link key={item.href} href={item.href}>

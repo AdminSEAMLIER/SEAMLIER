@@ -80,7 +80,7 @@ export default function ProSetup() {
         title: t('auth.profileCreated'),
         description: t('auth.welcomeProDesc'),
       });
-      setLocation("/professionnel");
+      setLocation("/professionnel/dashboard");
     },
     onError: (error: Error) => {
       toast({

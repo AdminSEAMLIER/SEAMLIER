@@ -110,7 +110,7 @@ export default function TailorProfile() {
       <div className="min-h-screen flex items-center justify-center pb-20 lg:pb-8 bg-white">
         <div className="text-center">
           <p className="text-gray-500 mb-4">{t('tailorProfile.notFound')}</p>
-          <Link href="/particulier">
+          <Link href="/particulier/accueil">
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               {t('common.backToHome')}
@@ -132,7 +132,7 @@ export default function TailorProfile() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         
         <div className="absolute top-4 left-4 right-4 flex justify-between">
-          <Link href="/particulier">
+          <Link href="/particulier/accueil">
             <Button 
               variant="ghost" 
               size="icon" 

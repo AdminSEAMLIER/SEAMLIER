@@ -69,7 +69,7 @@ export default function InscriptionParticulier() {
         title: t('auth.accountCreated'),
         description: t('auth.welcomeDesc'),
       });
-      setLocation("/particulier");
+      setLocation("/particulier/accueil");
     },
     onError: (error: Error) => {
       toast({

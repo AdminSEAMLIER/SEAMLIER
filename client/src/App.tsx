@@ -1,4 +1,4 @@
-import { Switch, Route, Link } from "wouter";
+import { Switch, Route, Link, useLocation, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -11,8 +11,8 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/hooks/use-auth";
 
-// Imports des pages
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
@@ -46,14 +46,31 @@ import ProParametres from "@/pages/pro-parametres";
 import ProModifierMotDePasse from "@/pages/pro-modifier-mot-de-passe";
 import ProNotifications from "@/pages/pro-notifications";
 import ProSetup from "@/pages/pro-setup";
+import Marketplace from "@/pages/marketplace";
 
-// --- Headers Mobiles ---
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[#722F37] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Redirect to="/connexion" />;
+  }
+
+  return <>{children}</>;
+}
 
 function MobileHeader() {
   return (
     <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="w-10" />
-      <Link href="/particulier">
+      <Link href="/particulier/accueil">
         <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
       </Link>
       <LanguageToggle />
@@ -64,7 +81,7 @@ function MobileHeader() {
 function ProMobileHeader() {
   return (
     <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-50">
-      <Link href="/professionnel">
+      <Link href="/professionnel/dashboard">
         <div className="flex items-center gap-2">
           <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
           <Badge variant="secondary" className="bg-[#722F37]/10 text-[#722F37] border-none text-[10px]">Pro</Badge>
@@ -74,8 +91,6 @@ function ProMobileHeader() {
     </div>
   );
 }
-
-// --- Layouts ---
 
 function ParticulierLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -103,59 +118,104 @@ function ProLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-// --- Navigation (Router) ---
-
 function Router() {
   return (
     <Switch>
-      {/* Pages d'accueil et Authentification */}
+      {/* ===== PAGES PUBLIQUES ===== */}
       <Route path="/" component={Landing} />
       <Route path="/connexion" component={Connexion} />
       <Route path="/inscription" component={Inscription} />
+      <Route path="/particulier" component={InscriptionParticulier} />
+      <Route path="/professionnel" component={InscriptionProfessionnel} />
+      <Route path="/recherche" component={Recherche} />
+      <Route path="/couturier/:id" component={CouturierProfile} />
+      <Route path="/mentions-legales" component={MentionsLegales} />
+      <Route path="/confidentialite" component={Confidentialite} />
       <Route path="/cgv" component={CGV} />
 
-      {/* Univers Particulier */}
-      <Route path="/particulier">
-        <ParticulierLayout><Home /></ParticulierLayout>
+      {/* ===== ESPACE PARTICULIER (protégé) ===== */}
+      <Route path="/particulier/accueil">
+        <ProtectedRoute><ParticulierLayout><Home /></ParticulierLayout></ProtectedRoute>
       </Route>
-      <Route path="/discovery">
-        <ParticulierLayout><Discovery /></ParticulierLayout>
+      <Route path="/particulier/decouverte">
+        <ProtectedRoute><ParticulierLayout><Discovery /></ParticulierLayout></ProtectedRoute>
       </Route>
-      <Route path="/mesures">
-        <ParticulierLayout><Mesures /></ParticulierLayout>
+      <Route path="/particulier/mesures">
+        <ProtectedRoute><ParticulierLayout><Mesures /></ParticulierLayout></ProtectedRoute>
       </Route>
-      <Route path="/magazine">
-        <ParticulierLayout><Magazine /></ParticulierLayout>
+      <Route path="/particulier/magazine">
+        <ProtectedRoute><ParticulierLayout><Magazine /></ParticulierLayout></ProtectedRoute>
+      </Route>
+      <Route path="/particulier/magazine/:id">
+        <ProtectedRoute><ParticulierLayout><MagazineDetail /></ParticulierLayout></ProtectedRoute>
+      </Route>
+      <Route path="/particulier/marketplace">
+        <ProtectedRoute><ParticulierLayout><Marketplace /></ParticulierLayout></ProtectedRoute>
+      </Route>
+      <Route path="/particulier/messages">
+        <ProtectedRoute><ParticulierLayout><Messages /></ParticulierLayout></ProtectedRoute>
+      </Route>
+      <Route path="/particulier/profil">
+        <ProtectedRoute><ParticulierLayout><ProfilParticulier /></ParticulierLayout></ProtectedRoute>
+      </Route>
+      <Route path="/particulier/profil/mot-de-passe">
+        <ProtectedRoute><ParticulierLayout><ModifierMotDePasse /></ParticulierLayout></ProtectedRoute>
+      </Route>
+      <Route path="/particulier/profil/notifications">
+        <ProtectedRoute><ParticulierLayout><PreferencesNotifications /></ParticulierLayout></ProtectedRoute>
+      </Route>
+      <Route path="/particulier/tailor/:id">
+        <ProtectedRoute><ParticulierLayout><TailorProfile /></ParticulierLayout></ProtectedRoute>
+      </Route>
+      <Route path="/particulier/product/:id">
+        <ProtectedRoute><ParticulierLayout><ProductDetail /></ParticulierLayout></ProtectedRoute>
       </Route>
 
-      {/* Univers Professionnel (Burgundy) */}
-      <Route path="/professionnel">
-        <ProLayout><ProDashboard /></ProLayout>
+      {/* ===== ESPACE PROFESSIONNEL (protégé) ===== */}
+      <Route path="/professionnel/dashboard">
+        <ProtectedRoute><ProLayout><ProDashboard /></ProLayout></ProtectedRoute>
       </Route>
-      <Route path="/pro-projets">
-        <ProLayout><ProProjets /></ProLayout>
+      <Route path="/professionnel/setup">
+        <ProtectedRoute><ProLayout><ProSetup /></ProLayout></ProtectedRoute>
       </Route>
-      <Route path="/pro-messagerie">
-        <ProLayout><ProMessagerie /></ProLayout>
+      <Route path="/professionnel/demandes">
+        <ProtectedRoute><ProLayout><ProDemandes /></ProLayout></ProtectedRoute>
       </Route>
-      <Route path="/pro-planning">
-        <ProLayout><ProPlanning /></ProLayout>
+      <Route path="/professionnel/projets">
+        <ProtectedRoute><ProLayout><ProProjets /></ProLayout></ProtectedRoute>
       </Route>
-      <Route path="/pro-parametres">
-        <ProLayout><ProParametres /></ProLayout>
+      <Route path="/professionnel/messagerie">
+        <ProtectedRoute><ProLayout><ProMessagerie /></ProLayout></ProtectedRoute>
+      </Route>
+      <Route path="/professionnel/planning">
+        <ProtectedRoute><ProLayout><ProPlanning /></ProLayout></ProtectedRoute>
+      </Route>
+      <Route path="/professionnel/profil">
+        <ProtectedRoute><ProLayout><ProProfil /></ProLayout></ProtectedRoute>
+      </Route>
+      <Route path="/professionnel/profil/mot-de-passe">
+        <ProtectedRoute><ProLayout><ProModifierMotDePasse /></ProLayout></ProtectedRoute>
+      </Route>
+      <Route path="/professionnel/profil/notifications">
+        <ProtectedRoute><ProLayout><ProNotifications /></ProLayout></ProtectedRoute>
+      </Route>
+      <Route path="/professionnel/parametres">
+        <ProtectedRoute><ProLayout><ProParametres /></ProLayout></ProtectedRoute>
       </Route>
 
-      {/* L'Espace Administrateur Secret (SEAMLiER Admin) */}
-      <Route path="/admin/seamlier" component={AdminDashboard} />
-      <Route path="/access/gestion/seamlier" component={AdminDashboard} />
+      {/* ===== ADMIN (protégé) ===== */}
+      <Route path="/admin/seamlier">
+        <ProtectedRoute><AdminDashboard /></ProtectedRoute>
+      </Route>
+      <Route path="/access/gestion/seamlier">
+        <ProtectedRoute><AdminDashboard /></ProtectedRoute>
+      </Route>
 
-      {/* Erreur 404 */}
+      {/* ===== 404 ===== */}
       <Route component={NotFound} />
     </Switch>
   );
 }
-
-// --- Exportation Finale (L'entrée du site) ---
 
 export default function App() {
   return (

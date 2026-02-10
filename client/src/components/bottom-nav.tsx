@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { icon: Home, labelKey: "nav.home", path: "/particulier" },
+  { icon: Home, labelKey: "nav.home", path: "/particulier/accueil" },
   { icon: Compass, labelKey: "nav.search", path: "/particulier/decouverte" },
   { icon: Ruler, labelKey: "nav.measures", path: "/particulier/mesures" },
   { icon: BookOpen, labelKey: "nav.magazine", path: "/particulier/magazine" },
@@ -23,7 +23,7 @@ export function BottomNav() {
       <div className="flex items-center justify-around h-full max-w-lg mx-auto px-2">
         {navItems.map((item) => {
           const isActive = location === item.path || 
-            (item.path !== "/particulier" && location.startsWith(item.path));
+            (item.path !== "/particulier/accueil" && location.startsWith(item.path));
           const Icon = item.icon;
           
           return (

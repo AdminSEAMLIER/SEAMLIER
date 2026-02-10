@@ -47,9 +47,9 @@ export default function Connexion() {
           description: t('auth.welcomeBack'),
         });
         if (data.role === 'tailor') {
-          setLocation('/professionnel');
+          setLocation('/professionnel/dashboard');
         } else {
-          setLocation('/particulier');
+          setLocation('/particulier/accueil');
         }
       } else {
         toast({

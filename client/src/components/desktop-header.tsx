@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const particulierNavItems = [
-  { icon: Home, labelKey: "nav.home", path: "/particulier" },
+  { icon: Home, labelKey: "nav.home", path: "/particulier/accueil" },
   { icon: Compass, labelKey: "nav.search", path: "/particulier/decouverte" },
   { icon: Ruler, labelKey: "nav.measures", path: "/particulier/mesures" },
   { icon: BookOpen, labelKey: "nav.magazine", path: "/particulier/magazine" },
@@ -20,7 +20,7 @@ const particulierNavItems = [
 ];
 
 const proNavItems = [
-  { icon: Home, labelKey: "nav.proHome", path: "/professionnel" },
+  { icon: Home, labelKey: "nav.proHome", path: "/professionnel/dashboard" },
   { icon: FileText, labelKey: "nav.requests", path: "/professionnel/demandes" },
   { icon: FolderKanban, labelKey: "nav.projects", path: "/professionnel/projets" },
   { icon: MessageCircle, labelKey: "nav.messaging", path: "/professionnel/messagerie" },
@@ -37,7 +37,7 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
   const [location] = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
   const navItems = mode === "professionnel" ? proNavItems : particulierNavItems;
-  const basePath = mode === "professionnel" ? "/professionnel" : "/particulier";
+  const basePath = mode === "professionnel" ? "/professionnel/dashboard" : "/particulier/accueil";
   
   const userInitials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() || 'U' : 'U';
 
