@@ -5,9 +5,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, User, Briefcase } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
+import { useLocation } from "wouter";
 
 export default function Inscription() {
   const { t } = useTranslation();
+  const [, setLocation] = useLocation();
+
+  const handleSignup = (role: string) => {
+    setLocation(`/connexion?role=${role}`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -38,50 +44,54 @@ export default function Inscription() {
         </div>
 
         <div className="grid sm:grid-cols-2 gap-6">
-          <Card className="border-2 border-gray-200 hover:border-[#722F37] transition-colors cursor-pointer group">
-            <a href="/api/login?role=client">
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-gray-100 group-hover:bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors">
-                  <User className="h-8 w-8 text-[#722F37]" />
-                </div>
-                <h2 className="font-serif text-sm text-[#722F37] mb-1">
-                  {t('inscription.clientTitle')}
-                </h2>
-                <p className="text-gray-500 text-xs mb-3">
-                  {t('inscription.clientDesc')}
-                </p>
-                <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-xs px-2" data-testid="button-inscription-particulier">
-                  {t('inscription.clientButton')}
-                </Button>
-              </CardContent>
-            </a>
+          <Card
+            className="border-2 border-gray-200 hover:border-[#722F37] transition-colors cursor-pointer group"
+            onClick={() => handleSignup('client')}
+            data-testid="card-inscription-particulier"
+          >
+            <CardContent className="p-8 text-center">
+              <div className="w-16 h-16 bg-gray-100 group-hover:bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors">
+                <User className="h-8 w-8 text-[#722F37]" />
+              </div>
+              <h2 className="font-serif text-sm text-[#722F37] mb-1">
+                {t('inscription.clientTitle')}
+              </h2>
+              <p className="text-gray-500 text-xs mb-3">
+                {t('inscription.clientDesc')}
+              </p>
+              <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-xs px-2" data-testid="button-inscription-particulier">
+                {t('inscription.clientButton')}
+              </Button>
+            </CardContent>
           </Card>
 
-          <Card className="border-2 border-gray-200 hover:border-[#722F37] transition-colors cursor-pointer group">
-            <a href="/api/login?role=tailor">
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-gray-100 group-hover:bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors">
-                  <Briefcase className="h-8 w-8 text-[#722F37]" />
-                </div>
-                <h2 className="font-serif text-sm text-[#722F37] mb-1">
-                  {t('inscription.proTitle')}
-                </h2>
-                <p className="text-gray-500 text-xs mb-3">
-                  {t('inscription.proDesc')}
-                </p>
-                <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-xs px-2" data-testid="button-inscription-professionnel">
-                  {t('inscription.proButton')}
-                </Button>
-              </CardContent>
-            </a>
+          <Card
+            className="border-2 border-gray-200 hover:border-[#722F37] transition-colors cursor-pointer group"
+            onClick={() => handleSignup('tailor')}
+            data-testid="card-inscription-professionnel"
+          >
+            <CardContent className="p-8 text-center">
+              <div className="w-16 h-16 bg-gray-100 group-hover:bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors">
+                <Briefcase className="h-8 w-8 text-[#722F37]" />
+              </div>
+              <h2 className="font-serif text-sm text-[#722F37] mb-1">
+                {t('inscription.proTitle')}
+              </h2>
+              <p className="text-gray-500 text-xs mb-3">
+                {t('inscription.proDesc')}
+              </p>
+              <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-xs px-2" data-testid="button-inscription-professionnel">
+                {t('inscription.proButton')}
+              </Button>
+            </CardContent>
           </Card>
         </div>
 
         <p className="text-center text-gray-500 mt-8">
           {t('inscription.alreadyAccount')}{' '}
-          <a href="/api/login" className="text-[#722F37] hover:underline">
+          <Link href="/connexion" className="text-[#722F37] hover:underline" data-testid="link-connexion">
             {t('inscription.loginLink')}
-          </a>
+          </Link>
         </p>
       </main>
     </div>

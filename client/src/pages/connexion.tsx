@@ -5,34 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
+import { useEffect } from "react";
 
 export default function Connexion() {
   const { t } = useTranslation();
 
-  // Cette fonction magique empêche la page blanche
-  const handleLogin = async (role: string) => {
-    try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: 'test@seamlier.fr', 
-          password: 'password123',
-          role: role 
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        alert("Bravo ! Connexion réussie en tant que " + role);
-        // Ici tu pourras rediriger l'utilisateur plus tard
-      } else {
-        alert("Erreur : " + data.message);
-      }
-    } catch (error) {
-      alert("Le serveur ne répond pas, vérifie ton fichier auth.php");
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const role = params.get('role');
+    if (role === 'client' || role === 'tailor') {
+      window.location.href = `/api/login?role=${role}`;
     }
+  }, []);
+
+  const handleLogin = (role: string) => {
+    window.location.href = `/api/login?role=${role}`;
   };
 
   return (
@@ -61,7 +48,7 @@ export default function Connexion() {
           </div>
 
           <div className="space-y-4">
-            <Card className="border-2 border-gray-200">
+            <Card className="border-2 border-gray-200 cursor-pointer" onClick={() => handleLogin('client')} data-testid="card-login-particulier">
               <CardContent className="p-6 text-center">
                 <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <User className="h-7 w-7 text-[#722F37]" />
@@ -73,7 +60,6 @@ export default function Connexion() {
                   {t('auth.loginAsClientDesc')}
                 </p>
                 <Button 
-                  onClick={() => handleLogin('client')}
                   className="w-full bg-[#722F37] hover:bg-[#5a252c]" 
                   data-testid="button-login-particulier"
                 >
@@ -82,7 +68,7 @@ export default function Connexion() {
               </CardContent>
             </Card>
 
-            <Card className="border-2 border-gray-200">
+            <Card className="border-2 border-gray-200 cursor-pointer" onClick={() => handleLogin('tailor')} data-testid="card-login-professionnel">
               <CardContent className="p-6 text-center">
                 <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Briefcase className="h-7 w-7 text-[#722F37]" />
@@ -94,7 +80,6 @@ export default function Connexion() {
                   {t('auth.loginAsProDesc')}
                 </p>
                 <Button 
-                  onClick={() => handleLogin('tailor')}
                   className="w-full bg-[#722F37] hover:bg-[#5a252c]" 
                   data-testid="button-login-professionnel"
                 >

@@ -100,11 +100,12 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
                 <DropdownMenuItem className="text-gray-700">
                   <span className="font-medium">{user.firstName} {user.lastName}</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <a href="/api/logout" className="flex items-center gap-2 text-red-600 cursor-pointer">
-                    <LogOut className="h-4 w-4" />
-                    {t('auth.logout')}
-                  </a>
+                <DropdownMenuItem 
+                  className="flex items-center gap-2 text-red-600 cursor-pointer"
+                  onClick={() => window.location.href = '/api/logout'}
+                >
+                  <LogOut className="h-4 w-4" />
+                  {t('auth.logout')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

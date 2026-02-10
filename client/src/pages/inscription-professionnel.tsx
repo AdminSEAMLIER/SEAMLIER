@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { LanguageToggle } from "@/components/language-toggle";
 
 export default function InscriptionProfessionnel() {
   const { t } = useTranslation();
+  const [, setLocation] = useLocation();
 
   const benefits = [
     { icon: Users, text: t('auth.proBenefits.clients') },
@@ -97,16 +98,15 @@ export default function InscriptionProfessionnel() {
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
               {t('auth.createAccountInSeconds')}
             </p>
-            <a href="/api/login?role=tailor">
-              <Button 
-                size="lg" 
-                className="bg-[#722F37] hover:bg-[#5a252c] text-white px-8"
-                data-testid="button-start-registration"
-              >
-                {t('auth.startRegistration')}
-                <ArrowRight className="h-5 w-5 ml-2" />
-              </Button>
-            </a>
+            <Button 
+              size="lg" 
+              className="bg-[#722F37] hover:bg-[#5a252c] text-white px-8"
+              data-testid="button-start-registration"
+              onClick={() => setLocation('/connexion?role=tailor')}
+            >
+              {t('auth.startRegistration')}
+              <ArrowRight className="h-5 w-5 ml-2" />
+            </Button>
             <p className="text-sm text-gray-500 mt-4">
               {t('auth.termsAccept')}{' '}
               <Link href="/mentions-legales" className="text-[#722F37] hover:underline">

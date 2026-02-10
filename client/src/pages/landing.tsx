@@ -70,11 +70,11 @@ export default function Landing() {
           <Logo className="text-[#722F37] shrink-0" textClassName="text-base lg:text-lg text-[#722F37]" />
           <div className="flex items-center gap-1 md:gap-2 lg:gap-4">
             <LanguageToggle />
-            <a href="/api/login">
+            <Link href="/connexion">
               <Button variant="ghost" size="sm" className="text-[#722F37] px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9" data-testid="button-connexion-header">
                 {t('landing.login')}
               </Button>
-            </a>
+            </Link>
             <Link href="/inscription">
               <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9" data-testid="button-inscription-header">
                 {t('landing.signup')}
