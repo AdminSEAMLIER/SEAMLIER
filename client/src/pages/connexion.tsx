@@ -9,6 +9,32 @@ import { LanguageToggle } from "@/components/language-toggle";
 export default function Connexion() {
   const { t } = useTranslation();
 
+  // Cette fonction magique empêche la page blanche
+  const handleLogin = async (role: string) => {
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: 'test@seamlier.fr', 
+          password: 'password123',
+          role: role 
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert("Bravo ! Connexion réussie en tant que " + role);
+        // Ici tu pourras rediriger l'utilisateur plus tard
+      } else {
+        alert("Erreur : " + data.message);
+      }
+    } catch (error) {
+      alert("Le serveur ne répond pas, vérifie ton fichier auth.php");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="bg-white border-b border-gray-100 px-4 py-4">
@@ -46,11 +72,13 @@ export default function Connexion() {
                 <p className="text-gray-500 text-xs mb-3">
                   {t('auth.loginAsClientDesc')}
                 </p>
-                <a href="/api/login?role=client">
-                  <Button className="w-full bg-[#722F37] hover:bg-[#5a252c]" data-testid="button-login-particulier">
-                    {t('auth.loginAsClientButton')}
-                  </Button>
-                </a>
+                <Button 
+                  onClick={() => handleLogin('client')}
+                  className="w-full bg-[#722F37] hover:bg-[#5a252c]" 
+                  data-testid="button-login-particulier"
+                >
+                  {t('auth.loginAsClientButton')}
+                </Button>
               </CardContent>
             </Card>
 
@@ -65,11 +93,13 @@ export default function Connexion() {
                 <p className="text-gray-500 text-xs mb-3">
                   {t('auth.loginAsProDesc')}
                 </p>
-                <a href="/api/login?role=tailor">
-                  <Button className="w-full bg-[#722F37] hover:bg-[#5a252c]" data-testid="button-login-professionnel">
-                    {t('auth.loginAsProButton')}
-                  </Button>
-                </a>
+                <Button 
+                  onClick={() => handleLogin('tailor')}
+                  className="w-full bg-[#722F37] hover:bg-[#5a252c]" 
+                  data-testid="button-login-professionnel"
+                >
+                  {t('auth.loginAsProButton')}
+                </Button>
               </CardContent>
             </Card>
           </div>
