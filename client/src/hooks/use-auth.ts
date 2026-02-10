@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { API_ENDPOINTS, phpFetch, safeParse } from "@/lib/api-config";
 
 interface User {
   id: number;
@@ -11,33 +12,25 @@ interface User {
 }
 
 async function fetchUser(): Promise<User | null> {
-  const response = await fetch("/api/auth/user", {
-    credentials: "include",
-  });
+  try {
+    const response = await phpFetch(API_ENDPOINTS.auth.user);
 
-  if (response.status === 401) {
+    if (response.status === 401) {
+      return null;
+    }
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return await safeParse<User>(response);
+  } catch {
     return null;
   }
-
-  if (!response.ok) {
-    throw new Error(`${response.status}: ${response.statusText}`);
-  }
-
-  return response.json();
 }
 
 async function logoutRequest(): Promise<void> {
-  try {
-    await fetch("/api/logout", {
-      method: "POST",
-      credentials: "include",
-    });
-  } catch {
-    // Fallback to GET logout for OIDC sessions
-    await fetch("/api/logout", {
-      credentials: "include",
-    });
-  }
+  await phpFetch(API_ENDPOINTS.auth.logout, { method: "POST" });
 }
 
 export function useAuth() {
@@ -45,7 +38,7 @@ export function useAuth() {
   const [, setLocation] = useLocation();
 
   const { data: user, isLoading } = useQuery<User | null>({
-    queryKey: ["/api/auth/user"],
+    queryKey: ["auth-user"],
     queryFn: fetchUser,
     retry: false,
     staleTime: 1000 * 60 * 5,
@@ -54,7 +47,7 @@ export function useAuth() {
   const logoutMutation = useMutation({
     mutationFn: logoutRequest,
     onSuccess: () => {
-      queryClient.setQueryData(["/api/auth/user"], null);
+      queryClient.setQueryData(["auth-user"], null);
       setLocation("/connexion");
     },
   });

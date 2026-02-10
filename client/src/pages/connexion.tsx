@@ -10,6 +10,7 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { API_ENDPOINTS, phpFetch, safeParse } from "@/lib/api-config";
 
 export default function Connexion() {
   const { t } = useTranslation();
@@ -33,17 +34,15 @@ export default function Connexion() {
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/login', {
+      const response = await phpFetch(API_ENDPOINTS.auth.login, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      const data = await safeParse(response);
 
       if (response.ok && data.success) {
-        await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        await queryClient.invalidateQueries({ queryKey: ["auth-user"] });
         toast({
           title: t('auth.loginSuccess'),
           description: t('auth.welcomeBack'),
@@ -60,10 +59,10 @@ export default function Connexion() {
           variant: "destructive",
         });
       }
-    } catch {
+    } catch (err: any) {
       toast({
         title: t('auth.error'),
-        description: t('auth.serverError'),
+        description: err.message || t('auth.serverError'),
         variant: "destructive",
       });
     } finally {

@@ -1,0 +1,18 @@
+# SEAMLIER - Configuration Apache pour o2switch
+# Placer ce fichier à la racine du site
+
+# Activer la réécriture d'URL
+RewriteEngine On
+
+# Si le fichier ou répertoire existe physiquement, le servir directement
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Laisser passer les fichiers PHP
+RewriteRule ^auth\.php - [L]
+RewriteRule ^admin\.php - [L]
+RewriteRule ^data\.php - [L]
+
+# Toutes les autres requêtes → index.html (SPA React)
+RewriteRule ^ index.html [L]

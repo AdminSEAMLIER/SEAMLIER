@@ -19,7 +19,8 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Eye, EyeOff, Check } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
+import { API_ENDPOINTS, phpFetch, safeParse } from "@/lib/api-config";
 import { LanguageToggle } from "@/components/language-toggle";
 
 const inscriptionSchema = z.object({
@@ -55,17 +56,24 @@ export default function InscriptionParticulier() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: InscriptionForm) => {
-      const response = await apiRequest("POST", "/api/auth/register", {
-        fullName: data.fullName,
-        email: data.email,
-        phone: data.phone,
-        password: data.password,
-        role: "client",
+      const response = await phpFetch(API_ENDPOINTS.auth.register, {
+        method: "POST",
+        body: JSON.stringify({
+          fullName: data.fullName,
+          email: data.email,
+          phone: data.phone,
+          password: data.password,
+          role: "client",
+        }),
       });
-      return response.json();
+      const result = await safeParse(response);
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Erreur lors de l'inscription");
+      }
+      return result;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.invalidateQueries({ queryKey: ["auth-user"] });
       toast({
         title: t('auth.accountCreated'),
         description: t('auth.welcomeDesc'),

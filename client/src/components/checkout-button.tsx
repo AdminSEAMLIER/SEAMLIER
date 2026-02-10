@@ -1,5 +1,6 @@
 import { loadStripe } from "@stripe/stripe-js";
 import { useState, useEffect } from "react";
+import { resolveApiUrl } from "@/lib/api-config";
 
 export default function CheckoutButton() {
   const [loading, setLoading] = useState(false);
@@ -21,12 +22,15 @@ export default function CheckoutButton() {
 
     setLoading(true);
     try {
-      const response = await fetch("/api/create-checkout-session", {
+      const response = await fetch(resolveApiUrl("/api/create-checkout-session"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
       });
 
-      const session = await response.json();
+      const text = await response.text();
+      let session;
+      try { session = JSON.parse(text); } catch { throw new Error("Réponse inattendue du serveur."); }
       const stripe = await stripePromise;
 
       if (stripe && session.id) {
