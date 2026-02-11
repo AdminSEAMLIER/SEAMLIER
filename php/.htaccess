@@ -1,18 +1,19 @@
 # SEAMLIER - Configuration Apache pour o2switch
-# Placer ce fichier à la racine du site
+# Placer ce fichier à la racine du site (public_html/)
 
-# Activer la réécriture d'URL
+# ===== Forcer HTTPS =====
 RewriteEngine On
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-# Si le fichier ou répertoire existe physiquement, le servir directement
+# ===== Fichiers PHP (API backend dans /php/) =====
+RewriteRule ^php/ - [L]
+
+# ===== Fichiers statiques existants (JS, CSS, images, fonts) =====
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
-# Laisser passer les fichiers PHP
-RewriteRule ^auth\.php - [L]
-RewriteRule ^admin\.php - [L]
-RewriteRule ^data\.php - [L]
-
-# Toutes les autres requêtes → index.html (SPA React)
+# ===== Toutes les autres requêtes → index.html (SPA React Router) =====
+# Cela couvre : /admin/seamlier, /particulier/*, /professionnel/*, etc.
 RewriteRule ^ index.html [L]

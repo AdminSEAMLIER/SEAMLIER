@@ -1,0 +1,33 @@
+Bonjour, nous passons à la phase finale de mise en production. Voici la liste complète des correctifs et fonctionnalités à implémenter pour que le site soit totalement opérationnel et fluide :
+
+1. Correction du Formulaire Particulier & API (Urgent)
+
+Le formulaire renvoie actuellement une erreur 404. Le fichier de traitement est sur o2switch à l'adresse https://seamlier.fr/php/auth.php.
+
+Merci de fixer la variable PHP_BASE sur /php afin que les requêtes pointent vers le bon dossier.
+
+2. Inscription Professionnelle & Automatisation
+
+Formulaire Pro : Finalise la page /professionnel avec un formulaire complet (SIRET, spécialité, etc.) qui crée à la fois un compte 'User' et un profil 'Artisan'.
+
+Paiement d'adhésion : Intègre un système de paiement (Stripe ou PayPal). Une fois payé, le compte doit passer en statut 'Pro' automatiquement sans intervention manuelle.
+
+Activation par mail : Ajoute l'envoi d'un mail d'activation automatique lors de l'inscription pour valider le compte.
+
+3. Nettoyage et Design de l'Interface
+
+Données Fake : Supprime toutes les données de test (utilisateurs fictifs, faux avis, Lorem Ipsum). La base de données doit être propre pour les vrais clients.
+
+Contraste des Filtres : Sur la page 'Découvrir', corrige les menus déroulants (Select) où le texte est blanc sur blanc. Il doit être noir ou bleu foncé pour être lisible.
+
+Bulle d'aide : Ajoute une icône (?) à côté de 'Frais de service' avec le texte : 'Ces frais assurent la protection de vos paiements et le support de la plateforme'.
+
+États de chargement : Ajoute un indicateur visuel (spinner) sur les boutons lors de la soumission des formulaires.
+
+4. Espace Admin & Sécurité
+
+Onglet Inscrits : Assure-toi que l'admin peut voir la liste complète des particuliers et pros avec leurs statuts.
+
+Configuration o2switch : Génère un fichier .htaccess pour forcer le HTTPS et gérer les redirections React Router (éviter les 404 au rafraîchissement de page).
+
+Redirection : Après inscription ou paiement, redirige l'utilisateur directement vers son tableau de bord connecté."

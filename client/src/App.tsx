@@ -203,13 +203,9 @@ function Router() {
         <ProtectedRoute><ProLayout><ProParametres /></ProLayout></ProtectedRoute>
       </Route>
 
-      {/* ===== ADMIN (protégé) ===== */}
-      <Route path="/admin/seamlier">
-        <ProtectedRoute><AdminDashboard /></ProtectedRoute>
-      </Route>
-      <Route path="/access/gestion/seamlier">
-        <ProtectedRoute><AdminDashboard /></ProtectedRoute>
-      </Route>
+      {/* ===== ADMIN (login interne dans la page) ===== */}
+      <Route path="/admin/seamlier" component={AdminDashboard} />
+      <Route path="/access/gestion/seamlier" component={AdminDashboard} />
 
       {/* ===== 404 ===== */}
       <Route component={NotFound} />
