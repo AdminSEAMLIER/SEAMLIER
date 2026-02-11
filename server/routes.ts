@@ -39,6 +39,29 @@ export async function registerRoutes(
         role: role || "client",
       });
 
+      if ((role || "client") === "tailor") {
+        try {
+          const { specialty, city, yearsExperience, bio, siret, companyName } = req.body;
+          await storage.createAdminArtisan({
+            firstName,
+            lastName,
+            email,
+            phone: phone || "",
+            specialty: specialty || "",
+            city: city || "",
+            status: "En attente",
+            siret: siret || "",
+            companyName: companyName || "",
+            yearsExperience: parseInt(yearsExperience) || 0,
+            bio: bio || "",
+            subscriptionPlan: "Starter",
+            paymentStatus: "En attente",
+          });
+        } catch (artisanError) {
+          console.error("Error creating artisan profile:", artisanError);
+        }
+      }
+
       (req.session as any).userId = user.id;
 
       const { password: _, ...safeUser } = user;
@@ -504,6 +527,17 @@ export async function registerRoutes(
       res.status(201).json(review);
     } catch (error) {
       res.status(500).json({ error: "Failed to create review" });
+    }
+  });
+
+  // Admin routes - Users listing
+  app.get("/api/admin/users", async (req, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      res.json(allUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
     }
   });
 

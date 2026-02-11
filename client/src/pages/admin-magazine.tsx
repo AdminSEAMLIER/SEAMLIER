@@ -227,6 +227,16 @@ export default function AdminDashboard() {
 
   const [projects, setProjects] = useState<Project[]>([]);
 
+  const { data: dbUsers = [], isLoading: usersLoading } = useQuery<any[]>({
+    queryKey: ["admin-users"],
+    queryFn: async () => {
+      const res = await phpFetch(API_ENDPOINTS.admin.users);
+      if (!res.ok) return [];
+      return safeParse(res);
+    },
+    enabled: isAuthenticated,
+  });
+
   const { data: dbArtisans = [], isLoading: artisansLoading } = useQuery<any[]>({
     queryKey: ["admin-artisans"],
     queryFn: async () => {
@@ -605,6 +615,7 @@ export default function AdminDashboard() {
 
   const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, id: "overview" },
+    { label: "Inscrits", icon: User, id: "users" },
     { label: "Projets", icon: ShoppingBag, id: "projects" },
     { label: "Messagerie", icon: MessageSquare, id: "messaging" },
     { label: "Planning", icon: Calendar, id: "planning" },
@@ -1446,6 +1457,103 @@ export default function AdminDashboard() {
                       )}
                     </DialogContent>
                   </Dialog>
+                </>
+              )}
+
+              {/* ===== INSCRITS (USERS) ===== */}
+              {activeTab === "users" && (
+                <>
+                  <div>
+                    <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title-users">Liste des Inscrits</h1>
+                    <p className="text-gray-500 mt-1 text-sm">Tous les utilisateurs inscrits sur la plateforme (particuliers et professionnels)</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <Card>
+                      <CardContent className="p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                          <Users className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-gray-900" data-testid="text-total-users">{dbUsers.length}</p>
+                          <p className="text-xs text-gray-500">Total inscrits</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
+                          <User className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-gray-900" data-testid="text-total-clients">{dbUsers.filter((u: any) => u.role === 'client').length}</p>
+                          <p className="text-xs text-gray-500">Particuliers</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
+                          <Briefcase className="h-5 w-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-gray-900" data-testid="text-total-pros">{dbUsers.filter((u: any) => u.role === 'tailor').length}</p>
+                          <p className="text-xs text-gray-500">Professionnels</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {usersLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="w-8 h-8 border-4 border-[#722F37] border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : dbUsers.length === 0 ? (
+                    <Card>
+                      <CardContent className="p-12 text-center">
+                        <Users className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                        <p className="text-gray-500">Aucun utilisateur inscrit pour le moment.</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card>
+                      <CardContent className="p-0">
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm" data-testid="table-users">
+                            <thead>
+                              <tr className="border-b border-gray-100 bg-gray-50/50">
+                                <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Nom</th>
+                                <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
+                                <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Téléphone</th>
+                                <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
+                                <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date d'inscription</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {dbUsers.map((u: any) => (
+                                <tr key={u.id} className="border-b border-gray-50 last:border-0" data-testid={`row-user-${u.id}`}>
+                                  <td className="p-4 font-medium text-gray-900">{u.firstName} {u.lastName}</td>
+                                  <td className="p-4 text-gray-600">{u.email}</td>
+                                  <td className="p-4 text-gray-600">{u.phone || '—'}</td>
+                                  <td className="p-4">
+                                    <Badge variant="secondary" className={cn(
+                                      "text-[10px] font-bold uppercase",
+                                      u.role === 'tailor' ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
+                                    )}>
+                                      {u.role === 'tailor' ? 'Professionnel' : 'Particulier'}
+                                    </Badge>
+                                  </td>
+                                  <td className="p-4 text-gray-500 text-xs">
+                                    {u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                 </>
               )}
 

@@ -1,5 +1,5 @@
 const isProduction = import.meta.env.PROD;
-const PHP_BASE = import.meta.env.VITE_PHP_BASE_URL || "";
+const PHP_BASE = import.meta.env.VITE_PHP_BASE_URL || "/php";
 
 export const API_ENDPOINTS = {
   auth: {
@@ -13,6 +13,7 @@ export const API_ENDPOINTS = {
     artisan: (id: string) =>
       isProduction ? `${PHP_BASE}/admin.php?action=artisan&id=${id}` : `/api/admin/artisans/${id}`,
     settings: isProduction ? `${PHP_BASE}/admin.php?action=settings` : "/api/admin/settings",
+    users: isProduction ? `${PHP_BASE}/admin.php?action=users` : "/api/admin/users",
   },
 };
 
@@ -26,6 +27,7 @@ export function resolveApiUrl(path: string): string {
     return `${PHP_BASE}/admin.php?action=artisan&id=${id}`;
   }
   if (clean === "api/admin/artisans") return `${PHP_BASE}/admin.php?action=artisans`;
+  if (clean === "api/admin/users") return `${PHP_BASE}/admin.php?action=users`;
   if (clean === "api/admin/settings") return `${PHP_BASE}/admin.php?action=settings`;
   if (clean === "api/auth/user") return API_ENDPOINTS.auth.user;
   if (clean === "api/auth/register") return API_ENDPOINTS.auth.register;

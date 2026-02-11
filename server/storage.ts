@@ -68,6 +68,8 @@ export interface IStorage {
   updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment | undefined>;
   deleteAppointment(id: string): Promise<void>;
 
+  getAllUsers(): Promise<Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'role' | 'createdAt'>[]>;
+
   getAdminArtisans(): Promise<AdminArtisan[]>;
   getAdminArtisan(id: string): Promise<AdminArtisan | undefined>;
   createAdminArtisan(artisan: InsertAdminArtisan): Promise<AdminArtisan>;
@@ -445,6 +447,24 @@ class DatabaseStorage implements IStorage {
 
   async deleteAppointment(id: string): Promise<void> {
     await db.delete(appointments).where(eq(appointments.id, id));
+  }
+
+  async getAllUsers(): Promise<Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'role' | 'createdAt'>[]> {
+    try {
+      const result = await db.select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        phone: users.phone,
+        role: users.role,
+        createdAt: users.createdAt,
+      }).from(users).orderBy(desc(users.createdAt));
+      return result || [];
+    } catch (error) {
+      console.error("getAllUsers error:", error);
+      return [];
+    }
   }
 
   async getAdminArtisans(): Promise<AdminArtisan[]> {

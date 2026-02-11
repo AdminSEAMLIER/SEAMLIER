@@ -106,6 +106,25 @@ switch ($action) {
         }
         break;
 
+    case 'users':
+        if ($method === 'GET') {
+            $stmt = $pdo->query('SELECT id, first_name, last_name, email, phone, role, created_at FROM users ORDER BY created_at DESC');
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $result = array_map(function($u) {
+                return [
+                    'id' => $u['id'],
+                    'firstName' => $u['first_name'],
+                    'lastName' => $u['last_name'],
+                    'email' => $u['email'],
+                    'phone' => $u['phone'] ?? '',
+                    'role' => $u['role'],
+                    'createdAt' => $u['created_at'],
+                ];
+            }, $users);
+            echo json_encode($result);
+        }
+        break;
+
     case 'settings':
         if ($method === 'GET') {
             $stmt = $pdo->query('SELECT setting_key, setting_value FROM settings');

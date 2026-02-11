@@ -59,6 +59,19 @@ switch ($action) {
         $stmt = $pdo->prepare('INSERT INTO users (id, first_name, last_name, email, phone, password, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())');
         $stmt->execute([$id, $firstName, $lastName, $email, $phone, $hashedPassword, $role]);
 
+        if ($role === 'tailor') {
+            $specialty = $input['specialty'] ?? '';
+            $city = $input['city'] ?? '';
+            $yearsExperience = intval($input['yearsExperience'] ?? 0);
+            $bio = $input['bio'] ?? '';
+            $siret = $input['siret'] ?? '';
+            $companyName = $input['companyName'] ?? '';
+            $artisanId = bin2hex(random_bytes(16));
+
+            $stmt = $pdo->prepare('INSERT INTO artisans (id, user_id, first_name, last_name, email, phone, specialty, city, status, siret, company_name, years_experience, bio, subscription_plan, payment_status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())');
+            $stmt->execute([$artisanId, $id, $firstName, $lastName, $email, $phone, $specialty, $city, 'En attente', $siret, $companyName, $yearsExperience, $bio, 'Starter', 'En attente']);
+        }
+
         $_SESSION['userId'] = $id;
 
         echo json_encode([
