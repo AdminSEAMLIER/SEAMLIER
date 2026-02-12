@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Send, ImagePlus, ArrowLeft, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 import type { ConversationWithParticipant, MessageWithSender } from "@shared/schema";
 
 export default function Messages() {
+  const { user } = useAuth();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const queryClient = useQueryClient();
@@ -28,7 +30,7 @@ export default function Messages() {
     mutationFn: async (content: string) => {
       return apiRequest("POST", "/api/messages", {
         conversationId: selectedConversationId,
-        senderId: "u6",
+        senderId: user?.id?.toString() || "",
         content,
         sentAt: new Date().toISOString(),
         isRead: false,
@@ -85,16 +87,16 @@ export default function Messages() {
                     data-testid={`conversation-${conversation.id}`}
                   >
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={conversation.otherParticipant.avatarUrl || undefined} />
+                      <AvatarImage src={conversation.otherParticipant.profileImageUrl || undefined} />
                       <AvatarFallback className="bg-[#722F37] text-white">
-                        {conversation.otherParticipant.fullName.charAt(0)}
+                        {(conversation.otherParticipant.firstName || "?").charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
                         <h3 className="font-medium text-sm text-gray-900 truncate">
-                          {conversation.otherParticipant.fullName}
+                          {[conversation.otherParticipant.firstName, conversation.otherParticipant.lastName].filter(Boolean).join(" ")}
                         </h3>
                         {conversation.lastMessageAt && (
                           <span className="text-xs text-gray-500 flex-shrink-0">
@@ -150,13 +152,13 @@ export default function Messages() {
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={selectedConversation.otherParticipant.avatarUrl || undefined} />
+                  <AvatarImage src={selectedConversation.otherParticipant.profileImageUrl || undefined} />
                   <AvatarFallback className="bg-[#722F37] text-white">
-                    {selectedConversation.otherParticipant.fullName.charAt(0)}
+                    {(selectedConversation.otherParticipant.firstName || "?").charAt(0)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h2 className="font-medium text-gray-900">{selectedConversation.otherParticipant.fullName}</h2>
+                  <h2 className="font-medium text-gray-900">{[selectedConversation.otherParticipant.firstName, selectedConversation.otherParticipant.lastName].filter(Boolean).join(" ")}</h2>
                   <p className="text-xs text-gray-500">En ligne</p>
                 </div>
               </div>
@@ -195,10 +197,10 @@ export default function Messages() {
                             "text-[10px] mt-1",
                             isSent ? "text-white/70" : "text-gray-500"
                           )}>
-                            {new Date(message.sentAt).toLocaleTimeString('fr-FR', { 
+                            {message.sentAt ? new Date(message.sentAt).toLocaleTimeString('fr-FR', { 
                               hour: '2-digit', 
                               minute: '2-digit' 
-                            })}
+                            }) : ""}
                           </p>
                         </div>
                       </div>

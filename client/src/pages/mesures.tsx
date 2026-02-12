@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 function BodyDiagram({ activeMeasurement }: { activeMeasurement: string | null }) {
   return (
@@ -60,11 +61,11 @@ function BodyDiagram({ activeMeasurement }: { activeMeasurement: string | null }
   );
 }
 
-const DEMO_USER_ID = "u6";
-
 export default function Mesures() {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const userId = user?.id?.toString() || "";
   const [activeMeasurement, setActiveMeasurement] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, string>>({
     tour_cou: "",
@@ -78,11 +79,13 @@ export default function Mesures() {
   });
 
   const { data: savedMeasurements, isLoading } = useQuery({
-    queryKey: ['/api/measurements', DEMO_USER_ID],
+    queryKey: ['/api/measurements', userId],
     queryFn: async () => {
-      const res = await fetch(`/api/measurements/${DEMO_USER_ID}`);
+      if (!userId) return null;
+      const res = await fetch(`/api/measurements/${userId}`);
       return res.json();
-    }
+    },
+    enabled: !!userId
   });
 
   useEffect(() => {
@@ -103,7 +106,7 @@ export default function Mesures() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       return apiRequest('POST', '/api/measurements', {
-        userId: DEMO_USER_ID,
+        userId: userId,
         neck: parseFloat(values.tour_cou) || null,
         bust: parseFloat(values.tour_poitrine) || null,
         waist: parseFloat(values.tour_taille) || null,
@@ -117,7 +120,7 @@ export default function Mesures() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/measurements', DEMO_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/measurements', userId] });
       toast({
         title: "Mesures enregistrées",
         description: "Vos mesures ont été sauvegardées avec succès",

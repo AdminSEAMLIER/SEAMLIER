@@ -8,54 +8,49 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-
-const DEMO_USER_ID = "u6";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function ProfilParticulier() {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { user, isLoading, logout } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
-    fullName: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
     location: "",
-    avatarUrl: "",
-  });
-
-  const { data: userData, isLoading } = useQuery({
-    queryKey: ['/api/users', DEMO_USER_ID],
-    queryFn: async () => {
-      const res = await fetch(`/api/users/${DEMO_USER_ID}`);
-      return res.json();
-    }
+    profileImageUrl: "",
   });
 
   useEffect(() => {
-    if (userData) {
+    if (user) {
       setProfile({
-        fullName: userData.fullName || "",
-        email: userData.email || "",
-        phone: userData.phone || "",
-        location: userData.location || "",
-        avatarUrl: userData.avatarUrl || "",
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+        phone: (user as any).phone || "",
+        location: (user as any).location || "",
+        profileImageUrl: user.profileImageUrl || "",
       });
     }
-  }, [userData]);
+  }, [user]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('PATCH', `/api/users/${DEMO_USER_ID}`, {
-        fullName: profile.fullName,
+      return apiRequest('PATCH', `/api/users/${user?.id}`, {
+        firstName: profile.firstName,
+        lastName: profile.lastName,
         email: profile.email,
         phone: profile.phone,
         location: profile.location,
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users', DEMO_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ["auth-user"] });
       setIsEditing(false);
       toast({
         title: t('profile.updated'),
@@ -75,20 +70,31 @@ export default function ProfilParticulier() {
     saveMutation.mutate();
   };
 
-  const getInitials = (name: string) => {
-    if (!name) return "";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+  const getInitials = () => {
+    const first = profile.firstName?.[0] || "";
+    const last = profile.lastName?.[0] || "";
+    return (first + last).toUpperCase() || "?";
   };
+
+  const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
 
   if (isLoading) {
     return (
       <div className="min-h-screen pb-20 lg:pb-8 bg-white flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#722F37]" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen pb-20 lg:pb-8 bg-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">Vous devez être connecté pour accéder à votre profil.</p>
+          <Link href="/connexion">
+            <Button className="bg-[#722F37]" data-testid="button-go-login">Se connecter</Button>
+          </Link>
+        </div>
       </div>
     );
   }
@@ -117,9 +123,9 @@ export default function ProfilParticulier() {
             <div className="flex flex-col sm:flex-row items-center gap-6">
               <div className="relative">
                 <Avatar className="h-24 w-24 border-2 border-gray-100">
-                  <AvatarImage src={profile.avatarUrl} alt={profile.fullName} />
+                  <AvatarImage src={profile.profileImageUrl} alt={fullName} />
                   <AvatarFallback className="bg-[#722F37]/10 text-[#722F37] text-2xl font-medium">
-                    {getInitials(profile.fullName)}
+                    {getInitials()}
                   </AvatarFallback>
                 </Avatar>
                 <button 
@@ -130,28 +136,15 @@ export default function ProfilParticulier() {
                 </button>
               </div>
               <div className="text-center sm:text-left flex-1">
-                <h2 className="text-xl font-semibold text-[#722F37]">{profile.fullName}</h2>
-                <p className="text-gray-500">{t('profile.memberSince')} janvier 2026</p>
-              </div>
-            </div>
-            
-            <div className="mt-6 pt-6 border-t border-gray-100">
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-bold text-[#722F37]">3</p>
-                  <p className="text-sm text-gray-500">{t('profile.projectsCompleted')}</p>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-bold text-[#722F37]">2</p>
-                  <p className="text-sm text-gray-500">{t('profile.tailorsContacted')}</p>
-                </div>
+                <h2 className="text-xl font-semibold text-[#722F37]" data-testid="text-profile-name">{fullName || "—"}</h2>
+                <p className="text-gray-500" data-testid="text-profile-email">{profile.email}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border border-gray-100 bg-white shadow-sm mb-6">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between gap-1">
             <CardTitle className="text-lg text-[#722F37]">{t('profile.personalInfo')}</CardTitle>
             {!isEditing && (
               <Button 
@@ -175,14 +168,24 @@ export default function ProfilParticulier() {
                 <div className="flex-1">
                   <Label className="text-gray-500 text-sm">{t('auth.fullName')}</Label>
                   {isEditing ? (
-                    <Input
-                      value={profile.fullName}
-                      onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
-                      className="mt-1 border-gray-200"
-                      data-testid="input-fullname"
-                    />
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        value={profile.firstName}
+                        onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
+                        placeholder="Prénom"
+                        className="border-gray-200"
+                        data-testid="input-firstname"
+                      />
+                      <Input
+                        value={profile.lastName}
+                        onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
+                        placeholder="Nom"
+                        className="border-gray-200"
+                        data-testid="input-lastname"
+                      />
+                    </div>
                   ) : (
-                    <p className="text-gray-700">{profile.fullName}</p>
+                    <p className="text-gray-700" data-testid="text-fullname">{fullName || "—"}</p>
                   )}
                 </div>
               </div>
@@ -202,7 +205,7 @@ export default function ProfilParticulier() {
                       data-testid="input-email"
                     />
                   ) : (
-                    <p className="text-gray-700">{profile.email}</p>
+                    <p className="text-gray-700" data-testid="text-email">{profile.email || "—"}</p>
                   )}
                 </div>
               </div>
@@ -222,7 +225,7 @@ export default function ProfilParticulier() {
                       data-testid="input-phone"
                     />
                   ) : (
-                    <p className="text-gray-700">{profile.phone || "-"}</p>
+                    <p className="text-gray-700" data-testid="text-phone">{profile.phone || "—"}</p>
                   )}
                 </div>
               </div>
@@ -241,7 +244,7 @@ export default function ProfilParticulier() {
                       data-testid="input-location"
                     />
                   ) : (
-                    <p className="text-gray-700">{profile.location || "-"}</p>
+                    <p className="text-gray-700" data-testid="text-location">{profile.location || "—"}</p>
                   )}
                 </div>
               </div>
@@ -258,7 +261,7 @@ export default function ProfilParticulier() {
                   {t('profile.cancel')}
                 </Button>
                 <Button 
-                  className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+                  className="flex-1 bg-[#722F37] text-white"
                   onClick={handleSave}
                   disabled={saveMutation.isPending}
                   data-testid="button-save"
@@ -333,16 +336,15 @@ export default function ProfilParticulier() {
                   {t('profile.notifications')}
                 </Button>
               </Link>
-              <Link href="/">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start bg-white border border-red-200 text-red-600 hover:bg-red-50"
-                  data-testid="button-logout"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  {t('auth.logout')}
-                </Button>
-              </Link>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start bg-white border border-red-200 text-red-600 hover:bg-red-50"
+                onClick={() => logout()}
+                data-testid="button-logout"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                {t('auth.logout')}
+              </Button>
             </div>
           </CardContent>
         </Card>

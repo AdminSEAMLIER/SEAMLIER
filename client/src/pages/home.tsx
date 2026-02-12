@@ -1,4 +1,3 @@
-import CheckoutButton from "@/components/checkout-button";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -82,10 +81,6 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* AJOUT DU BOUTON STRIPE ICI POUR LE TEST */}
-          <div className="max-w-xs mx-auto">
-            <CheckoutButton />
-          </div>
         </div>
       </section>
 
