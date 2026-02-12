@@ -71,11 +71,11 @@ export default function Connexion() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-white border-b border-gray-100 px-4 py-4">
+    <div className="min-h-screen bg-muted/50 flex flex-col">
+      <header className="bg-background border-b border-border px-4 py-4">
         <div className="max-w-md mx-auto flex items-center justify-between">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="text-gray-600" data-testid="button-back">
+            <Button variant="ghost" size="icon" className="text-muted-foreground" data-testid="button-back">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
@@ -90,18 +90,18 @@ export default function Connexion() {
             <h1 className="font-serif text-base lg:text-lg text-[#722F37] mb-1">
               {t('auth.login')}
             </h1>
-            <p className="text-gray-600 text-xs">
+            <p className="text-muted-foreground text-xs">
               {t('auth.loginSubtitle')}
             </p>
           </div>
 
-          <Card className="border border-gray-200">
+          <Card className="border border-border">
             <CardContent className="p-6">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm text-gray-700">{t('auth.email')}</Label>
+                  <Label htmlFor="email" className="text-sm text-foreground">{t('auth.email')}</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="email"
                       type="email"
@@ -115,9 +115,9 @@ export default function Connexion() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm text-gray-700">{t('auth.password')}</Label>
+                  <Label htmlFor="password" className="text-sm text-foreground">{t('auth.password')}</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
@@ -130,7 +130,7 @@ export default function Connexion() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       data-testid="button-toggle-password"
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -150,14 +150,14 @@ export default function Connexion() {
             </CardContent>
           </Card>
 
-          <div className="mt-6 pt-6 border-t border-gray-200 text-center">
-            <p className="text-gray-500 text-xs mb-3">
+          <div className="mt-6 pt-6 border-t border-border text-center">
+            <p className="text-muted-foreground text-xs mb-3">
               {t('auth.noAccount')}
             </p>
             <Link href="/inscription">
               <Button
                 variant="outline"
-                className="bg-white border-[#722F37] text-[#722F37] text-sm"
+                className="bg-background border-[#722F37] text-[#722F37] text-sm"
                 data-testid="button-inscription"
               >
                 {t('auth.createAccount')}
@@ -169,7 +169,7 @@ export default function Connexion() {
 
       <footer className="py-4 text-center">
         <Link href="/">
-          <span className="text-sm text-gray-500 hover:text-[#722F37]" data-testid="link-home">
+          <span className="text-sm text-muted-foreground hover:text-[#722F37]" data-testid="link-home">
             {t('common.backToHome')}
           </span>
         </Link>

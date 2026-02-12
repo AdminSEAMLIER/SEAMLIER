@@ -54,45 +54,45 @@ export default function ModifierMotDePasse() {
   };
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
-      <div className="bg-gray-50 border-b border-gray-100">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
+      <div className="bg-muted/50 border-b border-border">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <Link href="/particulier/profil">
-            <Button variant="ghost" size="sm" className="mb-4 -ml-2 text-gray-600" data-testid="button-back">
+            <Button variant="ghost" size="sm" className="mb-4 -ml-2 text-muted-foreground" data-testid="button-back">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour au profil
             </Button>
           </Link>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center">
               <Lock className="h-5 w-5 text-[#722F37]" />
             </div>
             <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
               Modifier le mot de passe
             </h1>
           </div>
-          <p className="text-gray-600 mt-2">
+          <p className="text-muted-foreground mt-2">
             Choisissez un mot de passe sécurisé pour protéger votre compte
           </p>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 lg:px-6 py-6">
-        <Card className="border border-gray-100 bg-white shadow-sm">
+        <Card>
           <CardHeader>
             <CardTitle className="text-lg text-[#722F37]">Changer votre mot de passe</CardTitle>
           </CardHeader>
-          <CardContent className="bg-white">
+          <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="current-password" className="text-gray-600">Mot de passe actuel</Label>
+                <Label htmlFor="current-password" className="text-muted-foreground">Mot de passe actuel</Label>
                 <div className="relative">
                   <Input
                     id="current-password"
                     type={showCurrentPassword ? "text" : "password"}
                     value={formData.currentPassword}
                     onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
-                    className="pr-10 border-gray-200"
+                    className="pr-10"
                     placeholder="••••••••"
                     required
                     data-testid="input-current-password"
@@ -100,7 +100,7 @@ export default function ModifierMotDePasse() {
                   <button
                     type="button"
                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
                     data-testid="button-toggle-current-password"
                   >
                     {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -109,14 +109,14 @@ export default function ModifierMotDePasse() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="new-password" className="text-gray-600">Nouveau mot de passe</Label>
+                <Label htmlFor="new-password" className="text-muted-foreground">Nouveau mot de passe</Label>
                 <div className="relative">
                   <Input
                     id="new-password"
                     type={showNewPassword ? "text" : "password"}
                     value={formData.newPassword}
                     onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
-                    className="pr-10 border-gray-200"
+                    className="pr-10"
                     placeholder="••••••••"
                     required
                     data-testid="input-new-password"
@@ -124,24 +124,24 @@ export default function ModifierMotDePasse() {
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
                     data-testid="button-toggle-new-password"
                   >
                     {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <p className="text-sm text-gray-500">Minimum 8 caractères</p>
+                <p className="text-sm text-muted-foreground">Minimum 8 caractères</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirm-password" className="text-gray-600">Confirmer le nouveau mot de passe</Label>
+                <Label htmlFor="confirm-password" className="text-muted-foreground">Confirmer le nouveau mot de passe</Label>
                 <div className="relative">
                   <Input
                     id="confirm-password"
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    className="pr-10 border-gray-200"
+                    className="pr-10"
                     placeholder="••••••••"
                     required
                     data-testid="input-confirm-password"
@@ -149,7 +149,7 @@ export default function ModifierMotDePasse() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
                     data-testid="button-toggle-confirm-password"
                   >
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -162,7 +162,7 @@ export default function ModifierMotDePasse() {
                   <Button 
                     type="button"
                     variant="outline" 
-                    className="w-full bg-white border border-gray-300 text-gray-600"
+                    className="w-full"
                     data-testid="button-cancel"
                   >
                     Annuler

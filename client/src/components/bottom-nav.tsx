@@ -17,7 +17,7 @@ export function BottomNav() {
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 shadow-lg z-50 pb-safe lg:hidden"
+      className="fixed bottom-0 left-0 right-0 h-16 bg-background border-t border-border shadow-lg z-50 pb-safe lg:hidden"
       data-testid="nav-bottom"
     >
       <div className="flex items-center justify-around h-full max-w-lg mx-auto px-2">
@@ -33,7 +33,7 @@ export function BottomNav() {
                   "flex flex-col items-center justify-center gap-1 w-16 h-full transition-colors",
                   isActive 
                     ? "text-[#722F37]" 
-                    : "text-gray-700 hover:text-gray-900"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
                 data-testid={`nav-${item.labelKey.split('.')[1]}`}
               >

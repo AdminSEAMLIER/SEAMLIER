@@ -51,10 +51,10 @@ export default function CouturierProfile() {
 
   if (tailorLoading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-background">
         <div className="h-64 skeleton-shimmer" />
         <div className="px-4 lg:px-6 -mt-16 max-w-4xl mx-auto">
-          <div className="h-24 w-24 rounded-full skeleton-shimmer border-4 border-white" />
+          <div className="h-24 w-24 rounded-full skeleton-shimmer border-4 border-background" />
           <div className="mt-4 space-y-3">
             <div className="h-8 w-48 rounded skeleton-shimmer" />
             <div className="h-4 w-32 rounded skeleton-shimmer" />
@@ -67,9 +67,9 @@ export default function CouturierProfile() {
 
   if (!tailor) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">{t('tailorProfile.notFound')}</p>
+          <p className="text-muted-foreground mb-4">{t('tailorProfile.notFound')}</p>
           <Link href="/recherche">
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -82,21 +82,21 @@ export default function CouturierProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100 sticky top-0 z-50 bg-white">
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border sticky top-0 z-50 bg-background">
         <div className="w-full px-4 md:px-8 py-3 md:py-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Link href="/recherche">
-              <Button variant="ghost" size="icon" className="text-[#722F37]">
+              <Button variant="ghost" size="icon" className="text-primary">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <Logo className="text-[#722F37] shrink-0" textClassName="text-base lg:text-lg text-[#722F37]" />
+            <Logo className="text-primary shrink-0" textClassName="text-base lg:text-lg text-primary" />
           </div>
           <div className="flex items-center gap-1 md:gap-2 lg:gap-4">
             <LanguageToggle />
             <Link href="/connexion">
-              <Button variant="ghost" size="sm" className="text-[#722F37] px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9">
+              <Button variant="ghost" size="sm" className="text-primary px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9">
                 {t('landing.login')}
               </Button>
             </Link>
@@ -120,7 +120,7 @@ export default function CouturierProfile() {
 
       <div className="px-4 lg:px-6 -mt-16 relative z-10 max-w-4xl mx-auto">
         <div className="flex items-end gap-4">
-          <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
+          <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
             <AvatarImage src={tailor.user.profileImageUrl || undefined} alt={`${tailor.user.firstName || ''} ${tailor.user.lastName || ''}`.trim()} />
             <AvatarFallback className="bg-[#722F37] text-white text-2xl">
               {`${tailor.user.firstName?.[0] || ''}${tailor.user.lastName?.[0] || ''}`.toUpperCase()}
@@ -129,34 +129,34 @@ export default function CouturierProfile() {
           
           <div className="flex-1 pt-4">
             <div className="flex items-center gap-2">
-              <h1 className="font-serif text-2xl lg:text-3xl text-gray-700">
+              <h1 className="font-serif text-2xl lg:text-3xl text-foreground">
                 {`${tailor.user.firstName || ''} ${tailor.user.lastName || ''}`.trim() || 'Couturier'}
               </h1>
               {tailor.isVerified && (
-                <BadgeCheck className="h-6 w-6 text-[#722F37]" fill="currentColor" />
+                <BadgeCheck className="h-6 w-6 text-primary" fill="currentColor" />
               )}
             </div>
           </div>
         </div>
 
-        <Card className="mt-4 p-4 lg:p-6 border border-gray-100 shadow-sm">
+        <Card className="mt-4 p-4 lg:p-6 border border-border shadow-sm">
           <div className="flex flex-wrap items-center gap-4 mb-4">
             {tailor.user.location && (
-              <div className="flex items-center gap-1.5 text-gray-600">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <MapPin className="h-4 w-4" />
                 <span>{tailor.user.location}</span>
               </div>
             )}
             
-            <div className="flex items-center gap-1.5 text-gray-600">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
               <span className="font-medium">{tailor.rating?.toFixed(1) || "Nouveau"}</span>
               {tailor.reviewCount && tailor.reviewCount > 0 && (
-                <span className="text-gray-500">({tailor.reviewCount} Avis)</span>
+                <span className="text-muted-foreground">({tailor.reviewCount} Avis)</span>
               )}
             </div>
             
-            <div className="flex items-center gap-1.5 text-gray-600">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
               <Clock className="h-4 w-4" />
               <span>Disponible</span>
             </div>
@@ -177,12 +177,12 @@ export default function CouturierProfile() {
           )}
 
           {tailor.bio && (
-            <p className="text-gray-600 leading-relaxed mb-6">
+            <p className="text-muted-foreground leading-relaxed mb-6">
               {tailor.bio}
             </p>
           )}
 
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="bg-muted border border-border rounded-lg p-4">
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
               <Link href={`/particulier/messages?tailor=${tailorId}`}>
                 <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white w-full sm:w-auto" data-testid="button-contact-tailor">
@@ -190,7 +190,7 @@ export default function CouturierProfile() {
                   Envoyer un message
                 </Button>
               </Link>
-              <Button variant="outline" className="border-[#722F37] text-[#722F37] w-full sm:w-auto" data-testid="button-book-appointment">
+              <Button variant="outline" className="border-primary text-primary w-full sm:w-auto" data-testid="button-book-appointment">
                 <Calendar className="h-4 w-4 mr-2" />
                 Prendre rendez-vous
               </Button>
@@ -199,14 +199,14 @@ export default function CouturierProfile() {
         </Card>
 
         <Tabs defaultValue="portfolio" className="mt-6">
-          <TabsList className="w-full grid grid-cols-3 bg-transparent border-b border-gray-200 rounded-none h-auto p-0">
-            <TabsTrigger value="portfolio" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#722F37] data-[state=active]:bg-transparent data-[state=active]:text-[#722F37] data-[state=active]:shadow-none bg-transparent py-3 text-sm">
+          <TabsList className="w-full grid grid-cols-3 bg-transparent border-b border-border rounded-none h-auto p-0">
+            <TabsTrigger value="portfolio" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none bg-transparent py-3 text-sm">
               {t('tailorProfile.portfolio')}
             </TabsTrigger>
-            <TabsTrigger value="boutique" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#722F37] data-[state=active]:bg-transparent data-[state=active]:text-[#722F37] data-[state=active]:shadow-none bg-transparent py-3 text-sm">
+            <TabsTrigger value="boutique" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none bg-transparent py-3 text-sm">
               {t('tailorProfile.shop')}
             </TabsTrigger>
-            <TabsTrigger value="avis" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#722F37] data-[state=active]:bg-transparent data-[state=active]:text-[#722F37] data-[state=active]:shadow-none bg-transparent py-3 text-sm">
+            <TabsTrigger value="avis" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none bg-transparent py-3 text-sm">
               Avis
             </TabsTrigger>
           </TabsList>
@@ -225,7 +225,7 @@ export default function CouturierProfile() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-muted-foreground">
                 {t('tailorProfile.noPortfolio')}
               </div>
             )}
@@ -245,7 +245,7 @@ export default function CouturierProfile() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-muted-foreground">
                 {t('tailorProfile.noProducts')}
               </div>
             )}
@@ -265,7 +265,7 @@ export default function CouturierProfile() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-muted-foreground">
                 {t('tailorProfile.noReviews')}
               </div>
             )}

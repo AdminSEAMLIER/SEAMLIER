@@ -38,7 +38,7 @@ export default function SearchPage() {
     
     return tailors.filter((tailor) => {
       const matchesSearch = !searchQuery || 
-        tailor.user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        [tailor.user.firstName, tailor.user.lastName].filter(Boolean).join(' ').toLowerCase().includes(searchQuery.toLowerCase()) ||
         tailor.specialties?.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
       
       const matchesSpecialties = selectedSpecialties.length === 0 || 
@@ -49,8 +49,7 @@ export default function SearchPage() {
       
       const matchesRating = (tailor.rating || 0) >= minRating;
       
-      const matchesPrice = !tailor.hourlyRate || 
-        (tailor.hourlyRate >= priceRange[0] && tailor.hourlyRate <= priceRange[1]);
+      const matchesPrice = true;
       
       return matchesSearch && matchesSpecialties && matchesLocation && matchesRating && matchesPrice;
     });
@@ -67,23 +66,23 @@ export default function SearchPage() {
   const activeFiltersCount = selectedSpecialties.length + (selectedLocation ? 1 : 0) + (minRating > 0 ? 1 : 0);
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
-      <div className="bg-gray-50 border-b border-gray-100">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
+      <div className="bg-muted/50 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-2">
             Recherche avancée
           </h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-muted-foreground mb-6">
             Trouvez le couturier idéal selon vos critères
           </p>
           
           <div className="relative max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               placeholder="Rechercher par nom, spécialité..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-12 bg-white border-gray-200"
+              className="pl-12 h-12 bg-background border-border"
               data-testid="input-search-advanced"
             />
           </div>
@@ -93,9 +92,9 @@ export default function SearchPage() {
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6">
         <div className="lg:flex lg:gap-8">
           <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="sticky top-24 space-y-6 bg-gray-50 p-4 rounded-lg">
+            <div className="sticky top-24 space-y-6 bg-muted/50 p-4 rounded-lg">
               <div>
-                <h3 className="font-semibold text-sm text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
                   <Star className="h-4 w-4 text-[#722F37]" />
                   Spécialités
                 </h3>
@@ -112,7 +111,7 @@ export default function SearchPage() {
               </div>
 
               <div>
-                <h3 className="font-semibold text-sm text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-[#722F37]" />
                   Localisation
                 </h3>
@@ -129,7 +128,7 @@ export default function SearchPage() {
               </div>
 
               <div>
-                <h3 className="font-semibold text-sm text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
                   <Star className="h-4 w-4 text-[#722F37]" />
                   Note minimum
                 </h3>
@@ -150,7 +149,7 @@ export default function SearchPage() {
               </div>
 
               <div>
-                <h3 className="font-semibold text-sm text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
                   <Clock className="h-4 w-4 text-[#722F37]" />
                   Tarif horaire
                 </h3>
@@ -163,7 +162,7 @@ export default function SearchPage() {
                     step={10}
                     data-testid="slider-price"
                   />
-                  <div className="flex justify-between text-sm text-gray-500 mt-2">
+                  <div className="flex justify-between text-sm text-muted-foreground mt-2">
                     <span>{priceRange[0]}€</span>
                     <span>{priceRange[1]}€+</span>
                   </div>
@@ -228,7 +227,7 @@ export default function SearchPage() {
               <h2 className="font-serif text-2xl text-[#722F37]">
                 Résultats
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 {isLoading ? "Chargement..." : `${filteredTailors.length} couturiers`}
               </p>
             </div>
@@ -244,11 +243,11 @@ export default function SearchPage() {
                 ))
               ) : (
                 <div className="col-span-full text-center py-12">
-                  <Scissors className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">
+                  <Scissors className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                  <p className="text-muted-foreground">
                     Aucun couturier ne correspond à vos critères
                   </p>
-                  <p className="text-gray-400 text-sm mt-1">Essayez de modifier vos filtres</p>
+                  <p className="text-muted-foreground text-sm mt-1">Essayez de modifier vos filtres</p>
                 </div>
               )}
             </div>

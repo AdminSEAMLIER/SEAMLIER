@@ -12,8 +12,8 @@ export default function Inscription() {
   const [, setLocation] = useLocation();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-100 bg-white">
+    <div className="min-h-screen bg-muted/50">
+      <header className="border-b border-border bg-background">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/">
             <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
@@ -24,7 +24,7 @@ export default function Inscription() {
 
       <main className="max-w-2xl mx-auto px-4 py-12">
         <Link href="/">
-          <Button variant="ghost" className="mb-6 text-gray-600" data-testid="button-back">
+          <Button variant="ghost" className="mb-6 text-muted-foreground" data-testid="button-back">
             <ArrowLeft className="h-4 w-4 mr-2" />
             {t('common.back')}
           </Button>
@@ -34,25 +34,25 @@ export default function Inscription() {
           <h1 className="font-serif text-base lg:text-lg text-[#722F37] mb-1">
             {t('inscription.title')}
           </h1>
-          <p className="text-gray-600 text-xs">
+          <p className="text-muted-foreground text-xs">
             {t('inscription.subtitle')}
           </p>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-6">
           <Card
-            className="border-2 border-gray-200 hover:border-[#722F37] transition-colors cursor-pointer group"
+            className="border-2 border-border hover:border-[#722F37] transition-colors cursor-pointer group"
             onClick={() => setLocation('/particulier')}
             data-testid="card-inscription-particulier"
           >
             <CardContent className="p-8 text-center">
-              <div className="w-16 h-16 bg-gray-100 group-hover:bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors">
+              <div className="w-16 h-16 bg-muted group-hover:bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors">
                 <User className="h-8 w-8 text-[#722F37]" />
               </div>
               <h2 className="font-serif text-sm text-[#722F37] mb-1">
                 {t('inscription.clientTitle')}
               </h2>
-              <p className="text-gray-500 text-xs mb-3">
+              <p className="text-muted-foreground text-xs mb-3">
                 {t('inscription.clientDesc')}
               </p>
               <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-xs px-2" data-testid="button-inscription-particulier">
@@ -62,18 +62,18 @@ export default function Inscription() {
           </Card>
 
           <Card
-            className="border-2 border-gray-200 hover:border-[#722F37] transition-colors cursor-pointer group"
+            className="border-2 border-border hover:border-[#722F37] transition-colors cursor-pointer group"
             onClick={() => setLocation('/professionnel')}
             data-testid="card-inscription-professionnel"
           >
             <CardContent className="p-8 text-center">
-              <div className="w-16 h-16 bg-gray-100 group-hover:bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors">
+              <div className="w-16 h-16 bg-muted group-hover:bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors">
                 <Briefcase className="h-8 w-8 text-[#722F37]" />
               </div>
               <h2 className="font-serif text-sm text-[#722F37] mb-1">
                 {t('inscription.proTitle')}
               </h2>
-              <p className="text-gray-500 text-xs mb-3">
+              <p className="text-muted-foreground text-xs mb-3">
                 {t('inscription.proDesc')}
               </p>
               <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-xs px-2" data-testid="button-inscription-professionnel">
@@ -83,7 +83,7 @@ export default function Inscription() {
           </Card>
         </div>
 
-        <p className="text-center text-gray-500 mt-8">
+        <p className="text-center text-muted-foreground mt-8">
           {t('inscription.alreadyAccount')}{' '}
           <Link href="/connexion" className="text-[#722F37] hover:underline" data-testid="link-connexion">
             {t('inscription.loginLink')}

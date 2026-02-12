@@ -17,20 +17,20 @@ export function ReviewCard({ review }: ReviewCardProps) {
 
   return (
     <div 
-      className="flex gap-4 py-4 border-b border-gray-100 last:border-b-0"
+      className="flex gap-4 py-4 border-b border-border last:border-b-0"
       data-testid={`card-review-${review.id}`}
     >
       <Avatar className="h-10 w-10 flex-shrink-0">
         <AvatarImage src={review.user.profileImageUrl || undefined} />
-        <AvatarFallback className="bg-gray-100 text-gray-700">
+        <AvatarFallback className="bg-muted/50 text-foreground">
           {initial}
         </AvatarFallback>
       </Avatar>
       
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2 mb-1">
-          <h4 className="font-medium text-sm text-gray-900">{fullName}</h4>
-          <span className="text-xs text-gray-500">{formattedDate}</span>
+          <h4 className="font-medium text-sm text-foreground">{fullName}</h4>
+          <span className="text-xs text-muted-foreground">{formattedDate}</span>
         </div>
         
         <div className="flex items-center gap-0.5 mb-2">
@@ -47,7 +47,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
         </div>
         
         {review.comment && (
-          <p className="text-sm text-gray-600 line-clamp-3">
+          <p className="text-sm text-muted-foreground line-clamp-3">
             {review.comment}
           </p>
         )}
@@ -58,7 +58,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
 
 export function ReviewCardSkeleton() {
   return (
-    <div className="flex gap-4 py-4 border-b border-gray-100">
+    <div className="flex gap-4 py-4 border-b border-border">
       <div className="h-10 w-10 rounded-full skeleton-shimmer flex-shrink-0" />
       <div className="flex-1 space-y-2">
         <div className="flex justify-between">

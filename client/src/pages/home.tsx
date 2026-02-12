@@ -53,7 +53,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
       <section className="relative py-16 lg:py-24 px-4 lg:px-8 overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center"
@@ -70,7 +70,7 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto mb-6">
             <div className="relative flex-1">
-              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 placeholder={t('landing.searchPlaceholder')}
                 value={searchCity}
@@ -95,23 +95,23 @@ export default function Home() {
       </section>
 
       {/* Reste du code inchangé... */}
-      <section className="py-8 px-4 lg:px-8 border-y border-gray-100 bg-white">
+      <section className="py-8 px-4 lg:px-8 border-y border-border bg-background">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-gray-800 text-sm md:text-base lg:text-lg font-medium leading-tight">{t('features.verifiedTailors')}</p>
+              <p className="text-foreground text-sm md:text-base lg:text-lg font-medium leading-tight">{t('features.verifiedTailors')}</p>
             </div>
             <div>
-              <p className="text-gray-800 text-sm md:text-base lg:text-lg font-medium leading-tight">{t('features.onTimeDelivery')}</p>
+              <p className="text-foreground text-sm md:text-base lg:text-lg font-medium leading-tight">{t('features.onTimeDelivery')}</p>
             </div>
             <div>
-              <p className="text-gray-800 text-sm md:text-base lg:text-lg font-medium leading-tight">{t('features.secureMessaging')}</p>
+              <p className="text-foreground text-sm md:text-base lg:text-lg font-medium leading-tight">{t('features.secureMessaging')}</p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="py-12 lg:py-16 px-4 lg:px-8 bg-white">
+      <section className="py-12 lg:py-16 px-4 lg:px-8 bg-background">
         <div className="max-w-6xl mx-auto">
           <h2 className="font-serif text-2xl lg:text-3xl text-[#722F37] mb-8 text-center">
             {t('landing.howItWorks')}
@@ -126,7 +126,7 @@ export default function Home() {
                 <h3 className="font-semibold text-lg text-[#722F37] mb-2">
                   {step.title}
                 </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   {step.description}
                 </p>
               </div>
@@ -136,7 +136,7 @@ export default function Home() {
       </section>
 
       {featuredTailors && featuredTailors.length > 0 && (
-        <section className="py-12 lg:py-16 px-4 lg:px-8 bg-white border-y border-gray-100">
+        <section className="py-12 lg:py-16 px-4 lg:px-8 bg-background border-y border-border">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-serif text-2xl lg:text-3xl text-[#722F37]">
@@ -165,7 +165,7 @@ export default function Home() {
         </section>
       )}
 
-      <section className="py-12 lg:py-16 px-4 lg:px-8 bg-white">
+      <section className="py-12 lg:py-16 px-4 lg:px-8 bg-background">
         <div className="max-w-6xl mx-auto">
           <h2 className="font-serif text-2xl lg:text-3xl text-[#722F37] mb-6 text-center">
             {t('landing.popularCities')}
@@ -193,44 +193,44 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-12 lg:py-16 px-4 lg:px-8 bg-gray-50">
+      <section className="py-12 lg:py-16 px-4 lg:px-8 bg-muted/50">
         <div className="max-w-6xl mx-auto">
           <h2 className="font-serif text-2xl lg:text-3xl text-[#722F37] mb-8 text-center">
             {t('landing.whyChooseUs')}
           </h2>
 
           <div className="grid md:grid-cols-3 gap-6">
-            <Card className="border border-gray-100 bg-white shadow-sm p-6">
-              <CardContent className="p-0 text-center">
-                <div className="w-12 h-12 rounded-full bg-white border border-[#722F37] flex items-center justify-center mx-auto mb-4">
+            <Card className="p-6">
+              <CardContent className="text-center">
+                <div className="w-12 h-12 rounded-full bg-card border border-primary flex items-center justify-center mx-auto mb-4">
                   <Shield className="h-6 w-6 text-[#722F37]" />
                 </div>
                 <h3 className="font-semibold text-[#722F37] mb-2">{t('landing.verifiedPros')}</h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-muted-foreground text-sm">
                   {t('landing.verifiedProsDesc')}
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border border-gray-100 bg-white shadow-sm p-6">
-              <CardContent className="p-0 text-center">
-                <div className="w-12 h-12 rounded-full bg-white border border-[#722F37] flex items-center justify-center mx-auto mb-4">
+            <Card className="p-6">
+              <CardContent className="text-center">
+                <div className="w-12 h-12 rounded-full bg-card border border-primary flex items-center justify-center mx-auto mb-4">
                   <Star className="h-6 w-6 text-[#722F37]" />
                 </div>
                 <h3 className="font-semibold text-[#722F37] mb-2">{t('landing.authenticReviews')}</h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-muted-foreground text-sm">
                   {t('landing.authenticReviewsDesc')}
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border border-gray-100 bg-white shadow-sm p-6">
-              <CardContent className="p-0 text-center">
-                <div className="w-12 h-12 rounded-full bg-white border border-[#722F37] flex items-center justify-center mx-auto mb-4">
+            <Card className="p-6">
+              <CardContent className="text-center">
+                <div className="w-12 h-12 rounded-full bg-card border border-primary flex items-center justify-center mx-auto mb-4">
                   <Scissors className="h-6 w-6 text-[#722F37]" />
                 </div>
                 <h3 className="font-semibold text-[#722F37] mb-2">{t('landing.freeService')}</h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-muted-foreground text-sm">
                   {t('landing.freeServiceDesc')}
                 </p>
               </CardContent>
@@ -239,19 +239,19 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="py-10 px-4 lg:px-8 bg-gray-50 border-t border-gray-100">
+      <footer className="py-10 px-4 lg:px-8 bg-muted/50 border-t border-border">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
             <div>
               <p style={{ fontFamily: "'Satoshi', sans-serif" }} className="text-2xl font-bold text-[#722F37] mb-2">
                 SEAMLIER
               </p>
-              <p className="text-gray-600 text-sm">
+              <p className="text-muted-foreground text-sm">
                 {t('landing.joinNetwork')}
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-6 text-sm text-gray-600">
+            <div className="flex flex-wrap gap-6 text-sm text-muted-foreground">
               <Link href="/mentions-legales" className="hover:text-[#722F37]">{t('footer.legalNotice')}</Link>
               <Link href="/confidentialite" className="hover:text-[#722F37]">{t('footer.privacy')}</Link>
               <a href="#" className="hover:text-[#722F37]">{t('footer.terms')}</a>
@@ -259,7 +259,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="border-t border-gray-200 pt-6 text-center text-sm text-gray-500">
+          <div className="border-t border-border pt-6 text-center text-sm text-muted-foreground">
             <p>&copy; 2026 SEAMLIER. {t('footer.allRightsReserved')}</p>
           </div>
         </div>

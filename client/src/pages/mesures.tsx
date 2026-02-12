@@ -150,47 +150,47 @@ export default function Mesures() {
   ];
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
-      <div className="bg-gray-50 border-b border-gray-100">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
+      <div className="bg-muted/50 border-b border-border">
         <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-              <Ruler className="h-5 w-5 text-[#722F37]" />
+            <div className="w-10 h-10 rounded-full bg-card border border-primary flex items-center justify-center">
+              <Ruler className="h-5 w-5 text-primary" />
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+            <h1 className="font-serif text-3xl lg:text-4xl text-primary">
               {t('measures.title')}
             </h1>
           </div>
-          <p className="text-gray-600 mt-2">
+          <p className="text-muted-foreground mt-2">
             {t('measures.subtitle')}
           </p>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 lg:px-6 py-6">
-        <Card className="border border-gray-100 bg-white shadow-sm mb-6">
+        <Card className="mb-6">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg text-[#722F37] flex items-center gap-2">
+            <CardTitle className="text-lg text-primary flex items-center gap-2">
               <HelpCircle className="h-5 w-5" />
               {t('measures.howTo')}
             </CardTitle>
           </CardHeader>
-          <CardContent className="bg-white">
-            <ul className="text-sm text-gray-600 space-y-2">
+          <CardContent>
+            <ul className="text-sm text-muted-foreground space-y-2">
               <li className="flex items-start gap-2">
-                <span className="text-[#722F37] font-medium">1.</span>
+                <span className="text-primary font-medium">1.</span>
                 {t('measures.tip1')}
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-[#722F37] font-medium">2.</span>
+                <span className="text-primary font-medium">2.</span>
                 {t('measures.tip2')}
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-[#722F37] font-medium">3.</span>
+                <span className="text-primary font-medium">3.</span>
                 {t('measures.tip3')}
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-[#722F37] font-medium">4.</span>
+                <span className="text-primary font-medium">4.</span>
                 {t('measures.tip4')}
               </li>
             </ul>
@@ -198,28 +198,28 @@ export default function Mesures() {
         </Card>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          <Card className="border border-gray-100 bg-white shadow-sm">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-lg text-[#722F37]">{t('measures.visualGuide')}</CardTitle>
+              <CardTitle className="text-lg text-primary">{t('measures.visualGuide')}</CardTitle>
             </CardHeader>
-            <CardContent className="bg-white flex justify-center py-6">
+            <CardContent className="flex justify-center py-6">
               <BodyDiagram activeMeasurement={activeMeasurement} />
             </CardContent>
             <div className="px-6 pb-6">
-              <p className="text-sm text-gray-500 text-center">
+              <p className="text-sm text-muted-foreground text-center">
                 {t('measures.clickToSee')}
               </p>
             </div>
           </Card>
 
-          <Card className="border border-gray-100 bg-white shadow-sm">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-lg text-[#722F37]">{t('measures.myMeasures')}</CardTitle>
+              <CardTitle className="text-lg text-primary">{t('measures.myMeasures')}</CardTitle>
             </CardHeader>
-            <CardContent className="bg-white">
+            <CardContent>
               {isLoading ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-[#722F37]" />
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
               ) : (
                 <div className="grid gap-4">
@@ -227,12 +227,12 @@ export default function Mesures() {
                     <div 
                       key={m.id} 
                       className={`flex items-center gap-3 p-2 rounded-md transition-colors ${
-                        activeMeasurement === m.id ? 'bg-[#722F37]/5' : ''
+                        activeMeasurement === m.id ? 'bg-primary/5' : ''
                       }`}
                     >
                       <Label 
                         htmlFor={m.id} 
-                        className="w-36 text-sm text-gray-700 cursor-pointer"
+                        className="w-36 text-sm text-foreground cursor-pointer"
                         onClick={() => setActiveMeasurement(m.id)}
                       >
                         {m.label}
@@ -244,12 +244,12 @@ export default function Mesures() {
                           placeholder={m.placeholder}
                           value={values[m.id]}
                           onChange={(e) => handleChange(m.id, e.target.value)}
-                          className="border-gray-200 text-gray-900 placeholder:text-gray-500 focus:border-[#722F37] focus:ring-[#722F37]"
+                          className="focus:border-primary focus:ring-primary"
                           data-testid={`input-${m.id}`}
                           onFocus={() => setActiveMeasurement(m.id)}
                           onBlur={() => setActiveMeasurement(null)}
                         />
-                        <span className="text-gray-500 text-sm w-8">{m.unit}</span>
+                        <span className="text-muted-foreground text-sm w-8">{m.unit}</span>
                       </div>
                     </div>
                   ))}
@@ -261,8 +261,7 @@ export default function Mesures() {
 
         <div className="flex gap-3 mt-6">
           <Button 
-            variant="outline" 
-            className="flex-1 h-12 bg-[#722F37] border-[#722F37] text-white hover:bg-[#5a252c]" 
+            className="flex-1 bg-[#722F37] border-[#722F37] text-white" 
             data-testid="button-save-measures"
             onClick={handleSave}
             disabled={saveMutation.isPending}
@@ -274,12 +273,12 @@ export default function Mesures() {
             )}
             {t('measures.save')}
           </Button>
-          <Button variant="outline" className="h-12 border-gray-200" data-testid="button-scan">
+          <Button variant="outline" size="icon" data-testid="button-scan">
             <Camera className="h-5 w-5" />
           </Button>
         </div>
 
-        <p className="text-center text-gray-500 text-sm mt-4">
+        <p className="text-center text-muted-foreground text-sm mt-4">
           {t('measures.autoShare')}
         </p>
       </div>

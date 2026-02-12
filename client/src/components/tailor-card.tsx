@@ -17,7 +17,7 @@ export function TailorCard({ tailor, linkPrefix = "/particulier/tailor" }: Tailo
   return (
     <Link href={`${linkPrefix}/${tailor.id}`}>
       <Card 
-        className="overflow-hidden cursor-pointer border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow"
+        className="overflow-hidden cursor-pointer border border-border bg-background shadow-sm hover:shadow-md transition-shadow"
         data-testid={`card-tailor-${tailor.id}`}
       >
         <div className="relative h-40 overflow-hidden">
@@ -47,7 +47,7 @@ export function TailorCard({ tailor, linkPrefix = "/particulier/tailor" }: Tailo
               </div>
               
               {tailor.user.location && (
-                <div className="flex items-center gap-1 text-gray-500 text-sm mt-0.5">
+                <div className="flex items-center gap-1 text-muted-foreground text-sm mt-0.5">
                   <MapPin className="h-3 w-3" />
                   <span className="truncate">{tailor.user.location}</span>
                 </div>
@@ -61,7 +61,7 @@ export function TailorCard({ tailor, linkPrefix = "/particulier/tailor" }: Tailo
                 <Badge 
                   key={specialty} 
                   variant="secondary" 
-                  className="text-xs bg-gray-100 text-gray-600 border-none"
+                  className="text-xs bg-muted/50 text-muted-foreground border-none"
                 >
                   {specialty}
                 </Badge>
@@ -69,12 +69,12 @@ export function TailorCard({ tailor, linkPrefix = "/particulier/tailor" }: Tailo
             </div>
           )}
           
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
             <div className="flex items-center gap-1 text-sm">
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-              <span className="font-medium text-gray-900">{tailor.rating?.toFixed(1) || "Nouveau"}</span>
+              <span className="font-medium text-foreground">{tailor.rating?.toFixed(1) || "Nouveau"}</span>
               {tailor.reviewCount && tailor.reviewCount > 0 && (
-                <span className="text-gray-500">({tailor.reviewCount} avis)</span>
+                <span className="text-muted-foreground">({tailor.reviewCount} avis)</span>
               )}
             </div>
             
@@ -88,7 +88,7 @@ export function TailorCard({ tailor, linkPrefix = "/particulier/tailor" }: Tailo
 
 export function TailorCardSkeleton() {
   return (
-    <Card className="overflow-hidden border border-gray-100">
+    <Card className="overflow-hidden border border-border">
       <div className="h-40 skeleton-shimmer" />
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
@@ -102,7 +102,7 @@ export function TailorCardSkeleton() {
           <div className="h-5 w-16 skeleton-shimmer rounded-full" />
           <div className="h-5 w-20 skeleton-shimmer rounded-full" />
         </div>
-        <div className="flex justify-between mt-3 pt-3 border-t border-gray-100">
+        <div className="flex justify-between mt-3 pt-3 border-t border-border">
           <div className="h-4 w-20 skeleton-shimmer rounded" />
           <div className="h-4 w-16 skeleton-shimmer rounded" />
         </div>

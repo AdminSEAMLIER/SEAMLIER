@@ -72,18 +72,18 @@ export default function Profile() {
 
           <div className="flex items-center gap-4">
             <Avatar className="h-20 w-20 border-4 border-white shadow-md">
-              <AvatarImage src={user?.avatarUrl || undefined} />
+              <AvatarImage src={user?.profileImageUrl || undefined} />
               <AvatarFallback className="bg-[#722F37] text-white text-2xl">
-                {user?.fullName?.charAt(0) || <User className="h-8 w-8" />}
+                {user?.firstName?.charAt(0) || <User className="h-8 w-8" />}
               </AvatarFallback>
             </Avatar>
             
             <div className="flex-1">
-              <h2 className="font-semibold text-xl text-gray-900">
-                {user?.fullName || t('userProfile.user')}
+              <h2 className="font-semibold text-xl text-foreground">
+                {[user?.firstName, user?.lastName].filter(Boolean).join(' ') || t('userProfile.user')}
               </h2>
               {user?.location && (
-                <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+                <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                   <MapPin className="h-3.5 w-3.5" />
                   <span>{user.location}</span>
                 </div>
@@ -95,7 +95,7 @@ export default function Profile() {
               )}
             </div>
             
-            <Button variant="outline" size="sm" className="border-gray-200" data-testid="button-edit-profile">
+            <Button variant="outline" size="sm" className="border-border" data-testid="button-edit-profile">
               {t('userProfile.edit')}
             </Button>
           </div>
@@ -103,60 +103,60 @@ export default function Profile() {
       </div>
 
       <div className="px-4 lg:px-6 py-6 max-w-2xl mx-auto">
-        <Card className="mb-6 border-gray-100 shadow-sm overflow-hidden">
+        <Card className="mb-6 border-border shadow-sm overflow-hidden">
           <div className="p-4 space-y-3">
             {user?.email && (
               <div className="flex items-center gap-3 text-sm">
-                <Mail className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-700">{user.email}</span>
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <span className="text-foreground">{user.email}</span>
               </div>
             )}
             {user?.phone && (
               <div className="flex items-center gap-3 text-sm">
-                <Phone className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-700">{user.phone}</span>
+                <Phone className="h-4 w-4 text-muted-foreground" />
+                <span className="text-foreground">{user.phone}</span>
               </div>
             )}
           </div>
         </Card>
 
-        <Card className="mb-6 border-gray-100 shadow-sm overflow-hidden">
+        <Card className="mb-6 border-border shadow-sm overflow-hidden">
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
               <button
                 key={item.path}
-                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors text-left border-b border-gray-100 last:border-b-0"
+                className="w-full flex items-center justify-between p-4 hover-elevate transition-colors text-left border-b border-border last:border-b-0"
                 data-testid={`menu-${item.labelKey.split('.')[1]}`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-                    <Icon className="h-5 w-5 text-gray-600" />
+                  <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center">
+                    <Icon className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <span className="font-medium text-gray-900">{t(item.labelKey)}</span>
+                  <span className="font-medium text-foreground">{t(item.labelKey)}</span>
                 </div>
-                <ChevronRight className="h-5 w-5 text-gray-400" />
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
               </button>
             );
           })}
         </Card>
 
-        <Card className="mb-6 border-gray-100 shadow-sm overflow-hidden">
+        <Card className="mb-6 border-border shadow-sm overflow-hidden">
           {settingsItems.map((item) => {
             const Icon = item.icon;
             return (
               <button
                 key={item.path}
-                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors text-left border-b border-gray-100 last:border-b-0"
+                className="w-full flex items-center justify-between p-4 hover-elevate transition-colors text-left border-b border-border last:border-b-0"
                 data-testid={`menu-${item.labelKey.split('.')[1]}`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-                    <Icon className="h-5 w-5 text-gray-600" />
+                  <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center">
+                    <Icon className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <span className="font-medium text-gray-900">{t(item.labelKey)}</span>
+                  <span className="font-medium text-foreground">{t(item.labelKey)}</span>
                 </div>
-                <ChevronRight className="h-5 w-5 text-gray-400" />
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
               </button>
             );
           })}

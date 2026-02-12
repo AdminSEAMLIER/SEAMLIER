@@ -26,7 +26,7 @@ export default function PreferencesNotifications() {
     pushOrders: true,
   });
 
-  const { data: savedPrefs, isLoading } = useQuery({
+  const { data: savedPrefs, isLoading } = useQuery<Record<string, boolean>>({
     queryKey: ['/api/user/preferences'],
     enabled: !!user,
   });
@@ -57,14 +57,14 @@ export default function PreferencesNotifications() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user/preferences'] });
       toast({
-        title: "Pr\u00e9f\u00e9rences enregistr\u00e9es",
-        description: "Vos pr\u00e9f\u00e9rences de notifications ont \u00e9t\u00e9 mises \u00e0 jour",
+        title: "Préférences enregistrées",
+        description: "Vos préférences de notifications ont été mises à jour",
       });
     },
     onError: () => {
       toast({
         title: "Erreur",
-        description: "Impossible de sauvegarder vos pr\u00e9f\u00e9rences",
+        description: "Impossible de sauvegarder vos préférences",
         variant: "destructive",
       });
     },
@@ -75,25 +75,25 @@ export default function PreferencesNotifications() {
   };
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
-      <div className="bg-gray-50 border-b border-gray-100">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
+      <div className="bg-muted/50 border-b border-border">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <Link href="/particulier/profil">
-            <Button variant="ghost" size="sm" className="mb-4 -ml-2 text-gray-600" data-testid="button-back">
+            <Button variant="ghost" size="sm" className="mb-4 -ml-2 text-muted-foreground" data-testid="button-back">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour au profil
             </Button>
           </Link>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center">
               <Bell className="h-5 w-5 text-[#722F37]" />
             </div>
             <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
               Notifications
             </h1>
           </div>
-          <p className="text-gray-600 mt-2">
-            G\u00e9rez vos pr\u00e9f\u00e9rences de notifications
+          <p className="text-muted-foreground mt-2">
+            Gérez vos préférences de notifications
           </p>
         </div>
       </div>
@@ -105,22 +105,22 @@ export default function PreferencesNotifications() {
           </div>
         ) : (
           <>
-            <Card className="border border-gray-100 bg-white shadow-sm">
+            <Card>
               <CardHeader>
                 <CardTitle className="text-lg text-[#722F37] flex items-center gap-2">
                   <Mail className="h-5 w-5" />
                   Notifications par email
                 </CardTitle>
               </CardHeader>
-              <CardContent className="bg-white space-y-4">
+              <CardContent className="space-y-4">
                 <div className="flex items-center justify-between py-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                      <MessageSquare className="h-5 w-5 text-gray-400" />
+                    <div className="w-10 h-10 rounded-full bg-muted/50 border border-border flex items-center justify-center">
+                      <MessageSquare className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
-                      <Label className="text-gray-700 font-medium">Messages</Label>
-                      <p className="text-sm text-gray-500">Recevoir un email pour chaque nouveau message</p>
+                      <Label className="text-foreground font-medium">Messages</Label>
+                      <p className="text-sm text-muted-foreground">Recevoir un email pour chaque nouveau message</p>
                     </div>
                   </div>
                   <Switch
@@ -130,14 +130,14 @@ export default function PreferencesNotifications() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                <div className="flex items-center justify-between py-2 border-t border-border">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                      <Calendar className="h-5 w-5 text-gray-400" />
+                    <div className="w-10 h-10 rounded-full bg-muted/50 border border-border flex items-center justify-center">
+                      <Calendar className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
-                      <Label className="text-gray-700 font-medium">Rendez-vous</Label>
-                      <p className="text-sm text-gray-500">Rappels et confirmations de rendez-vous</p>
+                      <Label className="text-foreground font-medium">Rendez-vous</Label>
+                      <p className="text-sm text-muted-foreground">Rappels et confirmations de rendez-vous</p>
                     </div>
                   </div>
                   <Switch
@@ -147,14 +147,14 @@ export default function PreferencesNotifications() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                <div className="flex items-center justify-between py-2 border-t border-border">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                      <ShoppingBag className="h-5 w-5 text-gray-400" />
+                    <div className="w-10 h-10 rounded-full bg-muted/50 border border-border flex items-center justify-center">
+                      <ShoppingBag className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
-                      <Label className="text-gray-700 font-medium">Promotions</Label>
-                      <p className="text-sm text-gray-500">Offres sp\u00e9ciales et r\u00e9ductions</p>
+                      <Label className="text-foreground font-medium">Promotions</Label>
+                      <p className="text-sm text-muted-foreground">Offres spéciales et réductions</p>
                     </div>
                   </div>
                   <Switch
@@ -164,14 +164,14 @@ export default function PreferencesNotifications() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                <div className="flex items-center justify-between py-2 border-t border-border">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                      <Mail className="h-5 w-5 text-gray-400" />
+                    <div className="w-10 h-10 rounded-full bg-muted/50 border border-border flex items-center justify-center">
+                      <Mail className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
-                      <Label className="text-gray-700 font-medium">Newsletter</Label>
-                      <p className="text-sm text-gray-500">Actualit\u00e9s et tendances de la couture</p>
+                      <Label className="text-foreground font-medium">Newsletter</Label>
+                      <p className="text-sm text-muted-foreground">Actualités et tendances de la couture</p>
                     </div>
                   </div>
                   <Switch
@@ -183,22 +183,22 @@ export default function PreferencesNotifications() {
               </CardContent>
             </Card>
 
-            <Card className="border border-gray-100 bg-white shadow-sm">
+            <Card>
               <CardHeader>
                 <CardTitle className="text-lg text-[#722F37] flex items-center gap-2">
                   <Bell className="h-5 w-5" />
                   Notifications push
                 </CardTitle>
               </CardHeader>
-              <CardContent className="bg-white space-y-4">
+              <CardContent className="space-y-4">
                 <div className="flex items-center justify-between py-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                      <MessageSquare className="h-5 w-5 text-gray-400" />
+                    <div className="w-10 h-10 rounded-full bg-muted/50 border border-border flex items-center justify-center">
+                      <MessageSquare className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
-                      <Label className="text-gray-700 font-medium">Messages</Label>
-                      <p className="text-sm text-gray-500">Notification instantan\u00e9e des nouveaux messages</p>
+                      <Label className="text-foreground font-medium">Messages</Label>
+                      <p className="text-sm text-muted-foreground">Notification instantanée des nouveaux messages</p>
                     </div>
                   </div>
                   <Switch
@@ -208,14 +208,14 @@ export default function PreferencesNotifications() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                <div className="flex items-center justify-between py-2 border-t border-border">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                      <Calendar className="h-5 w-5 text-gray-400" />
+                    <div className="w-10 h-10 rounded-full bg-muted/50 border border-border flex items-center justify-center">
+                      <Calendar className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
-                      <Label className="text-gray-700 font-medium">Rendez-vous</Label>
-                      <p className="text-sm text-gray-500">Rappels avant vos rendez-vous</p>
+                      <Label className="text-foreground font-medium">Rendez-vous</Label>
+                      <p className="text-sm text-muted-foreground">Rappels avant vos rendez-vous</p>
                     </div>
                   </div>
                   <Switch
@@ -225,14 +225,14 @@ export default function PreferencesNotifications() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                <div className="flex items-center justify-between py-2 border-t border-border">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                      <ShoppingBag className="h-5 w-5 text-gray-400" />
+                    <div className="w-10 h-10 rounded-full bg-muted/50 border border-border flex items-center justify-center">
+                      <ShoppingBag className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
-                      <Label className="text-gray-700 font-medium">Commandes</Label>
-                      <p className="text-sm text-gray-500">Mises \u00e0 jour sur vos commandes</p>
+                      <Label className="text-foreground font-medium">Commandes</Label>
+                      <p className="text-sm text-muted-foreground">Mises à jour sur vos commandes</p>
                     </div>
                   </div>
                   <Switch
@@ -242,14 +242,14 @@ export default function PreferencesNotifications() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                <div className="flex items-center justify-between py-2 border-t border-border">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                      <ShoppingBag className="h-5 w-5 text-gray-400" />
+                    <div className="w-10 h-10 rounded-full bg-muted/50 border border-border flex items-center justify-center">
+                      <ShoppingBag className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
-                      <Label className="text-gray-700 font-medium">Promotions</Label>
-                      <p className="text-sm text-gray-500">Alertes sur les offres sp\u00e9ciales</p>
+                      <Label className="text-foreground font-medium">Promotions</Label>
+                      <p className="text-sm text-muted-foreground">Alertes sur les offres spéciales</p>
                     </div>
                   </div>
                   <Switch
@@ -265,7 +265,7 @@ export default function PreferencesNotifications() {
               <Link href="/particulier/profil" className="flex-1">
                 <Button 
                   variant="outline" 
-                  className="w-full bg-white border border-gray-300 text-gray-600"
+                  className="w-full"
                   data-testid="button-cancel"
                 >
                   Annuler

@@ -80,7 +80,7 @@ export default function ProfilParticulier() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pb-20 lg:pb-8 bg-white flex items-center justify-center">
+      <div className="min-h-screen pb-20 lg:pb-8 bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#722F37]" />
       </div>
     );
@@ -88,9 +88,9 @@ export default function ProfilParticulier() {
 
   if (!user) {
     return (
-      <div className="min-h-screen pb-20 lg:pb-8 bg-white flex items-center justify-center">
+      <div className="min-h-screen pb-20 lg:pb-8 bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">Vous devez être connecté pour accéder à votre profil.</p>
+          <p className="text-muted-foreground mb-4">Vous devez être connecté pour accéder à votre profil.</p>
           <Link href="/connexion">
             <Button className="bg-[#722F37]" data-testid="button-go-login">Se connecter</Button>
           </Link>
@@ -100,36 +100,36 @@ export default function ProfilParticulier() {
   }
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
-      <div className="bg-gray-50 border-b border-gray-100">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
+      <div className="bg-muted/50 border-b border-border">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center">
               <User className="h-5 w-5 text-[#722F37]" />
             </div>
             <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
               {t('profile.title')}
             </h1>
           </div>
-          <p className="text-gray-600 mt-2">
+          <p className="text-muted-foreground mt-2">
             {t('profile.subtitle')}
           </p>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 lg:px-6 py-6">
-        <Card className="border border-gray-100 bg-white shadow-sm mb-6">
-          <CardContent className="p-6 bg-white">
+        <Card className="mb-6">
+          <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row items-center gap-6">
               <div className="relative">
-                <Avatar className="h-24 w-24 border-2 border-gray-100">
+                <Avatar className="h-24 w-24 border-2 border-border">
                   <AvatarImage src={profile.profileImageUrl} alt={fullName} />
                   <AvatarFallback className="bg-[#722F37]/10 text-[#722F37] text-2xl font-medium">
                     {getInitials()}
                   </AvatarFallback>
                 </Avatar>
                 <button 
-                  className="absolute bottom-0 right-0 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-50"
+                  className="absolute bottom-0 right-0 w-8 h-8 bg-card border border-border rounded-full flex items-center justify-center text-muted-foreground"
                   data-testid="button-change-avatar"
                 >
                   <Camera className="h-4 w-4" />
@@ -137,13 +137,13 @@ export default function ProfilParticulier() {
               </div>
               <div className="text-center sm:text-left flex-1">
                 <h2 className="text-xl font-semibold text-[#722F37]" data-testid="text-profile-name">{fullName || "—"}</h2>
-                <p className="text-gray-500" data-testid="text-profile-email">{profile.email}</p>
+                <p className="text-muted-foreground" data-testid="text-profile-email">{profile.email}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border border-gray-100 bg-white shadow-sm mb-6">
+        <Card className="mb-6">
           <CardHeader className="flex flex-row items-center justify-between gap-1">
             <CardTitle className="text-lg text-[#722F37]">{t('profile.personalInfo')}</CardTitle>
             {!isEditing && (
@@ -151,7 +151,7 @@ export default function ProfilParticulier() {
                 variant="ghost" 
                 size="sm" 
                 onClick={() => setIsEditing(true)}
-                className="text-gray-500"
+                className="text-muted-foreground"
                 data-testid="button-edit-profile"
               >
                 <Edit2 className="h-4 w-4 mr-2" />
@@ -159,92 +159,90 @@ export default function ProfilParticulier() {
               </Button>
             )}
           </CardHeader>
-          <CardContent className="bg-white">
+          <CardContent>
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center">
-                  <User className="h-5 w-5 text-gray-400" />
+                <div className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center">
+                  <User className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div className="flex-1">
-                  <Label className="text-gray-500 text-sm">{t('auth.fullName')}</Label>
+                  <Label className="text-muted-foreground text-sm">{t('auth.fullName')}</Label>
                   {isEditing ? (
                     <div className="flex gap-2 mt-1">
                       <Input
                         value={profile.firstName}
                         onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
                         placeholder="Prénom"
-                        className="border-gray-200"
                         data-testid="input-firstname"
                       />
                       <Input
                         value={profile.lastName}
                         onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
                         placeholder="Nom"
-                        className="border-gray-200"
                         data-testid="input-lastname"
                       />
                     </div>
                   ) : (
-                    <p className="text-gray-700" data-testid="text-fullname">{fullName || "—"}</p>
+                    <p className="text-foreground" data-testid="text-fullname">{fullName || "—"}</p>
                   )}
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                <div className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center">
+                  <Mail className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div className="flex-1">
-                  <Label className="text-gray-500 text-sm">{t('auth.email')}</Label>
+                  <Label className="text-muted-foreground text-sm">{t('auth.email')}</Label>
                   {isEditing ? (
                     <Input
                       type="email"
                       value={profile.email}
                       onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                      className="mt-1 border-gray-200"
+                      className="mt-1"
                       data-testid="input-email"
                     />
                   ) : (
-                    <p className="text-gray-700" data-testid="text-email">{profile.email || "—"}</p>
+                    <p className="text-foreground" data-testid="text-email">{profile.email || "—"}</p>
                   )}
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center">
-                  <Phone className="h-5 w-5 text-gray-400" />
+                <div className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center">
+                  <Phone className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div className="flex-1">
-                  <Label className="text-gray-500 text-sm">{t('auth.phone')}</Label>
+                  <Label className="text-muted-foreground text-sm">{t('auth.phone')}</Label>
                   {isEditing ? (
                     <Input
                       type="tel"
                       value={profile.phone}
                       onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                      className="mt-1 border-gray-200"
+                      className="mt-1"
                       data-testid="input-phone"
                     />
                   ) : (
-                    <p className="text-gray-700" data-testid="text-phone">{profile.phone || "—"}</p>
+                    <p className="text-foreground" data-testid="text-phone">{profile.phone || "—"}</p>
                   )}
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center">
-                  <MapPin className="h-5 w-5 text-gray-400" />
+                <div className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center">
+                  <MapPin className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div className="flex-1">
-                  <Label className="text-gray-500 text-sm">{t('profile.city')}</Label>
+                  <Label className="text-muted-foreground text-sm">{t('profile.city')}</Label>
                   {isEditing ? (
                     <Input
                       value={profile.location}
                       onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-                      className="mt-1 border-gray-200"
+                      className="mt-1"
                       data-testid="input-location"
                     />
                   ) : (
-                    <p className="text-gray-700" data-testid="text-location">{profile.location || "—"}</p>
+                    <p className="text-foreground" data-testid="text-location">{profile.location || "—"}</p>
                   )}
                 </div>
               </div>
@@ -254,7 +252,7 @@ export default function ProfilParticulier() {
               <div className="flex gap-3 mt-6">
                 <Button 
                   variant="outline"
-                  className="flex-1 bg-white border border-gray-300 text-gray-600"
+                  className="flex-1"
                   onClick={() => setIsEditing(false)}
                   data-testid="button-cancel"
                 >
@@ -278,50 +276,50 @@ export default function ProfilParticulier() {
           </CardContent>
         </Card>
 
-        <Card className="border border-gray-100 bg-white shadow-sm mb-6">
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg text-[#722F37]">{t('profile.quickAccess')}</CardTitle>
           </CardHeader>
-          <CardContent className="bg-white">
+          <CardContent>
             <div className="grid grid-cols-3 gap-3">
               <Link href="/particulier/decouverte">
-                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-testid="link-recherche">
-                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
+                <div className="flex flex-col items-center p-4 bg-muted/50 rounded-md transition-colors cursor-pointer" data-testid="link-recherche">
+                  <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center mb-2">
                     <Search className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-sm text-gray-600 text-center">{t('nav.search')}</span>
+                  <span className="text-sm text-muted-foreground text-center">{t('nav.search')}</span>
                 </div>
               </Link>
               <Link href="/particulier/mesures">
-                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-testid="link-mesures">
-                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
+                <div className="flex flex-col items-center p-4 bg-muted/50 rounded-md transition-colors cursor-pointer" data-testid="link-mesures">
+                  <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center mb-2">
                     <Ruler className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-sm text-gray-600 text-center">{t('nav.measures')}</span>
+                  <span className="text-sm text-muted-foreground text-center">{t('nav.measures')}</span>
                 </div>
               </Link>
               <Link href="/particulier/magazine">
-                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-testid="link-magazine">
-                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
+                <div className="flex flex-col items-center p-4 bg-muted/50 rounded-md transition-colors cursor-pointer" data-testid="link-magazine">
+                  <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center mb-2">
                     <BookOpen className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-sm text-gray-600 text-center">{t('nav.magazine')}</span>
+                  <span className="text-sm text-muted-foreground text-center">{t('nav.magazine')}</span>
                 </div>
               </Link>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border border-gray-100 bg-white shadow-sm">
+        <Card>
           <CardHeader>
             <CardTitle className="text-lg text-[#722F37]">{t('profile.account')}</CardTitle>
           </CardHeader>
-          <CardContent className="bg-white">
+          <CardContent>
             <div className="space-y-3">
               <Link href="/particulier/profil/mot-de-passe">
                 <Button 
                   variant="outline" 
-                  className="w-full justify-start bg-white border border-gray-200 text-gray-600"
+                  className="w-full justify-start"
                   data-testid="button-change-password"
                 >
                   {t('profile.changePassword')}
@@ -330,7 +328,7 @@ export default function ProfilParticulier() {
               <Link href="/particulier/profil/notifications">
                 <Button 
                   variant="outline" 
-                  className="w-full justify-start bg-white border border-gray-200 text-gray-600"
+                  className="w-full justify-start"
                   data-testid="button-notifications"
                 >
                   {t('profile.notifications')}
@@ -338,7 +336,7 @@ export default function ProfilParticulier() {
               </Link>
               <Button 
                 variant="outline" 
-                className="w-full justify-start bg-white border border-red-200 text-red-600 hover:bg-red-50"
+                className="w-full justify-start border-red-200 text-red-600 hover:bg-red-50"
                 onClick={() => logout()}
                 data-testid="button-logout"
               >

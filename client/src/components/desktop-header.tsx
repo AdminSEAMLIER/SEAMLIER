@@ -43,7 +43,7 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
 
   return (
     <header 
-      className="hidden lg:flex fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 z-50"
+      className="hidden lg:flex fixed top-0 left-0 right-0 h-16 bg-background border-b border-border z-50"
       data-testid="header-desktop"
     >
       <div className="flex items-center justify-between w-full max-w-7xl mx-auto px-6">
@@ -67,8 +67,8 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
                 <Button
                   variant="ghost"
                   className={cn(
-                    "gap-2 text-gray-800",
-                    isActive && "bg-gray-100 text-[#722F37]"
+                    "gap-2 text-foreground",
+                    isActive && "bg-muted text-[#722F37]"
                   )}
                   data-testid={`nav-desktop-${item.labelKey.split('.')[1]}`}
                 >
@@ -95,7 +95,7 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem className="text-gray-700">
+                <DropdownMenuItem className="text-foreground">
                   <span className="font-medium">{user.firstName} {user.lastName}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 

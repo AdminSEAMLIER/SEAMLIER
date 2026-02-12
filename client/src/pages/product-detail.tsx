@@ -27,7 +27,7 @@ export default function ProductDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pb-20 lg:pb-8 bg-white">
+      <div className="min-h-screen pb-20 lg:pb-8 bg-background">
         <div className="aspect-square max-h-[50vh] skeleton-shimmer" />
         <div className="px-4 lg:px-6 py-6 max-w-2xl mx-auto space-y-4">
           <div className="h-8 w-3/4 rounded skeleton-shimmer" />
@@ -40,9 +40,9 @@ export default function ProductDetail() {
 
   if (!product) {
     return (
-      <div className="min-h-screen flex items-center justify-center pb-20 lg:pb-8 bg-white">
+      <div className="min-h-screen flex items-center justify-center pb-20 lg:pb-8 bg-background">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">Produit non trouvé</p>
+          <p className="text-muted-foreground mb-4">Produit non trouvé</p>
           <Link href="/particulier/marketplace">
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -55,7 +55,7 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
       <div className="relative aspect-square max-h-[50vh] overflow-hidden">
         <img
           src={product.imageUrl}
@@ -68,7 +68,7 @@ export default function ProductDetail() {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="bg-white/90 hover:bg-white text-gray-700"
+              className="bg-white/90 hover:bg-white text-foreground"
               data-testid="button-back"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -78,7 +78,7 @@ export default function ProductDetail() {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="bg-white/90 hover:bg-white text-gray-700"
+              className="bg-white/90 hover:bg-white text-foreground"
               data-testid="button-share"
             >
               <Share2 className="h-5 w-5" />
@@ -86,7 +86,7 @@ export default function ProductDetail() {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="bg-white/90 hover:bg-white text-gray-700"
+              className="bg-white/90 hover:bg-white text-foreground"
               data-testid="button-favorite"
             >
               <Heart className="h-5 w-5" />
@@ -99,7 +99,7 @@ export default function ProductDetail() {
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
             {product.category && (
-              <Badge variant="secondary" className="mb-2 bg-gray-100 text-gray-700 border-none">
+              <Badge variant="secondary" className="mb-2 bg-muted/50 text-foreground border-none">
                 {product.category}
               </Badge>
             )}
@@ -113,29 +113,29 @@ export default function ProductDetail() {
         </div>
 
         {product.description && (
-          <p className="text-gray-600 mb-6 leading-relaxed">
+          <p className="text-muted-foreground mb-6 leading-relaxed">
             {product.description}
           </p>
         )}
 
-        <Card className="p-4 mb-6 border-gray-100 shadow-sm">
+        <Card className="p-4 mb-6 border-border shadow-sm">
           <Link href={`/particulier/tailor/${product.tailor.id}`}>
             <div className="flex items-center gap-3 cursor-pointer">
               <Avatar className="h-12 w-12">
-                <AvatarImage src={product.tailor.user.avatarUrl || undefined} />
+                <AvatarImage src={product.tailor.user.profileImageUrl || undefined} />
                 <AvatarFallback className="bg-[#722F37] text-white">
-                  {product.tailor.user.fullName.charAt(0)}
+                  {product.tailor.user.firstName?.charAt(0) || '?'}
                 </AvatarFallback>
               </Avatar>
               
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-medium text-gray-900">{product.tailor.user.fullName}</h3>
+                  <h3 className="font-medium text-foreground">{[product.tailor.user.firstName, product.tailor.user.lastName].filter(Boolean).join(' ')}</h3>
                   {product.tailor.isVerified && (
                     <BadgeCheck className="h-4 w-4 text-[#722F37]" fill="currentColor" />
                   )}
                 </div>
-                <div className="flex items-center gap-3 text-sm text-gray-500">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
                     <span>{product.tailor.rating?.toFixed(1) || "Nouveau"}</span>
@@ -157,7 +157,7 @@ export default function ProductDetail() {
             <ShoppingCart className="h-5 w-5 mr-2" />
             Ajouter au panier
           </Button>
-          <Button variant="outline" className="flex-1 h-12 bg-white border-[#722F37] text-[#722F37] hover:bg-gray-50" data-testid="button-contact-seller">
+          <Button variant="outline" className="flex-1 h-12 bg-background border-[#722F37] text-[#722F37] hover:bg-muted/50" data-testid="button-contact-seller">
             <MessageCircle className="h-5 w-5 mr-2" />
             Contacter
           </Button>
