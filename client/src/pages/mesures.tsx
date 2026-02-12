@@ -9,6 +9,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import type { Measurements } from "@shared/schema";
 
 function BodyDiagram({ activeMeasurement }: { activeMeasurement: string | null }) {
   return (
@@ -78,13 +79,8 @@ export default function Mesures() {
     longueur_jambe: "",
   });
 
-  const { data: savedMeasurements, isLoading } = useQuery({
-    queryKey: ['/api/measurements', userId],
-    queryFn: async () => {
-      if (!userId) return null;
-      const res = await fetch(`/api/measurements/${userId}`);
-      return res.json();
-    },
+  const { data: savedMeasurements, isLoading } = useQuery<Measurements>({
+    queryKey: ['/api/measurements'],
     enabled: !!userId
   });
 
@@ -106,7 +102,6 @@ export default function Mesures() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       return apiRequest('POST', '/api/measurements', {
-        userId: userId,
         neck: parseFloat(values.tour_cou) || null,
         bust: parseFloat(values.tour_poitrine) || null,
         waist: parseFloat(values.tour_taille) || null,
@@ -120,7 +115,7 @@ export default function Mesures() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/measurements', userId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/measurements'] });
       toast({
         title: "Mesures enregistrées",
         description: "Vos mesures ont été sauvegardées avec succès",
@@ -249,7 +244,7 @@ export default function Mesures() {
                           placeholder={m.placeholder}
                           value={values[m.id]}
                           onChange={(e) => handleChange(m.id, e.target.value)}
-                          className="border-gray-200 focus:border-[#722F37] focus:ring-[#722F37]"
+                          className="border-gray-200 text-gray-900 placeholder:text-gray-500 focus:border-[#722F37] focus:ring-[#722F37]"
                           data-testid={`input-${m.id}`}
                           onFocus={() => setActiveMeasurement(m.id)}
                           onBlur={() => setActiveMeasurement(null)}

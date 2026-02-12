@@ -1,8 +1,22 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { isAuthenticated } from "./replit_integrations/auth";
 import bcrypt from "bcryptjs";
+
+function getSessionUserId(req: Request): string | null {
+  const sessionId = (req.session as any)?.userId;
+  const replitId = (req as any)?.user?.claims?.sub;
+  return sessionId || replitId || null;
+}
+
+function requireAuth(req: Request, res: Response, next: NextFunction) {
+  const userId = getSessionUserId(req);
+  if (!userId) {
+    return res.status(401).json({ message: "Non authentifié" });
+  }
+  (req as any).authUserId = userId;
+  next();
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -215,10 +229,51 @@ export async function registerRoutes(
     }
   });
 
-  // Protected routes - User profile
-  app.get("/api/user/me", isAuthenticated, async (req: any, res) => {
+  // Session-based user update (used by profile page)
+  app.patch("/api/users/:id", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
+      if (userId !== req.params.id) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      const { firstName, lastName, email, phone, location, profileImageUrl } = req.body;
+      const user = await storage.updateUser(userId, { firstName, lastName, email, phone, location, profileImageUrl });
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      const { password: _, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
+  // User preferences
+  app.get("/api/user/preferences", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const prefs = await storage.getUserPreferences(userId);
+      res.json(prefs || {});
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch preferences" });
+    }
+  });
+
+  app.post("/api/user/preferences", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const prefs = await storage.upsertUserPreferences(userId, req.body);
+      res.json(prefs);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to save preferences" });
+    }
+  });
+
+  // Protected routes - User profile
+  app.get("/api/user/me", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
@@ -229,9 +284,9 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/user/me", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/user/me", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       const { firstName, lastName, phone, location, profileImageUrl } = req.body;
       const user = await storage.updateUser(userId, { firstName, lastName, phone, location, profileImageUrl });
       if (!user) {
@@ -244,9 +299,9 @@ export async function registerRoutes(
   });
 
   // Protected routes - Tailor profile management
-  app.get("/api/user/me/tailor", isAuthenticated, async (req: any, res) => {
+  app.get("/api/user/me/tailor", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
       if (!tailor) {
         return res.status(404).json({ error: "Tailor profile not found" });
@@ -257,9 +312,9 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/user/me/tailor", isAuthenticated, async (req: any, res) => {
+  app.post("/api/user/me/tailor", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       
       const existingTailor = await storage.getTailorByUserId(userId);
       if (existingTailor) {
@@ -287,9 +342,9 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/user/me/tailor", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/user/me/tailor", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
       if (!tailor) {
         return res.status(404).json({ error: "Tailor profile not found" });
@@ -304,9 +359,9 @@ export async function registerRoutes(
   });
 
   // Protected routes - Conversations
-  app.get("/api/conversations", isAuthenticated, async (req: any, res) => {
+  app.get("/api/conversations", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       const conversations = await storage.getConversations(userId);
       res.json(conversations);
     } catch (error) {
@@ -314,9 +369,9 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/conversations", isAuthenticated, async (req: any, res) => {
+  app.post("/api/conversations", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       const { participantId } = req.body;
       const conversation = await storage.getOrCreateConversation(userId, participantId);
       res.json(conversation);
@@ -325,7 +380,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/messages/:conversationId", isAuthenticated, async (req: any, res) => {
+  app.get("/api/messages/:conversationId", requireAuth, async (req: any, res) => {
     try {
       const messages = await storage.getMessages(req.params.conversationId);
       res.json(messages);
@@ -334,9 +389,9 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/messages", isAuthenticated, async (req: any, res) => {
+  app.post("/api/messages", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       const message = await storage.createMessage({
         ...req.body,
         senderId: userId,
@@ -348,9 +403,9 @@ export async function registerRoutes(
   });
 
   // Protected routes - Measurements
-  app.get("/api/measurements", isAuthenticated, async (req: any, res) => {
+  app.get("/api/measurements", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       const measurements = await storage.getMeasurements(userId);
       res.json(measurements || null);
     } catch (error) {
@@ -358,9 +413,9 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/measurements", isAuthenticated, async (req: any, res) => {
+  app.post("/api/measurements", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       const measurements = await storage.upsertMeasurements({
         ...req.body,
         userId,
@@ -372,9 +427,9 @@ export async function registerRoutes(
   });
 
   // Protected routes - Projects (for tailors)
-  app.get("/api/projects", isAuthenticated, async (req: any, res) => {
+  app.get("/api/projects", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
       if (!tailor) {
         return res.status(403).json({ error: "Not a tailor" });
@@ -386,7 +441,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/projects/:id", isAuthenticated, async (req: any, res) => {
+  app.get("/api/projects/:id", requireAuth, async (req: any, res) => {
     try {
       const project = await storage.getProject(req.params.id);
       if (!project) {
@@ -398,9 +453,9 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/projects", isAuthenticated, async (req: any, res) => {
+  app.post("/api/projects", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
       if (!tailor) {
         return res.status(403).json({ error: "Not a tailor" });
@@ -415,7 +470,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/projects/:id", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/projects/:id", requireAuth, async (req: any, res) => {
     try {
       const project = await storage.updateProject(req.params.id, req.body);
       if (!project) {
@@ -428,9 +483,9 @@ export async function registerRoutes(
   });
 
   // Protected routes - Appointments (for tailors)
-  app.get("/api/appointments", isAuthenticated, async (req: any, res) => {
+  app.get("/api/appointments", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
       if (!tailor) {
         return res.status(403).json({ error: "Not a tailor" });
@@ -442,9 +497,9 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/appointments", isAuthenticated, async (req: any, res) => {
+  app.post("/api/appointments", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
       if (!tailor) {
         return res.status(403).json({ error: "Not a tailor" });
@@ -459,7 +514,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/appointments/:id", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/appointments/:id", requireAuth, async (req: any, res) => {
     try {
       const appointment = await storage.updateAppointment(req.params.id, req.body);
       if (!appointment) {
@@ -471,7 +526,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/appointments/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/appointments/:id", requireAuth, async (req: any, res) => {
     try {
       await storage.deleteAppointment(req.params.id);
       res.status(204).send();
@@ -481,9 +536,9 @@ export async function registerRoutes(
   });
 
   // Portfolio management for tailors
-  app.post("/api/portfolio", isAuthenticated, async (req: any, res) => {
+  app.post("/api/portfolio", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
       if (!tailor) {
         return res.status(403).json({ error: "Not a tailor" });
@@ -499,9 +554,9 @@ export async function registerRoutes(
   });
 
   // Product management for tailors
-  app.post("/api/products", isAuthenticated, async (req: any, res) => {
+  app.post("/api/products", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
       if (!tailor) {
         return res.status(403).json({ error: "Not a tailor" });
@@ -517,9 +572,9 @@ export async function registerRoutes(
   });
 
   // Reviews
-  app.post("/api/reviews", isAuthenticated, async (req: any, res) => {
+  app.post("/api/reviews", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.authUserId;
       const review = await storage.createReview({
         ...req.body,
         userId,

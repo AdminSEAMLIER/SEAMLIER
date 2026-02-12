@@ -3,7 +3,7 @@ import { eq, and, or, desc } from "drizzle-orm";
 import { 
   users, tailors, portfolioItems, products, reviews, 
   conversations, messages, measurements, projects, appointments,
-  adminArtisans, adminSettings,
+  adminArtisans, adminSettings, userPreferences,
   type User, type InsertUser,
   type Tailor, type InsertTailor,
   type PortfolioItem, type InsertPortfolioItem,
@@ -16,6 +16,7 @@ import {
   type Appointment, type InsertAppointment,
   type AdminArtisan, type InsertAdminArtisan,
   type AdminSetting, type InsertAdminSetting,
+  type UserPreferences, type InsertUserPreferences,
   type TailorWithUser,
   type PortfolioWithTailor,
   type ProductWithTailor,
@@ -75,6 +76,9 @@ export interface IStorage {
   createAdminArtisan(artisan: InsertAdminArtisan): Promise<AdminArtisan>;
   updateAdminArtisan(id: string, updates: Partial<InsertAdminArtisan>): Promise<AdminArtisan | undefined>;
   deleteAdminArtisan(id: string): Promise<void>;
+
+  getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
+  upsertUserPreferences(userId: string, prefs: Partial<InsertUserPreferences>): Promise<UserPreferences>;
 
   getAdminSettings(): Promise<AdminSetting[]>;
   getAdminSetting(key: string): Promise<AdminSetting | undefined>;
@@ -547,6 +551,36 @@ class DatabaseStorage implements IStorage {
     }
     const [created] = await db.insert(adminSettings)
       .values({ key, value })
+      .returning();
+    return created;
+  }
+
+  async getUserPreferences(userId: string): Promise<UserPreferences | undefined> {
+    try {
+      const result = await db.select().from(userPreferences).where(eq(userPreferences.userId, userId));
+      if (!result || !Array.isArray(result) || result.length === 0) return undefined;
+      return result[0];
+    } catch (error) {
+      console.error("getUserPreferences error:", error);
+      return undefined;
+    }
+  }
+
+  async upsertUserPreferences(userId: string, prefs: Partial<InsertUserPreferences>): Promise<UserPreferences> {
+    try {
+      const existing = await this.getUserPreferences(userId);
+      if (existing) {
+        const [updated] = await db.update(userPreferences)
+          .set({ ...prefs, updatedAt: new Date() })
+          .where(eq(userPreferences.userId, userId))
+          .returning();
+        return updated;
+      }
+    } catch (error) {
+      // Fall through to insert
+    }
+    const [created] = await db.insert(userPreferences)
+      .values({ userId, ...prefs })
       .returning();
     return created;
   }

@@ -1,16 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Bell, Mail, MessageSquare, Calendar, ShoppingBag, Save } from "lucide-react";
+import { ArrowLeft, Bell, Mail, MessageSquare, Calendar, ShoppingBag, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function PreferencesNotifications() {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [preferences, setPreferences] = useState({
     emailMessages: true,
     emailAppointments: true,
@@ -22,15 +26,52 @@ export default function PreferencesNotifications() {
     pushOrders: true,
   });
 
+  const { data: savedPrefs, isLoading } = useQuery({
+    queryKey: ['/api/user/preferences'],
+    enabled: !!user,
+  });
+
+  useEffect(() => {
+    if (savedPrefs && typeof savedPrefs === 'object' && Object.keys(savedPrefs).length > 0) {
+      setPreferences({
+        emailMessages: savedPrefs.emailMessages ?? true,
+        emailAppointments: savedPrefs.emailAppointments ?? true,
+        emailPromotions: savedPrefs.emailPromotions ?? false,
+        emailNewsletter: savedPrefs.emailNewsletter ?? true,
+        pushMessages: savedPrefs.pushMessages ?? true,
+        pushAppointments: savedPrefs.pushAppointments ?? true,
+        pushPromotions: savedPrefs.pushPromotions ?? false,
+        pushOrders: savedPrefs.pushOrders ?? true,
+      });
+    }
+  }, [savedPrefs]);
+
   const handleToggle = (key: keyof typeof preferences) => {
     setPreferences({ ...preferences, [key]: !preferences[key] });
   };
 
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('POST', '/api/user/preferences', preferences);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user/preferences'] });
+      toast({
+        title: "Pr\u00e9f\u00e9rences enregistr\u00e9es",
+        description: "Vos pr\u00e9f\u00e9rences de notifications ont \u00e9t\u00e9 mises \u00e0 jour",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder vos pr\u00e9f\u00e9rences",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSave = () => {
-    toast({
-      title: "Préférences enregistrées",
-      description: "Vos préférences de notifications ont été mises à jour",
-    });
+    saveMutation.mutate();
   };
 
   return (
@@ -52,187 +93,200 @@ export default function PreferencesNotifications() {
             </h1>
           </div>
           <p className="text-gray-600 mt-2">
-            Gérez vos préférences de notifications
+            G\u00e9rez vos pr\u00e9f\u00e9rences de notifications
           </p>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 lg:px-6 py-6 space-y-6">
-        <Card className="border border-gray-100 bg-white shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg text-[#722F37] flex items-center gap-2">
-              <Mail className="h-5 w-5" />
-              Notifications par email
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="bg-white space-y-4">
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                  <MessageSquare className="h-5 w-5 text-gray-400" />
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-[#722F37]" />
+          </div>
+        ) : (
+          <>
+            <Card className="border border-gray-100 bg-white shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg text-[#722F37] flex items-center gap-2">
+                  <Mail className="h-5 w-5" />
+                  Notifications par email
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="bg-white space-y-4">
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
+                      <MessageSquare className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <div>
+                      <Label className="text-gray-700 font-medium">Messages</Label>
+                      <p className="text-sm text-gray-500">Recevoir un email pour chaque nouveau message</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={preferences.emailMessages}
+                    onCheckedChange={() => handleToggle('emailMessages')}
+                    data-testid="switch-email-messages"
+                  />
                 </div>
-                <div>
-                  <Label className="text-gray-700 font-medium">Messages</Label>
-                  <p className="text-sm text-gray-500">Recevoir un email pour chaque nouveau message</p>
-                </div>
-              </div>
-              <Switch
-                checked={preferences.emailMessages}
-                onCheckedChange={() => handleToggle('emailMessages')}
-                data-testid="switch-email-messages"
-              />
-            </div>
 
-            <div className="flex items-center justify-between py-2 border-t border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                  <Calendar className="h-5 w-5 text-gray-400" />
+                <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
+                      <Calendar className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <div>
+                      <Label className="text-gray-700 font-medium">Rendez-vous</Label>
+                      <p className="text-sm text-gray-500">Rappels et confirmations de rendez-vous</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={preferences.emailAppointments}
+                    onCheckedChange={() => handleToggle('emailAppointments')}
+                    data-testid="switch-email-appointments"
+                  />
                 </div>
-                <div>
-                  <Label className="text-gray-700 font-medium">Rendez-vous</Label>
-                  <p className="text-sm text-gray-500">Rappels et confirmations de rendez-vous</p>
-                </div>
-              </div>
-              <Switch
-                checked={preferences.emailAppointments}
-                onCheckedChange={() => handleToggle('emailAppointments')}
-                data-testid="switch-email-appointments"
-              />
-            </div>
 
-            <div className="flex items-center justify-between py-2 border-t border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                  <ShoppingBag className="h-5 w-5 text-gray-400" />
+                <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
+                      <ShoppingBag className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <div>
+                      <Label className="text-gray-700 font-medium">Promotions</Label>
+                      <p className="text-sm text-gray-500">Offres sp\u00e9ciales et r\u00e9ductions</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={preferences.emailPromotions}
+                    onCheckedChange={() => handleToggle('emailPromotions')}
+                    data-testid="switch-email-promotions"
+                  />
                 </div>
-                <div>
-                  <Label className="text-gray-700 font-medium">Promotions</Label>
-                  <p className="text-sm text-gray-500">Offres spéciales et réductions</p>
-                </div>
-              </div>
-              <Switch
-                checked={preferences.emailPromotions}
-                onCheckedChange={() => handleToggle('emailPromotions')}
-                data-testid="switch-email-promotions"
-              />
-            </div>
 
-            <div className="flex items-center justify-between py-2 border-t border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
+                      <Mail className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <div>
+                      <Label className="text-gray-700 font-medium">Newsletter</Label>
+                      <p className="text-sm text-gray-500">Actualit\u00e9s et tendances de la couture</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={preferences.emailNewsletter}
+                    onCheckedChange={() => handleToggle('emailNewsletter')}
+                    data-testid="switch-email-newsletter"
+                  />
                 </div>
-                <div>
-                  <Label className="text-gray-700 font-medium">Newsletter</Label>
-                  <p className="text-sm text-gray-500">Actualités et tendances de la couture</p>
-                </div>
-              </div>
-              <Switch
-                checked={preferences.emailNewsletter}
-                onCheckedChange={() => handleToggle('emailNewsletter')}
-                data-testid="switch-email-newsletter"
-              />
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        <Card className="border border-gray-100 bg-white shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg text-[#722F37] flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Notifications push
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="bg-white space-y-4">
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                  <MessageSquare className="h-5 w-5 text-gray-400" />
+            <Card className="border border-gray-100 bg-white shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg text-[#722F37] flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Notifications push
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="bg-white space-y-4">
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
+                      <MessageSquare className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <div>
+                      <Label className="text-gray-700 font-medium">Messages</Label>
+                      <p className="text-sm text-gray-500">Notification instantan\u00e9e des nouveaux messages</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={preferences.pushMessages}
+                    onCheckedChange={() => handleToggle('pushMessages')}
+                    data-testid="switch-push-messages"
+                  />
                 </div>
-                <div>
-                  <Label className="text-gray-700 font-medium">Messages</Label>
-                  <p className="text-sm text-gray-500">Notification instantanée des nouveaux messages</p>
-                </div>
-              </div>
-              <Switch
-                checked={preferences.pushMessages}
-                onCheckedChange={() => handleToggle('pushMessages')}
-                data-testid="switch-push-messages"
-              />
-            </div>
 
-            <div className="flex items-center justify-between py-2 border-t border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                  <Calendar className="h-5 w-5 text-gray-400" />
+                <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
+                      <Calendar className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <div>
+                      <Label className="text-gray-700 font-medium">Rendez-vous</Label>
+                      <p className="text-sm text-gray-500">Rappels avant vos rendez-vous</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={preferences.pushAppointments}
+                    onCheckedChange={() => handleToggle('pushAppointments')}
+                    data-testid="switch-push-appointments"
+                  />
                 </div>
-                <div>
-                  <Label className="text-gray-700 font-medium">Rendez-vous</Label>
-                  <p className="text-sm text-gray-500">Rappels avant vos rendez-vous</p>
-                </div>
-              </div>
-              <Switch
-                checked={preferences.pushAppointments}
-                onCheckedChange={() => handleToggle('pushAppointments')}
-                data-testid="switch-push-appointments"
-              />
-            </div>
 
-            <div className="flex items-center justify-between py-2 border-t border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                  <ShoppingBag className="h-5 w-5 text-gray-400" />
+                <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
+                      <ShoppingBag className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <div>
+                      <Label className="text-gray-700 font-medium">Commandes</Label>
+                      <p className="text-sm text-gray-500">Mises \u00e0 jour sur vos commandes</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={preferences.pushOrders}
+                    onCheckedChange={() => handleToggle('pushOrders')}
+                    data-testid="switch-push-orders"
+                  />
                 </div>
-                <div>
-                  <Label className="text-gray-700 font-medium">Commandes</Label>
-                  <p className="text-sm text-gray-500">Mises à jour sur vos commandes</p>
-                </div>
-              </div>
-              <Switch
-                checked={preferences.pushOrders}
-                onCheckedChange={() => handleToggle('pushOrders')}
-                data-testid="switch-push-orders"
-              />
-            </div>
 
-            <div className="flex items-center justify-between py-2 border-t border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                  <ShoppingBag className="h-5 w-5 text-gray-400" />
+                <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
+                      <ShoppingBag className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <div>
+                      <Label className="text-gray-700 font-medium">Promotions</Label>
+                      <p className="text-sm text-gray-500">Alertes sur les offres sp\u00e9ciales</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={preferences.pushPromotions}
+                    onCheckedChange={() => handleToggle('pushPromotions')}
+                    data-testid="switch-push-promotions"
+                  />
                 </div>
-                <div>
-                  <Label className="text-gray-700 font-medium">Promotions</Label>
-                  <p className="text-sm text-gray-500">Alertes sur les offres spéciales</p>
-                </div>
-              </div>
-              <Switch
-                checked={preferences.pushPromotions}
-                onCheckedChange={() => handleToggle('pushPromotions')}
-                data-testid="switch-push-promotions"
-              />
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        <div className="flex gap-3">
-          <Link href="/particulier/profil" className="flex-1">
-            <Button 
-              variant="outline" 
-              className="w-full bg-white border border-gray-300 text-gray-600"
-              data-testid="button-cancel"
-            >
-              Annuler
-            </Button>
-          </Link>
-          <Button 
-            className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
-            onClick={handleSave}
-            data-testid="button-save-preferences"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            Enregistrer
-          </Button>
-        </div>
+            <div className="flex gap-3">
+              <Link href="/particulier/profil" className="flex-1">
+                <Button 
+                  variant="outline" 
+                  className="w-full bg-white border border-gray-300 text-gray-600"
+                  data-testid="button-cancel"
+                >
+                  Annuler
+                </Button>
+              </Link>
+              <Button 
+                className="flex-1 bg-[#722F37] text-white"
+                onClick={handleSave}
+                disabled={saveMutation.isPending}
+                data-testid="button-save-preferences"
+              >
+                {saveMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                Enregistrer
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

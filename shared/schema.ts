@@ -166,6 +166,20 @@ export const adminArtisans = pgTable("admin_artisans", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const userPreferences = pgTable("user_preferences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique().references(() => users.id),
+  emailMessages: boolean("email_messages").default(true),
+  emailAppointments: boolean("email_appointments").default(true),
+  emailPromotions: boolean("email_promotions").default(false),
+  emailNewsletter: boolean("email_newsletter").default(true),
+  pushMessages: boolean("push_messages").default(true),
+  pushAppointments: boolean("push_appointments").default(true),
+  pushPromotions: boolean("push_promotions").default(false),
+  pushOrders: boolean("push_orders").default(true),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const adminSettings = pgTable("admin_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   key: varchar("key").notNull().unique(),
@@ -185,6 +199,7 @@ export const insertMeasurementsSchema = createInsertSchema(measurements).omit({ 
 export const insertProjectSchema = createInsertSchema(projects).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertAppointmentSchema = createInsertSchema(appointments).omit({ id: true, createdAt: true });
 export const insertAdminArtisanSchema = createInsertSchema(adminArtisans).omit({ id: true, createdAt: true });
+export const insertUserPreferencesSchema = createInsertSchema(userPreferences).omit({ id: true, updatedAt: true });
 export const insertAdminSettingSchema = createInsertSchema(adminSettings).omit({ id: true, updatedAt: true });
 
 // Types
@@ -211,6 +226,8 @@ export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
 export type Appointment = typeof appointments.$inferSelect;
 export type InsertAdminArtisan = z.infer<typeof insertAdminArtisanSchema>;
 export type AdminArtisan = typeof adminArtisans.$inferSelect;
+export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
+export type UserPreferences = typeof userPreferences.$inferSelect;
 export type InsertAdminSetting = z.infer<typeof insertAdminSettingSchema>;
 export type AdminSetting = typeof adminSettings.$inferSelect;
 
