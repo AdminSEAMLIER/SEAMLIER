@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin, Search, ArrowRight, Star, Shield, Scissors } from "lucide-react";
@@ -20,7 +20,13 @@ const cities = [
 
 export default function Home() {
   const { t } = useTranslation();
-  const [location, setLocation] = useState("");
+  const [, navigate] = useLocation();
+  const [searchCity, setSearchCity] = useState("");
+
+  const handleSearch = () => {
+    const params = searchCity.trim() ? `?ville=${encodeURIComponent(searchCity.trim())}` : "";
+    navigate(`/particulier/decouverte${params}`);
+  };
 
   const { data: tailors, isLoading } = useQuery<TailorWithUser[]>({
     queryKey: ["/api/tailors"],
@@ -64,21 +70,25 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto mb-6">
             <div className="relative flex-1">
-              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
               <Input
                 placeholder={t('landing.searchPlaceholder')}
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="pl-12 h-12 text-base border-0 bg-white shadow-lg"
+                value={searchCity}
+                onChange={(e) => setSearchCity(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                className="pl-12 h-12 text-base border-0 bg-white shadow-lg text-gray-900 placeholder:text-gray-500"
                 data-testid="input-location-home"
               />
             </div>
-            <Link href="/particulier/decouverte">
-              <Button size="lg" className="h-12 px-6 bg-[#722F37] hover:bg-[#5a252c] text-white w-full sm:w-auto shadow-lg" data-testid="button-search-home">
-                <Search className="h-5 w-5 mr-2" />
-                {t('landing.searchButton')}
-              </Button>
-            </Link>
+            <Button 
+              size="lg" 
+              className="h-12 px-6 bg-[#722F37] text-white w-full sm:w-auto shadow-lg" 
+              onClick={handleSearch}
+              data-testid="button-search-home"
+            >
+              <Search className="h-5 w-5 mr-2" />
+              {t('landing.searchButton')}
+            </Button>
           </div>
 
         </div>
@@ -163,7 +173,7 @@ export default function Home() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {cities.map((city) => (
-              <Link key={city.name} href="/particulier/decouverte">
+              <Link key={city.name} href={`/particulier/decouverte?ville=${encodeURIComponent(city.name)}`}>
                 <Card className="overflow-hidden cursor-pointer group border-0 shadow-sm hover:shadow-md transition-shadow">
                   <div className="relative h-24">
                     <img

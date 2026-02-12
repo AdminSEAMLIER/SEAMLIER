@@ -1,4 +1,4 @@
-import { Home, Compass, MessageCircle, Ruler, BookOpen, User, Bell, FileText, FolderKanban, Calendar, ArrowLeftRight, Briefcase, Users, LogOut } from "lucide-react";
+import { Home, Compass, MessageCircle, Ruler, BookOpen, User, FileText, FolderKanban, Calendar, ArrowLeftRight, Briefcase, Users, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -83,9 +83,7 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
         <div className="flex items-center gap-2">
           <LanguageToggle />
           <ThemeToggle />
-          <Button variant="ghost" size="icon" className="text-gray-600" data-testid="button-notifications">
-            <Bell className="h-5 w-5" />
-          </Button>
+          {/* Bell notification hidden until feature is active */}
           {isAuthenticated && user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
