@@ -138,14 +138,14 @@ export default function ProDashboard() {
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-2">
                   <Ruler className="h-5 w-5 text-[#722F37]" />
-                  <span className="font-semibold text-gray-900">Outil Mesures</span>
+                  <span className="font-semibold text-gray-900">Plan Couturier</span>
                   <Badge className="bg-blue-50 text-blue-700 border-none text-[10px]">Starter</Badge>
                 </div>
                 <span className={cn(
                   "text-sm font-bold",
                   measureCount >= STARTER_LIMIT ? "text-red-600" : measureCount >= 7 ? "text-amber-600" : "text-green-600"
                 )} data-testid="text-pro-measure-count">
-                  {measureCount} / {STARTER_LIMIT} fiches
+                  {measureCount} / {STARTER_LIMIT} projets
                 </span>
               </div>
 
@@ -180,7 +180,7 @@ export default function ProDashboard() {
                 <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg">
                   <ShieldAlert className="h-5 w-5 text-red-500 flex-shrink-0" />
                   <p className="text-sm text-red-700">
-                    Limite atteinte. Passez au plan Pro pour des mesures illimitées et 0% de commission.
+                    Limite atteinte. Passez au plan Pro pour des projets illimités et 0% de commission.
                   </p>
                 </div>
               )}
@@ -194,7 +194,7 @@ export default function ProDashboard() {
               <CheckCircle className="h-5 w-5 text-purple-600 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-purple-800">Plan Pro actif</p>
-                <p className="text-xs text-purple-600">0% commission - Mesures illimitées</p>
+                <p className="text-xs text-purple-600">0% commission - Projets illimités</p>
               </div>
               <Badge className="bg-purple-100 text-purple-700 border-none">PRO</Badge>
             </CardContent>
@@ -323,8 +323,7 @@ export default function ProDashboard() {
                   <p className="text-sm font-bold text-gray-500 line-through">Votre plan actuel</p>
                   <ul className="mt-2 space-y-1 text-xs text-gray-600">
                     <li className="text-red-500 font-bold">15% commission</li>
-                    <li>{STARTER_LIMIT} fiches max</li>
-                    <li>10% frais client</li>
+                    <li>{STARTER_LIMIT} projets/mois</li>
                   </ul>
                 </div>
                 <div className="border-2 border-purple-300 rounded-lg p-3 bg-purple-50/30 relative">
@@ -335,8 +334,7 @@ export default function ProDashboard() {
                   <p className="text-sm font-bold">{subscriptionPrice}€/mois</p>
                   <ul className="mt-2 space-y-1 text-xs text-gray-700">
                     <li className="font-bold text-green-600">0% commission</li>
-                    <li className="font-bold text-green-600">Mesures illimitées</li>
-                    <li>10% frais client</li>
+                    <li className="font-bold text-green-600">Projets illimités</li>
                   </ul>
                 </div>
               </div>
@@ -374,7 +372,7 @@ export default function ProDashboard() {
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      Fiches mesures illimitées
+                      Projets illimités
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
