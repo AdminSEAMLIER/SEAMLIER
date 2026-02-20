@@ -10,7 +10,7 @@ interface TailorCardProps {
   linkPrefix?: string;
 }
 
-export function TailorCard({ tailor, linkPrefix = "/particulier/tailor" }: TailorCardProps) {
+export function TailorCard({ tailor, linkPrefix = "/tailor" }: TailorCardProps) {
   const fullName = `${tailor.user.firstName || ''} ${tailor.user.lastName || ''}`.trim() || 'Couturier';
   const initials = `${tailor.user.firstName?.[0] || ''}${tailor.user.lastName?.[0] || ''}`.toUpperCase() || 'C';
   

@@ -28,7 +28,7 @@ import { ArrowLeft, Eye, EyeOff, Check, Briefcase, Loader2 } from "lucide-react"
 import { Logo } from "@/components/logo";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { API_ENDPOINTS, phpFetch, safeParse } from "@/lib/api-config";
+import { API_ENDPOINTS, apiFetch } from "@/lib/api-config";
 import { LanguageToggle } from "@/components/language-toggle";
 
 // Point 2: Schéma mis à jour avec SIRET et Entreprise obligatoires pour le sérieux du profil
@@ -92,7 +92,7 @@ export default function InscriptionProfessionnel() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: ProForm) => {
-      const response = await phpFetch(API_ENDPOINTS.auth.register, {
+      const response = await apiFetch(API_ENDPOINTS.auth.register, {
         method: "POST",
         body: JSON.stringify({
           fullName: `${data.firstName} ${data.lastName}`,
@@ -108,7 +108,7 @@ export default function InscriptionProfessionnel() {
           companyName: data.companyName,
         }),
       });
-      const result = await safeParse(response);
+      const result = await response.json();
       if (!response.ok || !result.success) {
         throw new Error(result.message || "Erreur lors de l'inscription");
       }
@@ -121,7 +121,7 @@ export default function InscriptionProfessionnel() {
         description: "Redirection vers le paiement d'adhésion...",
       });
       // Point 2 & 4: Redirection vers le dashboard (ou Stripe si configuré)
-      setLocation("/professionnel/dashboard");
+      setLocation("/dashboard-pro");
     },
     onError: (error: Error) => {
       toast({

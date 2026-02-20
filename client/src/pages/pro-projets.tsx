@@ -305,7 +305,7 @@ export default function ProProjets() {
               )}
 
               <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-100">
-                <Link href="/professionnel/messagerie" className="flex-1">
+                <Link href="/messagerie" className="flex-1">
                   <Button 
                     variant="outline" 
                     className="w-full gap-2 text-gray-500"
@@ -315,7 +315,7 @@ export default function ProProjets() {
                     {t('pro.messageClient')}
                   </Button>
                 </Link>
-                <Link href="/professionnel/planning" className="flex-1">
+                <Link href="/portefeuille" className="flex-1">
                   <Button 
                     className="w-full gap-2 bg-[#722F37] hover:bg-[#5a252c] text-white"
                     data-testid="button-schedule-appointment"

@@ -31,7 +31,7 @@ export default function Home() {
 
   const handleSearch = () => {
     const params = searchCity.trim() ? `?ville=${encodeURIComponent(searchCity.trim())}` : "";
-    navigate(`/particulier/decouverte${params}`);
+    navigate(`/decouverte${params}`);
   };
 
   const { data: tailors, isLoading } = useQuery<TailorWithUser[]>({
@@ -148,7 +148,7 @@ export default function Home() {
               <h2 className="font-serif text-2xl lg:text-3xl text-[#722F37]">
                 {t('landing.featuredTailors')}
               </h2>
-              <Link href="/particulier/decouverte">
+              <Link href="/decouverte">
                 <Button variant="ghost" className="text-[#722F37]" data-testid="button-view-all-tailors">
                   {t('landing.viewAll')}
                   <ArrowRight className="h-4 w-4 ml-1" />
@@ -179,7 +179,7 @@ export default function Home() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {cities.map((city) => (
-              <Link key={city.name} href={`/particulier/decouverte?ville=${encodeURIComponent(city.name)}`}>
+              <Link key={city.name} href={`/decouverte?ville=${encodeURIComponent(city.name)}`}>
                 <Card className="overflow-hidden cursor-pointer group border-0 shadow-sm hover:shadow-md transition-shadow">
                   <div className="relative h-24">
                     <img

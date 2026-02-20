@@ -4,11 +4,11 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { icon: Home, labelKey: "nav.home", path: "/particulier/accueil" },
-  { icon: Compass, labelKey: "nav.search", path: "/particulier/decouverte" },
-  { icon: Ruler, labelKey: "nav.measures", path: "/particulier/mesures" },
-  { icon: BookOpen, labelKey: "nav.magazine", path: "/particulier/magazine" },
-  { icon: User, labelKey: "nav.profile", path: "/particulier/profil" },
+  { icon: Home, labelKey: "nav.home", path: "/dashboard-client" },
+  { icon: Compass, labelKey: "nav.search", path: "/decouverte" },
+  { icon: Ruler, labelKey: "nav.measures", path: "/mesures" },
+  { icon: BookOpen, labelKey: "nav.magazine", path: "/magazine" },
+  { icon: User, labelKey: "nav.profile", path: "/mon-profil" },
 ];
 
 export function BottomNav() {
@@ -23,7 +23,7 @@ export function BottomNav() {
       <div className="flex items-center justify-around h-full max-w-lg mx-auto px-2">
         {navItems.map((item) => {
           const isActive = location === item.path || 
-            (item.path !== "/particulier/accueil" && location.startsWith(item.path));
+            (item.path !== "/dashboard-client" && location.startsWith(item.path));
           const Icon = item.icon;
           
           return (

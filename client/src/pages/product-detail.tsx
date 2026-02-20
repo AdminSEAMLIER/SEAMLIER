@@ -17,7 +17,7 @@ import {
 import type { ProductWithTailor } from "@shared/schema";
 
 export default function ProductDetail() {
-  const [, params] = useRoute("/particulier/product/:id");
+  const [, params] = useRoute("/product/:id");
   const productId = params?.id;
 
   const { data: product, isLoading } = useQuery<ProductWithTailor>({
@@ -43,7 +43,7 @@ export default function ProductDetail() {
       <div className="min-h-screen flex items-center justify-center pb-20 lg:pb-8 bg-background">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">Produit non trouvé</p>
-          <Link href="/particulier/marketplace">
+          <Link href="/marketplace">
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour à la boutique
@@ -64,7 +64,7 @@ export default function ProductDetail() {
         />
         
         <div className="absolute top-4 left-4 right-4 flex justify-between">
-          <Link href="/particulier/marketplace">
+          <Link href="/marketplace">
             <Button 
               variant="ghost" 
               size="icon" 
@@ -119,7 +119,7 @@ export default function ProductDetail() {
         )}
 
         <Card className="p-4 mb-6 border-border shadow-sm">
-          <Link href={`/particulier/tailor/${product.tailor.id}`}>
+          <Link href={`/tailor/${product.tailor.id}`}>
             <div className="flex items-center gap-3 cursor-pointer">
               <Avatar className="h-12 w-12">
                 <AvatarImage src={product.tailor.user.profileImageUrl || undefined} />

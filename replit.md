@@ -111,20 +111,23 @@ shared/              # Shared code (schema, types)
 - **Build**: Vite frontend (670KB / 183KB gzip) + esbuild server bundle
 - **Business Constants**: Starter=15% artisan com + 10 mesures, Pro=0% com + unlimited, Client=10% fees, Min order=30€
 
-### o2switch Deployment Architecture (February 2026)
-- **Dual Backend**: Development uses Node.js/Express (/api/* routes); Production uses PHP files on o2switch
-- **API Config**: `client/src/lib/api-config.ts` centralizes all API URL routing with `resolveApiUrl()`
-  - In dev (`import.meta.env.PROD === false`): routes go to `/api/*` (Node.js)
-  - In prod: routes go to `auth.php`, `admin.php`, `data.php` with query params
-- **PHP Files**: Located in `php/` directory, ready to upload to o2switch
-  - `auth.php`: Registration, login, user session, logout (action= query param)
-  - `admin.php`: Artisan CRUD, settings management
-  - `data.php`: General data queries (tailors, products, portfolio, messages, etc.)
-  - `schema.sql`: MySQL schema for o2switch database
-  - `.htaccess`: Apache URL rewriting for SPA + PHP coexistence
-- **Safe Response Parsing**: `safeParse()` function handles HTML error responses from PHP gracefully
-- **Custom Auth**: Email/password with bcrypt, no Replit Auth in production
-- **Public Routes**: `/particulier` and `/professionnel` are 100% public (no auth redirect)
+### Auth Architecture (February 2026)
+- **Single Auth System**: Passport.js local strategy (email/password with bcrypt)
+- **Auth Endpoints**: Defined in `server/replit_integrations/auth/localAuth.ts`
+  - `POST /api/login`: Email/password login, returns user with role
+  - `POST /api/register`: Registration with optional tailor profile creation (supports fullName or firstName/lastName)
+  - `GET /api/auth/user`: Get current authenticated user
+  - `GET /api/logout`: Logout and destroy session
+- **Session Store**: PostgreSQL via connect-pg-simple (1-week TTL, httpOnly cookies)
+- **Middleware**: `requireAuth` (passport isAuthenticated), `requireAdmin` (role check)
+- **Frontend Auth**: `useAuth()` hook in `client/src/hooks/use-auth.ts`
+
+### Route Structure (February 2026)
+- **Public**: `/` (landing), `/connexion`, `/inscription`, `/inscription/particulier`, `/inscription/professionnel`, `/recherche`, `/profil-pro/:id`
+- **Client (protected)**: `/dashboard-client`, `/decouverte`, `/mesures`, `/magazine`, `/marketplace`, `/messages`, `/mon-profil`, `/mes-projets`, `/suivi-projet/:id`, `/product/:id`, `/tailor/:id`
+- **Pro (protected)**: `/dashboard-pro`, `/gestion-demandes`, `/atelier`, `/atelier/:id`, `/messagerie`, `/vitrine-pro`, `/portefeuille`, `/pro-profil`
+- **Admin (protected + role=admin)**: `/admin/dashboard`
+- **API Config**: `client/src/lib/api-config.ts` with `apiFetch()` helper and `API_ENDPOINTS` constants
 
 ### Complete Feature Set
 - Discovery page with hero section and featured tailors

@@ -12,20 +12,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const particulierNavItems = [
-  { icon: Home, labelKey: "nav.home", path: "/particulier/accueil" },
-  { icon: Compass, labelKey: "nav.search", path: "/particulier/decouverte" },
-  { icon: Ruler, labelKey: "nav.measures", path: "/particulier/mesures" },
-  { icon: BookOpen, labelKey: "nav.magazine", path: "/particulier/magazine" },
-  { icon: User, labelKey: "nav.profile", path: "/particulier/profil" },
+  { icon: Home, labelKey: "nav.home", path: "/dashboard-client" },
+  { icon: Compass, labelKey: "nav.search", path: "/decouverte" },
+  { icon: Ruler, labelKey: "nav.measures", path: "/mesures" },
+  { icon: BookOpen, labelKey: "nav.magazine", path: "/magazine" },
+  { icon: User, labelKey: "nav.profile", path: "/mon-profil" },
 ];
 
 const proNavItems = [
-  { icon: Home, labelKey: "nav.proHome", path: "/professionnel/dashboard" },
-  { icon: FileText, labelKey: "nav.requests", path: "/professionnel/demandes" },
-  { icon: FolderKanban, labelKey: "nav.projects", path: "/professionnel/projets" },
-  { icon: MessageCircle, labelKey: "nav.messaging", path: "/professionnel/messagerie" },
-  { icon: Calendar, labelKey: "nav.planning", path: "/professionnel/planning" },
-  { icon: User, labelKey: "nav.profile", path: "/professionnel/profil" },
+  { icon: Home, labelKey: "nav.proHome", path: "/dashboard-pro" },
+  { icon: FileText, labelKey: "nav.requests", path: "/gestion-demandes" },
+  { icon: FolderKanban, labelKey: "nav.projects", path: "/atelier" },
+  { icon: MessageCircle, labelKey: "nav.messaging", path: "/messagerie" },
+  { icon: Calendar, labelKey: "nav.planning", path: "/portefeuille" },
+  { icon: User, labelKey: "nav.profile", path: "/pro-profil" },
 ];
 
 interface DesktopHeaderProps {
@@ -37,7 +37,7 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
   const [location] = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
   const navItems = mode === "professionnel" ? proNavItems : particulierNavItems;
-  const basePath = mode === "professionnel" ? "/professionnel/dashboard" : "/particulier/accueil";
+  const basePath = mode === "professionnel" ? "/dashboard-pro" : "/dashboard-client";
   
   const userInitials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() || 'U' : 'U';
 

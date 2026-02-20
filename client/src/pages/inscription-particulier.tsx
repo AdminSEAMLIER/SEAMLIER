@@ -20,7 +20,7 @@ import { ArrowLeft, Eye, EyeOff, Check } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { API_ENDPOINTS, phpFetch, safeParse } from "@/lib/api-config";
+import { API_ENDPOINTS, apiFetch } from "@/lib/api-config";
 import { LanguageToggle } from "@/components/language-toggle";
 
 const inscriptionSchema = z.object({
@@ -56,7 +56,7 @@ export default function InscriptionParticulier() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: InscriptionForm) => {
-      const response = await phpFetch(API_ENDPOINTS.auth.register, {
+      const response = await apiFetch(API_ENDPOINTS.auth.register, {
         method: "POST",
         body: JSON.stringify({
           fullName: data.fullName,
@@ -66,7 +66,7 @@ export default function InscriptionParticulier() {
           role: "client",
         }),
       });
-      const result = await safeParse(response);
+      const result = await response.json();
       if (!response.ok || !result.success) {
         throw new Error(result.message || "Erreur lors de l'inscription");
       }
@@ -78,7 +78,7 @@ export default function InscriptionParticulier() {
         title: t('auth.accountCreated'),
         description: t('auth.welcomeDesc'),
       });
-      setLocation("/particulier/accueil");
+      setLocation("/dashboard-client");
     },
     onError: (error: Error) => {
       toast({

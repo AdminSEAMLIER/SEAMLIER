@@ -10,7 +10,7 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { API_ENDPOINTS, phpFetch, safeParse } from "@/lib/api-config";
+import { API_ENDPOINTS, apiFetch } from "@/lib/api-config";
 
 export default function Connexion() {
   const { t } = useTranslation();
@@ -34,12 +34,12 @@ export default function Connexion() {
 
     setIsLoading(true);
     try {
-      const response = await phpFetch(API_ENDPOINTS.auth.login, {
+      const response = await apiFetch(API_ENDPOINTS.auth.login, {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await safeParse(response);
+      const data = await response.json();
 
       if (response.ok && data) {
         await queryClient.invalidateQueries({ queryKey: ["auth-user"] });
@@ -49,12 +49,14 @@ export default function Connexion() {
           description: t('auth.welcomeBack'),
         });
 
-        const userRole = data.role || (data.user && data.user.role);
+        const userRole = data.role;
 
-        if (userRole === 'tailor') {
-          setLocation('/professionnel/dashboard');
+        if (userRole === 'admin') {
+          setLocation('/admin/dashboard');
+        } else if (userRole === 'tailor') {
+          setLocation('/dashboard-pro');
         } else {
-          setLocation('/particulier/accueil');
+          setLocation('/dashboard-client');
         }
       } else {
         toast({
@@ -79,7 +81,7 @@ export default function Connexion() {
       <header className="bg-white border-b border-zinc-100 px-4 py-4">
         <div className="max-w-md mx-auto flex items-center justify-between">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="hover:text-[#722F37]">
+            <Button variant="ghost" size="icon" className="hover:text-[#722F37]" data-testid="button-back">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
@@ -115,6 +117,7 @@ export default function Connexion() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-10 h-11 border-zinc-200 focus:border-[#722F37] focus:ring-[#722F37]"
+                      data-testid="input-email"
                     />
                   </div>
                 </div>
@@ -132,6 +135,7 @@ export default function Connexion() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="pl-10 pr-10 h-11 border-zinc-200 focus:border-[#722F37] focus:ring-[#722F37]"
+                      data-testid="input-password"
                     />
                     <button
                       type="button"
@@ -147,6 +151,7 @@ export default function Connexion() {
                   type="submit"
                   className="w-full bg-[#722F37] hover:bg-[#5a1f25] text-white h-12 text-base font-medium transition-all shadow-md"
                   disabled={isLoading}
+                  data-testid="button-submit"
                 >
                   {isLoading ? (
                     <div className="flex items-center gap-2">

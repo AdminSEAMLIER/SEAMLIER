@@ -279,7 +279,7 @@ export default function ProProfil() {
           </CardHeader>
           <CardContent className="bg-white">
             <div className="grid grid-cols-3 gap-3">
-              <Link href="/professionnel/demandes">
+              <Link href="/gestion-demandes">
                 <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-testid="link-demandes">
                   <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
                     <FileText className="h-5 w-5 text-[#722F37]" />
@@ -287,7 +287,7 @@ export default function ProProfil() {
                   <span className="text-sm text-gray-600 text-center">{t('nav.requests')}</span>
                 </div>
               </Link>
-              <Link href="/professionnel/projets">
+              <Link href="/atelier">
                 <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-testid="link-projets">
                   <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
                     <FolderKanban className="h-5 w-5 text-[#722F37]" />
@@ -295,7 +295,7 @@ export default function ProProfil() {
                   <span className="text-sm text-gray-600 text-center">{t('nav.projects')}</span>
                 </div>
               </Link>
-              <Link href="/professionnel/planning">
+              <Link href="/portefeuille">
                 <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-testid="link-planning">
                   <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
                     <TrendingUp className="h-5 w-5 text-[#722F37]" />
@@ -313,7 +313,7 @@ export default function ProProfil() {
           </CardHeader>
           <CardContent className="bg-white">
             <div className="space-y-3">
-              <Link href="/professionnel/parametres">
+              <Link href="/pro-profil/parametres">
                 <Button 
                   variant="outline" 
                   className="w-full justify-start bg-white border border-gray-200 text-gray-600"
@@ -323,7 +323,7 @@ export default function ProProfil() {
                   {t('pro.settings')}
                 </Button>
               </Link>
-              <Link href="/professionnel/profil/mot-de-passe">
+              <Link href="/pro-profil/mot-de-passe">
                 <Button 
                   variant="outline" 
                   className="w-full justify-start bg-white border border-gray-200 text-gray-600"
@@ -332,7 +332,7 @@ export default function ProProfil() {
                   {t('profile.changePassword')}
                 </Button>
               </Link>
-              <Link href="/professionnel/profil/notifications">
+              <Link href="/pro-profil/notifications">
                 <Button 
                   variant="outline" 
                   className="w-full justify-start bg-white border border-gray-200 text-gray-600"

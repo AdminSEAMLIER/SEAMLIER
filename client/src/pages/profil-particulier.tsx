@@ -282,7 +282,7 @@ export default function ProfilParticulier() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-4 gap-3">
-              <Link href="/particulier/decouverte">
+              <Link href="/decouverte">
                 <div className="flex flex-col items-center p-4 bg-muted/50 rounded-md transition-colors cursor-pointer" data-testid="link-recherche">
                   <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center mb-2">
                     <Search className="h-5 w-5 text-[#722F37]" />
@@ -290,7 +290,7 @@ export default function ProfilParticulier() {
                   <span className="text-sm text-muted-foreground text-center">{t('nav.search')}</span>
                 </div>
               </Link>
-              <Link href="/particulier/mes-projets">
+              <Link href="/mes-projets">
                 <div className="flex flex-col items-center p-4 bg-muted/50 rounded-md transition-colors cursor-pointer" data-testid="link-mes-projets">
                   <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center mb-2">
                     <FolderKanban className="h-5 w-5 text-[#722F37]" />
@@ -298,7 +298,7 @@ export default function ProfilParticulier() {
                   <span className="text-sm text-muted-foreground text-center">{t('nav.projects')}</span>
                 </div>
               </Link>
-              <Link href="/particulier/mesures">
+              <Link href="/mesures">
                 <div className="flex flex-col items-center p-4 bg-muted/50 rounded-md transition-colors cursor-pointer" data-testid="link-mesures">
                   <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center mb-2">
                     <Ruler className="h-5 w-5 text-[#722F37]" />
@@ -306,7 +306,7 @@ export default function ProfilParticulier() {
                   <span className="text-sm text-muted-foreground text-center">{t('nav.measures')}</span>
                 </div>
               </Link>
-              <Link href="/particulier/magazine">
+              <Link href="/magazine">
                 <div className="flex flex-col items-center p-4 bg-muted/50 rounded-md transition-colors cursor-pointer" data-testid="link-magazine">
                   <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center mb-2">
                     <BookOpen className="h-5 w-5 text-[#722F37]" />
@@ -324,7 +324,7 @@ export default function ProfilParticulier() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <Link href="/particulier/profil/mot-de-passe">
+              <Link href="/mon-profil/mot-de-passe">
                 <Button 
                   variant="outline" 
                   className="w-full justify-start"
@@ -333,7 +333,7 @@ export default function ProfilParticulier() {
                   {t('profile.changePassword')}
                 </Button>
               </Link>
-              <Link href="/particulier/profil/notifications">
+              <Link href="/mon-profil/notifications">
                 <Button 
                   variant="outline" 
                   className="w-full justify-start"

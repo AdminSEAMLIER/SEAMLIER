@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, Calendar } from "lucide-react";
 
 export default function MagazineDetail() {
-  const [, params] = useRoute("/particulier/magazine/:id");
+  const [, params] = useRoute("/magazine/:id");
   const article = articles.find(a => a.id === Number(params?.id));
 
   if (!article) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <p className="mb-4 text-gray-500">Article introuvable</p>
-        <Link href="/particulier/magazine">
+        <Link href="/magazine">
           <Button className="bg-[#722F37]">Retour au magazine</Button>
         </Link>
       </div>
@@ -21,7 +21,7 @@ export default function MagazineDetail() {
   return (
     <div className="min-h-screen bg-white pb-24">
       <article className="max-w-3xl mx-auto px-4 pt-8">
-        <Link href="/particulier/magazine">
+        <Link href="/magazine">
           <Button variant="ghost" className="mb-8 text-gray-500 hover:text-[#722F37] pl-0">
             <ArrowLeft className="mr-2 h-4 w-4" /> Retour au magazine
           </Button>

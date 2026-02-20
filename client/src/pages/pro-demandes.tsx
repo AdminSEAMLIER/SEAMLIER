@@ -48,7 +48,7 @@ export default function ProDemandes() {
     }));
 
     setTimeout(() => {
-      setLocation('/professionnel/messagerie?newConversation=true');
+      setLocation('/messagerie?newConversation=true');
     }, 500);
   };
 

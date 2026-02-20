@@ -41,7 +41,7 @@ const getInitials = (user: { firstName?: string | null; lastName?: string | null
 export default function TailorProfile() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [, params] = useRoute("/particulier/tailor/:id");
+  const [, params] = useRoute("/tailor/:id");
   const tailorId = params?.id;
   
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -110,7 +110,7 @@ export default function TailorProfile() {
       <div className="min-h-screen flex items-center justify-center pb-20 lg:pb-8 bg-white">
         <div className="text-center">
           <p className="text-gray-500 mb-4">{t('tailorProfile.notFound')}</p>
-          <Link href="/particulier/accueil">
+          <Link href="/dashboard-client">
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               {t('common.backToHome')}
@@ -132,7 +132,7 @@ export default function TailorProfile() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         
         <div className="absolute top-4 left-4 right-4 flex justify-between">
-          <Link href="/particulier/accueil">
+          <Link href="/dashboard-client">
             <Button 
               variant="ghost" 
               size="icon" 
@@ -222,7 +222,7 @@ export default function TailorProfile() {
           )}
 
           <div className="flex gap-3 mt-6">
-            <Link href={`/particulier/messages?tailor=${tailorId}`} className="flex-1">
+            <Link href={`/messages?tailor=${tailorId}`} className="flex-1">
               <Button className="w-full h-12 bg-[#722F37] hover:bg-[#5a252c] text-white" data-testid="button-contact">
                 <MessageCircle className="h-5 w-5 mr-2" />
                 Envoyer un message

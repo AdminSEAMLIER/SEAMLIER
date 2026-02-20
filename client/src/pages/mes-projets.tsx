@@ -59,7 +59,7 @@ export default function MesProjets() {
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
       <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
-          <Link href="/particulier/accueil">
+          <Link href="/dashboard-client">
             <Button variant="ghost" size="sm" className="mb-4 text-gray-500 -ml-2">
               <ArrowLeft className="h-4 w-4 mr-1" />
               {isFr ? "Retour" : "Back"}

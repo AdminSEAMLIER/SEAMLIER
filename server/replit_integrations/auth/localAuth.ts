@@ -88,6 +88,7 @@ export async function setupAuth(app: Express) {
       req.logIn(user, (loginErr) => {
         if (loginErr) return next(loginErr);
         return res.json({
+          success: true,
           id: user.id,
           email: user.email,
           firstName: user.firstName,
@@ -102,7 +103,8 @@ export async function setupAuth(app: Express) {
   // POST /api/register — inscription
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { email, password, firstName, lastName, role } = req.body;
+      const { email, password, firstName, lastName, fullName, role, phone,
+              specialty, city, yearsExperience, bio, siret, companyName } = req.body;
 
       if (!email || !password) {
         return res.status(400).json({ message: "Email et mot de passe requis." });
@@ -119,20 +121,51 @@ export async function setupAuth(app: Express) {
       const hashedPassword = await bcrypt.hash(password, 12);
       const userRole = role === "tailor" ? "tailor" : "client";
 
+      let resolvedFirstName = firstName || null;
+      let resolvedLastName = lastName || null;
+      if (!resolvedFirstName && fullName) {
+        const parts = fullName.trim().split(/\s+/);
+        resolvedFirstName = parts[0];
+        resolvedLastName = parts.slice(1).join(" ") || "";
+      }
+
       const newUser = await authStorage.createUser({
         email,
         password: hashedPassword,
-        firstName: firstName || null,
-        lastName: lastName || null,
+        firstName: resolvedFirstName,
+        lastName: resolvedLastName,
         role: userRole,
         profileImageUrl: null,
-        phone: null,
-        location: null,
+        phone: phone || null,
+        location: city || null,
       });
+
+      if (userRole === "tailor") {
+        try {
+          await storage.createAdminArtisan({
+            firstName: resolvedFirstName || "",
+            lastName: resolvedLastName || "",
+            email,
+            phone: phone || "",
+            specialty: specialty || "",
+            city: city || "",
+            status: "En attente",
+            siret: siret || "",
+            companyName: companyName || "",
+            yearsExperience: parseInt(yearsExperience) || 0,
+            bio: bio || "",
+            subscriptionPlan: "Starter",
+            paymentStatus: "En attente",
+          });
+        } catch (artisanError) {
+          console.error("Error creating artisan profile:", artisanError);
+        }
+      }
 
       req.logIn(newUser, (loginErr) => {
         if (loginErr) return next(loginErr);
         return res.status(201).json({
+          success: true,
           id: newUser.id,
           email: newUser.email,
           firstName: newUser.firstName,

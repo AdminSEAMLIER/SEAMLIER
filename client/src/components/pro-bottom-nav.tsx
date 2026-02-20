@@ -8,11 +8,11 @@ export function ProBottomNav() {
   const [location] = useLocation();
 
   const navItems = [
-    { icon: Home, labelKey: "nav.proHome", href: "/professionnel/dashboard" },
-    { icon: FileText, labelKey: "nav.requests", href: "/professionnel/demandes" },
-    { icon: FolderKanban, labelKey: "nav.projects", href: "/professionnel/projets" },
-    { icon: MessageSquare, labelKey: "nav.messaging", href: "/professionnel/messagerie" },
-    { icon: User, labelKey: "nav.profile", href: "/professionnel/profil" },
+    { icon: Home, labelKey: "nav.proHome", href: "/dashboard-pro" },
+    { icon: FileText, labelKey: "nav.requests", href: "/gestion-demandes" },
+    { icon: FolderKanban, labelKey: "nav.projects", href: "/atelier" },
+    { icon: MessageSquare, labelKey: "nav.messaging", href: "/messagerie" },
+    { icon: User, labelKey: "nav.profile", href: "/pro-profil" },
   ];
 
   return (
@@ -23,7 +23,7 @@ export function ProBottomNav() {
       <div className="flex items-center justify-around h-full max-w-lg mx-auto px-2">
         {navItems.map((item) => {
           const isActive = location === item.href || 
-            (item.href !== "/professionnel/dashboard" && location.startsWith(item.href));
+            (item.href !== "/dashboard-pro" && location.startsWith(item.href));
           
           return (
             <Link key={item.href} href={item.href}>

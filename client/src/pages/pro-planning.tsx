@@ -495,7 +495,7 @@ export default function ProPlanning() {
           )}
 
           <div className="flex flex-col sm:flex-row gap-2 mt-4">
-            <Link href="/professionnel/messagerie" className="flex-1">
+            <Link href="/messagerie" className="flex-1">
               <Button 
                 variant="outline" 
                 className="w-full gap-2 text-gray-500"

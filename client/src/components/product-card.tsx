@@ -8,7 +8,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   return (
-    <Link href={`/particulier/product/${product.id}`}>
+    <Link href={`/product/${product.id}`}>
       <Card 
         className="overflow-hidden cursor-pointer border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow"
         data-testid={`card-product-${product.id}`}

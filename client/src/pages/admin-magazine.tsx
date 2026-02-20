@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { API_ENDPOINTS, phpFetch, safeParse } from "@/lib/api-config";
+import { API_ENDPOINTS, apiFetch } from "@/lib/api-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -230,9 +230,9 @@ export default function AdminDashboard() {
   const { data: dbUsers = [], isLoading: usersLoading } = useQuery<any[]>({
     queryKey: ["admin-users"],
     queryFn: async () => {
-      const res = await phpFetch(API_ENDPOINTS.admin.users);
+      const res = await apiFetch(API_ENDPOINTS.admin.users);
       if (!res.ok) return [];
-      return safeParse(res);
+      return res.json();
     },
     enabled: isAuthenticated,
   });
@@ -240,9 +240,9 @@ export default function AdminDashboard() {
   const { data: dbArtisans = [], isLoading: artisansLoading } = useQuery<any[]>({
     queryKey: ["admin-artisans"],
     queryFn: async () => {
-      const res = await phpFetch(API_ENDPOINTS.admin.artisans);
+      const res = await apiFetch(API_ENDPOINTS.admin.artisans);
       if (!res.ok) return [];
-      return safeParse(res);
+      return res.json();
     },
     enabled: isAuthenticated,
   });
@@ -278,11 +278,11 @@ export default function AdminDashboard() {
 
   const createArtisanMutation = useMutation({
     mutationFn: async (data: any) => {
-      const res = await phpFetch(API_ENDPOINTS.admin.artisans, {
+      const res = await apiFetch(API_ENDPOINTS.admin.artisans, {
         method: "POST",
         body: JSON.stringify(data),
       });
-      return safeParse(res);
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-artisans"] });
@@ -303,11 +303,11 @@ export default function AdminDashboard() {
 
   const updateArtisanMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const res = await phpFetch(API_ENDPOINTS.admin.artisan(id), {
+      const res = await apiFetch(API_ENDPOINTS.admin.artisan(id), {
         method: "PUT",
         body: JSON.stringify(data),
       });
-      return safeParse(res);
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-artisans"] });
@@ -316,7 +316,7 @@ export default function AdminDashboard() {
 
   const deleteArtisanMutation = useMutation({
     mutationFn: async (id: string) => {
-      await phpFetch(API_ENDPOINTS.admin.artisan(id), { method: "DELETE" });
+      await apiFetch(API_ENDPOINTS.admin.artisan(id), { method: "DELETE" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-artisans"] });
@@ -326,9 +326,9 @@ export default function AdminDashboard() {
   const { data: dbSettings } = useQuery<Record<string, string>>({
     queryKey: ["admin-settings"],
     queryFn: async () => {
-      const res = await phpFetch(API_ENDPOINTS.admin.settings);
+      const res = await apiFetch(API_ENDPOINTS.admin.settings);
       if (!res.ok) return {};
-      return safeParse(res);
+      return res.json();
     },
     enabled: isAuthenticated,
   });
@@ -361,11 +361,11 @@ export default function AdminDashboard() {
 
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: Record<string, string>) => {
-      const res = await phpFetch(API_ENDPOINTS.admin.settings, {
+      const res = await apiFetch(API_ENDPOINTS.admin.settings, {
         method: "POST",
         body: JSON.stringify(data),
       });
-      return safeParse(res);
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-settings"] });

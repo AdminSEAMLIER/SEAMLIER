@@ -42,7 +42,7 @@ export default function ProParametres() {
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
       <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
-          <Link href="/professionnel/profil">
+          <Link href="/pro-profil">
             <Button variant="ghost" size="sm" className="mb-4 -ml-2 text-gray-600" data-testid="button-back">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour au profil
@@ -144,7 +144,7 @@ export default function ProParametres() {
             </CardTitle>
           </CardHeader>
           <CardContent className="bg-white space-y-3">
-            <Link href="/professionnel/profil/mot-de-passe">
+            <Link href="/pro-profil/mot-de-passe">
               <Button 
                 variant="outline" 
                 className="w-full justify-start bg-white border border-gray-200 text-gray-600"

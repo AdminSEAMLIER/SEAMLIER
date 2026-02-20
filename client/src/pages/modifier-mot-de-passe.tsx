@@ -57,7 +57,7 @@ export default function ModifierMotDePasse() {
     <div className="min-h-screen pb-20 lg:pb-8 bg-background">
       <div className="bg-muted/50 border-b border-border">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
-          <Link href="/particulier/profil">
+          <Link href="/mon-profil">
             <Button variant="ghost" size="sm" className="mb-4 -ml-2 text-muted-foreground" data-testid="button-back">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour au profil
@@ -158,7 +158,7 @@ export default function ModifierMotDePasse() {
               </div>
 
               <div className="flex gap-3 pt-4">
-                <Link href="/particulier/profil" className="flex-1">
+                <Link href="/mon-profil" className="flex-1">
                   <Button 
                     type="button"
                     variant="outline" 

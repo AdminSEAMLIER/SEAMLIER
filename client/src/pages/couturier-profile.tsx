@@ -26,7 +26,7 @@ import type { TailorWithUser, PortfolioWithTailor, ProductWithTailor, ReviewWith
 
 export default function CouturierProfile() {
   const { t } = useTranslation();
-  const [, params] = useRoute("/couturier/:id");
+  const [, params] = useRoute("/profil-pro/:id");
   const tailorId = params?.id;
 
   const { data: tailor, isLoading: tailorLoading } = useQuery<TailorWithUser>({
@@ -184,7 +184,7 @@ export default function CouturierProfile() {
 
           <div className="bg-muted border border-border rounded-lg p-4">
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              <Link href={`/particulier/messages?tailor=${tailorId}`}>
+              <Link href={`/messages?tailor=${tailorId}`}>
                 <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white w-full sm:w-auto" data-testid="button-contact-tailor">
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Envoyer un message

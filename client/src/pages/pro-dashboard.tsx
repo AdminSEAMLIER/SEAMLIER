@@ -97,10 +97,10 @@ export default function ProDashboard() {
   ];
 
   const quickLinks = [
-    { label: t('nav.requests'), icon: FileText, href: "/professionnel/demandes", count: 0 },
-    { label: t('nav.projects'), icon: FolderKanban, href: "/professionnel/projets", count: productCount },
-    { label: t('nav.messaging'), icon: MessageSquare, href: "/professionnel/messagerie", count: conversationCount },
-    { label: t('nav.planning'), icon: Calendar, href: "/professionnel/planning", count: 0 },
+    { label: t('nav.requests'), icon: FileText, href: "/gestion-demandes", count: 0 },
+    { label: t('nav.projects'), icon: FolderKanban, href: "/atelier", count: productCount },
+    { label: t('nav.messaging'), icon: MessageSquare, href: "/messagerie", count: conversationCount },
+    { label: t('nav.planning'), icon: Calendar, href: "/portefeuille", count: 0 },
   ];
 
   const handleOpenUpgradeModal = () => {
@@ -247,7 +247,7 @@ export default function ProDashboard() {
         <Card className="border border-gray-100 bg-white shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between gap-2">
             <CardTitle className="text-lg text-[#722F37]">{t('pro.recentMessages')}</CardTitle>
-            <Link href="/professionnel/messagerie">
+            <Link href="/messagerie">
               <Button variant="ghost" size="sm" className="text-[#722F37]" data-testid="button-pro-view-messages">
                 {t('landing.viewAll')}
                 <ArrowRight className="h-4 w-4 ml-1" />

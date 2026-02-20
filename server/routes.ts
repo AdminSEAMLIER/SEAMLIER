@@ -1,20 +1,24 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import bcrypt from "bcryptjs";
-
-function getSessionUserId(req: Request): string | null {
-  const sessionId = (req.session as any)?.userId;
-  const replitId = (req as any)?.user?.claims?.sub;
-  return sessionId || replitId || null;
-}
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
-  const userId = getSessionUserId(req);
-  if (!userId) {
+  if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
     return res.status(401).json({ message: "Non authentifié" });
   }
-  (req as any).authUserId = userId;
+  (req as any).authUserId = (req.user as any).id;
+  next();
+}
+
+function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
+    return res.status(401).json({ message: "Non authentifié" });
+  }
+  const user = req.user as any;
+  if (user.role !== "admin") {
+    return res.status(403).json({ message: "Accès réservé aux administrateurs" });
+  }
+  (req as any).authUserId = user.id;
   next();
 }
 
@@ -22,130 +26,6 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-
-  // ===== Custom Auth Endpoints =====
-
-  app.post("/api/auth/register", async (req, res) => {
-    try {
-      const { fullName, email, phone, password, role } = req.body;
-
-      if (!email || !password || !fullName) {
-        return res.status(400).json({ success: false, message: "Tous les champs obligatoires doivent être remplis." });
-      }
-
-      const existing = await storage.getUserByEmail(email);
-      if (existing) {
-        return res.status(409).json({ success: false, message: "Un compte avec cet email existe déjà." });
-      }
-
-      const nameParts = fullName.trim().split(/\s+/);
-      const firstName = nameParts[0];
-      const lastName = nameParts.slice(1).join(" ") || "";
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      const user = await storage.createUser({
-        email,
-        password: hashedPassword,
-        firstName,
-        lastName,
-        phone: phone || null,
-        role: role || "client",
-      });
-
-      if ((role || "client") === "tailor") {
-        try {
-          const { specialty, city, yearsExperience, bio, siret, companyName } = req.body;
-          await storage.createAdminArtisan({
-            firstName,
-            lastName,
-            email,
-            phone: phone || "",
-            specialty: specialty || "",
-            city: city || "",
-            status: "En attente",
-            siret: siret || "",
-            companyName: companyName || "",
-            yearsExperience: parseInt(yearsExperience) || 0,
-            bio: bio || "",
-            subscriptionPlan: "Starter",
-            paymentStatus: "En attente",
-          });
-        } catch (artisanError) {
-          console.error("Error creating artisan profile:", artisanError);
-        }
-      }
-
-      (req.session as any).userId = user.id;
-
-      const { password: _, ...safeUser } = user;
-      res.status(201).json({ success: true, user: safeUser });
-    } catch (error) {
-      console.error("Registration error:", error);
-      res.status(500).json({ success: false, message: "Erreur lors de l'inscription." });
-    }
-  });
-
-  app.post("/api/login", async (req, res) => {
-    try {
-      const { email, password } = req.body;
-
-      if (!email || !password) {
-        return res.status(400).json({ success: false, message: "Email et mot de passe requis." });
-      }
-
-      const user = await storage.getUserByEmail(email);
-      if (!user || !user.password) {
-        return res.status(401).json({ success: false, message: "Email ou mot de passe incorrect." });
-      }
-
-      const validPassword = await bcrypt.compare(password, user.password);
-      if (!validPassword) {
-        return res.status(401).json({ success: false, message: "Email ou mot de passe incorrect." });
-      }
-
-      (req.session as any).userId = user.id;
-
-      const { password: _, ...safeUser } = user;
-      res.json({ success: true, role: user.role, user: safeUser });
-    } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ success: false, message: "Erreur lors de la connexion." });
-    }
-  });
-
-  app.get("/api/auth/user", async (req, res) => {
-    try {
-      const sessionUserId = (req.session as any)?.userId;
-      const passportUser = (req.user as any)?.claims?.sub;
-      const userId = sessionUserId || passportUser;
-
-      if (!userId) {
-        return res.status(401).json({ message: "Non authentifié" });
-      }
-
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(401).json({ message: "Utilisateur introuvable" });
-      }
-
-      const { password: _, ...safeUser } = user;
-      res.json(safeUser);
-    } catch (error) {
-      console.error("Get user error:", error);
-      res.status(500).json({ message: "Erreur serveur" });
-    }
-  });
-
-  app.post("/api/logout", (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ message: "Erreur lors de la déconnexion" });
-      }
-      res.clearCookie("connect.sid");
-      res.json({ success: true });
-    });
-  });
 
   // ===== Professional Plan Routes =====
 
@@ -528,13 +408,32 @@ export async function registerRoutes(
   app.post("/api/projects", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
-      const tailor = await storage.getTailorByUserId(userId);
-      if (!tailor) {
-        return res.status(403).json({ error: "Not a tailor" });
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ error: "User not found" });
+      }
+
+      if (user.role === "tailor") {
+        const tailor = await storage.getTailorByUserId(userId);
+        if (!tailor) {
+          return res.status(403).json({ error: "Tailor profile not found" });
+        }
+        const project = await storage.createProject({
+          ...req.body,
+          tailorId: tailor.id,
+        });
+        return res.status(201).json(project);
+      }
+
+      if (!req.body.tailorId) {
+        return res.status(400).json({ error: "tailorId is required for client projects" });
       }
       const project = await storage.createProject({
         ...req.body,
-        tailorId: tailor.id,
+        clientId: userId,
+        status: "pending",
+        progress: 0,
+        currentStep: "prise_mesures",
       });
       res.status(201).json(project);
     } catch (error) {
@@ -657,8 +556,31 @@ export async function registerRoutes(
     }
   });
 
+  // Admin routes - Dashboard stats
+  app.get("/api/admin/stats", requireAdmin, async (req, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      const artisans = await storage.getAdminArtisans();
+      const totalClients = allUsers.filter((u: any) => u.role === "client").length;
+      const totalTailors = allUsers.filter((u: any) => u.role === "tailor").length;
+      const activeArtisans = artisans.filter((a: any) => a.status === "Actif").length;
+      const pendingArtisans = artisans.filter((a: any) => a.status === "En attente").length;
+      res.json({
+        totalUsers: allUsers.length,
+        totalClients,
+        totalTailors,
+        totalArtisans: artisans.length,
+        activeArtisans,
+        pendingArtisans,
+      });
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+
   // Admin routes - Users listing
-  app.get("/api/admin/users", async (req, res) => {
+  app.get("/api/admin/users", requireAdmin, async (req, res) => {
     try {
       const allUsers = await storage.getAllUsers();
       res.json(allUsers);
@@ -668,8 +590,7 @@ export async function registerRoutes(
     }
   });
 
-  // Admin routes - Artisans (no auth required, admin auth is client-side)
-  app.get("/api/admin/artisans", async (req, res) => {
+  app.get("/api/admin/artisans", requireAdmin, async (req, res) => {
     try {
       const artisans = await storage.getAdminArtisans();
       res.json(artisans);
@@ -679,7 +600,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/admin/artisans", async (req, res) => {
+  app.post("/api/admin/artisans", requireAdmin, async (req, res) => {
     try {
       const artisan = await storage.createAdminArtisan(req.body);
       res.status(201).json(artisan);
@@ -689,7 +610,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put("/api/admin/artisans/:id", async (req, res) => {
+  app.put("/api/admin/artisans/:id", requireAdmin, async (req, res) => {
     try {
       const artisan = await storage.updateAdminArtisan(req.params.id, req.body);
       if (!artisan) {
@@ -702,7 +623,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/admin/artisans/:id", async (req, res) => {
+  app.delete("/api/admin/artisans/:id", requireAdmin, async (req, res) => {
     try {
       await storage.deleteAdminArtisan(req.params.id);
       res.status(204).send();
@@ -713,7 +634,7 @@ export async function registerRoutes(
   });
 
   // Admin routes - Settings
-  app.get("/api/admin/settings", async (req, res) => {
+  app.get("/api/admin/settings", requireAdmin, async (req, res) => {
     try {
       const settings = await storage.getAdminSettings();
       const settingsMap: Record<string, string> = {};
@@ -727,7 +648,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/admin/settings", async (req, res) => {
+  app.post("/api/admin/settings", requireAdmin, async (req, res) => {
     try {
       const entries = Object.entries(req.body) as [string, string][];
       for (const [key, value] of entries) {

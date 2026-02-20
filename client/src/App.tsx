@@ -9,7 +9,6 @@ import { ProBottomNav } from "@/components/pro-bottom-nav";
 import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -49,15 +48,14 @@ import ProSetup from "@/pages/pro-setup";
 import Marketplace from "@/pages/marketplace";
 import MesProjets from "@/pages/mes-projets";
 
-// Composant de chargement amélioré (Point 3 de la liste)
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-        <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-black font-medium">Chargement de votre espace...</p>
+        <div className="w-10 h-10 border-4 border-[#722F37] border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-zinc-600 font-medium">Chargement...</p>
       </div>
     );
   }
@@ -73,7 +71,7 @@ function MobileHeader() {
   return (
     <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="w-10" />
-      <Link href="/particulier/accueil">
+      <Link href="/dashboard-client">
         <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
       </Link>
       <LanguageToggle />
@@ -84,7 +82,7 @@ function MobileHeader() {
 function ProMobileHeader() {
   return (
     <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-50">
-      <Link href="/professionnel/dashboard">
+      <Link href="/dashboard-pro">
         <div className="flex items-center gap-2">
           <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
           <Badge
@@ -100,7 +98,7 @@ function ProMobileHeader() {
   );
 }
 
-function ParticulierLayout({ children }: { children: React.ReactNode }) {
+function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-white min-h-screen text-black">
       <DesktopHeader mode="particulier" />
@@ -125,206 +123,199 @@ function ProLayout({ children }: { children: React.ReactNode }) {
 function Router() {
   return (
     <Switch>
+      {/* Public routes */}
       <Route path="/" component={Landing} />
       <Route path="/connexion" component={Connexion} />
       <Route path="/inscription" component={Inscription} />
-      <Route path="/particulier" component={InscriptionParticulier} />
-      <Route path="/professionnel" component={InscriptionProfessionnel} />
+      <Route path="/inscription/particulier" component={InscriptionParticulier} />
+      <Route path="/inscription/professionnel" component={InscriptionProfessionnel} />
       <Route path="/recherche" component={Recherche} />
-      <Route path="/couturier/:id" component={CouturierProfile} />
+      <Route path="/profil-pro/:id" component={CouturierProfile} />
       <Route path="/mentions-legales" component={MentionsLegales} />
       <Route path="/confidentialite" component={Confidentialite} />
       <Route path="/cgv" component={CGV} />
 
-      {/* Routes Particulier */}
-      <Route path="/particulier/accueil">
+      {/* Legacy redirects */}
+      <Route path="/particulier">
+        <Redirect to="/inscription/particulier" />
+      </Route>
+      <Route path="/professionnel">
+        <Redirect to="/inscription/professionnel" />
+      </Route>
+      <Route path="/couturier/:id">
+        {(params: any) => <Redirect to={`/profil-pro/${params.id}`} />}
+      </Route>
+
+      {/* Client routes */}
+      <Route path="/dashboard-client">
         <ProtectedRoute>
-          <ParticulierLayout>
-            <Home />
-          </ParticulierLayout>
+          <ClientLayout><Home /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/particulier/decouverte">
+      <Route path="/decouverte">
         <ProtectedRoute>
-          <ParticulierLayout>
-            <Discovery />
-          </ParticulierLayout>
+          <ClientLayout><Discovery /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/particulier/mesures">
+      <Route path="/mesures">
         <ProtectedRoute>
-          <ParticulierLayout>
-            <Mesures />
-          </ParticulierLayout>
+          <ClientLayout><Mesures /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/particulier/magazine">
+      <Route path="/magazine">
         <ProtectedRoute>
-          <ParticulierLayout>
-            <Magazine />
-          </ParticulierLayout>
+          <ClientLayout><Magazine /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/particulier/magazine/:id">
+      <Route path="/magazine/:id">
         <ProtectedRoute>
-          <ParticulierLayout>
-            <MagazineDetail />
-          </ParticulierLayout>
+          <ClientLayout><MagazineDetail /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/particulier/marketplace">
+      <Route path="/marketplace">
         <ProtectedRoute>
-          <ParticulierLayout>
-            <Marketplace />
-          </ParticulierLayout>
+          <ClientLayout><Marketplace /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/particulier/messages">
+      <Route path="/messages">
         <ProtectedRoute>
-          <ParticulierLayout>
-            <Messages />
-          </ParticulierLayout>
+          <ClientLayout><Messages /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/particulier/profil">
+      <Route path="/mon-profil">
         <ProtectedRoute>
-          <ParticulierLayout>
-            <ProfilParticulier />
-          </ParticulierLayout>
+          <ClientLayout><ProfilParticulier /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/particulier/profil/mot-de-passe">
+      <Route path="/mon-profil/mot-de-passe">
         <ProtectedRoute>
-          <ParticulierLayout>
-            <ModifierMotDePasse />
-          </ParticulierLayout>
+          <ClientLayout><ModifierMotDePasse /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/particulier/profil/notifications">
+      <Route path="/mon-profil/notifications">
         <ProtectedRoute>
-          <ParticulierLayout>
-            <PreferencesNotifications />
-          </ParticulierLayout>
+          <ClientLayout><PreferencesNotifications /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/particulier/tailor/:id">
+      <Route path="/tailor/:id">
         <ProtectedRoute>
-          <ParticulierLayout>
-            <TailorProfile />
-          </ParticulierLayout>
+          <ClientLayout><TailorProfile /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
-      {/* ✅ Correction ici : fermeture de ParticulierLayout */}
-      <Route path="/particulier/product/:id">
+      <Route path="/product/:id">
         <ProtectedRoute>
-          <ParticulierLayout>
-            <ProductDetail />
-          </ParticulierLayout>
+          <ClientLayout><ProductDetail /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/particulier/mes-projets">
+      <Route path="/suivi-projet/:id">
         <ProtectedRoute>
-          <ParticulierLayout>
-            <MesProjets />
-          </ParticulierLayout>
+          <ClientLayout><MesProjets /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
-      {/* Routes Professionnel */}
-      <Route path="/professionnel/dashboard">
+      <Route path="/mes-projets">
         <ProtectedRoute>
-          <ProLayout>
-            <ProDashboard />
-          </ProLayout>
+          <ClientLayout><MesProjets /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/professionnel/setup">
+      {/* Pro routes */}
+      <Route path="/dashboard-pro">
         <ProtectedRoute>
-          <ProLayout>
-            <ProSetup />
-          </ProLayout>
+          <ProLayout><ProDashboard /></ProLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/professionnel/demandes">
+      <Route path="/dashboard-pro/setup">
         <ProtectedRoute>
-          <ProLayout>
-            <ProDemandes />
-          </ProLayout>
+          <ProLayout><ProSetup /></ProLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/professionnel/projets">
+      <Route path="/gestion-demandes">
         <ProtectedRoute>
-          <ProLayout>
-            <ProProjets />
-          </ProLayout>
+          <ProLayout><ProDemandes /></ProLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/professionnel/messagerie">
+      <Route path="/atelier/:id">
         <ProtectedRoute>
-          <ProLayout>
-            <ProMessagerie />
-          </ProLayout>
+          <ProLayout><ProProjets /></ProLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/professionnel/planning">
+      <Route path="/atelier">
         <ProtectedRoute>
-          <ProLayout>
-            <ProPlanning />
-          </ProLayout>
+          <ProLayout><ProProjets /></ProLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/professionnel/profil">
+      <Route path="/messagerie">
         <ProtectedRoute>
-          <ProLayout>
-            <ProProfil />
-          </ProLayout>
+          <ProLayout><ProMessagerie /></ProLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/professionnel/profil/mot-de-passe">
+      <Route path="/vitrine-pro">
         <ProtectedRoute>
-          <ProLayout>
-            <ProModifierMotDePasse />
-          </ProLayout>
+          <ProLayout><ProProfil /></ProLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/professionnel/profil/notifications">
+      <Route path="/portefeuille">
         <ProtectedRoute>
-          <ProLayout>
-            <ProNotifications />
-          </ProLayout>
+          <ProLayout><ProPlanning /></ProLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/professionnel/parametres">
+      <Route path="/pro-profil">
         <ProtectedRoute>
-          <ProLayout>
-            <ProParametres />
-          </ProLayout>
+          <ProLayout><ProProfil /></ProLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/admin/seamlier" component={AdminDashboard} />
-      <Route path="/access/gestion/seamlier" component={AdminDashboard} />
+      <Route path="/pro-profil/mot-de-passe">
+        <ProtectedRoute>
+          <ProLayout><ProModifierMotDePasse /></ProLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/pro-profil/notifications">
+        <ProtectedRoute>
+          <ProLayout><ProNotifications /></ProLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/pro-profil/parametres">
+        <ProtectedRoute>
+          <ProLayout><ProParametres /></ProLayout>
+        </ProtectedRoute>
+      </Route>
+
+      {/* Admin routes */}
+      <Route path="/admin/dashboard">
+        <ProtectedRoute>
+          <AdminDashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/admin/seamlier">
+        <ProtectedRoute>
+          <AdminDashboard />
+        </ProtectedRoute>
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -334,7 +325,6 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        {/* Forçage du mode clair et texte noir pour toute l'app */}
         <div className="min-h-screen bg-white text-black selection:bg-black/10">
           <Router />
           <Toaster />
