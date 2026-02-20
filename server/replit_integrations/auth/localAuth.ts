@@ -1,0 +1,212 @@
+import passport from "passport";
+import { Strategy as LocalStrategy } from "passport-local";
+import session from "express-session";
+import cookieParser from "cookie-parser";
+import bcrypt from "bcrypt";
+import type { Express, RequestHandler } from "express";
+import connectPg from "connect-pg-simple";
+import { authStorage } from "./storage";
+import { storage } from "../../storage";
+
+// ─── Session ────────────────────────────────────────────────────────────────
+
+export function getSession() {
+  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 semaine
+  const pgStore = connectPg(session);
+  const sessionStore = new pgStore({
+    conString: process.env.DATABASE_URL,
+    createTableIfMissing: false,
+    ttl: sessionTtl,
+    tableName: "sessions",
+  });
+  return session({
+    secret: process.env.SESSION_SECRET!,
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: sessionTtl,
+    },
+  });
+}
+
+// ─── Setup Auth ──────────────────────────────────────────────────────────────
+
+export async function setupAuth(app: Express) {
+  app.set("trust proxy", 1);
+  app.use(cookieParser());
+  app.use(getSession());
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  // Stratégie locale email/password
+  passport.use(
+    new LocalStrategy(
+      { usernameField: "email", passwordField: "password" },
+      async (email, password, done) => {
+        try {
+          const user = await authStorage.getUserByEmail(email);
+          if (!user) {
+            return done(null, false, { message: "Email ou mot de passe incorrect." });
+          }
+          if (!user.password) {
+            return done(null, false, { message: "Compte sans mot de passe configuré." });
+          }
+          const valid = await bcrypt.compare(password, user.password);
+          if (!valid) {
+            return done(null, false, { message: "Email ou mot de passe incorrect." });
+          }
+          return done(null, user);
+        } catch (err) {
+          return done(err);
+        }
+      }
+    )
+  );
+
+  passport.serializeUser((user: any, cb) => cb(null, user.id));
+  passport.deserializeUser(async (id: string, cb) => {
+    try {
+      const user = await authStorage.getUser(id);
+      cb(null, user);
+    } catch (err) {
+      cb(err);
+    }
+  });
+
+  // ── Routes Auth ────────────────────────────────────────────────────────────
+
+  // POST /api/login — connexion
+  app.post("/api/login", (req, res, next) => {
+    passport.authenticate("local", async (err: any, user: any, info: any) => {
+      if (err) return next(err);
+      if (!user) {
+        return res.status(401).json({ message: info?.message || "Identifiants invalides." });
+      }
+      req.logIn(user, (loginErr) => {
+        if (loginErr) return next(loginErr);
+        return res.json({
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          profileImageUrl: user.profileImageUrl,
+        });
+      });
+    })(req, res, next);
+  });
+
+  // POST /api/register — inscription
+  app.post("/api/register", async (req, res, next) => {
+    try {
+      const { email, password, firstName, lastName, role } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email et mot de passe requis." });
+      }
+      if (password.length < 8) {
+        return res.status(400).json({ message: "Le mot de passe doit faire au moins 8 caractères." });
+      }
+
+      const existing = await authStorage.getUserByEmail(email);
+      if (existing) {
+        return res.status(409).json({ message: "Un compte avec cet email existe déjà." });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 12);
+      const userRole = role === "tailor" ? "tailor" : "client";
+
+      const newUser = await authStorage.createUser({
+        email,
+        password: hashedPassword,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        role: userRole,
+        profileImageUrl: null,
+        phone: null,
+        location: null,
+      });
+
+      req.logIn(newUser, (loginErr) => {
+        if (loginErr) return next(loginErr);
+        return res.status(201).json({
+          id: newUser.id,
+          email: newUser.email,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          role: newUser.role,
+        });
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // GET /api/logout — déconnexion
+  app.get("/api/logout", (req, res) => {
+    req.logout(() => {
+      res.redirect("/");
+    });
+  });
+
+  // POST /api/logout — déconnexion (aussi en POST pour le frontend)
+  app.post("/api/logout", (req, res) => {
+    req.logout(() => {
+      res.json({ success: true });
+    });
+  });
+
+  // GET /api/auth/user — utilisateur courant (compatible avec l'ancien frontend)
+  app.get("/api/auth/user", (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ message: "Non authentifié." });
+    }
+    const user = req.user as any;
+    return res.json({
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      profileImageUrl: user.profileImageUrl,
+    });
+  });
+}
+
+// ─── Middleware isAuthenticated ──────────────────────────────────────────────
+
+export const isAuthenticated: RequestHandler = (req, res, next) => {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  return res.status(401).json({ message: "Non authentifié." });
+};
+
+// ─── Middleware requireTailor ────────────────────────────────────────────────
+
+export const requireTailor: RequestHandler = async (req, res, next) => {
+  if (!req.isAuthenticated() || !req.user) {
+    return res.status(401).json({ message: "Non authentifié." });
+  }
+  const user = req.user as any;
+  if (user.role !== "tailor") {
+    return res.status(403).json({ message: "Accès refusé. Compte professionnel requis." });
+  }
+  return next();
+};
+
+// ─── Middleware requireClient ────────────────────────────────────────────────
+
+export const requireClient: RequestHandler = async (req, res, next) => {
+  if (!req.isAuthenticated() || !req.user) {
+    return res.status(401).json({ message: "Non authentifié." });
+  }
+  const user = req.user as any;
+  if (user.role !== "client") {
+    return res.status(403).json({ message: "Accès refusé. Compte client requis." });
+  }
+  return next();
+};

@@ -1,65 +1,55 @@
-const isProduction = import.meta.env.PROD;
-const PHP_BASE = import.meta.env.VITE_PHP_BASE_URL || "/php";
+/**
+ * Configuration de l'API Seamlier — Express Node.js sur o2switch
+ */
+
+export const API_BASE_URL = "";  // Relatif — même domaine
 
 export const API_ENDPOINTS = {
   auth: {
-    register: isProduction ? `${PHP_BASE}/auth.php?action=register` : "/api/auth/register",
-    login: isProduction ? `${PHP_BASE}/auth.php?action=login` : "/api/login",
-    user: isProduction ? `${PHP_BASE}/auth.php?action=user` : "/api/auth/user",
-    logout: isProduction ? `${PHP_BASE}/auth.php?action=logout` : "/api/logout",
+    login: `/api/login`,
+    register: `/api/register`,
+    user: `/api/auth/user`,
+    logout: `/api/logout`,
   },
-  admin: {
-    artisans: isProduction ? `${PHP_BASE}/admin.php?action=artisans` : "/api/admin/artisans",
-    artisan: (id: string) =>
-      isProduction ? `${PHP_BASE}/admin.php?action=artisan&id=${id}` : `/api/admin/artisans/${id}`,
-    settings: isProduction ? `${PHP_BASE}/admin.php?action=settings` : "/api/admin/settings",
-    users: isProduction ? `${PHP_BASE}/admin.php?action=users` : "/api/admin/users",
-  },
+  tailors: `/api/tailors`,
 };
 
+/**
+ * Utilitaire de résolution d'URL
+ */
 export function resolveApiUrl(path: string): string {
-  if (!isProduction) return path;
-
-  const clean = path.replace(/^\//, "");
-
-  if (clean.startsWith("api/admin/artisans/")) {
-    const id = clean.replace("api/admin/artisans/", "");
-    return `${PHP_BASE}/admin.php?action=artisan&id=${id}`;
-  }
-  if (clean === "api/admin/artisans") return `${PHP_BASE}/admin.php?action=artisans`;
-  if (clean === "api/admin/users") return `${PHP_BASE}/admin.php?action=users`;
-  if (clean === "api/admin/settings") return `${PHP_BASE}/admin.php?action=settings`;
-  if (clean === "api/auth/user") return API_ENDPOINTS.auth.user;
-  if (clean === "api/auth/register") return API_ENDPOINTS.auth.register;
-  if (clean === "api/login") return API_ENDPOINTS.auth.login;
-  if (clean === "api/logout") return API_ENDPOINTS.auth.logout;
-
-  const slug = clean.replace(/^api\//, "");
-  return `${PHP_BASE}/data.php?route=${encodeURIComponent(slug)}`;
+  if (/^https?:\/\//i.test(path)) return path;
+  return path;
 }
 
-export async function phpFetch(
-  url: string,
-  options: RequestInit = {}
-): Promise<Response> {
-  const res = await fetch(url, {
+/**
+ * Fetch standard avec credentials (pour les sessions)
+ */
+export async function phpFetch(url: string, options: RequestInit = {}) {
+  const finalUrl = resolveApiUrl(url);
+  return fetch(finalUrl, {
     ...options,
-    credentials: "include",
+    credentials: "include", // Indispensable pour les sessions cookie
     headers: {
-      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      "Content-Type": "application/json",
       ...options.headers,
     },
   });
-  return res;
 }
 
-export async function safeParse<T = any>(response: Response): Promise<T> {
-  const text = await response.text();
+/**
+ * Analyse sécurisée du JSON
+ */
+export async function safeParse<T>(response: Response): Promise<T | null> {
   try {
-    return JSON.parse(text);
-  } catch {
-    throw new Error(
-      `Le serveur a renvoyé une réponse inattendue. Vérifiez que le fichier PHP est accessible.`
-    );
+    const text = await response.text();
+    if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
+      console.error("Le serveur a renvoyé du HTML au lieu de JSON.");
+      return null;
+    }
+    return JSON.parse(text) as T;
+  } catch (e) {
+    console.error("Erreur de lecture JSON:", e);
+    return null;
   }
 }
