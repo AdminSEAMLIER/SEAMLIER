@@ -147,6 +147,47 @@ export async function registerRoutes(
     });
   });
 
+  // ===== Professional Plan Routes =====
+
+  app.get("/api/professionnel/plan", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) {
+        return res.status(404).json({ message: "Profil artisan introuvable" });
+      }
+      res.json({
+        tailorId: tailor.id,
+        subscriptionPlan: tailor.subscriptionPlan || "Starter",
+      });
+    } catch (error) {
+      console.error("Error fetching plan:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
+  app.post("/api/professionnel/upgrade", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) {
+        return res.status(404).json({ message: "Profil artisan introuvable" });
+      }
+      if (tailor.subscriptionPlan === "Pro") {
+        return res.json({ success: true, message: "Déjà abonné au plan Pro", subscriptionPlan: "Pro" });
+      }
+      const updated = await storage.updateTailor(tailor.id, { subscriptionPlan: "Pro" });
+      res.json({
+        success: true,
+        message: "Abonnement Pro activé avec succès",
+        subscriptionPlan: updated?.subscriptionPlan || "Pro",
+      });
+    } catch (error) {
+      console.error("Error upgrading plan:", error);
+      res.status(500).json({ message: "Erreur lors de la mise à niveau" });
+    }
+  });
+
   // Public routes - Tailors
   app.get("/api/tailors", async (req, res) => {
     try {

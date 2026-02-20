@@ -40,6 +40,7 @@ export const tailors = pgTable("tailors", {
   rating: real("rating").default(0),
   reviewCount: integer("review_count").default(0),
   portfolioCount: integer("portfolio_count").default(0),
+  subscriptionPlan: text("subscription_plan").default("Starter"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

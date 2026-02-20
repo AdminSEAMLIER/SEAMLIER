@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { 
   Home, 
@@ -25,15 +26,21 @@ import {
   ArrowUpRight,
   ShieldAlert,
   CheckCircle,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Product, ConversationWithParticipant } from "@shared/schema";
 
 const STARTER_LIMIT = 10;
 
 export default function ProDashboard() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showConfirmStep, setShowConfirmStep] = useState(false);
   
   const { data: products } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -47,10 +54,35 @@ export default function ProDashboard() {
     queryKey: ["/api/admin/settings"],
   });
 
-  const subscriptionPrice = settings?.subscriptionPrice || "29";
+  const { data: planData } = useQuery<{ tailorId: string; subscriptionPlan: string }>({
+    queryKey: ["/api/professionnel/plan"],
+  });
 
-  // TODO: Replace with real data from /api/professionnel/plan when artisan plan API is implemented
-  const currentPlan = "Starter" as "Starter" | "Pro";
+  const upgradeMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/professionnel/upgrade");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/professionnel/plan"] });
+      setShowUpgradeModal(false);
+      setShowConfirmStep(false);
+      toast({
+        title: "Abonnement Pro activé !",
+        description: "Vous bénéficiez maintenant de 0% de commission et de mesures illimitées.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'activer le plan Pro. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const subscriptionPrice = settings?.subscriptionPrice || "29";
+  const currentPlan = (planData?.subscriptionPlan || "Starter") as "Starter" | "Pro";
   const measureCount = 0;
   const limitPercent = Math.min(100, (measureCount / STARTER_LIMIT) * 100);
 
@@ -70,6 +102,15 @@ export default function ProDashboard() {
     { label: t('nav.messaging'), icon: MessageSquare, href: "/professionnel/messagerie", count: conversationCount },
     { label: t('nav.planning'), icon: Calendar, href: "/professionnel/planning", count: 0 },
   ];
+
+  const handleOpenUpgradeModal = () => {
+    setShowConfirmStep(false);
+    setShowUpgradeModal(true);
+  };
+
+  const handleConfirmUpgrade = () => {
+    upgradeMutation.mutate();
+  };
 
   return (
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
@@ -127,7 +168,7 @@ export default function ProDashboard() {
                   size="sm"
                   variant="outline"
                   className="text-xs text-purple-700 border-purple-200"
-                  onClick={() => setShowUpgradeModal(true)}
+                  onClick={handleOpenUpgradeModal}
                   data-testid="button-pro-upgrade"
                 >
                   <ArrowUpRight className="h-3 w-3 mr-1" />
@@ -261,53 +302,117 @@ export default function ProDashboard() {
         </Card>
       </div>
 
-      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+      <Dialog open={showUpgradeModal} onOpenChange={(open) => { setShowUpgradeModal(open); if (!open) setShowConfirmStep(false); }}>
         <DialogContent className="sm:max-w-md bg-white" data-testid="dialog-pro-upgrade">
           <DialogHeader>
-            <DialogTitle className="text-[#722F37] font-serif text-xl">Passer au Plan Pro</DialogTitle>
+            <DialogTitle className="text-[#722F37] font-serif text-xl">
+              {showConfirmStep ? "Confirmer votre abonnement" : "Passer au Plan Pro"}
+            </DialogTitle>
+            <DialogDescription>
+              {showConfirmStep
+                ? `Vous allez souscrire au plan Pro à ${subscriptionPrice}€/mois.`
+                : "Boostez votre activité avec le plan Pro et profitez de tous les avantages."}
+            </DialogDescription>
           </DialogHeader>
-          <p className="text-sm text-gray-600">
-            Boostez votre activité avec le plan Pro et profitez de tous les avantages.
-          </p>
-          <div className="grid grid-cols-2 gap-3 mt-4">
-            <div className="border border-gray-200 rounded-lg p-3">
-              <Badge className="bg-blue-50 text-blue-700 border-none text-[10px] font-bold mb-2">STARTER</Badge>
-              <p className="text-sm font-bold text-gray-500 line-through">Votre plan actuel</p>
-              <ul className="mt-2 space-y-1 text-xs text-gray-600">
-                <li className="text-red-500 font-bold">15% commission</li>
-                <li>{STARTER_LIMIT} fiches max</li>
-                <li>10% frais client</li>
-              </ul>
-            </div>
-            <div className="border-2 border-purple-300 rounded-lg p-3 bg-purple-50/30">
-              <Badge className="bg-purple-100 text-purple-700 border-none text-[10px] font-bold mb-2">PRO</Badge>
-              <p className="text-sm font-bold">{subscriptionPrice}€/mois</p>
-              <ul className="mt-2 space-y-1 text-xs text-gray-700">
-                <li className="font-bold text-green-600">0% commission</li>
-                <li className="font-bold text-green-600">Mesures illimitées</li>
-                <li>10% frais client</li>
-              </ul>
-            </div>
-          </div>
-          <div className="flex gap-2 mt-4">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => setShowUpgradeModal(false)}
-              data-testid="button-close-pro-upgrade"
-            >
-              Plus tard
-            </Button>
-            <Button
-              className="flex-1 bg-[#722F37] text-white"
-              onClick={() => {
-                setShowUpgradeModal(false);
-              }}
-              data-testid="button-confirm-pro-upgrade"
-            >
-              Contacter l'équipe
-            </Button>
-          </div>
+
+          {!showConfirmStep ? (
+            <>
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <div className="border border-gray-200 rounded-lg p-3">
+                  <Badge className="bg-blue-50 text-blue-700 border-none text-[10px] font-bold mb-2">STARTER</Badge>
+                  <p className="text-sm font-bold text-gray-500 line-through">Votre plan actuel</p>
+                  <ul className="mt-2 space-y-1 text-xs text-gray-600">
+                    <li className="text-red-500 font-bold">15% commission</li>
+                    <li>{STARTER_LIMIT} fiches max</li>
+                    <li>10% frais client</li>
+                  </ul>
+                </div>
+                <div className="border-2 border-purple-300 rounded-lg p-3 bg-purple-50/30 relative">
+                  <div className="absolute -top-2 right-2">
+                    <Sparkles className="h-4 w-4 text-purple-500" />
+                  </div>
+                  <Badge className="bg-purple-100 text-purple-700 border-none text-[10px] font-bold mb-2">PRO</Badge>
+                  <p className="text-sm font-bold">{subscriptionPrice}€/mois</p>
+                  <ul className="mt-2 space-y-1 text-xs text-gray-700">
+                    <li className="font-bold text-green-600">0% commission</li>
+                    <li className="font-bold text-green-600">Mesures illimitées</li>
+                    <li>10% frais client</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowUpgradeModal(false)}
+                  data-testid="button-close-pro-upgrade"
+                >
+                  Plus tard
+                </Button>
+                <Button
+                  className="flex-1 bg-purple-700 hover:bg-purple-800 text-white"
+                  onClick={() => setShowConfirmStep(true)}
+                  data-testid="button-choose-pro"
+                >
+                  <Sparkles className="h-4 w-4 mr-1" />
+                  Choisir le Pro
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="space-y-3 mt-2">
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CheckCircle className="h-5 w-5 text-purple-600" />
+                    <span className="font-semibold text-purple-800">Plan Pro - {subscriptionPrice}€/mois</span>
+                  </div>
+                  <ul className="space-y-2 text-sm text-purple-700">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      0% de commission sur vos prestations
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      Fiches mesures illimitées
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      Visibilité prioritaire dans les résultats
+                    </li>
+                  </ul>
+                </div>
+                <p className="text-xs text-gray-500 text-center">
+                  En confirmant, vous activez immédiatement le plan Pro.
+                </p>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowConfirmStep(false)}
+                  data-testid="button-back-upgrade"
+                >
+                  Retour
+                </Button>
+                <Button
+                  className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+                  onClick={handleConfirmUpgrade}
+                  disabled={upgradeMutation.isPending}
+                  data-testid="button-confirm-pro-upgrade"
+                >
+                  {upgradeMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      Activation...
+                    </>
+                  ) : (
+                    "Confirmer et activer"
+                  )}
+                </Button>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
