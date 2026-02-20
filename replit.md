@@ -94,6 +94,15 @@ shared/              # Shared code (schema, types)
 - **Admin Dashboard**: Plan selection in add/edit artisan forms, plan details with commission breakdown
 - **Settings**: Plans & Tarification card with side-by-side plan comparison, configurable Pro pricing
 
+### Project Progress Tracking (February 2026)
+- **Schema**: Added `currentStep` text field to projects table (default: "prise_mesures")
+- **Types**: Added `ProjectWithTailor` type for client-side project queries
+- **8 Fabrication Steps**: Prise de mesures → Choix du tissu → Patronage → Coupe → Assemblage → Essayage → Finitions → Prêt/Livraison
+- **Pro Dashboard (pro-projets.tsx)**: Tailors click project → dialog with step timeline → click step to advance, auto-updates progress % and status
+- **Client Page (mes-projets.tsx)**: Visual timeline showing current fabrication stage, accessible from `/particulier/mes-projets`
+- **API Routes**: `GET /api/client/projects` (client view), `PATCH /api/projects/:id/step` (tailor updates step+progress+status)
+- **Navigation**: Quick access link added to client profile page (profil-particulier.tsx)
+
 ### Production Readiness (February 2026)
 - **Pro Dashboard**: Starter limit gauge (0/10 fiches with progress bar), upgrade-to-Pro modal, plan status card
 - **Admin Dashboard Cleanup**: All mock data removed, empty states for all sections, real data from DB only

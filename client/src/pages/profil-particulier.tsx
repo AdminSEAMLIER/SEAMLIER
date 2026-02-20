@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, Ruler, BookOpen, Search, Loader2 } from "lucide-react";
+import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, Ruler, BookOpen, Search, Loader2, FolderKanban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -281,13 +281,21 @@ export default function ProfilParticulier() {
             <CardTitle className="text-lg text-[#722F37]">{t('profile.quickAccess')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <Link href="/particulier/decouverte">
                 <div className="flex flex-col items-center p-4 bg-muted/50 rounded-md transition-colors cursor-pointer" data-testid="link-recherche">
                   <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center mb-2">
                     <Search className="h-5 w-5 text-[#722F37]" />
                   </div>
                   <span className="text-sm text-muted-foreground text-center">{t('nav.search')}</span>
+                </div>
+              </Link>
+              <Link href="/particulier/mes-projets">
+                <div className="flex flex-col items-center p-4 bg-muted/50 rounded-md transition-colors cursor-pointer" data-testid="link-mes-projets">
+                  <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center mb-2">
+                    <FolderKanban className="h-5 w-5 text-[#722F37]" />
+                  </div>
+                  <span className="text-sm text-muted-foreground text-center">{t('nav.projects')}</span>
                 </div>
               </Link>
               <Link href="/particulier/mesures">

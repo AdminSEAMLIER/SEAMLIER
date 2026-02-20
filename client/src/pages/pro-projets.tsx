@@ -1,73 +1,72 @@
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { FolderKanban, Clock, Euro, User, ChevronRight, Ruler, Calendar, MessageSquare, Phone, Mail, Camera, Image, Users } from "lucide-react";
+import { FolderKanban, Clock, Euro, User, ChevronRight, Ruler, Calendar, MessageSquare, Phone, Mail, Camera, Image, Users, CheckCircle, Circle, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import type { ProjectWithClient } from "@shared/schema";
 
-interface Measurement {
-  label: string;
-  value: string;
-}
-
-interface Project {
-  id: string;
-  title: string;
-  client: string;
-  clientEmail: string;
-  clientPhone: string;
-  status: string;
-  progress: number;
-  amount: string;
-  deadline: string;
-  nextStep: string;
-  measurements: Measurement[];
-  notes: string;
-  modelPhoto?: string;
-}
+const FABRICATION_STEPS = [
+  { key: "prise_mesures", label: "Prise de mesures", progress: 0 },
+  { key: "choix_tissu", label: "Choix du tissu", progress: 15 },
+  { key: "patronage", label: "Patronage", progress: 30 },
+  { key: "coupe", label: "Coupe", progress: 45 },
+  { key: "assemblage", label: "Assemblage", progress: 60 },
+  { key: "essayage", label: "Essayage", progress: 75 },
+  { key: "finitions", label: "Finitions", progress: 90 },
+  { key: "livraison", label: "Prêt / Livraison", progress: 100 },
+];
 
 export default function ProProjets() {
   const { t } = useTranslation();
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const { toast } = useToast();
+  const [selectedProject, setSelectedProject] = useState<ProjectWithClient | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [localProjects, setLocalProjects] = useState<Project[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch real projects from API (empty for now)
-  const { data: projects = [], isLoading } = useQuery<Project[]>({
-    queryKey: ["/api/pro/projects"],
-    enabled: false, // Disabled until API is implemented
+  const { data: projects = [], isLoading } = useQuery<ProjectWithClient[]>({
+    queryKey: ["/api/projects"],
   });
 
-  const allProjects = localProjects.length > 0 ? localProjects : projects;
+  const stepMutation = useMutation({
+    mutationFn: async ({ projectId, currentStep, progress, status }: { projectId: string; currentStep: string; progress: number; status: string }) => {
+      const res = await apiRequest("PATCH", `/api/projects/${projectId}/step`, { currentStep, progress, status });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      if (selectedProject) {
+        setSelectedProject({ ...selectedProject, currentStep: data.currentStep, progress: data.progress, status: data.status });
+      }
+      toast({ title: "Étape mise à jour", description: `Le client peut maintenant voir l'avancement.` });
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de mettre à jour l'étape.", variant: "destructive" });
+    },
+  });
 
-  const handleOpenProject = (project: Project) => {
+  const handleOpenProject = (project: ProjectWithClient) => {
     setSelectedProject(project);
     setIsDetailOpen(true);
   };
 
-  const handleAddPhoto = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && selectedProject) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const photoUrl = reader.result as string;
-        const updatedProject = { ...selectedProject, modelPhoto: photoUrl };
-        setSelectedProject(updatedProject);
-        setLocalProjects(prev => 
-          prev.map(p => p.id === selectedProject.id ? updatedProject : p)
-        );
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleStepChange = (stepKey: string) => {
+    if (!selectedProject) return;
+    const step = FABRICATION_STEPS.find(s => s.key === stepKey);
+    if (!step) return;
+    const newStatus = step.progress === 100 ? "completed" : "in_progress";
+    stepMutation.mutate({ 
+      projectId: selectedProject.id, 
+      currentStep: stepKey, 
+      progress: step.progress,
+      status: newStatus,
+    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -78,25 +77,27 @@ export default function ProProjets() {
         return <Badge className="bg-yellow-100 text-yellow-700 border-none">{t('pro.pendingPayment')}</Badge>;
       case "completed":
         return <Badge className="bg-green-100 text-green-700 border-none">{t('pro.completed')}</Badge>;
+      case "pending":
+        return <Badge className="bg-gray-100 text-gray-700 border-none">En attente</Badge>;
       default:
         return null;
     }
   };
 
-  const getProgressColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-500";
-      case "pending_payment":
-        return "bg-yellow-500";
-      default:
-        return "bg-[#722F37]";
-    }
+  const getProgressColor = (progress: number) => {
+    if (progress >= 100) return "bg-green-500";
+    if (progress >= 75) return "bg-blue-500";
+    return "bg-[#722F37]";
   };
 
-  const activeCount = allProjects.filter(p => p.status === 'in_progress').length;
-  const pendingPaymentCount = allProjects.filter(p => p.status === 'pending_payment').length;
-  const completedCount = allProjects.filter(p => p.status === 'completed').length;
+  const getCurrentStepLabel = (stepKey: string | null) => {
+    const step = FABRICATION_STEPS.find(s => s.key === stepKey);
+    return step?.label || "Prise de mesures";
+  };
+
+  const activeCount = projects.filter(p => p.status === 'in_progress').length;
+  const pendingCount = projects.filter(p => p.status === 'pending').length;
+  const completedCount = projects.filter(p => p.status === 'completed').length;
 
   return (
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
@@ -125,8 +126,8 @@ export default function ProProjets() {
                 <p className="text-xs text-gray-500">{t('pro.activeProjects')}</p>
               </div>
               <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xl font-bold text-yellow-600">{pendingPaymentCount}</p>
-                <p className="text-xs text-gray-500">{t('pro.awaitingPayment')}</p>
+                <p className="text-xl font-bold text-yellow-600">{pendingCount}</p>
+                <p className="text-xs text-gray-500">En attente</p>
               </div>
               <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="text-xl font-bold text-green-600">{completedCount}</p>
@@ -139,10 +140,11 @@ export default function ProProjets() {
         {isLoading ? (
           <Card className="border border-gray-100 bg-white shadow-sm">
             <CardContent className="p-8 bg-white text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-[#722F37] mx-auto mb-2" />
               <p className="text-gray-500">{t('common.loading')}</p>
             </CardContent>
           </Card>
-        ) : allProjects.length === 0 ? (
+        ) : projects.length === 0 ? (
           <Card className="border border-gray-100 bg-white shadow-sm">
             <CardContent className="p-12 bg-white text-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -156,7 +158,7 @@ export default function ProProjets() {
             </CardContent>
           </Card>
         ) : (
-          allProjects.map((project) => (
+          projects.map((project) => (
             <Card 
               key={project.id} 
               className="border border-gray-100 bg-white shadow-sm mb-4 cursor-pointer hover:border-[#722F37]/30 transition-colors"
@@ -172,7 +174,7 @@ export default function ProProjets() {
                     </div>
                     <div className="flex items-center gap-1 text-sm text-gray-500">
                       <User className="h-3 w-3" />
-                      <span>{project.client}</span>
+                      <span>{project.client?.firstName} {project.client?.lastName}</span>
                     </div>
                   </div>
                   <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
@@ -180,31 +182,31 @@ export default function ProProjets() {
 
                 <div className="mb-3">
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">{t('pro.progress')}</span>
-                    <span className="font-medium">{project.progress}%</span>
+                    <span className="text-gray-600">{getCurrentStepLabel(project.currentStep)}</span>
+                    <span className="font-medium">{project.progress || 0}%</span>
                   </div>
                   <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div 
-                      className={`h-full ${getProgressColor(project.status)} rounded-full transition-all`}
-                      style={{ width: `${project.progress}%` }}
+                      className={`h-full ${getProgressColor(project.progress || 0)} rounded-full transition-all`}
+                      style={{ width: `${project.progress || 0}%` }}
                     />
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-4 text-sm">
-                  <div className="flex items-center gap-1 text-gray-600">
-                    <Euro className="h-4 w-4 text-[#722F37]" />
-                    <span>{project.amount}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-gray-600">
-                    <Clock className="h-4 w-4 text-[#722F37]" />
-                    <span>{project.deadline}</span>
-                  </div>
+                  {project.amount && (
+                    <div className="flex items-center gap-1 text-gray-600">
+                      <Euro className="h-4 w-4 text-[#722F37]" />
+                      <span>{project.amount}€</span>
+                    </div>
+                  )}
+                  {project.deadline && (
+                    <div className="flex items-center gap-1 text-gray-600">
+                      <Clock className="h-4 w-4 text-[#722F37]" />
+                      <span>{new Date(project.deadline).toLocaleDateString('fr-FR')}</span>
+                    </div>
+                  )}
                 </div>
-
-                <p className="text-sm text-gray-500 mt-3 pt-3 border-t border-gray-100">
-                  {t('pro.nextStep')}: <span className="text-gray-700">{project.nextStep}</span>
-                </p>
               </CardContent>
             </Card>
           ))
@@ -217,130 +219,90 @@ export default function ProProjets() {
             <DialogTitle className="text-[#722F37]">
               {selectedProject?.title}
             </DialogTitle>
+            <DialogDescription>
+              Gérez l'avancement de ce projet
+            </DialogDescription>
           </DialogHeader>
           
           {selectedProject && (
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
-                  <p className="font-medium text-gray-900">{selectedProject.client}</p>
+                  <p className="font-medium text-gray-900">{selectedProject.client?.firstName} {selectedProject.client?.lastName}</p>
                   <div className="flex items-center gap-2 mt-1">
                     {getStatusBadge(selectedProject.status)}
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-[#722F37]">{selectedProject.amount}</p>
-                  <p className="text-sm text-gray-500">{selectedProject.deadline}</p>
+                  {selectedProject.amount && <p className="text-lg font-bold text-[#722F37]">{selectedProject.amount}€</p>}
+                  {selectedProject.deadline && <p className="text-sm text-gray-500">{new Date(selectedProject.deadline).toLocaleDateString('fr-FR')}</p>}
                 </div>
               </div>
 
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handlePhotoChange}
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                data-testid="input-model-photo"
-              />
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-3">Étapes de confection</p>
+                <div className="space-y-1">
+                  {FABRICATION_STEPS.map((step, index) => {
+                    const currentIndex = FABRICATION_STEPS.findIndex(s => s.key === (selectedProject.currentStep || "prise_mesures"));
+                    const isCompleted = index < currentIndex;
+                    const isCurrent = index === currentIndex;
+                    const isFuture = index > currentIndex;
 
-              <div className="mb-4">
-                <p className="text-sm text-gray-500 mb-2">{t('pro.modelPhoto')}</p>
-                {selectedProject.modelPhoto ? (
-                  <div className="relative">
-                    <img 
-                      src={selectedProject.modelPhoto} 
-                      alt="Model" 
-                      className="w-full h-48 object-cover rounded-lg border border-gray-200"
-                    />
-                    <button
-                      onClick={handleAddPhoto}
-                      className="absolute bottom-2 right-2 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-50"
-                      data-testid="button-change-model-photo"
-                    >
-                      <Camera className="h-4 w-4" />
-                    </button>
+                    return (
+                      <button
+                        key={step.key}
+                        onClick={() => handleStepChange(step.key)}
+                        disabled={stepMutation.isPending}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all ${
+                          isCurrent
+                            ? "bg-[#722F37]/10 border border-[#722F37]/30"
+                            : isCompleted
+                            ? "bg-green-50 border border-green-200"
+                            : "bg-gray-50 border border-transparent hover:border-gray-200"
+                        }`}
+                        data-testid={`step-${step.key}`}
+                      >
+                        <div className="flex-shrink-0">
+                          {isCompleted ? (
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          ) : isCurrent ? (
+                            <div className="h-5 w-5 rounded-full border-2 border-[#722F37] bg-[#722F37] flex items-center justify-center">
+                              <div className="h-2 w-2 rounded-full bg-white" />
+                            </div>
+                          ) : (
+                            <Circle className="h-5 w-5 text-gray-300" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium ${
+                            isCurrent ? "text-[#722F37]" : isCompleted ? "text-green-700" : "text-gray-400"
+                          }`}>
+                            {step.label}
+                          </p>
+                        </div>
+                        <span className={`text-xs ${
+                          isCurrent ? "text-[#722F37] font-bold" : isCompleted ? "text-green-600" : "text-gray-300"
+                        }`}>
+                          {step.progress}%
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {stepMutation.isPending && (
+                  <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Mise à jour...
                   </div>
-                ) : (
-                  <button
-                    onClick={handleAddPhoto}
-                    className="w-full h-32 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-[#722F37]/50 hover:text-[#722F37] transition-colors"
-                    data-testid="button-add-model-photo"
-                  >
-                    <Image className="h-8 w-8 mb-2" />
-                    <span className="text-sm">{t('pro.addModelPhoto')}</span>
-                  </button>
                 )}
               </div>
 
-              <Tabs defaultValue="measurements" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 bg-gray-100 rounded-lg p-1">
-                  <TabsTrigger 
-                    value="measurements" 
-                    className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm text-gray-600 data-[state=active]:text-gray-900" 
-                    data-testid="tab-measurements"
-                  >
-                    <Ruler className="h-4 w-4 mr-1" />
-                    {t('pro.measurements')}
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="info" 
-                    className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm text-gray-600 data-[state=active]:text-gray-900" 
-                    data-testid="tab-info"
-                  >
-                    <User className="h-4 w-4 mr-1" />
-                    {t('pro.clientInfo')}
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="notes" 
-                    className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm text-gray-600 data-[state=active]:text-gray-900" 
-                    data-testid="tab-notes"
-                  >
-                    <FolderKanban className="h-4 w-4 mr-1" />
-                    {t('pro.notes')}
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="measurements" className="mt-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    {selectedProject.measurements.map((measure, index) => (
-                      <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-xs text-gray-500">{measure.label}</p>
-                        <p className="font-medium text-gray-900">{measure.value}</p>
-                      </div>
-                    ))}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="info" className="mt-4 space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <User className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-xs text-gray-500">{t('pro.clientName')}</p>
-                      <p className="font-medium text-gray-900">{selectedProject.client}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Mail className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-xs text-gray-500">{t('auth.email')}</p>
-                      <p className="font-medium text-gray-900">{selectedProject.clientEmail}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Phone className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-xs text-gray-500">{t('auth.phone')}</p>
-                      <p className="font-medium text-gray-900">{selectedProject.clientPhone}</p>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="notes" className="mt-4">
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-gray-700 whitespace-pre-line">{selectedProject.notes}</p>
-                  </div>
-                </TabsContent>
-              </Tabs>
+              {selectedProject.notes && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm font-semibold text-gray-700 mb-1">Notes</p>
+                  <p className="text-gray-600 text-sm whitespace-pre-line">{selectedProject.notes}</p>
+                </div>
+              )}
 
               <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-100">
                 <Link href="/professionnel/messagerie" className="flex-1">

@@ -24,6 +24,7 @@ import {
   type ConversationWithParticipant,
   type MessageWithSender,
   type ProjectWithClient,
+  type ProjectWithTailor,
   type AppointmentWithClient
 } from "@shared/schema";
 
@@ -60,6 +61,7 @@ export interface IStorage {
   upsertMeasurements(measurements: InsertMeasurements): Promise<Measurements>;
   
   getProjectsByTailor(tailorId: string): Promise<ProjectWithClient[]>;
+  getProjectsByClient(clientId: string): Promise<ProjectWithTailor[]>;
   getProject(id: string): Promise<ProjectWithClient | undefined>;
   createProject(project: InsertProject): Promise<Project>;
   updateProject(id: string, updates: Partial<InsertProject>): Promise<Project | undefined>;
@@ -393,6 +395,25 @@ class DatabaseStorage implements IStorage {
     return result.map(row => ({
       ...row.projects,
       client: row.users
+    }));
+  }
+
+  async getProjectsByClient(clientId: string): Promise<ProjectWithTailor[]> {
+    const result = await db.select()
+      .from(projects)
+      .innerJoin(tailors, eq(projects.tailorId, tailors.id))
+      .innerJoin(users, eq(tailors.userId, users.id))
+      .where(eq(projects.clientId, clientId))
+      .orderBy(desc(projects.updatedAt));
+    
+    if (!result || !Array.isArray(result)) {
+      return [];
+    }
+    
+    return result.map(row => ({
+      ...row.projects,
+      tailor: row.tailors,
+      tailorUser: row.users,
     }));
   }
 

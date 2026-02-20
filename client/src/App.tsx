@@ -47,6 +47,7 @@ import ProModifierMotDePasse from "@/pages/pro-modifier-mot-de-passe";
 import ProNotifications from "@/pages/pro-notifications";
 import ProSetup from "@/pages/pro-setup";
 import Marketplace from "@/pages/marketplace";
+import MesProjets from "@/pages/mes-projets";
 
 // Composant de chargement amélioré (Point 3 de la liste)
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -229,6 +230,14 @@ function Router() {
         <ProtectedRoute>
           <ParticulierLayout>
             <ProductDetail />
+          </ParticulierLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/particulier/mes-projets">
+        <ProtectedRoute>
+          <ParticulierLayout>
+            <MesProjets />
           </ParticulierLayout>
         </ProtectedRoute>
       </Route>

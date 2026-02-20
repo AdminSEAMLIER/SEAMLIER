@@ -118,6 +118,7 @@ export const projects = pgTable("projects", {
   description: text("description"),
   status: text("status").notNull().default("pending"),
   progress: integer("progress").default(0),
+  currentStep: text("current_step").default("prise_mesures"),
   amount: real("amount"),
   deadline: timestamp("deadline"),
   modelPhotoUrl: text("model_photo_url"),
@@ -240,4 +241,5 @@ export type ReviewWithUser = Review & { user: User };
 export type ConversationWithParticipant = Conversation & { otherParticipant: User; unreadCount: number };
 export type MessageWithSender = Message & { sender: User };
 export type ProjectWithClient = Project & { client: User };
+export type ProjectWithTailor = Project & { tailor: Tailor; tailorUser: User };
 export type AppointmentWithClient = Appointment & { client: User };

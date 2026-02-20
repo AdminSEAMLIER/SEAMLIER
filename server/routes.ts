@@ -482,6 +482,37 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/client/projects", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const projects = await storage.getProjectsByClient(userId);
+      res.json(projects);
+    } catch (error) {
+      console.error("Error fetching client projects:", error);
+      res.status(500).json({ error: "Failed to fetch projects" });
+    }
+  });
+
+  app.patch("/api/projects/:id/step", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) {
+        return res.status(403).json({ error: "Not a tailor" });
+      }
+      const project = await storage.getProject(req.params.id);
+      if (!project || project.tailorId !== tailor.id) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      const { currentStep, progress, status } = req.body;
+      const updated = await storage.updateProject(req.params.id, { currentStep, progress, status });
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating project step:", error);
+      res.status(500).json({ error: "Failed to update project step" });
+    }
+  });
+
   app.get("/api/projects/:id", requireAuth, async (req: any, res) => {
     try {
       const project = await storage.getProject(req.params.id);
