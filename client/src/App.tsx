@@ -73,7 +73,7 @@ function MobileHeader() {
     <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="w-10" />
       <Link href="/particulier/accueil">
-        <Logo className="text-black" textClassName="text-black" />
+        <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
       </Link>
       <LanguageToggle />
     </div>
@@ -85,10 +85,10 @@ function ProMobileHeader() {
     <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-50">
       <Link href="/professionnel/dashboard">
         <div className="flex items-center gap-2">
-          <Logo className="text-black" textClassName="text-black" />
+          <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
           <Badge
             variant="secondary"
-            className="bg-black text-white border-none text-[10px]"
+            className="bg-[#722F37] text-white border-none text-[10px]"
           >
             Pro
           </Badge>

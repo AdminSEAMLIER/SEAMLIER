@@ -137,16 +137,16 @@ export default function InscriptionProfessionnel() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className="min-h-screen bg-white">
       <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/">
               <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-5 w-5 text-black" />
+                <ArrowLeft className="h-5 w-5 text-gray-600" />
               </Button>
             </Link>
-            <Logo className="text-2xl text-black" textClassName="text-black" />
+            <Logo className="text-2xl text-[#722F37]" />
           </div>
           <LanguageToggle />
         </div>
@@ -156,10 +156,10 @@ export default function InscriptionProfessionnel() {
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           <div className="hidden lg:block">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-black/5 flex items-center justify-center">
-                <Briefcase className="h-5 w-5 text-black" />
+              <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
+                <Briefcase className="h-5 w-5 text-[#722F37]" />
               </div>
-              <h1 className="font-serif text-2xl text-black">
+              <h1 className="font-serif text-2xl text-[#722F37]">
                 Espace Professionnel
               </h1>
             </div>
@@ -170,14 +170,16 @@ export default function InscriptionProfessionnel() {
             <div className="space-y-4">
               {["Visibilité accrue", "Gestion de projet", "Paiements sécurisés"].map((benefit, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <Check className="h-5 w-5 text-black" />
+                  <div className="w-8 h-8 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
+                    <Check className="h-4 w-4 text-[#722F37]" />
+                  </div>
                   <span className="text-gray-700">{benefit}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <Card className="border-gray-200 shadow-xl">
+          <Card className="border border-gray-100 shadow-sm">
             <CardContent className="p-6 lg:p-8">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
@@ -283,7 +285,7 @@ export default function InscriptionProfessionnel() {
                   {/* Bouton avec Spinner (Point 3) */}
                   <Button
                     type="submit"
-                    className="w-full bg-black hover:bg-zinc-800 text-white py-6"
+                    className="w-full bg-[#722F37] hover:bg-[#5a1f25] text-white py-6"
                     disabled={registerMutation.isPending}
                   >
                     {registerMutation.isPending ? (

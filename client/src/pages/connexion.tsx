@@ -79,11 +79,11 @@ export default function Connexion() {
       <header className="bg-white border-b border-zinc-100 px-4 py-4">
         <div className="max-w-md mx-auto flex items-center justify-between">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="hover:text-[#800020]">
+            <Button variant="ghost" size="icon" className="hover:text-[#722F37]">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
-          <Logo textClassName="text-xl text-[#800020]" />
+          <Logo textClassName="text-xl text-[#722F37]" />
           <LanguageToggle />
         </div>
       </header>
@@ -91,7 +91,7 @@ export default function Connexion() {
       <main className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <h1 className="font-serif text-2xl text-[#800020] mb-2">
+            <h1 className="font-serif text-2xl text-[#722F37] mb-2">
               {t('auth.login')}
             </h1>
             <p className="text-zinc-500 text-sm">
@@ -114,7 +114,7 @@ export default function Connexion() {
                       placeholder={t('auth.emailPlaceholder')}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 h-11 border-zinc-200 focus:border-[#800020] focus:ring-[#800020]"
+                      className="pl-10 h-11 border-zinc-200 focus:border-[#722F37] focus:ring-[#722F37]"
                     />
                   </div>
                 </div>
@@ -131,7 +131,7 @@ export default function Connexion() {
                       placeholder={t('auth.passwordPlaceholder')}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 pr-10 h-11 border-zinc-200 focus:border-[#800020] focus:ring-[#800020]"
+                      className="pl-10 pr-10 h-11 border-zinc-200 focus:border-[#722F37] focus:ring-[#722F37]"
                     />
                     <button
                       type="button"
@@ -145,7 +145,7 @@ export default function Connexion() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-[#800020] hover:bg-[#600018] text-white h-12 text-base font-medium transition-all shadow-md"
+                  className="w-full bg-[#722F37] hover:bg-[#5a1f25] text-white h-12 text-base font-medium transition-all shadow-md"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -167,13 +167,13 @@ export default function Connexion() {
         <p className="text-zinc-500 text-sm">
           {t('auth.noAccount')}{" "}
           <Link href="/inscription">
-            <span className="text-[#800020] font-semibold hover:underline cursor-pointer">
+            <span className="text-[#722F37] font-semibold hover:underline cursor-pointer">
               {t('auth.createAccount')}
             </span>
           </Link>
         </p>
         <Link href="/">
-          <span className="text-xs text-zinc-400 hover:text-[#800020] uppercase tracking-widest cursor-pointer transition-colors">
+          <span className="text-xs text-zinc-400 hover:text-[#722F37] uppercase tracking-widest cursor-pointer transition-colors">
             {t('common.backToHome')}
           </span>
         </Link>
