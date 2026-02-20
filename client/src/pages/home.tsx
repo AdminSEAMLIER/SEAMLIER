@@ -8,13 +8,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TailorCard, TailorCardSkeleton } from "@/components/tailor-card";
 import { useState } from "react";
 import type { TailorWithUser } from "@shared/schema";
+import toulouseImg from "@/assets/images/toulouse.jpg";
 
 const cities = [
   { name: "Paris", image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=300&fit=crop" },
   { name: "Lyon", image: "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?w=400&h=300&fit=crop" },
   { name: "Marseille", image: "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?w=400&h=300&fit=crop" },
   { name: "Bordeaux", image: "https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=400&h=300&fit=crop" },
-  { name: "Toulouse", image: "https://images.unsplash.com/photo-1582974214784-4e2a5ad6c9c4?w=400&h=300&fit=crop" },
+  { name: "Toulouse", image: toulouseImg },
   { name: "Nice", image: "https://images.unsplash.com/photo-1491166617655-0723a0999cfc?w=400&h=300&fit=crop" },
 ];
 
