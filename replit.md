@@ -32,10 +32,16 @@ Preferred communication style: Simple, everyday language.
 - **Build**: esbuild for production server bundling
 
 ### Data Layer
-- **ORM**: Drizzle ORM with PostgreSQL dialect
-- **Schema Location**: `shared/schema.ts` (shared between client and server)
+- **ORM**: Drizzle ORM with MySQL dialect (mysql2 driver)
+- **Database**: MySQL on o2switch (podu7204_seamlier_db)
+- **Connection**: mysql2/promise pool via MYSQL_DATABASE_URL env var
+- **Schema Location**: `shared/schema.ts` (shared between client and server, uses mysqlTable)
 - **Validation**: Zod schemas generated via drizzle-zod
-- **Storage Abstraction**: `IStorage` interface in `server/storage.ts` with in-memory implementation (MemStorage)
+- **Storage Abstraction**: `IStorage` interface in `server/storage.ts` with DatabaseStorage (MySQL)
+- **ID Strategy**: App-side UUID generation (no DB defaults), all IDs are VARCHAR(36)
+- **Session Store**: express-mysql-session (creates sessions table automatically)
+- **Schema SQL**: `mysql-schema.sql` for manual table creation on o2switch phpMyAdmin
+- **Note**: MySQL does not support `.returning()` — all inserts use INSERT + SELECT pattern
 
 ### Data Models
 - **Users**: Basic user accounts with roles (client/tailor)

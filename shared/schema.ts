@@ -1,4 +1,3 @@
-import { sql } from "drizzle-orm";
 import { mysqlTable, text, varchar, int, boolean, float, timestamp, json } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -13,7 +12,7 @@ export const sessions = mysqlTable(
 );
 
 export const users = mysqlTable("users", {
-  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  id: varchar("id", { length: 36 }).primaryKey(),
   email: varchar("email", { length: 255 }).unique(),
   password: varchar("password", { length: 255 }),
   firstName: varchar("first_name", { length: 100 }),
@@ -27,7 +26,7 @@ export const users = mysqlTable("users", {
 });
 
 export const tailors = mysqlTable("tailors", {
-  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id),
   bio: text("bio"),
   specialties: json("specialties").$type<string[]>(),
@@ -42,7 +41,7 @@ export const tailors = mysqlTable("tailors", {
 });
 
 export const portfolioItems = mysqlTable("portfolio_items", {
-  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  id: varchar("id", { length: 36 }).primaryKey(),
   tailorId: varchar("tailor_id", { length: 36 }).notNull().references(() => tailors.id),
   imageUrl: text("image_url").notNull(),
   title: varchar("title", { length: 255 }).notNull(),
@@ -53,7 +52,7 @@ export const portfolioItems = mysqlTable("portfolio_items", {
 });
 
 export const products = mysqlTable("products", {
-  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  id: varchar("id", { length: 36 }).primaryKey(),
   tailorId: varchar("tailor_id", { length: 36 }).notNull().references(() => tailors.id),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
@@ -65,7 +64,7 @@ export const products = mysqlTable("products", {
 });
 
 export const reviews = mysqlTable("reviews", {
-  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  id: varchar("id", { length: 36 }).primaryKey(),
   tailorId: varchar("tailor_id", { length: 36 }).notNull().references(() => tailors.id),
   userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id),
   rating: int("rating").notNull(),
@@ -74,7 +73,7 @@ export const reviews = mysqlTable("reviews", {
 });
 
 export const conversations = mysqlTable("conversations", {
-  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  id: varchar("id", { length: 36 }).primaryKey(),
   participant1Id: varchar("participant1_id", { length: 36 }).notNull().references(() => users.id),
   participant2Id: varchar("participant2_id", { length: 36 }).notNull().references(() => users.id),
   lastMessageAt: timestamp("last_message_at"),
@@ -83,7 +82,7 @@ export const conversations = mysqlTable("conversations", {
 });
 
 export const messages = mysqlTable("messages", {
-  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  id: varchar("id", { length: 36 }).primaryKey(),
   conversationId: varchar("conversation_id", { length: 36 }).notNull().references(() => conversations.id),
   senderId: varchar("sender_id", { length: 36 }).notNull().references(() => users.id),
   content: text("content").notNull(),
@@ -92,7 +91,7 @@ export const messages = mysqlTable("messages", {
 });
 
 export const measurements = mysqlTable("measurements", {
-  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull().unique().references(() => users.id),
   neck: float("neck"),
   bust: float("bust"),
@@ -108,7 +107,7 @@ export const measurements = mysqlTable("measurements", {
 });
 
 export const projects = mysqlTable("projects", {
-  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  id: varchar("id", { length: 36 }).primaryKey(),
   tailorId: varchar("tailor_id", { length: 36 }).notNull().references(() => tailors.id),
   clientId: varchar("client_id", { length: 36 }).notNull().references(() => users.id),
   title: varchar("title", { length: 255 }).notNull(),
@@ -125,7 +124,7 @@ export const projects = mysqlTable("projects", {
 });
 
 export const appointments = mysqlTable("appointments", {
-  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  id: varchar("id", { length: 36 }).primaryKey(),
   tailorId: varchar("tailor_id", { length: 36 }).notNull().references(() => tailors.id),
   clientId: varchar("client_id", { length: 36 }).notNull().references(() => users.id),
   projectId: varchar("project_id", { length: 36 }).references(() => projects.id),
@@ -139,7 +138,7 @@ export const appointments = mysqlTable("appointments", {
 });
 
 export const adminArtisans = mysqlTable("admin_artisans", {
-  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  id: varchar("id", { length: 36 }).primaryKey(),
   firstName: varchar("first_name", { length: 100 }).notNull(),
   lastName: varchar("last_name", { length: 100 }).notNull(),
   specialty: varchar("specialty", { length: 255 }).notNull(),
@@ -166,7 +165,7 @@ export const adminArtisans = mysqlTable("admin_artisans", {
 });
 
 export const userPreferences = mysqlTable("user_preferences", {
-  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull().unique().references(() => users.id),
   emailMessages: boolean("email_messages").default(true),
   emailAppointments: boolean("email_appointments").default(true),
@@ -180,7 +179,7 @@ export const userPreferences = mysqlTable("user_preferences", {
 });
 
 export const adminSettings = mysqlTable("admin_settings", {
-  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  id: varchar("id", { length: 36 }).primaryKey(),
   key: varchar("key", { length: 255 }).notNull().unique(),
   value: text("value").notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
