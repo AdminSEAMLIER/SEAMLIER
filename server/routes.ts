@@ -1,5 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import path from "path";
 import { storage } from "./storage";
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -26,6 +27,12 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  // ===== Temporary download route =====
+  app.get("/download/dist-bundle", (req, res) => {
+    const filePath = path.resolve(process.cwd(), "dist/index.cjs");
+    res.download(filePath, "index.cjs");
+  });
 
   // ===== Professional Plan Routes =====
 
