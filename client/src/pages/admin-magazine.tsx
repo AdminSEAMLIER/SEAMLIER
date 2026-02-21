@@ -717,7 +717,7 @@ export default function AdminDashboard() {
               <Badge variant="outline" className="text-[#722F37] border-[#722F37]/20 bg-[#722F37]/5 px-3 py-1 md:hidden" data-testid="badge-admin-mode">Admin</Badge>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-400 hidden sm:inline" data-testid="text-admin-email">{ADMIN_EMAIL}</span>
+              <span className="text-xs text-gray-400 hidden sm:inline" data-testid="text-admin-email">admin@seamlier.fr</span>
               <Button variant="ghost" size="sm" className="text-red-500" onClick={handleLogout} data-testid="button-header-logout">
                 <LogOut size={16} className="mr-1.5" /> Déconnexion
               </Button>
