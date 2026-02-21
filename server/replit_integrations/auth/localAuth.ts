@@ -14,7 +14,8 @@ import { storage } from "../../storage";
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 semaine
   const MySQLStore = (mysqlSession as any)(session);
-  const dbUrl = new URL(process.env.DATABASE_URL!);
+  const rawDbUrl = (process.env.MYSQL_DATABASE_URL || process.env.DATABASE_URL || "").replace(/[?&]sslmode=[^&]*/g, "");
+  const dbUrl = new URL(rawDbUrl);
   const sessionStore = new MySQLStore({
     host: dbUrl.hostname,
     port: parseInt(dbUrl.port || "3306"),
