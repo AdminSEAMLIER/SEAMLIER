@@ -36,6 +36,9 @@ import InscriptionProfessionnel from "@/pages/inscription-professionnel";
 import Inscription from "@/pages/inscription";
 import ProfilParticulier from "@/pages/profil-particulier";
 import Connexion from "@/pages/connexion";
+import ConnexionParticulier from "@/pages/connexion-particulier";
+import ConnexionProfessionnel from "@/pages/connexion-professionnel";
+import ConnexionAdmin from "@/pages/connexion-admin";
 import MentionsLegales from "@/pages/mentions-legales";
 import Confidentialite from "@/pages/confidentialite";
 import CGV from "@/pages/cgv";
@@ -126,6 +129,9 @@ function Router() {
       {/* Public routes */}
       <Route path="/" component={Landing} />
       <Route path="/connexion" component={Connexion} />
+      <Route path="/connexion/particulier" component={ConnexionParticulier} />
+      <Route path="/connexion/professionnel" component={ConnexionProfessionnel} />
+      <Route path="/connexion/admin" component={ConnexionAdmin} />
       <Route path="/inscription" component={Inscription} />
       <Route path="/inscription/particulier" component={InscriptionParticulier} />
       <Route path="/inscription/professionnel" component={InscriptionProfessionnel} />
