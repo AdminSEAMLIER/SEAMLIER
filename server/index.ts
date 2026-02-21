@@ -3,9 +3,27 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { setupAuth } from "./replit_integrations/auth";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
+
+const projectRoot = path.resolve(__dirname, "..");
+app.get("/seamlier-mysql.zip", (_req, res) => {
+  const filePath = path.join(projectRoot, "seamlier-mysql.zip");
+  if (fs.existsSync(filePath)) return res.download(filePath);
+  res.status(404).send("File not found");
+});
+app.get("/mysql-schema.sql", (_req, res) => {
+  const filePath = path.join(projectRoot, "mysql-schema.sql");
+  if (fs.existsSync(filePath)) return res.download(filePath);
+  res.status(404).send("File not found");
+});
 
 declare module "http" {
   interface IncomingMessage {
