@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { User, Scissors, ShieldCheck, ArrowLeft } from "lucide-react";
+import { User, Scissors, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/logo";
@@ -67,19 +67,6 @@ export default function Connexion() {
               </Card>
             </Link>
 
-            <Link href="/connexion/admin">
-              <Card className="border-zinc-200 shadow-md bg-zinc-900 hover:bg-zinc-800 transition-colors cursor-pointer group" data-testid="card-login-admin">
-                <CardContent className="p-6 flex items-center gap-4">
-                  <div className="w-14 h-14 bg-[#722F37]/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-[#722F37]/30 transition-colors">
-                    <ShieldCheck className="h-7 w-7 text-[#722F37]" />
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="font-semibold text-white text-lg">{t('auth.loginAsAdmin')}</h2>
-                    <p className="text-zinc-400 text-sm mt-0.5">{t('auth.loginAsAdminDesc')}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
           </div>
         </div>
       </main>

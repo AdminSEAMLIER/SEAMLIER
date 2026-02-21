@@ -38,7 +38,6 @@ import ProfilParticulier from "@/pages/profil-particulier";
 import Connexion from "@/pages/connexion";
 import ConnexionParticulier from "@/pages/connexion-particulier";
 import ConnexionProfessionnel from "@/pages/connexion-professionnel";
-import ConnexionAdmin from "@/pages/connexion-admin";
 import MentionsLegales from "@/pages/mentions-legales";
 import Confidentialite from "@/pages/confidentialite";
 import CGV from "@/pages/cgv";
@@ -131,7 +130,6 @@ function Router() {
       <Route path="/connexion" component={Connexion} />
       <Route path="/connexion/particulier" component={ConnexionParticulier} />
       <Route path="/connexion/professionnel" component={ConnexionProfessionnel} />
-      <Route path="/connexion/admin" component={ConnexionAdmin} />
       <Route path="/inscription" component={Inscription} />
       <Route path="/inscription/particulier" component={InscriptionParticulier} />
       <Route path="/inscription/professionnel" component={InscriptionProfessionnel} />
@@ -311,16 +309,8 @@ function Router() {
       </Route>
 
       {/* Admin routes */}
-      <Route path="/admin/dashboard">
-        <ProtectedRoute>
-          <AdminDashboard />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/admin/seamlier">
-        <ProtectedRoute>
-          <AdminDashboard />
-        </ProtectedRoute>
-      </Route>
+      <Route path="/admin/dashboard" component={AdminDashboard} />
+      <Route path="/admin/seamlier" component={AdminDashboard} />
 
       <Route component={NotFound} />
     </Switch>

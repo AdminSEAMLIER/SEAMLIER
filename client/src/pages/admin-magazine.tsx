@@ -43,8 +43,6 @@ import {
 } from "@/components/ui/sidebar";
 
 const ADMIN_AUTH_KEY = "seamlier_admin_auth";
-const ADMIN_EMAIL = "admin@seamlier.fr";
-const ADMIN_PASSWORD = "seamlier2026";
 
 type Project = {
   id: string;
@@ -386,17 +384,41 @@ export default function AdminDashboard() {
 
   const [articles, setArticles] = useState<Article[]>([]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginEmail === ADMIN_EMAIL && loginPassword === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      toast({ title: "Accès autorisé", description: "Bienvenue sur la console d'administration." });
-    } else {
-      toast({ title: "Erreur d'authentification", description: "Email ou mot de passe incorrect.", variant: "destructive" });
+    setLoginLoading(true);
+    try {
+      const response = await apiFetch(API_ENDPOINTS.auth.login, {
+        method: 'POST',
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
+      const data = await response.json();
+      if (response.ok && data) {
+        if (data.role !== 'admin') {
+          toast({ title: "Accès refusé", description: "Ce compte n'a pas les droits administrateur.", variant: "destructive" });
+          setLoginLoading(false);
+          return;
+        }
+        await queryClient.invalidateQueries({ queryKey: ["auth-user"] });
+        setIsAuthenticated(true);
+        toast({ title: "Accès autorisé", description: "Bienvenue sur la console d'administration." });
+      } else {
+        toast({ title: "Erreur d'authentification", description: data?.message || "Email ou mot de passe incorrect.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de se connecter au serveur.", variant: "destructive" });
+    } finally {
+      setLoginLoading(false);
     }
   };
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
+    try {
+      await apiFetch('/api/logout');
+      await queryClient.invalidateQueries({ queryKey: ["auth-user"] });
+    } catch {}
     setIsAuthenticated(false);
     try { localStorage.removeItem(ADMIN_AUTH_KEY); } catch {}
     toast({ title: "Déconnexion", description: "Vous avez été déconnecté." });
@@ -603,8 +625,8 @@ export default function AdminDashboard() {
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full bg-[#722F37] h-12" data-testid="button-admin-login">
-                Connexion
+              <Button type="submit" className="w-full bg-[#722F37] h-12" disabled={loginLoading} data-testid="button-admin-login">
+                {loginLoading ? "Connexion en cours..." : "Connexion"}
               </Button>
             </form>
           </div>
