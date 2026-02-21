@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq, and, or, desc } from "drizzle-orm";
+import { eq, and, or, desc, sql } from "drizzle-orm";
 import { 
   users, tailors, portfolioItems, products, reviews, 
   conversations, messages, measurements, projects, appointments,
@@ -87,6 +87,14 @@ export interface IStorage {
   upsertAdminSetting(key: string, value: string): Promise<AdminSetting>;
 }
 
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
     try {
@@ -111,21 +119,18 @@ class DatabaseStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const result = await db.insert(users).values(user).returning();
-    if (!result || result.length === 0) {
-      const created = await this.getUserByEmail(user.email!);
-      if (!created) throw new Error("Failed to create user");
-      return created;
-    }
-    return result[0];
+    const id = generateUUID();
+    await db.insert(users).values({ ...user, id });
+    const created = await this.getUser(id);
+    if (!created) throw new Error("Failed to create user");
+    return created;
   }
 
   async updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined> {
-    const [user] = await db.update(users)
+    await db.update(users)
       .set({ ...updates, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning();
-    return user;
+      .where(eq(users.id, id));
+    return this.getUser(id);
   }
 
   async getTailors(): Promise<TailorWithUser[]> {
@@ -162,16 +167,18 @@ class DatabaseStorage implements IStorage {
   }
 
   async createTailor(tailor: InsertTailor): Promise<Tailor> {
-    const [created] = await db.insert(tailors).values(tailor).returning();
-    return created;
+    const id = generateUUID();
+    await db.insert(tailors).values({ ...tailor, id } as any);
+    const result = await db.select().from(tailors).where(eq(tailors.id, id));
+    return result[0];
   }
 
   async updateTailor(id: string, updates: Partial<InsertTailor>): Promise<Tailor | undefined> {
-    const [updated] = await db.update(tailors)
-      .set(updates)
-      .where(eq(tailors.id, id))
-      .returning();
-    return updated;
+    await db.update(tailors)
+      .set(updates as any)
+      .where(eq(tailors.id, id));
+    const result = await db.select().from(tailors).where(eq(tailors.id, id));
+    return result[0];
   }
 
   async getPortfolioItems(): Promise<PortfolioWithTailor[]> {
@@ -202,8 +209,10 @@ class DatabaseStorage implements IStorage {
   }
 
   async createPortfolioItem(item: InsertPortfolioItem): Promise<PortfolioItem> {
-    const [created] = await db.insert(portfolioItems).values(item).returning();
-    return created;
+    const id = generateUUID();
+    await db.insert(portfolioItems).values({ ...item, id });
+    const result = await db.select().from(portfolioItems).where(eq(portfolioItems.id, id));
+    return result[0];
   }
 
   async getProducts(): Promise<ProductWithTailor[]> {
@@ -243,8 +252,10 @@ class DatabaseStorage implements IStorage {
   }
 
   async createProduct(product: InsertProduct): Promise<Product> {
-    const [created] = await db.insert(products).values(product).returning();
-    return created;
+    const id = generateUUID();
+    await db.insert(products).values({ ...product, id });
+    const result = await db.select().from(products).where(eq(products.id, id));
+    return result[0];
   }
 
   async getReviewsByTailor(tailorId: string): Promise<ReviewWithUser[]> {
@@ -263,8 +274,10 @@ class DatabaseStorage implements IStorage {
   }
 
   async createReview(review: InsertReview): Promise<Review> {
-    const [created] = await db.insert(reviews).values(review).returning();
-    return created;
+    const id = generateUUID();
+    await db.insert(reviews).values({ ...review, id });
+    const result = await db.select().from(reviews).where(eq(reviews.id, id));
+    return result[0];
   }
 
   async getConversations(userId: string): Promise<ConversationWithParticipant[]> {
@@ -314,10 +327,10 @@ class DatabaseStorage implements IStorage {
     
     if (existing.length > 0) return existing[0];
     
-    const [created] = await db.insert(conversations)
-      .values({ participant1Id, participant2Id })
-      .returning();
-    return created;
+    const id = generateUUID();
+    await db.insert(conversations).values({ participant1Id, participant2Id, id });
+    const result = await db.select().from(conversations).where(eq(conversations.id, id));
+    return result[0];
   }
 
   async getMessages(conversationId: string): Promise<MessageWithSender[]> {
@@ -336,7 +349,8 @@ class DatabaseStorage implements IStorage {
   }
 
   async createMessage(message: InsertMessage): Promise<Message> {
-    const [created] = await db.insert(messages).values(message).returning();
+    const id = generateUUID();
+    await db.insert(messages).values({ ...message, id });
     
     await db.update(conversations)
       .set({ 
@@ -345,7 +359,8 @@ class DatabaseStorage implements IStorage {
       })
       .where(eq(conversations.id, message.conversationId));
     
-    return created;
+    const result = await db.select().from(messages).where(eq(messages.id, id));
+    return result[0];
   }
 
   async getMeasurements(userId: string): Promise<Measurements | undefined> {
@@ -359,15 +374,17 @@ class DatabaseStorage implements IStorage {
     const existing = await this.getMeasurements(data.userId);
     
     if (existing) {
-      const [updated] = await db.update(measurements)
+      await db.update(measurements)
         .set({ ...data, updatedAt: new Date() })
-        .where(eq(measurements.userId, data.userId))
-        .returning();
-      return updated;
+        .where(eq(measurements.userId, data.userId));
+      const result = await db.select().from(measurements).where(eq(measurements.userId, data.userId));
+      return result[0];
     }
     
-    const [created] = await db.insert(measurements).values(data).returning();
-    return created;
+    const id = generateUUID();
+    await db.insert(measurements).values({ ...data, id });
+    const result = await db.select().from(measurements).where(eq(measurements.id, id));
+    return result[0];
   }
 
   async getProjectsByTailor(tailorId: string): Promise<ProjectWithClient[]> {
@@ -413,16 +430,18 @@ class DatabaseStorage implements IStorage {
   }
 
   async createProject(project: InsertProject): Promise<Project> {
-    const [created] = await db.insert(projects).values(project).returning();
-    return created;
+    const id = generateUUID();
+    await db.insert(projects).values({ ...project, id });
+    const result = await db.select().from(projects).where(eq(projects.id, id));
+    return result[0];
   }
 
   async updateProject(id: string, updates: Partial<InsertProject>): Promise<Project | undefined> {
-    const [updated] = await db.update(projects)
+    await db.update(projects)
       .set({ ...updates, updatedAt: new Date() })
-      .where(eq(projects.id, id))
-      .returning();
-    return updated;
+      .where(eq(projects.id, id));
+    const result = await db.select().from(projects).where(eq(projects.id, id));
+    return result[0];
   }
 
   async getAppointmentsByTailor(tailorId: string): Promise<AppointmentWithClient[]> {
@@ -441,16 +460,18 @@ class DatabaseStorage implements IStorage {
   }
 
   async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
-    const [created] = await db.insert(appointments).values(appointment).returning();
-    return created;
+    const id = generateUUID();
+    await db.insert(appointments).values({ ...appointment, id });
+    const result = await db.select().from(appointments).where(eq(appointments.id, id));
+    return result[0];
   }
 
   async updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment | undefined> {
-    const [updated] = await db.update(appointments)
+    await db.update(appointments)
       .set(updates)
-      .where(eq(appointments.id, id))
-      .returning();
-    return updated;
+      .where(eq(appointments.id, id));
+    const result = await db.select().from(appointments).where(eq(appointments.id, id));
+    return result[0];
   }
 
   async deleteAppointment(id: string): Promise<void> {
@@ -490,28 +511,18 @@ class DatabaseStorage implements IStorage {
   }
 
   async createAdminArtisan(artisan: InsertAdminArtisan): Promise<AdminArtisan> {
-    const result = await db.insert(adminArtisans).values(artisan).returning();
-    if (result.length > 0) return result[0];
-    const all = await db.select().from(adminArtisans)
-      .where(
-        and(
-          eq(adminArtisans.firstName, artisan.firstName),
-          eq(adminArtisans.lastName, artisan.lastName)
-        )
-      )
-      .orderBy(desc(adminArtisans.createdAt))
-      .limit(1);
-    return all[0];
+    const id = generateUUID();
+    await db.insert(adminArtisans).values({ ...artisan, id });
+    const result = await db.select().from(adminArtisans).where(eq(adminArtisans.id, id));
+    return result[0];
   }
 
   async updateAdminArtisan(id: string, updates: Partial<InsertAdminArtisan>): Promise<AdminArtisan | undefined> {
-    const result = await db.update(adminArtisans)
+    await db.update(adminArtisans)
       .set(updates)
-      .where(eq(adminArtisans.id, id))
-      .returning();
-    if (result.length > 0) return result[0];
-    const [artisan] = await db.select().from(adminArtisans).where(eq(adminArtisans.id, id));
-    return artisan;
+      .where(eq(adminArtisans.id, id));
+    const result = await db.select().from(adminArtisans).where(eq(adminArtisans.id, id));
+    return result[0];
   }
 
   async deleteAdminArtisan(id: string): Promise<void> {
@@ -540,19 +551,19 @@ class DatabaseStorage implements IStorage {
     try {
       const existing = await this.getAdminSetting(key);
       if (existing) {
-        const [updated] = await db.update(adminSettings)
+        await db.update(adminSettings)
           .set({ value, updatedAt: new Date() })
-          .where(eq(adminSettings.key, key))
-          .returning();
-        return updated;
+          .where(eq(adminSettings.key, key));
+        const result = await db.select().from(adminSettings).where(eq(adminSettings.key, key));
+        return result[0];
       }
     } catch (error) {
       // Fall through to insert
     }
-    const [created] = await db.insert(adminSettings)
-      .values({ key, value })
-      .returning();
-    return created;
+    const id = generateUUID();
+    await db.insert(adminSettings).values({ key, value, id });
+    const result = await db.select().from(adminSettings).where(eq(adminSettings.id, id));
+    return result[0];
   }
 
   async getUserPreferences(userId: string): Promise<UserPreferences | undefined> {
@@ -570,19 +581,19 @@ class DatabaseStorage implements IStorage {
     try {
       const existing = await this.getUserPreferences(userId);
       if (existing) {
-        const [updated] = await db.update(userPreferences)
+        await db.update(userPreferences)
           .set({ ...prefs, updatedAt: new Date() })
-          .where(eq(userPreferences.userId, userId))
-          .returning();
-        return updated;
+          .where(eq(userPreferences.userId, userId));
+        const result = await db.select().from(userPreferences).where(eq(userPreferences.userId, userId));
+        return result[0];
       }
     } catch (error) {
       // Fall through to insert
     }
-    const [created] = await db.insert(userPreferences)
-      .values({ userId, ...prefs })
-      .returning();
-    return created;
+    const id = generateUUID();
+    await db.insert(userPreferences).values({ userId, ...prefs, id });
+    const result = await db.select().from(userPreferences).where(eq(userPreferences.id, id));
+    return result[0];
   }
 }
 

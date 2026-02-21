@@ -4,7 +4,7 @@ import session from "express-session";
 import cookieParser from "cookie-parser";
 import bcrypt from "bcrypt";
 import type { Express, RequestHandler } from "express";
-import connectPg from "connect-pg-simple";
+import mysqlSession from "express-mysql-session";
 import { authStorage } from "./storage";
 import { storage } from "../../storage";
 
@@ -12,13 +12,29 @@ import { storage } from "../../storage";
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 semaine
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: true,
-    ttl: sessionTtl,
-    tableName: "sessions",
-  });
+  const MySQLStore = mysqlSession(session as any);
+
+  const dbUrl = process.env.MYSQL_DATABASE_URL || process.env.DATABASE_URL || "";
+  const url = new URL(dbUrl);
+  const options = {
+    host: url.hostname,
+    port: parseInt(url.port || "3306"),
+    user: url.username,
+    password: url.password,
+    database: url.pathname.replace("/", ""),
+    createDatabaseTable: true,
+    schema: {
+      tableName: "sessions",
+      columnNames: {
+        session_id: "session_id",
+        expires: "expires",
+        data: "data",
+      },
+    },
+  };
+
+  const sessionStore = new MySQLStore(options);
+
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
@@ -41,7 +57,6 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Stratégie locale email/password
   passport.use(
     new LocalStrategy(
       { usernameField: "email", passwordField: "password" },
@@ -78,7 +93,6 @@ export async function setupAuth(app: Express) {
 
   // ── Routes Auth ────────────────────────────────────────────────────────────
 
-  // POST /api/login — connexion
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", async (err: any, user: any, info: any) => {
       if (err) return next(err);
@@ -105,7 +119,6 @@ export async function setupAuth(app: Express) {
     })(req, res, next);
   });
 
-  // POST /api/register — inscription
   app.post("/api/register", async (req, res, next) => {
     try {
       const { email, password, firstName, lastName, fullName, role, phone,
@@ -183,21 +196,18 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  // GET /api/logout — déconnexion
   app.get("/api/logout", (req, res) => {
     req.logout(() => {
       res.redirect("/");
     });
   });
 
-  // POST /api/logout — déconnexion (aussi en POST pour le frontend)
   app.post("/api/logout", (req, res) => {
     req.logout(() => {
       res.json({ success: true });
     });
   });
 
-  // GET /api/auth/user — utilisateur courant (compatible avec l'ancien frontend)
   app.get("/api/auth/user", (req, res) => {
     if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: "Non authentifié." });
