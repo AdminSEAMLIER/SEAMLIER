@@ -271,6 +271,7 @@
     "error": "Error",
     "fillAllFields": "Please fill in all fields",
     "choosePortal": "Choose your login portal",
+    "loginDesc": "Sign in with your email address",
     "loginAsAdmin": "Administration",
     "loginAsAdminDesc": "SEAMLIER management panel",
     "loginAsAdminButton": "Admin Login",

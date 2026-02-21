@@ -43,16 +43,6 @@ export default function ConnexionProfessionnel() {
       const data = await response.json();
 
       if (response.ok && data) {
-        if (data.role !== 'tailor') {
-          setIsLoading(false);
-          toast({
-            title: t('auth.error'),
-            description: t('auth.wrongPortalPro'),
-            variant: "destructive",
-          });
-          return;
-        }
-
         await queryClient.invalidateQueries({ queryKey: ["auth-user"] });
 
         toast({
@@ -60,7 +50,13 @@ export default function ConnexionProfessionnel() {
           description: t('auth.welcomeBack'),
         });
 
-        setLocation('/dashboard-pro');
+        if (data.role === 'admin') {
+          setLocation('/admin/dashboard');
+        } else if (data.role === 'tailor') {
+          setLocation('/dashboard-pro');
+        } else {
+          setLocation('/dashboard-client');
+        }
       } else {
         toast({
           title: t('auth.error'),

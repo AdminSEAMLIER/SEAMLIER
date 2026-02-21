@@ -271,6 +271,7 @@
     "error": "Erreur",
     "fillAllFields": "Veuillez remplir tous les champs",
     "choosePortal": "Choisissez votre espace de connexion",
+    "loginDesc": "Connectez-vous avec votre adresse email",
     "loginAsAdmin": "Administration",
     "loginAsAdminDesc": "Panneau de gestion SEAMLIER",
     "loginAsAdminButton": "Connexion Administration",
