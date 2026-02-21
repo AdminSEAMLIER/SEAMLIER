@@ -1,6 +1,7 @@
 import { users, type User, type UpsertUser, type InsertUser } from "@shared/schema";
 import { db } from "../../db";
 import { eq } from "drizzle-orm";
+import { randomUUID } from "crypto";
 
 export interface IAuthStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -12,42 +13,46 @@ export interface IAuthStorage {
 
 class AuthStorage implements IAuthStorage {
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0];
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
+    const result = await db.select().from(users).where(eq(users.email, email));
+    return result[0];
   }
 
   async createUser(userData: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(userData).returning();
-    return user;
+    const id = randomUUID();
+    await db.insert(users).values({ ...userData, id });
+    const result = await db.select().from(users).where(eq(users.id, id));
+    if (!result[0]) throw new Error("Failed to create user");
+    return result[0];
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return user;
+    if (userData.id) {
+      const existing = await this.getUser(userData.id);
+      if (existing) {
+        await db.update(users)
+          .set({ ...userData, updatedAt: new Date() })
+          .where(eq(users.id, userData.id));
+        const result = await db.select().from(users).where(eq(users.id, userData.id));
+        return result[0];
+      }
+    }
+    const id = userData.id || randomUUID();
+    await db.insert(users).values({ ...userData, id });
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0];
   }
 
   async updateUserRole(id: string, role: string): Promise<User | undefined> {
-    const [user] = await db
-      .update(users)
-      .set({ role: role as "client" | "tailor", updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning();
-    return user;
+    await db.update(users)
+      .set({ role, updatedAt: new Date() })
+      .where(eq(users.id, id));
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0];
   }
 }
 

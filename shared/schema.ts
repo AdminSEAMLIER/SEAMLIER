@@ -1,176 +1,173 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, real, timestamp, index, jsonb } from "drizzle-orm/pg-core";
+import { mysqlTable, text, varchar, int, boolean, float, datetime, index, json, char } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Session storage table for Replit Auth
-export const sessions = pgTable(
+export const sessions = mysqlTable(
   "sessions",
   {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
-    expire: timestamp("expire").notNull(),
-  },
-  (table) => [index("IDX_session_expire").on(table.expire)]
+    session_id: varchar("session_id", { length: 128 }).primaryKey(),
+    expires: int("expires").notNull(),
+    data: text("data"),
+  }
 );
 
-// User storage table for Replit Auth
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
-  password: varchar("password"),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  profileImageUrl: varchar("profile_image_url"),
-  phone: text("phone"),
-  role: text("role").notNull().default("client"),
-  location: text("location"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+export const users = mysqlTable("users", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  email: varchar("email", { length: 255 }).unique(),
+  password: varchar("password", { length: 255 }),
+  firstName: varchar("first_name", { length: 100 }),
+  lastName: varchar("last_name", { length: 100 }),
+  profileImageUrl: varchar("profile_image_url", { length: 500 }),
+  phone: varchar("phone", { length: 50 }),
+  role: varchar("role", { length: 20 }).notNull().default("client"),
+  location: varchar("location", { length: 255 }),
+  createdAt: datetime("created_at").default(sql`NOW()`),
+  updatedAt: datetime("updated_at").default(sql`NOW()`),
 });
 
-export const tailors = pgTable("tailors", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
+export const tailors = mysqlTable("tailors", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  userId: char("user_id", { length: 36 }).notNull().references(() => users.id),
   bio: text("bio"),
-  specialties: text("specialties").array(),
-  experience: integer("experience"),
+  specialties: json("specialties").$type<string[]>(),
+  experience: int("experience"),
   coverImageUrl: text("cover_image_url"),
   isVerified: boolean("is_verified").default(false),
-  rating: real("rating").default(0),
-  reviewCount: integer("review_count").default(0),
-  portfolioCount: integer("portfolio_count").default(0),
-  subscriptionPlan: text("subscription_plan").default("Starter"),
-  createdAt: timestamp("created_at").defaultNow(),
+  rating: float("rating").default(0),
+  reviewCount: int("review_count").default(0),
+  portfolioCount: int("portfolio_count").default(0),
+  subscriptionPlan: varchar("subscription_plan", { length: 50 }).default("Starter"),
+  createdAt: datetime("created_at").default(sql`NOW()`),
 });
 
-export const portfolioItems = pgTable("portfolio_items", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  tailorId: varchar("tailor_id").notNull().references(() => tailors.id),
+export const portfolioItems = mysqlTable("portfolio_items", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  tailorId: char("tailor_id", { length: 36 }).notNull().references(() => tailors.id),
   imageUrl: text("image_url").notNull(),
-  title: text("title").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  category: text("category"),
-  likesCount: integer("likes_count").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
+  category: varchar("category", { length: 100 }),
+  likesCount: int("likes_count").default(0),
+  createdAt: datetime("created_at").default(sql`NOW()`),
 });
 
-export const products = pgTable("products", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  tailorId: varchar("tailor_id").notNull().references(() => tailors.id),
-  title: text("title").notNull(),
+export const products = mysqlTable("products", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  tailorId: char("tailor_id", { length: 36 }).notNull().references(() => tailors.id),
+  title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  price: real("price").notNull(),
+  price: float("price").notNull(),
   imageUrl: text("image_url").notNull(),
-  category: text("category"),
+  category: varchar("category", { length: 100 }),
   inStock: boolean("in_stock").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: datetime("created_at").default(sql`NOW()`),
 });
 
-export const reviews = pgTable("reviews", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  tailorId: varchar("tailor_id").notNull().references(() => tailors.id),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  rating: integer("rating").notNull(),
+export const reviews = mysqlTable("reviews", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  tailorId: char("tailor_id", { length: 36 }).notNull().references(() => tailors.id),
+  userId: char("user_id", { length: 36 }).notNull().references(() => users.id),
+  rating: int("rating").notNull(),
   comment: text("comment"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: datetime("created_at").default(sql`NOW()`),
 });
 
-export const conversations = pgTable("conversations", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  participant1Id: varchar("participant1_id").notNull().references(() => users.id),
-  participant2Id: varchar("participant2_id").notNull().references(() => users.id),
-  lastMessageAt: timestamp("last_message_at"),
+export const conversations = mysqlTable("conversations", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  participant1Id: char("participant1_id", { length: 36 }).notNull().references(() => users.id),
+  participant2Id: char("participant2_id", { length: 36 }).notNull().references(() => users.id),
+  lastMessageAt: datetime("last_message_at"),
   lastMessagePreview: text("last_message_preview"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: datetime("created_at").default(sql`NOW()`),
 });
 
-export const messages = pgTable("messages", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  conversationId: varchar("conversation_id").notNull().references(() => conversations.id),
-  senderId: varchar("sender_id").notNull().references(() => users.id),
+export const messages = mysqlTable("messages", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  conversationId: char("conversation_id", { length: 36 }).notNull().references(() => conversations.id),
+  senderId: char("sender_id", { length: 36 }).notNull().references(() => users.id),
   content: text("content").notNull(),
-  sentAt: timestamp("sent_at").defaultNow(),
+  sentAt: datetime("sent_at").default(sql`NOW()`),
   isRead: boolean("is_read").default(false),
 });
 
-export const measurements = pgTable("measurements", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().unique().references(() => users.id),
-  neck: real("neck"),
-  bust: real("bust"),
-  waist: real("waist"),
-  hips: real("hips"),
-  shoulders: real("shoulders"),
-  armLength: real("arm_length"),
-  backLength: real("back_length"),
-  inseam: real("inseam"),
-  height: real("height"),
-  weight: real("weight"),
-  updatedAt: timestamp("updated_at").defaultNow(),
+export const measurements = mysqlTable("measurements", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  userId: char("user_id", { length: 36 }).notNull().unique().references(() => users.id),
+  neck: float("neck"),
+  bust: float("bust"),
+  waist: float("waist"),
+  hips: float("hips"),
+  shoulders: float("shoulders"),
+  armLength: float("arm_length"),
+  backLength: float("back_length"),
+  inseam: float("inseam"),
+  height: float("height"),
+  weight: float("weight"),
+  updatedAt: datetime("updated_at").default(sql`NOW()`),
 });
 
-export const projects = pgTable("projects", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  tailorId: varchar("tailor_id").notNull().references(() => tailors.id),
-  clientId: varchar("client_id").notNull().references(() => users.id),
-  title: text("title").notNull(),
+export const projects = mysqlTable("projects", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  tailorId: char("tailor_id", { length: 36 }).notNull().references(() => tailors.id),
+  clientId: char("client_id", { length: 36 }).notNull().references(() => users.id),
+  title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  status: text("status").notNull().default("pending"),
-  progress: integer("progress").default(0),
-  currentStep: text("current_step").default("prise_mesures"),
-  amount: real("amount"),
-  deadline: timestamp("deadline"),
+  status: varchar("status", { length: 50 }).notNull().default("pending"),
+  progress: int("progress").default(0),
+  currentStep: varchar("current_step", { length: 50 }).default("prise_mesures"),
+  amount: float("amount"),
+  deadline: datetime("deadline"),
   modelPhotoUrl: text("model_photo_url"),
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: datetime("created_at").default(sql`NOW()`),
+  updatedAt: datetime("updated_at").default(sql`NOW()`),
 });
 
-export const appointments = pgTable("appointments", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  tailorId: varchar("tailor_id").notNull().references(() => tailors.id),
-  clientId: varchar("client_id").notNull().references(() => users.id),
-  projectId: varchar("project_id").references(() => projects.id),
-  type: text("type").notNull(),
-  location: text("location"),
-  scheduledAt: timestamp("scheduled_at").notNull(),
-  duration: integer("duration").default(60),
+export const appointments = mysqlTable("appointments", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  tailorId: char("tailor_id", { length: 36 }).notNull().references(() => tailors.id),
+  clientId: char("client_id", { length: 36 }).notNull().references(() => users.id),
+  projectId: char("project_id", { length: 36 }).references(() => projects.id),
+  type: varchar("type", { length: 100 }).notNull(),
+  location: varchar("location", { length: 255 }),
+  scheduledAt: datetime("scheduled_at").notNull(),
+  duration: int("duration").default(60),
   notes: text("notes"),
-  status: text("status").notNull().default("scheduled"),
-  createdAt: timestamp("created_at").defaultNow(),
+  status: varchar("status", { length: 50 }).notNull().default("scheduled"),
+  createdAt: datetime("created_at").default(sql`NOW()`),
 });
 
-export const adminArtisans = pgTable("admin_artisans", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  firstName: varchar("first_name").notNull(),
-  lastName: varchar("last_name").notNull(),
-  specialty: text("specialty").notNull(),
-  status: text("status").notNull().default("En attente"),
-  city: text("city").notNull(),
-  email: text("email"),
-  phone: text("phone"),
-  birthDate: text("birth_date"),
-  nationality: text("nationality"),
-  idType: text("id_type"),
-  idNumber: text("id_number"),
+export const adminArtisans = mysqlTable("admin_artisans", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  firstName: varchar("first_name", { length: 100 }).notNull(),
+  lastName: varchar("last_name", { length: 100 }).notNull(),
+  specialty: varchar("specialty", { length: 255 }).notNull(),
+  status: varchar("status", { length: 50 }).notNull().default("En attente"),
+  city: varchar("city", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 50 }),
+  birthDate: varchar("birth_date", { length: 20 }),
+  nationality: varchar("nationality", { length: 100 }),
+  idType: varchar("id_type", { length: 50 }),
+  idNumber: varchar("id_number", { length: 100 }),
   address: text("address"),
-  siret: text("siret"),
-  companyName: text("company_name"),
-  legalForm: text("legal_form"),
-  tvaNumber: text("tva_number"),
-  iban: text("iban"),
-  yearsExperience: integer("years_experience"),
+  siret: varchar("siret", { length: 50 }),
+  companyName: varchar("company_name", { length: 255 }),
+  legalForm: varchar("legal_form", { length: 100 }),
+  tvaNumber: varchar("tva_number", { length: 50 }),
+  iban: varchar("iban", { length: 50 }),
+  yearsExperience: int("years_experience"),
   bio: text("bio"),
-  joinDate: text("join_date"),
-  subscriptionPlan: text("subscription_plan").default("Starter"),
-  paymentStatus: text("payment_status").default("En attente"),
-  createdAt: timestamp("created_at").defaultNow(),
+  joinDate: varchar("join_date", { length: 20 }),
+  subscriptionPlan: varchar("subscription_plan", { length: 50 }).default("Starter"),
+  paymentStatus: varchar("payment_status", { length: 50 }).default("En attente"),
+  createdAt: datetime("created_at").default(sql`NOW()`),
 });
 
-export const userPreferences = pgTable("user_preferences", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().unique().references(() => users.id),
+export const userPreferences = mysqlTable("user_preferences", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  userId: char("user_id", { length: 36 }).notNull().unique().references(() => users.id),
   emailMessages: boolean("email_messages").default(true),
   emailAppointments: boolean("email_appointments").default(true),
   emailPromotions: boolean("email_promotions").default(false),
@@ -179,14 +176,14 @@ export const userPreferences = pgTable("user_preferences", {
   pushAppointments: boolean("push_appointments").default(true),
   pushPromotions: boolean("push_promotions").default(false),
   pushOrders: boolean("push_orders").default(true),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: datetime("updated_at").default(sql`NOW()`),
 });
 
-export const adminSettings = pgTable("admin_settings", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  key: varchar("key").notNull().unique(),
+export const adminSettings = mysqlTable("admin_settings", {
+  id: char("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  key: varchar("key", { length: 255 }).notNull().unique(),
   value: text("value").notNull(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: datetime("updated_at").default(sql`NOW()`),
 });
 
 // Insert schemas

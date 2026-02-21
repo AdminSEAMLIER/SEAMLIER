@@ -4,7 +4,8 @@ import session from "express-session";
 import cookieParser from "cookie-parser";
 import bcrypt from "bcrypt";
 import type { Express, RequestHandler } from "express";
-import connectPg from "connect-pg-simple";
+import mysqlSession from "express-mysql-session";
+import mysql from "mysql2/promise";
 import { authStorage } from "./storage";
 import { storage } from "../../storage";
 
@@ -12,12 +13,24 @@ import { storage } from "../../storage";
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 semaine
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
-    ttl: sessionTtl,
-    tableName: "sessions",
+  const MySQLStore = (mysqlSession as any)(session);
+  const dbUrl = new URL(process.env.DATABASE_URL!);
+  const sessionStore = new MySQLStore({
+    host: dbUrl.hostname,
+    port: parseInt(dbUrl.port || "3306"),
+    user: dbUrl.username,
+    password: dbUrl.password,
+    database: dbUrl.pathname.replace("/", ""),
+    createDatabaseTable: true,
+    schema: {
+      tableName: "sessions",
+      columnNames: {
+        session_id: "session_id",
+        expires: "expires",
+        data: "data",
+      },
+    },
+    expiration: sessionTtl,
   });
   return session({
     secret: process.env.SESSION_SECRET!,
