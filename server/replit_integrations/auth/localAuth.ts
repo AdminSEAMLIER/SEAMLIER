@@ -85,16 +85,21 @@ export async function setupAuth(app: Express) {
       if (!user) {
         return res.status(401).json({ message: info?.message || "Identifiants invalides." });
       }
-      req.logIn(user, (loginErr) => {
-        if (loginErr) return next(loginErr);
-        return res.json({
-          success: true,
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-          profileImageUrl: user.profileImageUrl,
+      req.session.regenerate((regenerateErr) => {
+        if (regenerateErr) return next(regenerateErr);
+        req.logIn(user, (loginErr) => {
+          if (loginErr) return next(loginErr);
+          req.session.save(() => {
+            return res.json({
+              success: true,
+              id: user.id,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              role: user.role,
+              profileImageUrl: user.profileImageUrl,
+            });
+          });
         });
       });
     })(req, res, next);
