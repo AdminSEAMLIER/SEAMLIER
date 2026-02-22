@@ -42,7 +42,14 @@ export default function Connexion() {
       const data = await response.json();
 
       if (response.ok && data) {
-        await queryClient.invalidateQueries({ queryKey: ["auth-user"] });
+        queryClient.setQueryData(["auth-user"], {
+          id: data.id,
+          email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          role: data.role,
+          profileImageUrl: data.profileImageUrl,
+        });
 
         toast({
           title: t('auth.loginSuccess'),
