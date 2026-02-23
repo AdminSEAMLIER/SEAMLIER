@@ -220,6 +220,8 @@ export async function setupAuth(app: Express) {
       lastName: user.lastName,
       role: user.role,
       profileImageUrl: user.profileImageUrl,
+      phone: user.phone || null,
+      location: user.location || null,
     });
   });
 }

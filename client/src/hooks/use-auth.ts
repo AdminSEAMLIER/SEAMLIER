@@ -3,12 +3,14 @@ import { useLocation } from "wouter";
 import { API_ENDPOINTS, apiFetch } from "@/lib/api-config";
 
 interface User {
-  id: number;
+  id: string;
   firstName: string;
   lastName: string;
   email: string;
   role: string;
   profileImageUrl?: string;
+  phone?: string;
+  location?: string;
 }
 
 async function fetchUser(): Promise<User | null> {
