@@ -42,7 +42,7 @@ export default function Inscription() {
         <div className="grid sm:grid-cols-2 gap-6">
           <Card
             className="border-2 border-border hover:border-[#722F37] transition-colors cursor-pointer group"
-            onClick={() => setLocation('/particulier')}
+            onClick={() => setLocation('/inscription/particulier')}
             data-testid="card-inscription-particulier"
           >
             <CardContent className="p-8 text-center">
@@ -63,7 +63,7 @@ export default function Inscription() {
 
           <Card
             className="border-2 border-border hover:border-[#722F37] transition-colors cursor-pointer group"
-            onClick={() => setLocation('/professionnel')}
+            onClick={() => setLocation('/inscription/professionnel')}
             data-testid="card-inscription-professionnel"
           >
             <CardContent className="p-8 text-center">

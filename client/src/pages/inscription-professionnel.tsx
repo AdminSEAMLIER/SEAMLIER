@@ -114,13 +114,18 @@ export default function InscriptionProfessionnel() {
       }
       return result;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["auth-user"] });
+    onSuccess: (result) => {
+      queryClient.setQueryData(["auth-user"], {
+        id: result.id,
+        email: result.email,
+        firstName: result.firstName,
+        lastName: result.lastName,
+        role: result.role,
+      });
       toast({
         title: "Compte créé avec succès",
-        description: "Redirection vers le paiement d'adhésion...",
+        description: "Redirection vers votre tableau de bord...",
       });
-      // Point 2 & 4: Redirection vers le dashboard (ou Stripe si configuré)
       setLocation("/dashboard-pro");
     },
     onError: (error: Error) => {

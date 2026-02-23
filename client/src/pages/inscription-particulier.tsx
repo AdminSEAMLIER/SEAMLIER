@@ -72,8 +72,14 @@ export default function InscriptionParticulier() {
       }
       return result;
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["auth-user"] });
+    onSuccess: (result) => {
+      queryClient.setQueryData(["auth-user"], {
+        id: result.id,
+        email: result.email,
+        firstName: result.firstName,
+        lastName: result.lastName,
+        role: result.role,
+      });
       toast({
         title: t('auth.accountCreated'),
         description: t('auth.welcomeDesc'),
