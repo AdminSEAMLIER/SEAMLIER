@@ -55,33 +55,98 @@ export async function sendVerificationEmail(
   const html = `
 <!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;font-family:Inter,Arial,sans-serif;background:#faf9f7">
-  <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-    <div style="background:#722F37;padding:32px;text-align:center">
-      <h1 style="color:#fff;font-family:'Playfair Display',Georgia,serif;font-size:28px;margin:0">SEAMLIER</h1>
-      <p style="color:rgba(255,255,255,0.8);font-size:14px;margin:8px 0 0">L'art de la couture locale</p>
-    </div>
-    <div style="padding:40px 32px">
-      <h2 style="color:#722F37;font-size:22px;margin:0 0 16px">Bienvenue ${name} !</h2>
-      <p style="color:#4b5563;line-height:1.6;margin:0 0 24px">
-        Merci de vous être inscrit(e) sur SEAMLIER. Pour activer votre compte et commencer à utiliser la plateforme, veuillez confirmer votre adresse email en cliquant sur le bouton ci-dessous :
-      </p>
-      <div style="text-align:center;margin:32px 0">
-        <a href="${verifyUrl}" style="display:inline-block;background:#722F37;color:#fff;text-decoration:none;padding:14px 40px;border-radius:8px;font-weight:600;font-size:16px">
-          Confirmer mon email
-        </a>
-      </div>
-      <p style="color:#9ca3af;font-size:13px;line-height:1.5;margin:24px 0 0">
-        Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br>
-        <a href="${verifyUrl}" style="color:#722F37;word-break:break-all">${verifyUrl}</a>
-      </p>
-      <p style="color:#9ca3af;font-size:13px;margin:16px 0 0">Ce lien expire dans 24 heures.</p>
-    </div>
-    <div style="background:#f9fafb;padding:20px 32px;text-align:center;border-top:1px solid #e5e7eb">
-      <p style="color:#9ca3af;font-size:12px;margin:0">© SEAMLIER – L'art de la couture locale et simplifiée.</p>
-    </div>
-  </div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmez votre email - Seamlier</title>
+  <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+</head>
+<body style="margin:0;padding:0;background-color:#f5f3f0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f5f3f0">
+    <tr>
+      <td align="center" style="padding:40px 16px">
+        <table role="presentation" width="580" cellspacing="0" cellpadding="0" border="0" style="max-width:580px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.06)">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#722F37;padding:36px 40px;text-align:center">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center">
+                    <div style="width:48px;height:48px;border:2px solid rgba(255,255,255,0.3);border-radius:50%;margin:0 auto 16px;line-height:48px;text-align:center">
+                      <span style="color:#ffffff;font-size:20px;font-family:Georgia,'Times New Roman',serif;font-style:italic">S</span>
+                    </div>
+                    <h1 style="margin:0;color:#ffffff;font-family:Georgia,'Times New Roman','Playfair Display',serif;font-size:26px;font-weight:400;letter-spacing:3px">SEAMLIER</h1>
+                    <div style="width:40px;height:1px;background-color:rgba(255,255,255,0.35);margin:12px auto 0"></div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:44px 40px 36px">
+              <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,'Times New Roman','Playfair Display',serif;font-size:22px;font-weight:400">Bienvenue, ${name}</h2>
+              <div style="width:32px;height:2px;background-color:#722F37;margin:0 0 24px"></div>
+              <p style="margin:0 0 28px;color:#4b5563;font-size:15px;line-height:1.7">
+                Merci de rejoindre <strong style="color:#1f2937">Seamlier</strong>, la plateforme qui connecte les particuliers avec les meilleurs artisans couturiers.
+              </p>
+              <p style="margin:0 0 32px;color:#4b5563;font-size:15px;line-height:1.7">
+                Pour activer votre compte et commencer votre experience, veuillez confirmer votre adresse email :
+              </p>
+
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center" style="padding:8px 0 36px">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td style="background-color:#722F37;border-radius:8px">
+                          <a href="${verifyUrl}" target="_blank" style="display:inline-block;padding:16px 48px;color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none;letter-spacing:0.5px">
+                            Activer mon compte
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Separator -->
+              <div style="width:100%;height:1px;background-color:#e5e7eb;margin:0 0 24px"></div>
+
+              <!-- Fallback link -->
+              <p style="margin:0 0 6px;color:#9ca3af;font-size:12px;line-height:1.5">
+                Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :
+              </p>
+              <p style="margin:0 0 20px;font-size:12px;line-height:1.5;word-break:break-all">
+                <a href="${verifyUrl}" style="color:#722F37;text-decoration:underline">${verifyUrl}</a>
+              </p>
+              <p style="margin:0;color:#d1d5db;font-size:11px;font-style:italic">Ce lien est valable 24 heures.</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#faf9f7;padding:28px 40px;border-top:1px solid #f0eeeb">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center">
+                    <p style="margin:0 0 8px;color:#722F37;font-family:Georgia,'Times New Roman','Playfair Display',serif;font-size:14px;font-weight:400;letter-spacing:2px">SEAMLIER</p>
+                    <p style="margin:0 0 12px;color:#9ca3af;font-size:12px;line-height:1.5">L'art de la couture locale</p>
+                    <a href="https://www.seamlier.fr" style="color:#722F37;font-size:12px;text-decoration:none">www.seamlier.fr</a>
+                    <p style="margin:16px 0 0;color:#d1d5db;font-size:11px">&copy; 2026 Seamlier. Tous droits r&eacute;serv&eacute;s.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
 
