@@ -94,6 +94,7 @@ export async function registerRoutes(
       }
       res.json(tailor);
     } catch (error) {
+      console.error("Failed to fetch tailor:", error);
       res.status(500).json({ error: "Failed to fetch tailor" });
     }
   });
@@ -103,6 +104,7 @@ export async function registerRoutes(
       const portfolio = await storage.getPortfolioItemsByTailor(req.params.id);
       res.json(portfolio);
     } catch (error) {
+      console.error("Failed to fetch portfolio:", error);
       res.status(500).json({ error: "Failed to fetch portfolio" });
     }
   });
@@ -112,6 +114,7 @@ export async function registerRoutes(
       const products = await storage.getProductsByTailor(req.params.id);
       res.json(products);
     } catch (error) {
+      console.error("Failed to fetch products:", error);
       res.status(500).json({ error: "Failed to fetch products" });
     }
   });
@@ -121,6 +124,7 @@ export async function registerRoutes(
       const reviews = await storage.getReviewsByTailor(req.params.id);
       res.json(reviews);
     } catch (error) {
+      console.error("Failed to fetch reviews:", error);
       res.status(500).json({ error: "Failed to fetch reviews" });
     }
   });
@@ -131,6 +135,7 @@ export async function registerRoutes(
       const portfolio = await storage.getPortfolioItems();
       res.json(portfolio);
     } catch (error) {
+      console.error("Failed to fetch portfolio:", error);
       res.status(500).json({ error: "Failed to fetch portfolio" });
     }
   });
@@ -141,6 +146,7 @@ export async function registerRoutes(
       const products = await storage.getProducts();
       res.json(products);
     } catch (error) {
+      console.error("Failed to fetch products:", error);
       res.status(500).json({ error: "Failed to fetch products" });
     }
   });
@@ -153,6 +159,7 @@ export async function registerRoutes(
       }
       res.json(product);
     } catch (error) {
+      console.error("Failed to fetch product:", error);
       res.status(500).json({ error: "Failed to fetch product" });
     }
   });
@@ -184,6 +191,7 @@ export async function registerRoutes(
       const prefs = await storage.getUserPreferences(userId);
       res.json(prefs || {});
     } catch (error) {
+      console.error("Failed to fetch preferences:", error);
       res.status(500).json({ error: "Failed to fetch preferences" });
     }
   });
@@ -194,6 +202,7 @@ export async function registerRoutes(
       const prefs = await storage.upsertUserPreferences(userId, req.body);
       res.json(prefs);
     } catch (error) {
+      console.error("Failed to save preferences:", error);
       res.status(500).json({ error: "Failed to save preferences" });
     }
   });
@@ -208,6 +217,7 @@ export async function registerRoutes(
       }
       res.json(user);
     } catch (error) {
+      console.error("Failed to fetch user:", error);
       res.status(500).json({ error: "Failed to fetch user" });
     }
   });
@@ -222,6 +232,7 @@ export async function registerRoutes(
       }
       res.json(user);
     } catch (error) {
+      console.error("Failed to update user:", error);
       res.status(500).json({ error: "Failed to update user" });
     }
   });
@@ -236,6 +247,7 @@ export async function registerRoutes(
       }
       res.json(tailor);
     } catch (error) {
+      console.error("Failed to fetch tailor profile:", error);
       res.status(500).json({ error: "Failed to fetch tailor profile" });
     }
   });
@@ -282,6 +294,7 @@ export async function registerRoutes(
       const updated = await storage.updateTailor(tailor.id, { bio, specialties, experience, coverImageUrl });
       res.json(updated);
     } catch (error) {
+      console.error("Failed to update tailor profile:", error);
       res.status(500).json({ error: "Failed to update tailor profile" });
     }
   });
@@ -293,6 +306,7 @@ export async function registerRoutes(
       const conversations = await storage.getConversations(userId);
       res.json(conversations);
     } catch (error) {
+      console.error("Failed to fetch conversations:", error);
       res.status(500).json({ error: "Failed to fetch conversations" });
     }
   });
@@ -304,6 +318,7 @@ export async function registerRoutes(
       const conversation = await storage.getOrCreateConversation(userId, participantId);
       res.json(conversation);
     } catch (error) {
+      console.error("Failed to create conversation:", error);
       res.status(500).json({ error: "Failed to create conversation" });
     }
   });
@@ -313,6 +328,7 @@ export async function registerRoutes(
       const messages = await storage.getMessages(req.params.conversationId);
       res.json(messages);
     } catch (error) {
+      console.error("Failed to fetch messages:", error);
       res.status(500).json({ error: "Failed to fetch messages" });
     }
   });
@@ -326,6 +342,7 @@ export async function registerRoutes(
       });
       res.status(201).json(message);
     } catch (error) {
+      console.error("Failed to send message:", error);
       res.status(500).json({ error: "Failed to send message" });
     }
   });
@@ -337,6 +354,7 @@ export async function registerRoutes(
       const measurements = await storage.getMeasurements(userId);
       res.json(measurements || null);
     } catch (error) {
+      console.error("Failed to fetch measurements:", error);
       res.status(500).json({ error: "Failed to fetch measurements" });
     }
   });
@@ -376,6 +394,7 @@ export async function registerRoutes(
       const projects = await storage.getProjectsByTailor(tailor.id);
       res.json(projects);
     } catch (error) {
+      console.error("Failed to fetch projects:", error);
       res.status(500).json({ error: "Failed to fetch projects" });
     }
   });
@@ -419,6 +438,7 @@ export async function registerRoutes(
       }
       res.json(project);
     } catch (error) {
+      console.error("Failed to fetch project:", error);
       res.status(500).json({ error: "Failed to fetch project" });
     }
   });
@@ -455,6 +475,7 @@ export async function registerRoutes(
       });
       res.status(201).json(project);
     } catch (error) {
+      console.error("Failed to create project:", error);
       res.status(500).json({ error: "Failed to create project" });
     }
   });
@@ -467,6 +488,7 @@ export async function registerRoutes(
       }
       res.json(project);
     } catch (error) {
+      console.error("Failed to update project:", error);
       res.status(500).json({ error: "Failed to update project" });
     }
   });
@@ -482,6 +504,7 @@ export async function registerRoutes(
       const appointments = await storage.getAppointmentsByTailor(tailor.id);
       res.json(appointments);
     } catch (error) {
+      console.error("Failed to fetch appointments:", error);
       res.status(500).json({ error: "Failed to fetch appointments" });
     }
   });
@@ -499,6 +522,7 @@ export async function registerRoutes(
       });
       res.status(201).json(appointment);
     } catch (error) {
+      console.error("Failed to create appointment:", error);
       res.status(500).json({ error: "Failed to create appointment" });
     }
   });
@@ -511,6 +535,7 @@ export async function registerRoutes(
       }
       res.json(appointment);
     } catch (error) {
+      console.error("Failed to update appointment:", error);
       res.status(500).json({ error: "Failed to update appointment" });
     }
   });
@@ -520,6 +545,7 @@ export async function registerRoutes(
       await storage.deleteAppointment(req.params.id);
       res.status(204).send();
     } catch (error) {
+      console.error("Failed to delete appointment:", error);
       res.status(500).json({ error: "Failed to delete appointment" });
     }
   });
@@ -538,6 +564,7 @@ export async function registerRoutes(
       });
       res.status(201).json(item);
     } catch (error) {
+      console.error("Failed to add portfolio item:", error);
       res.status(500).json({ error: "Failed to add portfolio item" });
     }
   });
@@ -556,6 +583,7 @@ export async function registerRoutes(
       });
       res.status(201).json(product);
     } catch (error) {
+      console.error("Failed to create product:", error);
       res.status(500).json({ error: "Failed to create product" });
     }
   });
@@ -570,6 +598,7 @@ export async function registerRoutes(
       });
       res.status(201).json(review);
     } catch (error) {
+      console.error("Failed to create review:", error);
       res.status(500).json({ error: "Failed to create review" });
     }
   });

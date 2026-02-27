@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `password` VARCHAR(255) DEFAULT NULL,
   `first_name` VARCHAR(100) DEFAULT NULL,
   `last_name` VARCHAR(100) DEFAULT NULL,
-  `profile_image_url` VARCHAR(500) DEFAULT NULL,
+  `profile_image_url` MEDIUMTEXT DEFAULT NULL,
   `phone` TEXT DEFAULT NULL,
   `role` TEXT NOT NULL DEFAULT 'client',
   `location` TEXT DEFAULT NULL,
