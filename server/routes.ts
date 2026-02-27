@@ -649,7 +649,68 @@ export async function registerRoutes(
 
   app.post("/api/admin/artisans", requireAdmin, async (req, res) => {
     try {
-      const artisan = await storage.createAdminArtisan(req.body);
+      const { firstName, lastName, email, phone, specialty, city, bio,
+              yearsExperience, siret, companyName, subscriptionPlan, ...rest } = req.body;
+
+      const artisan = await storage.createAdminArtisan({
+        firstName, lastName, email, phone, specialty, city, bio,
+        yearsExperience, siret, companyName, subscriptionPlan,
+        ...rest,
+      });
+
+      if (email) {
+        try {
+          const existingUser = await storage.getUserByEmail(email);
+          if (!existingUser) {
+            const bcrypt = await import("bcrypt");
+            const tempPassword = await bcrypt.hash("Seamlier2026!", 12);
+            const newUser = await storage.createUser({
+              email,
+              password: tempPassword,
+              firstName: firstName || null,
+              lastName: lastName || null,
+              role: "tailor",
+              profileImageUrl: null,
+              phone: phone || null,
+              location: city || null,
+            });
+
+            await storage.createTailor({
+              userId: newUser.id,
+              bio: bio || null,
+              specialties: specialty ? [specialty] : [],
+              experience: parseInt(yearsExperience) || 0,
+              coverImageUrl: null,
+              isVerified: false,
+              rating: 0,
+              reviewCount: 0,
+              portfolioCount: 0,
+              subscriptionPlan: subscriptionPlan || "Starter",
+            });
+            console.log(`Created user+tailor for admin artisan: ${email}`);
+          } else {
+            const existingTailor = await storage.getTailorByUserId(existingUser.id);
+            if (!existingTailor) {
+              await storage.createTailor({
+                userId: existingUser.id,
+                bio: bio || null,
+                specialties: specialty ? [specialty] : [],
+                experience: parseInt(yearsExperience) || 0,
+                coverImageUrl: null,
+                isVerified: false,
+                rating: 0,
+                reviewCount: 0,
+                portfolioCount: 0,
+                subscriptionPlan: subscriptionPlan || "Starter",
+              });
+              console.log(`Created tailor profile for existing user: ${email}`);
+            }
+          }
+        } catch (syncError) {
+          console.error("Error syncing admin artisan to tailors:", syncError);
+        }
+      }
+
       res.status(201).json(artisan);
     } catch (error) {
       console.error("Error creating admin artisan:", error);
