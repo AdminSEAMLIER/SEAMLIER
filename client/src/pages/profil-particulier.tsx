@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, Ruler, BookOpen, Search, Loader2, FolderKanban } from "lucide-react";
+import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, Ruler, BookOpen, Search, Loader2, FolderKanban, MessageCircle, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -319,37 +319,53 @@ export default function ProfilParticulier() {
             <CardTitle className="text-lg text-[#722F37]">{t('profile.quickAccess')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <Link href="/decouverte">
-                <div className="flex flex-col items-center p-4 bg-muted/50 rounded-md transition-colors cursor-pointer" data-testid="link-recherche">
+                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer hover:bg-gray-100" data-testid="link-recherche">
                   <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
                     <Search className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-sm text-gray-500 text-center">{t('nav.search')}</span>
+                  <span className="text-xs text-gray-500 text-center">{t('nav.search')}</span>
+                </div>
+              </Link>
+              <Link href="/messages">
+                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer hover:bg-gray-100" data-testid="link-messages">
+                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
+                    <MessageCircle className="h-5 w-5 text-[#722F37]" />
+                  </div>
+                  <span className="text-xs text-gray-500 text-center">{t('nav.messages')}</span>
+                </div>
+              </Link>
+              <Link href="/marketplace">
+                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer hover:bg-gray-100" data-testid="link-marketplace">
+                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
+                    <ShoppingBag className="h-5 w-5 text-[#722F37]" />
+                  </div>
+                  <span className="text-xs text-gray-500 text-center">{t('nav.marketplace')}</span>
                 </div>
               </Link>
               <Link href="/mes-projets">
-                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer" data-testid="link-mes-projets">
+                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer hover:bg-gray-100" data-testid="link-mes-projets">
                   <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
                     <FolderKanban className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-sm text-gray-500 text-center">{t('nav.projects')}</span>
+                  <span className="text-xs text-gray-500 text-center">{t('nav.projects')}</span>
                 </div>
               </Link>
               <Link href="/mesures">
-                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer" data-testid="link-mesures">
+                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer hover:bg-gray-100" data-testid="link-mesures">
                   <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
                     <Ruler className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-sm text-gray-500 text-center">{t('nav.measures')}</span>
+                  <span className="text-xs text-gray-500 text-center">{t('nav.measures')}</span>
                 </div>
               </Link>
               <Link href="/magazine">
-                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer" data-testid="link-magazine">
+                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer hover:bg-gray-100" data-testid="link-magazine">
                   <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
                     <BookOpen className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-sm text-muted-foreground text-center">{t('nav.magazine')}</span>
+                  <span className="text-xs text-gray-500 text-center">{t('nav.magazine')}</span>
                 </div>
               </Link>
             </div>

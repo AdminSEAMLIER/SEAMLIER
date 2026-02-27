@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { MapPin, Search, ArrowRight, Star, Shield, Scissors } from "lucide-react";
+import { MapPin, Search, ArrowRight, Star, Shield, Scissors, Compass, MessageCircle, ShoppingBag, Ruler, BookOpen, FolderKanban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -100,7 +100,30 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Reste du code inchangé... */}
+      <section className="py-10 px-4 lg:px-8 bg-gray-50/50">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+            {[
+              { icon: Compass, labelKey: "nav.search", href: "/decouverte" },
+              { icon: MessageCircle, labelKey: "nav.messages", href: "/messages" },
+              { icon: ShoppingBag, labelKey: "nav.marketplace", href: "/marketplace" },
+              { icon: FolderKanban, labelKey: "nav.projects", href: "/mes-projets" },
+              { icon: Ruler, labelKey: "nav.measures", href: "/mesures" },
+              { icon: BookOpen, labelKey: "nav.magazine", href: "/magazine" },
+            ].map((item) => (
+              <Link key={item.href} href={item.href}>
+                <div className="flex flex-col items-center p-4 bg-white rounded-xl border border-gray-100 hover:border-[#722F37]/30 hover:shadow-sm transition-all cursor-pointer" data-testid={`home-link-${item.labelKey.split('.')[1]}`}>
+                  <div className="w-10 h-10 rounded-full bg-[#722F37]/5 flex items-center justify-center mb-2">
+                    <item.icon className="h-5 w-5 text-[#722F37]" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-600">{t(item.labelKey)}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="py-8 px-4 lg:px-8 border-y border-border bg-white">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-3 gap-4 text-center">

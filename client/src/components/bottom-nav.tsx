@@ -1,4 +1,4 @@
-import { Home, Compass, MessageCircle, Ruler, BookOpen, User } from "lucide-react";
+import { Home, Compass, MessageCircle, ShoppingBag, User } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { icon: Home, labelKey: "nav.home", path: "/dashboard-client" },
   { icon: Compass, labelKey: "nav.search", path: "/decouverte" },
-  { icon: Ruler, labelKey: "nav.measures", path: "/mesures" },
-  { icon: BookOpen, labelKey: "nav.magazine", path: "/magazine" },
+  { icon: MessageCircle, labelKey: "nav.messages", path: "/messages" },
+  { icon: ShoppingBag, labelKey: "nav.marketplace", path: "/marketplace" },
   { icon: User, labelKey: "nav.profile", path: "/mon-profil" },
 ];
 

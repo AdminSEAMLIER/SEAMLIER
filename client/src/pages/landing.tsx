@@ -1,6 +1,6 @@
 import { Link, useLocation as useWouterLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { MapPin, Search, MessageCircle, CheckCircle, Star, ArrowRight, Scissors, Users, Shield } from "lucide-react";
+import { MapPin, Search, MessageCircle, CheckCircle, Star, ArrowRight, Scissors, Users, Shield, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import parisImg from "@/assets/images/paris.jpg";
 import lyonImg from "@/assets/images/lyon.jpg";
 import marseilleImg from "@/assets/images/marseille.jpg";
@@ -28,6 +29,7 @@ export default function Landing() {
   const { t } = useTranslation();
   const [, setPageLocation] = useWouterLocation();
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
   const [location, setLocation] = useState("");
 
   const handleSearch = () => {
@@ -76,16 +78,27 @@ export default function Landing() {
           <Logo className="text-[#722F37] shrink-0" textClassName="text-base lg:text-lg text-[#722F37]" />
           <div className="flex items-center gap-1 md:gap-2 lg:gap-4">
             <LanguageToggle />
-            <Link href="/connexion">
-              <Button variant="ghost" size="sm" className="text-[#722F37] px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9" data-testid="button-connexion-header">
-                {t('landing.login')}
-              </Button>
-            </Link>
-            <Link href="/inscription">
-              <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9" data-testid="button-inscription-header">
-                {t('landing.signup')}
-              </Button>
-            </Link>
+            {isAuthenticated && user ? (
+              <Link href={user.role === 'admin' ? '/admin/dashboard' : user.role === 'tailor' ? '/dashboard-pro' : '/dashboard-client'}>
+                <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white px-2 md:px-4 text-xs md:text-sm h-8 md:h-9 gap-1.5" data-testid="button-mon-espace">
+                  <LayoutDashboard className="h-4 w-4" />
+                  {t('landing.mySpace')}
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/connexion">
+                  <Button variant="ghost" size="sm" className="text-[#722F37] px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9" data-testid="button-connexion-header">
+                    {t('landing.login')}
+                  </Button>
+                </Link>
+                <Link href="/inscription">
+                  <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9" data-testid="button-inscription-header">
+                    {t('landing.signup')}
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
