@@ -344,12 +344,23 @@ export async function registerRoutes(
   app.post("/api/measurements", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
-      const measurements = await storage.upsertMeasurements({
-        ...req.body,
+      const { neck, bust, waist, hips, shoulders, armLength, backLength, inseam, height, weight } = req.body;
+      const result = await storage.upsertMeasurements({
         userId,
+        neck: neck ?? null,
+        bust: bust ?? null,
+        waist: waist ?? null,
+        hips: hips ?? null,
+        shoulders: shoulders ?? null,
+        armLength: armLength ?? null,
+        backLength: backLength ?? null,
+        inseam: inseam ?? null,
+        height: height ?? null,
+        weight: weight ?? null,
       });
-      res.status(201).json(measurements);
+      res.status(201).json(result);
     } catch (error) {
+      console.error("Measurements save error:", error);
       res.status(500).json({ error: "Failed to save measurements" });
     }
   });

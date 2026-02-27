@@ -287,7 +287,30 @@ export default function InscriptionProfessionnel() {
                     </FormItem>
                   )} />
 
-                  {/* Bouton avec Spinner (Point 3) */}
+                  <FormField control={form.control} name="confirmPassword" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirmer le mot de passe</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input type={showConfirmPassword ? "text" : "password"} {...field} data-testid="input-confirm-password" />
+                          <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3">
+                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+                  <FormField control={form.control} name="bio" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Présentation</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Présentez votre savoir-faire et votre parcours..." className="min-h-[80px]" {...field} data-testid="textarea-bio" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
                   <Button
                     type="submit"
                     className="w-full bg-[#722F37] hover:bg-[#5a1f25] text-white py-6"
