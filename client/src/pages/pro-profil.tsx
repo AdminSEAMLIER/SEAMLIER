@@ -54,6 +54,7 @@ export default function ProProfil() {
         email: profile.email,
         phone: profile.phone,
         location: profile.location,
+        profileImageUrl: profile.profileImageUrl || null,
       });
     },
     onSuccess: () => {
@@ -81,6 +82,28 @@ export default function ProProfil() {
     fileInputRef.current?.click();
   };
 
+  const photoSaveMutation = useMutation({
+    mutationFn: async (base64: string) => {
+      return apiRequest('PATCH', `/api/users/${user?.id}`, {
+        profileImageUrl: base64,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auth-user"] });
+      toast({
+        title: t('profile.photoUpdated'),
+        description: t('profile.photoUpdatedDesc'),
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder la photo",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -94,11 +117,9 @@ export default function ProProfil() {
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfile({ ...profile, profileImageUrl: reader.result as string });
-        toast({
-          title: t('profile.photoUpdated'),
-          description: t('profile.photoUpdatedDesc'),
-        });
+        const base64 = reader.result as string;
+        setProfile({ ...profile, profileImageUrl: base64 });
+        photoSaveMutation.mutate(base64);
       };
       reader.readAsDataURL(file);
     }
