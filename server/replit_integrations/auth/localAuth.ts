@@ -7,6 +7,7 @@ import type { Express, RequestHandler } from "express";
 import mysqlSession from "express-mysql-session";
 import { authStorage } from "./storage";
 import { storage } from "../../storage";
+import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail } from "../../email";
 
 // ─── Session ────────────────────────────────────────────────────────────────
 
@@ -72,6 +73,9 @@ export async function setupAuth(app: Express) {
           const valid = await bcrypt.compare(password, user.password);
           if (!valid) {
             return done(null, false, { message: "Email ou mot de passe incorrect." });
+          }
+          if (user.emailVerified === false && user.verificationToken) {
+            return done(null, false, { message: "Veuillez confirmer votre email avant de vous connecter. Vérifiez votre boîte de réception." });
           }
           return done(null, user);
         } catch (err) {
@@ -147,6 +151,9 @@ export async function setupAuth(app: Express) {
         resolvedLastName = parts.slice(1).join(" ") || "";
       }
 
+      const verificationToken = generateVerificationToken();
+      const verificationExpires = getVerificationExpiry();
+
       const newUser = await authStorage.createUser({
         email,
         password: hashedPassword,
@@ -156,7 +163,10 @@ export async function setupAuth(app: Express) {
         profileImageUrl: null,
         phone: phone || null,
         location: city || null,
-      });
+        emailVerified: false,
+        verificationToken,
+        verificationExpires,
+      } as any);
 
       if (userRole === "tailor") {
         try {
@@ -180,16 +190,19 @@ export async function setupAuth(app: Express) {
         }
       }
 
-      req.logIn(newUser, (loginErr) => {
-        if (loginErr) return next(loginErr);
-        return res.status(201).json({
-          success: true,
-          id: newUser.id,
-          email: newUser.email,
-          firstName: newUser.firstName,
-          lastName: newUser.lastName,
-          role: newUser.role,
-        });
+      sendVerificationEmail(email, verificationToken, resolvedFirstName).catch(err => {
+        console.error("Failed to send verification email:", err);
+      });
+
+      return res.status(201).json({
+        success: true,
+        id: newUser.id,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        role: newUser.role,
+        emailVerificationSent: true,
+        message: "Compte créé ! Vérifiez votre email pour activer votre compte.",
       });
     } catch (err) {
       next(err);

@@ -21,6 +21,9 @@ CREATE TABLE IF NOT EXISTS `users` (
   `phone` TEXT DEFAULT NULL,
   `role` TEXT NOT NULL DEFAULT 'client',
   `location` TEXT DEFAULT NULL,
+  `email_verified` BOOLEAN DEFAULT FALSE,
+  `verification_token` VARCHAR(100) DEFAULT NULL,
+  `verification_expires` TIMESTAMP NULL DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -223,6 +226,23 @@ CREATE TABLE IF NOT EXISTS `user_preferences` (
   CONSTRAINT `user_preferences_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `magazine_articles` (
+  `id` VARCHAR(36) NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `category` VARCHAR(100) DEFAULT NULL,
+  `content` TEXT DEFAULT NULL,
+  `excerpt` TEXT DEFAULT NULL,
+  `image_url` TEXT DEFAULT NULL,
+  `status` VARCHAR(50) NOT NULL DEFAULT 'Brouillon',
+  `author_id` VARCHAR(36) DEFAULT NULL,
+  `views` INT DEFAULT 0,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `magazine_articles_author_id_idx` (`author_id`),
+  CONSTRAINT `magazine_articles_author_id_fk` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `admin_settings` (
   `id` VARCHAR(36) NOT NULL,
   `key` VARCHAR(255) NOT NULL,
@@ -243,3 +263,19 @@ VALUES (
   'Seamlier',
   'admin'
 ) ON DUPLICATE KEY UPDATE `email` = `email`;
+
+-- ============================================================
+-- MIGRATION QUERIES (for existing databases)
+-- Run these manually on o2switch phpMyAdmin if tables already exist
+-- ============================================================
+
+-- Add email verification columns to users table
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `email_verified` BOOLEAN DEFAULT FALSE;
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `verification_token` VARCHAR(100) DEFAULT NULL;
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `verification_expires` TIMESTAMP NULL DEFAULT NULL;
+
+-- Ensure profile_image_url is MEDIUMTEXT (supports base64 images)
+ALTER TABLE `users` MODIFY COLUMN `profile_image_url` MEDIUMTEXT DEFAULT NULL;
+
+-- Set existing admin user as verified
+UPDATE `users` SET `email_verified` = TRUE WHERE `email` = 'admin@seamlier.fr';

@@ -286,6 +286,8 @@
     "loginButton": "Log in",
     "errorMessage": "An error occurred during registration",
     "creating": "Creating...",
+    "verifyEmailSent": "A confirmation email has been sent. Please check your inbox to activate your account.",
+    "verifyEmailRequired": "Please confirm your email before logging in. Check your inbox.",
     "benefits": {
       "verified": "Access verified tailors",
       "quotes": "Receive personalized quotes",
@@ -434,7 +436,9 @@
       "article4Excerpt": "Essential tips for preserving the quality of your pieces...",
       "article5Title": "Wedding dresses: designers to follow",
       "article5Excerpt": "Our selection of the best tailors specializing in weddings..."
-    }
+    },
+    "emptyTitle": "Coming soon",
+    "emptyDescription": "New articles about trends, tips and artisan portraits will be published soon."
   },
   "common": {
     "loading": "Loading...",

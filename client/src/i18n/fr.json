@@ -286,6 +286,8 @@
     "loginButton": "Se connecter",
     "errorMessage": "Une erreur est survenue lors de l'inscription",
     "creating": "Création en cours...",
+    "verifyEmailSent": "Un email de confirmation a été envoyé. Vérifiez votre boîte de réception pour activer votre compte.",
+    "verifyEmailRequired": "Veuillez confirmer votre email avant de vous connecter. Vérifiez votre boîte de réception.",
     "benefits": {
       "verified": "Accédez à des couturiers vérifiés",
       "quotes": "Recevez des devis personnalisés",
@@ -434,7 +436,9 @@
       "article4Excerpt": "Les gestes essentiels pour préserver la qualité de vos pièces...",
       "article5Title": "Robes de mariée : les créateurs à suivre",
       "article5Excerpt": "Notre sélection des meilleurs couturiers spécialisés en mariage..."
-    }
+    },
+    "emptyTitle": "Bientôt disponible",
+    "emptyDescription": "De nouveaux articles sur les tendances, conseils et portraits d'artisans seront publiés prochainement."
   },
   "common": {
     "loading": "Chargement...",

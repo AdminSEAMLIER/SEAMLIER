@@ -769,5 +769,108 @@ export async function registerRoutes(
     }
   });
 
+  // Magazine Articles - Admin CRUD
+  app.get("/api/admin/articles", requireAdmin, async (req, res) => {
+    try {
+      const articles = await storage.getMagazineArticles();
+      res.json(articles);
+    } catch (error) {
+      console.error("Error fetching admin articles:", error);
+      res.status(500).json({ error: "Failed to fetch articles" });
+    }
+  });
+
+  app.post("/api/admin/articles", requireAdmin, async (req: any, res) => {
+    try {
+      const { title, category, content, excerpt, imageUrl, status } = req.body;
+      const article = await storage.createMagazineArticle({
+        title,
+        category: category || null,
+        content: content || null,
+        excerpt: excerpt || null,
+        imageUrl: imageUrl || null,
+        status: status || "Brouillon",
+        authorId: req.authUserId,
+      });
+      res.status(201).json(article);
+    } catch (error) {
+      console.error("Error creating article:", error);
+      res.status(500).json({ error: "Failed to create article" });
+    }
+  });
+
+  app.put("/api/admin/articles/:id", requireAdmin, async (req, res) => {
+    try {
+      const article = await storage.updateMagazineArticle(req.params.id, req.body);
+      if (!article) return res.status(404).json({ error: "Article not found" });
+      res.json(article);
+    } catch (error) {
+      console.error("Error updating article:", error);
+      res.status(500).json({ error: "Failed to update article" });
+    }
+  });
+
+  app.delete("/api/admin/articles/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteMagazineArticle(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting article:", error);
+      res.status(500).json({ error: "Failed to delete article" });
+    }
+  });
+
+  // Magazine Articles - Public (published only)
+  app.get("/api/articles", async (req, res) => {
+    try {
+      const articles = await storage.getMagazineArticles(true);
+      res.json(articles);
+    } catch (error) {
+      console.error("Error fetching published articles:", error);
+      res.status(500).json({ error: "Failed to fetch articles" });
+    }
+  });
+
+  app.get("/api/articles/:id", async (req, res) => {
+    try {
+      const article = await storage.getMagazineArticle(req.params.id);
+      if (!article) return res.status(404).json({ error: "Article not found" });
+      res.json(article);
+    } catch (error) {
+      console.error("Error fetching article:", error);
+      res.status(500).json({ error: "Failed to fetch article" });
+    }
+  });
+
+  // Email verification
+  app.get("/api/verify-email", async (req, res) => {
+    try {
+      const { token } = req.query;
+      if (!token || typeof token !== "string") {
+        return res.status(400).send(renderVerificationPage(false, "Token manquant."));
+      }
+      const userRaw = await storage.getUserByVerificationToken(token);
+      if (!userRaw) {
+        return res.status(400).send(renderVerificationPage(false, "Lien invalide ou expiré."));
+      }
+      if (userRaw.verificationExpires && new Date(userRaw.verificationExpires) < new Date()) {
+        return res.status(400).send(renderVerificationPage(false, "Ce lien a expiré. Veuillez vous réinscrire."));
+      }
+      await storage.updateUser(userRaw.id, {
+        emailVerified: true,
+        verificationToken: null,
+        verificationExpires: null,
+      } as any);
+      return res.send(renderVerificationPage(true, "Votre email a été vérifié avec succès ! Vous pouvez maintenant vous connecter."));
+    } catch (error) {
+      console.error("Email verification error:", error);
+      return res.status(500).send(renderVerificationPage(false, "Erreur serveur."));
+    }
+  });
+
   return httpServer;
+}
+
+function renderVerificationPage(success: boolean, message: string): string {
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vérification Email - SEAMLIER</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Inter,sans-serif;background:#faf9f7;display:flex;align-items:center;justify-content:center;min-height:100vh}.card{background:#fff;border-radius:16px;padding:48px;max-width:420px;width:90%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}.icon{width:64px;height:64px;border-radius:50%;margin:0 auto 24px;display:flex;align-items:center;justify-content:center;font-size:28px}.success{background:#dcfce7;color:#16a34a}.error{background:#fee2e2;color:#dc2626}h1{font-family:'Playfair Display',serif;color:#722F37;font-size:24px;margin-bottom:12px}p{color:#6b7280;line-height:1.6;margin-bottom:24px}a{display:inline-block;background:#722F37;color:#fff;text-decoration:none;padding:12px 32px;border-radius:8px;font-weight:600;transition:background .2s}a:hover{background:#5a252c}</style></head><body><div class="card"><div class="icon ${success ? 'success' : 'error'}">${success ? '✓' : '✕'}</div><h1>${success ? 'Email vérifié !' : 'Erreur de vérification'}</h1><p>${message}</p><a href="/connexion">Se connecter</a></div></body></html>`;
 }

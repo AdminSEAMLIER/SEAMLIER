@@ -21,6 +21,9 @@ export const users = mysqlTable("users", {
   phone: text("phone"),
   role: text("role").notNull().default("client"),
   location: text("location"),
+  emailVerified: boolean("email_verified").default(false),
+  verificationToken: varchar("verification_token", { length: 100 }),
+  verificationExpires: timestamp("verification_expires"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -178,6 +181,20 @@ export const userPreferences = mysqlTable("user_preferences", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const magazineArticles = mysqlTable("magazine_articles", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  category: varchar("category", { length: 100 }),
+  content: text("content"),
+  excerpt: text("excerpt"),
+  imageUrl: text("image_url"),
+  status: varchar("status", { length: 50 }).notNull().default("Brouillon"),
+  authorId: varchar("author_id", { length: 36 }).references(() => users.id),
+  views: int("views").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const adminSettings = mysqlTable("admin_settings", {
   id: varchar("id", { length: 36 }).primaryKey(),
   key: varchar("key", { length: 255 }).notNull().unique(),
@@ -198,6 +215,7 @@ export const insertProjectSchema = createInsertSchema(projects).omit({ id: true,
 export const insertAppointmentSchema = createInsertSchema(appointments).omit({ id: true, createdAt: true });
 export const insertAdminArtisanSchema = createInsertSchema(adminArtisans).omit({ id: true, createdAt: true });
 export const insertUserPreferencesSchema = createInsertSchema(userPreferences).omit({ id: true, updatedAt: true });
+export const insertMagazineArticleSchema = createInsertSchema(magazineArticles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertAdminSettingSchema = createInsertSchema(adminSettings).omit({ id: true, updatedAt: true });
 
 // Types
@@ -226,6 +244,8 @@ export type InsertAdminArtisan = z.infer<typeof insertAdminArtisanSchema>;
 export type AdminArtisan = typeof adminArtisans.$inferSelect;
 export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
 export type UserPreferences = typeof userPreferences.$inferSelect;
+export type InsertMagazineArticle = z.infer<typeof insertMagazineArticleSchema>;
+export type MagazineArticle = typeof magazineArticles.$inferSelect;
 export type InsertAdminSetting = z.infer<typeof insertAdminSettingSchema>;
 export type AdminSetting = typeof adminSettings.$inferSelect;
 

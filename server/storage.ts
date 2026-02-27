@@ -3,7 +3,7 @@ import { eq, and, or, desc, sql } from "drizzle-orm";
 import { 
   users, tailors, portfolioItems, products, reviews, 
   conversations, messages, measurements, projects, appointments,
-  adminArtisans, adminSettings, userPreferences,
+  adminArtisans, adminSettings, userPreferences, magazineArticles,
   type User, type InsertUser,
   type Tailor, type InsertTailor,
   type PortfolioItem, type InsertPortfolioItem,
@@ -17,6 +17,7 @@ import {
   type AdminArtisan, type InsertAdminArtisan,
   type AdminSetting, type InsertAdminSetting,
   type UserPreferences, type InsertUserPreferences,
+  type MagazineArticle, type InsertMagazineArticle,
   type TailorWithUser,
   type PortfolioWithTailor,
   type ProductWithTailor,
@@ -31,6 +32,7 @@ import {
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByVerificationToken(token: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
   
@@ -82,6 +84,12 @@ export interface IStorage {
   getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
   upsertUserPreferences(userId: string, prefs: Partial<InsertUserPreferences>): Promise<UserPreferences>;
 
+  getMagazineArticles(publishedOnly?: boolean): Promise<MagazineArticle[]>;
+  getMagazineArticle(id: string): Promise<MagazineArticle | undefined>;
+  createMagazineArticle(article: InsertMagazineArticle): Promise<MagazineArticle>;
+  updateMagazineArticle(id: string, updates: Partial<InsertMagazineArticle>): Promise<MagazineArticle | undefined>;
+  deleteMagazineArticle(id: string): Promise<void>;
+
   getAdminSettings(): Promise<AdminSetting[]>;
   getAdminSetting(key: string): Promise<AdminSetting | undefined>;
   upsertAdminSetting(key: string, value: string): Promise<AdminSetting>;
@@ -114,6 +122,17 @@ class DatabaseStorage implements IStorage {
       return result[0];
     } catch (error) {
       console.error("getUserByEmail error:", error);
+      return undefined;
+    }
+  }
+
+  async getUserByVerificationToken(token: string): Promise<User | undefined> {
+    try {
+      const result = await db.select().from(users).where(eq(users.verificationToken, token));
+      if (!result || result.length === 0) return undefined;
+      return result[0];
+    } catch (error) {
+      console.error("getUserByVerificationToken error:", error);
       return undefined;
     }
   }
@@ -594,6 +613,49 @@ class DatabaseStorage implements IStorage {
     await db.insert(userPreferences).values({ userId, ...prefs, id });
     const result = await db.select().from(userPreferences).where(eq(userPreferences.id, id));
     return result[0];
+  }
+
+  async getMagazineArticles(publishedOnly?: boolean): Promise<MagazineArticle[]> {
+    try {
+      if (publishedOnly) {
+        return await db.select().from(magazineArticles)
+          .where(eq(magazineArticles.status, "Publié"))
+          .orderBy(desc(magazineArticles.createdAt));
+      }
+      return await db.select().from(magazineArticles).orderBy(desc(magazineArticles.createdAt));
+    } catch (error) {
+      console.error("getMagazineArticles error:", error);
+      return [];
+    }
+  }
+
+  async getMagazineArticle(id: string): Promise<MagazineArticle | undefined> {
+    try {
+      const result = await db.select().from(magazineArticles).where(eq(magazineArticles.id, id));
+      return result[0];
+    } catch (error) {
+      console.error("getMagazineArticle error:", error);
+      return undefined;
+    }
+  }
+
+  async createMagazineArticle(article: InsertMagazineArticle): Promise<MagazineArticle> {
+    const id = generateUUID();
+    await db.insert(magazineArticles).values({ ...article, id });
+    const result = await db.select().from(magazineArticles).where(eq(magazineArticles.id, id));
+    return result[0];
+  }
+
+  async updateMagazineArticle(id: string, updates: Partial<InsertMagazineArticle>): Promise<MagazineArticle | undefined> {
+    await db.update(magazineArticles)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(magazineArticles.id, id));
+    const result = await db.select().from(magazineArticles).where(eq(magazineArticles.id, id));
+    return result[0];
+  }
+
+  async deleteMagazineArticle(id: string): Promise<void> {
+    await db.delete(magazineArticles).where(eq(magazineArticles.id, id));
   }
 }
 

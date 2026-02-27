@@ -152,10 +152,12 @@ type CouturierData = {
 type Article = {
   id: string;
   title: string;
-  category: string;
-  status: "Publié" | "Brouillon";
-  date: string;
-  views: number;
+  category: string | null;
+  content: string | null;
+  excerpt: string | null;
+  status: string;
+  views: number | null;
+  createdAt: string | null;
 };
 
 export default function AdminDashboard() {
@@ -382,7 +384,10 @@ export default function AdminDashboard() {
 
   const [couturiers, setCouturiers] = useState<CouturierData[]>([]);
 
-  const [articles, setArticles] = useState<Article[]>([]);
+  const { data: articles = [] } = useQuery<Article[]>({
+    queryKey: ["/api/admin/articles"],
+    enabled: isAuthenticated,
+  });
 
   const [loginLoading, setLoginLoading] = useState(false);
 
@@ -471,34 +476,54 @@ export default function AdminDashboard() {
     toast({ title: "Réponse envoyée", description: "Le message a été envoyé avec succès." });
   };
 
-  const publishArticle = (id: string) => {
-    setArticles(prev => prev.map(a =>
-      a.id === id ? { ...a, status: a.status === "Publié" ? "Brouillon" as const : "Publié" as const } : a
-    ));
-    toast({ title: "Statut mis à jour" });
+  const publishArticle = async (id: string) => {
+    const article = articles.find(a => a.id === id);
+    if (!article) return;
+    const newStatus = article.status === "Publié" ? "Brouillon" : "Publié";
+    try {
+      await apiFetch(`/api/admin/articles/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ status: newStatus }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/articles"] });
+      toast({ title: "Statut mis à jour" });
+    } catch (error) {
+      toast({ title: "Erreur", description: "Impossible de mettre à jour le statut", variant: "destructive" });
+    }
   };
 
-  const deleteArticle = (id: string) => {
-    setArticles(prev => prev.filter(a => a.id !== id));
-    toast({ title: "Article supprimé", variant: "destructive" });
+  const deleteArticle = async (id: string) => {
+    try {
+      await apiFetch(`/api/admin/articles/${id}`, { method: "DELETE" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/articles"] });
+      toast({ title: "Article supprimé", variant: "destructive" });
+    } catch (error) {
+      toast({ title: "Erreur", description: "Impossible de supprimer l'article", variant: "destructive" });
+    }
   };
 
-  const createArticle = () => {
+  const createArticle = async () => {
     if (!newArticleTitle.trim()) return;
-    const newArticle: Article = {
-      id: String(Date.now()),
-      title: newArticleTitle,
-      category: newArticleCategory || "Non catégorisé",
-      status: "Brouillon",
-      date: new Date().toLocaleDateString("fr-FR"),
-      views: 0,
-    };
-    setArticles(prev => [newArticle, ...prev]);
-    setNewArticleTitle("");
-    setNewArticleCategory("");
-    setNewArticleContent("");
-    setShowNewArticle(false);
-    toast({ title: "Article créé", description: "Le brouillon a été enregistré." });
+    try {
+      await apiFetch("/api/admin/articles", {
+        method: "POST",
+        body: JSON.stringify({
+          title: newArticleTitle,
+          category: newArticleCategory || "Non catégorisé",
+          content: newArticleContent,
+          excerpt: newArticleContent ? newArticleContent.substring(0, 200) : null,
+          status: "Brouillon",
+        }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/articles"] });
+      setNewArticleTitle("");
+      setNewArticleCategory("");
+      setNewArticleContent("");
+      setShowNewArticle(false);
+      toast({ title: "Article créé", description: "Le brouillon a été enregistré." });
+    } catch (error) {
+      toast({ title: "Erreur", description: "Impossible de créer l'article", variant: "destructive" });
+    }
   };
 
   const toggleCouturierSelect = (id: string) => {
@@ -2193,11 +2218,11 @@ export default function AdminDashboard() {
                             <tr key={a.id} className="hover:bg-gray-50/50 transition-colors" data-testid={`row-article-${a.id}`}>
                               <td className="px-5 py-3 text-sm font-semibold max-w-[280px] truncate">{a.title}</td>
                               <td className="px-5 py-3"><Badge variant="outline" className="text-[10px]">{a.category}</Badge></td>
-                              <td className="px-5 py-3 text-xs text-gray-500">{a.date}</td>
+                              <td className="px-5 py-3 text-xs text-gray-500">{a.createdAt ? new Date(a.createdAt).toLocaleDateString("fr-FR") : "—"}</td>
                               <td className="px-5 py-3 text-center">
                                 <Badge className={cn("text-[10px] border-none font-bold", a.status === "Publié" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500")} data-testid={`badge-article-status-${a.id}`}>{a.status}</Badge>
                               </td>
-                              <td className="px-5 py-3 text-right text-sm text-gray-600">{a.views.toLocaleString()}</td>
+                              <td className="px-5 py-3 text-right text-sm text-gray-600">{(a.views || 0).toLocaleString()}</td>
                               <td className="px-5 py-3 text-right">
                                 <div className="flex justify-end gap-2">
                                   <Button size="sm" variant="outline" className={cn("h-8 text-[11px] font-bold")} onClick={() => publishArticle(a.id)} data-testid={`button-toggle-article-${a.id}`}>

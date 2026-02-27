@@ -117,14 +117,30 @@ shared/              # Shared code (schema, types)
 - **Build**: Vite frontend (670KB / 183KB gzip) + esbuild server bundle
 - **Business Constants**: Starter=15% artisan com + 10 mesures, Pro=0% com + unlimited, Client=10% fees, Min order=30€
 
+### Email Verification (February 2026)
+- **Nodemailer**: SMTP-based email sending via environment variables
+- **Env Vars**: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `APP_URL`
+- **Flow**: Register → verification email sent → user clicks link → account activated → can login
+- **Schema**: `email_verified` (boolean), `verification_token` (varchar), `verification_expires` (timestamp) on users table
+- **Route**: `GET /api/verify-email?token=...` validates token, marks user as verified, renders confirmation page
+- **Login Block**: Users with unverified emails and active tokens cannot login until verified
+- **Email Template**: Branded HTML email with burgundy #722F37 styling
+
+### Magazine Articles (February 2026)
+- **Schema**: `magazine_articles` table (id, title, category, content, excerpt, imageUrl, status, authorId, views)
+- **Admin CRUD**: `GET/POST /api/admin/articles`, `PUT/DELETE /api/admin/articles/:id`
+- **Public API**: `GET /api/articles` (published only), `GET /api/articles/:id`
+- **Admin Dashboard**: Magazine tab now persists articles to database (was local state only)
+- **Client Magazine Page**: Shows published articles from DB with category badges, excerpts, dates
+
 ### Auth Architecture (February 2026)
 - **Single Auth System**: Passport.js local strategy (email/password with bcrypt)
 - **Auth Endpoints**: Defined in `server/replit_integrations/auth/localAuth.ts`
-  - `POST /api/login`: Email/password login, returns user with role
-  - `POST /api/register`: Registration with optional tailor profile creation (supports fullName or firstName/lastName)
+  - `POST /api/login`: Email/password login, returns user with role (blocks unverified emails)
+  - `POST /api/register`: Registration with email verification token + sends confirmation email
   - `GET /api/auth/user`: Get current authenticated user
   - `GET /api/logout`: Logout and destroy session
-- **Session Store**: PostgreSQL via connect-pg-simple (1-week TTL, httpOnly cookies)
+- **Session Store**: MySQL via express-mysql-session (1-week TTL, httpOnly cookies)
 - **Middleware**: `requireAuth` (passport isAuthenticated), `requireAdmin` (role check)
 - **Frontend Auth**: `useAuth()` hook in `client/src/hooks/use-auth.ts`
 

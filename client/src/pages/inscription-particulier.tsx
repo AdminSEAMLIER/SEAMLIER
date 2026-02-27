@@ -73,18 +73,26 @@ export default function InscriptionParticulier() {
       return result;
     },
     onSuccess: (result) => {
-      queryClient.setQueryData(["auth-user"], {
-        id: result.id,
-        email: result.email,
-        firstName: result.firstName,
-        lastName: result.lastName,
-        role: result.role,
-      });
-      toast({
-        title: t('auth.accountCreated'),
-        description: t('auth.welcomeDesc'),
-      });
-      setLocation("/dashboard-client");
+      if (result.emailVerificationSent) {
+        toast({
+          title: t('auth.accountCreated'),
+          description: t('auth.verifyEmailSent', 'Un email de confirmation a été envoyé. Vérifiez votre boîte de réception pour activer votre compte.'),
+        });
+        setLocation("/connexion");
+      } else {
+        queryClient.setQueryData(["auth-user"], {
+          id: result.id,
+          email: result.email,
+          firstName: result.firstName,
+          lastName: result.lastName,
+          role: result.role,
+        });
+        toast({
+          title: t('auth.accountCreated'),
+          description: t('auth.welcomeDesc'),
+        });
+        setLocation("/dashboard-client");
+      }
     },
     onError: (error: Error) => {
       toast({
