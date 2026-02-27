@@ -170,6 +170,8 @@ export default function AdminDashboard() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
+  const [usersRoleFilter, setUsersRoleFilter] = useState("all");
+  const [usersStatusFilter, setUsersStatusFilter] = useState("all");
   const [projectSearch, setProjectSearch] = useState("");
   const [artisanSearch, setArtisanSearch] = useState("");
   const [messageSearch, setMessageSearch] = useState("");
@@ -1508,14 +1510,23 @@ export default function AdminDashboard() {
               )}
 
               {/* ===== INSCRITS (USERS) ===== */}
-              {activeTab === "users" && (
+              {activeTab === "users" && (() => {
+                const filteredUsers = dbUsers.filter((u: any) => {
+                  if (usersRoleFilter !== "all" && u.role !== usersRoleFilter) return false;
+                  if (usersStatusFilter === "verified" && !u.emailVerified) return false;
+                  if (usersStatusFilter === "unverified" && u.emailVerified) return false;
+                  return true;
+                });
+                const totalVerified = dbUsers.filter((u: any) => u.emailVerified).length;
+
+                return (
                 <>
                   <div>
-                    <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title-users">Liste des Inscrits</h1>
-                    <p className="text-gray-500 mt-1 text-sm">Tous les utilisateurs inscrits sur la plateforme (particuliers et professionnels)</p>
+                    <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title-users">Utilisateurs</h1>
+                    <p className="text-gray-500 mt-1 text-sm">Gestion des comptes inscrits sur la plateforme</p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <Card>
                       <CardContent className="p-4 flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
@@ -1530,7 +1541,18 @@ export default function AdminDashboard() {
                     <Card>
                       <CardContent className="p-4 flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
-                          <User className="h-5 w-5 text-green-600" />
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-gray-900" data-testid="text-total-verified">{totalVerified}</p>
+                          <p className="text-xs text-gray-500">Activés</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
+                          <User className="h-5 w-5 text-purple-600" />
                         </div>
                         <div>
                           <p className="text-2xl font-bold text-gray-900" data-testid="text-total-clients">{dbUsers.filter((u: any) => u.role === 'client').length}</p>
@@ -1551,15 +1573,67 @@ export default function AdminDashboard() {
                     </Card>
                   </div>
 
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 font-medium">Rôle :</span>
+                      <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+                        {[
+                          { value: "all", label: "Tous" },
+                          { value: "client", label: "Particuliers" },
+                          { value: "tailor", label: "Professionnels" },
+                        ].map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => setUsersRoleFilter(opt.value)}
+                            className={cn(
+                              "px-3 py-1.5 text-xs font-medium transition-colors",
+                              usersRoleFilter === opt.value
+                                ? "bg-[#722F37] text-white"
+                                : "bg-white text-gray-600 hover:bg-gray-50"
+                            )}
+                            data-testid={`filter-role-${opt.value}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 font-medium">Statut :</span>
+                      <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+                        {[
+                          { value: "all", label: "Tous" },
+                          { value: "verified", label: "Activés" },
+                          { value: "unverified", label: "Non activés" },
+                        ].map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => setUsersStatusFilter(opt.value)}
+                            className={cn(
+                              "px-3 py-1.5 text-xs font-medium transition-colors",
+                              usersStatusFilter === opt.value
+                                ? "bg-[#722F37] text-white"
+                                : "bg-white text-gray-600 hover:bg-gray-50"
+                            )}
+                            data-testid={`filter-status-${opt.value}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <span className="ml-auto text-xs text-gray-400">{filteredUsers.length} résultat{filteredUsers.length !== 1 ? 's' : ''}</span>
+                  </div>
+
                   {usersLoading ? (
                     <div className="flex items-center justify-center py-12">
                       <div className="w-8 h-8 border-4 border-[#722F37] border-t-transparent rounded-full animate-spin" />
                     </div>
-                  ) : dbUsers.length === 0 ? (
+                  ) : filteredUsers.length === 0 ? (
                     <Card>
                       <CardContent className="p-12 text-center">
                         <Users className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                        <p className="text-gray-500">Aucun utilisateur inscrit pour le moment.</p>
+                        <p className="text-gray-500">Aucun utilisateur trouvé avec ces filtres.</p>
                       </CardContent>
                     </Card>
                   ) : (
@@ -1571,24 +1645,41 @@ export default function AdminDashboard() {
                               <tr className="border-b border-gray-100 bg-gray-50/50">
                                 <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Nom</th>
                                 <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
-                                <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Téléphone</th>
                                 <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
+                                <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Statut</th>
                                 <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date d'inscription</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {dbUsers.map((u: any) => (
-                                <tr key={u.id} className="border-b border-gray-50 last:border-0" data-testid={`row-user-${u.id}`}>
-                                  <td className="p-4 font-medium text-gray-900">{u.firstName} {u.lastName}</td>
+                              {filteredUsers.map((u: any) => (
+                                <tr key={u.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors" data-testid={`row-user-${u.id}`}>
+                                  <td className="p-4">
+                                    <div className="font-medium text-gray-900">{u.firstName} {u.lastName}</div>
+                                    <div className="text-xs text-gray-400 mt-0.5">{u.phone || ''}</div>
+                                  </td>
                                   <td className="p-4 text-gray-600">{u.email}</td>
-                                  <td className="p-4 text-gray-600">{u.phone || '—'}</td>
                                   <td className="p-4">
                                     <Badge variant="secondary" className={cn(
                                       "text-[10px] font-bold uppercase",
-                                      u.role === 'tailor' ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
+                                      u.role === 'tailor' ? "bg-amber-100 text-amber-700" :
+                                      u.role === 'admin' ? "bg-red-100 text-red-700" :
+                                      "bg-blue-100 text-blue-700"
                                     )}>
-                                      {u.role === 'tailor' ? 'Professionnel' : 'Particulier'}
+                                      {u.role === 'tailor' ? 'Pro' : u.role === 'admin' ? 'Admin' : 'Client'}
                                     </Badge>
+                                  </td>
+                                  <td className="p-4">
+                                    {u.emailVerified ? (
+                                      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full" data-testid={`status-verified-${u.id}`}>
+                                        <CheckCircle className="h-3 w-3" />
+                                        Activé
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full" data-testid={`status-unverified-${u.id}`}>
+                                        <Clock className="h-3 w-3" />
+                                        En attente
+                                      </span>
+                                    )}
                                   </td>
                                   <td className="p-4 text-gray-500 text-xs">
                                     {u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
@@ -1602,7 +1693,8 @@ export default function AdminDashboard() {
                     </Card>
                   )}
                 </>
-              )}
+                );
+              })()}
 
               {/* ===== ARTISANS ===== */}
               {activeTab === "artisans" && (

@@ -73,7 +73,7 @@ export interface IStorage {
   updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment | undefined>;
   deleteAppointment(id: string): Promise<void>;
 
-  getAllUsers(): Promise<Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'role' | 'createdAt'>[]>;
+  getAllUsers(): Promise<Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'role' | 'createdAt' | 'emailVerified'>[]>;
 
   getAdminArtisans(): Promise<AdminArtisan[]>;
   getAdminArtisan(id: string): Promise<AdminArtisan | undefined>;
@@ -497,7 +497,7 @@ class DatabaseStorage implements IStorage {
     await db.delete(appointments).where(eq(appointments.id, id));
   }
 
-  async getAllUsers(): Promise<Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'role' | 'createdAt'>[]> {
+  async getAllUsers(): Promise<Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'role' | 'createdAt' | 'emailVerified'>[]> {
     try {
       const result = await db.select({
         id: users.id,
@@ -507,6 +507,7 @@ class DatabaseStorage implements IStorage {
         phone: users.phone,
         role: users.role,
         createdAt: users.createdAt,
+        emailVerified: users.emailVerified,
       }).from(users).orderBy(desc(users.createdAt));
       return result || [];
     } catch (error) {
