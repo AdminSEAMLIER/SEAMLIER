@@ -43,7 +43,7 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
 
   return (
     <header 
-      className="hidden lg:flex fixed top-0 left-0 right-0 h-16 bg-background border-b border-border z-50"
+      className="hidden lg:flex fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-50"
       data-testid="header-desktop"
     >
       <div className="flex items-center justify-between w-full max-w-7xl mx-auto px-6">

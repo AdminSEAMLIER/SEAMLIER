@@ -43,7 +43,7 @@ export default function Profile() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pb-20 lg:pb-8 px-4 lg:px-6 py-6 bg-background">
+      <div className="min-h-screen pb-20 lg:pb-8 px-4 lg:px-6 py-6 bg-white">
         <div className="max-w-2xl mx-auto space-y-6">
           <div className="flex items-center gap-4">
             <div className="h-20 w-20 rounded-full skeleton-shimmer" />
@@ -60,7 +60,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
       <div className="bg-card border-b border-border">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">

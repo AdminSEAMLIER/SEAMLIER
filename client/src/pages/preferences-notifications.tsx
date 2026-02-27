@@ -75,7 +75,7 @@ export default function PreferencesNotifications() {
   };
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
       <div className="bg-muted/50 border-b border-border">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <Link href="/mon-profil">
@@ -85,7 +85,7 @@ export default function PreferencesNotifications() {
             </Button>
           </Link>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
               <Bell className="h-5 w-5 text-[#722F37]" />
             </div>
             <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">

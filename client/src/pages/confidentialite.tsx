@@ -8,8 +8,8 @@ export default function Confidentialite() {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 bg-background border-b border-border">
+    <div className="min-h-screen bg-white">
+      <header className="sticky top-0 z-50 bg-white border-b border-border">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
           <Link href="/">
             <Button variant="ghost" size="icon" data-testid="button-back">
@@ -130,7 +130,7 @@ export default function Confidentialite() {
         </div>
       </main>
 
-      <footer className="bg-background border-t border-border py-6 px-4">
+      <footer className="bg-white border-t border-border py-6 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-muted-foreground text-sm">
             © 2026 SEAMLIER. {t('footer.allRightsReserved')}

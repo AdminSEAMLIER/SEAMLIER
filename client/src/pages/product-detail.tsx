@@ -27,7 +27,7 @@ export default function ProductDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pb-20 lg:pb-8 bg-background">
+      <div className="min-h-screen pb-20 lg:pb-8 bg-white">
         <div className="aspect-square max-h-[50vh] skeleton-shimmer" />
         <div className="px-4 lg:px-6 py-6 max-w-2xl mx-auto space-y-4">
           <div className="h-8 w-3/4 rounded skeleton-shimmer" />
@@ -40,7 +40,7 @@ export default function ProductDetail() {
 
   if (!product) {
     return (
-      <div className="min-h-screen flex items-center justify-center pb-20 lg:pb-8 bg-background">
+      <div className="min-h-screen flex items-center justify-center pb-20 lg:pb-8 bg-white">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">Produit non trouvé</p>
           <Link href="/marketplace">
@@ -55,7 +55,7 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
       <div className="relative aspect-square max-h-[50vh] overflow-hidden">
         <img
           src={product.imageUrl}
@@ -157,7 +157,7 @@ export default function ProductDetail() {
             <ShoppingCart className="h-5 w-5 mr-2" />
             Ajouter au panier
           </Button>
-          <Button variant="outline" className="flex-1 h-12 bg-background border-[#722F37] text-[#722F37] hover:bg-muted/50" data-testid="button-contact-seller">
+          <Button variant="outline" className="flex-1 h-12 bg-white border-[#722F37] text-[#722F37] hover:bg-muted/50" data-testid="button-contact-seller">
             <MessageCircle className="h-5 w-5 mr-2" />
             Contacter
           </Button>

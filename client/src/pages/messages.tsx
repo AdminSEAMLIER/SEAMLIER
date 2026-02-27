@@ -49,7 +49,7 @@ export default function Messages() {
   };
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-0 bg-background">
+    <div className="min-h-screen pb-20 lg:pb-0 bg-white">
       <div className="lg:flex lg:h-[calc(100vh-4rem)]">
         <aside 
           className={cn(
@@ -57,7 +57,7 @@ export default function Messages() {
             selectedConversationId ? "hidden lg:flex" : "flex flex-col h-[calc(100vh-4rem)]"
           )}
         >
-          <div className="p-4 border-b border-border bg-background">
+          <div className="p-4 border-b border-border bg-white">
             <h1 className="font-serif text-2xl text-primary">Messages</h1>
           </div>
           
@@ -82,7 +82,7 @@ export default function Messages() {
                     onClick={() => setSelectedConversationId(conversation.id)}
                     className={cn(
                       "w-full flex items-center gap-3 p-4 hover-elevate transition-colors text-left border-b border-border",
-                      selectedConversationId === conversation.id && "bg-background"
+                      selectedConversationId === conversation.id && "bg-white"
                     )}
                     data-testid={`conversation-${conversation.id}`}
                   >
@@ -135,7 +135,7 @@ export default function Messages() {
 
         <main 
           className={cn(
-            "flex-1 flex flex-col bg-background",
+            "flex-1 flex flex-col bg-white",
             !selectedConversationId && "hidden lg:flex"
           )}
         >
@@ -188,7 +188,7 @@ export default function Messages() {
                             "max-w-[75%] px-4 py-2 rounded-2xl",
                             isSent 
                               ? "bg-[#722F37] text-white rounded-br-sm" 
-                              : "bg-background border border-border rounded-bl-sm"
+                              : "bg-white border border-border rounded-bl-sm"
                           )}
                           data-testid={`message-${message.id}`}
                         >
@@ -216,7 +216,7 @@ export default function Messages() {
                 )}
               </div>
 
-              <div className="p-4 border-t border-border bg-background">
+              <div className="p-4 border-t border-border bg-white">
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="icon" className="text-muted-foreground" data-testid="button-attach">
                     <ImagePlus className="h-5 w-5" />

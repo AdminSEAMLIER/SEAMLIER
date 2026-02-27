@@ -13,7 +13,7 @@ export default function Inscription() {
 
   return (
     <div className="min-h-screen bg-muted/50">
-      <header className="border-b border-border bg-background">
+      <header className="border-b border-border bg-white">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/">
             <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />

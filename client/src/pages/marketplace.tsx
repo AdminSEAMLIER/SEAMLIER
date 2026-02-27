@@ -53,7 +53,7 @@ export default function Marketplace() {
   const displayCategories = ["all", "dresses", "suits", "accessories", "children", "african", "wedding", "readyToWear"];
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
       <div className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-2">

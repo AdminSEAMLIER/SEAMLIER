@@ -150,7 +150,7 @@ export default function Mesures() {
   ];
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
       <div className="bg-muted/50 border-b border-border">
         <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center gap-3 mb-2">

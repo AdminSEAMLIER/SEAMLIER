@@ -17,7 +17,7 @@ export function TailorCard({ tailor, linkPrefix = "/tailor" }: TailorCardProps) 
   return (
     <Link href={`${linkPrefix}/${tailor.id}`}>
       <Card 
-        className="overflow-hidden cursor-pointer border border-border bg-background shadow-sm hover:shadow-md transition-shadow"
+        className="overflow-hidden cursor-pointer border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow"
         data-testid={`card-tailor-${tailor.id}`}
       >
         <div className="relative h-40 overflow-hidden">

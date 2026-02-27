@@ -51,7 +51,7 @@ export default function CouturierProfile() {
 
   if (tailorLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-white">
         <div className="h-64 skeleton-shimmer" />
         <div className="px-4 lg:px-6 -mt-16 max-w-4xl mx-auto">
           <div className="h-24 w-24 rounded-full skeleton-shimmer border-4 border-background" />
@@ -67,7 +67,7 @@ export default function CouturierProfile() {
 
   if (!tailor) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">{t('tailorProfile.notFound')}</p>
           <Link href="/recherche">
@@ -82,8 +82,8 @@ export default function CouturierProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border sticky top-0 z-50 bg-background">
+    <div className="min-h-screen bg-white">
+      <header className="border-b border-border sticky top-0 z-50 bg-white">
         <div className="w-full px-4 md:px-8 py-3 md:py-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Link href="/recherche">

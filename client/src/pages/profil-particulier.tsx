@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, Ruler, BookOpen, Search, Loader2, FolderKanban } from "lucide-react";
@@ -17,6 +17,7 @@ export default function ProfilParticulier() {
   const { toast } = useToast();
   const { user, isLoading, logout } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState({
     firstName: "",
     lastName: "",
@@ -47,6 +48,7 @@ export default function ProfilParticulier() {
         email: profile.email,
         phone: profile.phone,
         location: profile.location,
+        profileImageUrl: profile.profileImageUrl || null,
       });
     },
     onSuccess: () => {
@@ -70,6 +72,33 @@ export default function ProfilParticulier() {
     saveMutation.mutate();
   };
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: t('profile.imageTooLarge'),
+          description: t('profile.imageTooLargeDesc'),
+          variant: "destructive",
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfile({ ...profile, profileImageUrl: reader.result as string });
+        toast({
+          title: t('profile.photoUpdated'),
+          description: t('profile.photoUpdatedDesc'),
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const getInitials = () => {
     const first = profile.firstName?.[0] || "";
     const last = profile.lastName?.[0] || "";
@@ -80,7 +109,7 @@ export default function ProfilParticulier() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pb-20 lg:pb-8 bg-background flex items-center justify-center">
+      <div className="min-h-screen pb-20 lg:pb-8 bg-white flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#722F37]" />
       </div>
     );
@@ -88,7 +117,7 @@ export default function ProfilParticulier() {
 
   if (!user) {
     return (
-      <div className="min-h-screen pb-20 lg:pb-8 bg-background flex items-center justify-center">
+      <div className="min-h-screen pb-20 lg:pb-8 bg-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">Vous devez être connecté pour accéder à votre profil.</p>
           <Link href="/connexion">
@@ -100,11 +129,11 @@ export default function ProfilParticulier() {
   }
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
-      <div className="bg-muted/50 border-b border-border">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
+      <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
               <User className="h-5 w-5 text-[#722F37]" />
             </div>
             <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
@@ -122,14 +151,23 @@ export default function ProfilParticulier() {
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row items-center gap-6">
               <div className="relative">
-                <Avatar className="h-24 w-24 border-2 border-border">
+                <Avatar className="h-24 w-24 border-2 border-gray-200">
                   <AvatarImage src={profile.profileImageUrl} alt={fullName} />
                   <AvatarFallback className="bg-[#722F37]/10 text-[#722F37] text-2xl font-medium">
                     {getInitials()}
                   </AvatarFallback>
                 </Avatar>
-                <button 
-                  className="absolute bottom-0 right-0 w-8 h-8 bg-card border border-border rounded-full flex items-center justify-center text-muted-foreground"
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  data-testid="input-avatar-file"
+                />
+                <button
+                  onClick={handleAvatarClick}
+                  className="absolute bottom-0 right-0 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-50"
                   data-testid="button-change-avatar"
                 >
                   <Camera className="h-4 w-4" />
@@ -284,31 +322,31 @@ export default function ProfilParticulier() {
             <div className="grid grid-cols-4 gap-3">
               <Link href="/decouverte">
                 <div className="flex flex-col items-center p-4 bg-muted/50 rounded-md transition-colors cursor-pointer" data-testid="link-recherche">
-                  <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center mb-2">
+                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
                     <Search className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-sm text-muted-foreground text-center">{t('nav.search')}</span>
+                  <span className="text-sm text-gray-500 text-center">{t('nav.search')}</span>
                 </div>
               </Link>
               <Link href="/mes-projets">
-                <div className="flex flex-col items-center p-4 bg-muted/50 rounded-md transition-colors cursor-pointer" data-testid="link-mes-projets">
-                  <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center mb-2">
+                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer" data-testid="link-mes-projets">
+                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
                     <FolderKanban className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-sm text-muted-foreground text-center">{t('nav.projects')}</span>
+                  <span className="text-sm text-gray-500 text-center">{t('nav.projects')}</span>
                 </div>
               </Link>
               <Link href="/mesures">
-                <div className="flex flex-col items-center p-4 bg-muted/50 rounded-md transition-colors cursor-pointer" data-testid="link-mesures">
-                  <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center mb-2">
+                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer" data-testid="link-mesures">
+                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
                     <Ruler className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-sm text-muted-foreground text-center">{t('nav.measures')}</span>
+                  <span className="text-sm text-gray-500 text-center">{t('nav.measures')}</span>
                 </div>
               </Link>
               <Link href="/magazine">
-                <div className="flex flex-col items-center p-4 bg-muted/50 rounded-md transition-colors cursor-pointer" data-testid="link-magazine">
-                  <div className="w-10 h-10 rounded-full bg-background border border-[#722F37] flex items-center justify-center mb-2">
+                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer" data-testid="link-magazine">
+                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
                     <BookOpen className="h-5 w-5 text-[#722F37]" />
                   </div>
                   <span className="text-sm text-muted-foreground text-center">{t('nav.magazine')}</span>

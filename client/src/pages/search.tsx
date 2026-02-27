@@ -66,8 +66,8 @@ export default function SearchPage() {
   const activeFiltersCount = selectedSpecialties.length + (selectedLocation ? 1 : 0) + (minRating > 0 ? 1 : 0);
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
-      <div className="bg-muted/50 border-b border-border">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
+      <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-2">
             Recherche avancée
@@ -82,7 +82,7 @@ export default function SearchPage() {
               placeholder="Rechercher par nom, spécialité..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-12 bg-background border-border"
+              className="pl-12 h-12 bg-white border-gray-200"
               data-testid="input-search-advanced"
             />
           </div>

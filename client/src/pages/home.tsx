@@ -59,7 +59,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-background">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
       <section className="relative py-16 lg:py-24 px-4 lg:px-8 overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center"
@@ -101,7 +101,7 @@ export default function Home() {
       </section>
 
       {/* Reste du code inchangé... */}
-      <section className="py-8 px-4 lg:px-8 border-y border-border bg-background">
+      <section className="py-8 px-4 lg:px-8 border-y border-border bg-white">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
@@ -117,7 +117,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-12 lg:py-16 px-4 lg:px-8 bg-background">
+      <section className="py-12 lg:py-16 px-4 lg:px-8 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="font-serif text-2xl lg:text-3xl text-[#722F37] mb-8 text-center">
             {t('landing.howItWorks')}
@@ -142,7 +142,7 @@ export default function Home() {
       </section>
 
       {featuredTailors && featuredTailors.length > 0 && (
-        <section className="py-12 lg:py-16 px-4 lg:px-8 bg-background border-y border-border">
+        <section className="py-12 lg:py-16 px-4 lg:px-8 bg-white border-y border-border">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-serif text-2xl lg:text-3xl text-[#722F37]">
@@ -171,7 +171,7 @@ export default function Home() {
         </section>
       )}
 
-      <section className="py-12 lg:py-16 px-4 lg:px-8 bg-background">
+      <section className="py-12 lg:py-16 px-4 lg:px-8 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="font-serif text-2xl lg:text-3xl text-[#722F37] mb-6 text-center">
             {t('landing.popularCities')}
