@@ -299,6 +299,29 @@ export async function registerRoutes(
     }
   });
 
+  // Protected routes - Measurements
+  app.get("/api/measurements", requireAuth, async (req: any, res) => {
+    try {
+      const result = await storage.getMeasurements(req.authUserId);
+      if (!result) return res.json(null);
+      res.json(result);
+    } catch (error) {
+      console.error("Failed to fetch measurements:", error);
+      res.status(500).json({ error: "Failed to fetch measurements" });
+    }
+  });
+
+  app.post("/api/measurements", requireAuth, async (req: any, res) => {
+    try {
+      const data = { ...req.body, userId: req.authUserId };
+      const result = await storage.upsertMeasurements(data);
+      res.json(result);
+    } catch (error) {
+      console.error("Failed to save measurements:", error);
+      res.status(500).json({ error: "Failed to save measurements" });
+    }
+  });
+
   // Protected routes - Conversations
   app.get("/api/conversations", requireAuth, async (req: any, res) => {
     try {
@@ -344,42 +367,6 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to send message:", error);
       res.status(500).json({ error: "Failed to send message" });
-    }
-  });
-
-  // Protected routes - Measurements
-  app.get("/api/measurements", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const measurements = await storage.getMeasurements(userId);
-      res.json(measurements || null);
-    } catch (error) {
-      console.error("Failed to fetch measurements:", error);
-      res.status(500).json({ error: "Failed to fetch measurements" });
-    }
-  });
-
-  app.post("/api/measurements", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const { neck, bust, waist, hips, shoulders, armLength, backLength, inseam, height, weight } = req.body;
-      const result = await storage.upsertMeasurements({
-        userId,
-        neck: neck ?? null,
-        bust: bust ?? null,
-        waist: waist ?? null,
-        hips: hips ?? null,
-        shoulders: shoulders ?? null,
-        armLength: armLength ?? null,
-        backLength: backLength ?? null,
-        inseam: inseam ?? null,
-        height: height ?? null,
-        weight: weight ?? null,
-      });
-      res.status(201).json(result);
-    } catch (error) {
-      console.error("Measurements save error:", error);
-      res.status(500).json({ error: "Failed to save measurements" });
     }
   });
 

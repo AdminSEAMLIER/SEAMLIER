@@ -532,6 +532,31 @@ class DatabaseStorage implements IStorage {
     }
   }
 
+  private async cascadeDeleteUser(id: string): Promise<void> {
+    await db.delete(messages).where(eq(messages.senderId, id));
+    const userConvos = await db.select({ id: conversations.id }).from(conversations)
+      .where(or(eq(conversations.participant1Id, id), eq(conversations.participant2Id, id)));
+    for (const c of userConvos) {
+      await db.delete(messages).where(eq(messages.conversationId, c.id));
+      await db.delete(conversations).where(eq(conversations.id, c.id));
+    }
+    await db.delete(measurements).where(eq(measurements.userId, id));
+    await db.delete(reviews).where(eq(reviews.clientId, id));
+    await db.delete(projects).where(eq(projects.clientId, id));
+    await db.delete(appointments).where(eq(appointments.clientId, id));
+    await db.delete(userPreferences).where(eq(userPreferences.userId, id));
+    const userTailors = await db.select({ id: tailors.id }).from(tailors).where(eq(tailors.userId, id));
+    for (const t of userTailors) {
+      await db.delete(portfolioItems).where(eq(portfolioItems.tailorId, t.id));
+      await db.delete(products).where(eq(products.tailorId, t.id));
+      await db.delete(reviews).where(eq(reviews.tailorId, t.id));
+      await db.delete(projects).where(eq(projects.tailorId, t.id));
+      await db.delete(appointments).where(eq(appointments.tailorId, t.id));
+    }
+    await db.delete(tailors).where(eq(tailors.userId, id));
+    await db.delete(users).where(eq(users.id, id));
+  }
+
   async deleteUnverifiedUsers(): Promise<number> {
     try {
       const unverified = await db.select({ id: users.id })
@@ -540,13 +565,10 @@ class DatabaseStorage implements IStorage {
       
       if (unverified.length === 0) return 0;
       
-      const ids = unverified.map(u => u.id);
-      for (const id of ids) {
-        await db.delete(messages).where(eq(messages.senderId, id));
-        await db.delete(tailors).where(eq(tailors.userId, id));
-        await db.delete(users).where(eq(users.id, id));
+      for (const u of unverified) {
+        await this.cascadeDeleteUser(u.id);
       }
-      return ids.length;
+      return unverified.length;
     } catch (error) {
       console.error("deleteUnverifiedUsers error:", error);
       throw error;
@@ -555,9 +577,7 @@ class DatabaseStorage implements IStorage {
 
   async deleteUser(id: string): Promise<void> {
     try {
-      await db.delete(messages).where(eq(messages.senderId, id));
-      await db.delete(tailors).where(eq(tailors.userId, id));
-      await db.delete(users).where(eq(users.id, id));
+      await this.cascadeDeleteUser(id);
     } catch (error) {
       console.error("deleteUser error:", error);
       throw error;

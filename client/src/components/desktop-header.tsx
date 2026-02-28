@@ -1,4 +1,4 @@
-import { Home, Compass, MessageCircle, ShoppingBag, Ruler, BookOpen, User, FileText, FolderKanban, Calendar, ArrowLeftRight, Briefcase, Users, LogOut } from "lucide-react";
+import { Home, Compass, MessageCircle, Ruler, BookOpen, User, FileText, FolderKanban, Calendar, ArrowLeftRight, Briefcase, Users, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ const particulierNavItems = [
   { icon: Home, labelKey: "nav.home", path: "/dashboard-client" },
   { icon: Compass, labelKey: "nav.search", path: "/decouverte" },
   { icon: MessageCircle, labelKey: "nav.messages", path: "/messages" },
-  { icon: ShoppingBag, labelKey: "nav.marketplace", path: "/marketplace" },
+  { icon: Ruler, labelKey: "nav.measures", path: "/mesures" },
   { icon: User, labelKey: "nav.profile", path: "/mon-profil" },
 ];
 
