@@ -198,7 +198,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-12 lg:py-16 px-4 lg:px-8 bg-muted/50">
+      <section className="py-12 lg:py-16 px-4 lg:px-8 bg-gray-50 border-t border-gray-100">
         <div className="max-w-6xl mx-auto">
           <h2 className="font-serif text-2xl lg:text-3xl text-[#722F37] mb-8 text-center">
             {t('landing.whyChooseUs')}
@@ -244,7 +244,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="py-10 px-4 lg:px-8 bg-muted/50 border-t border-border">
+      <footer className="py-10 px-4 lg:px-8 bg-gray-50 border-t border-gray-100">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
             <div>

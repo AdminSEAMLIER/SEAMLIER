@@ -234,7 +234,6 @@ export default function AdminDashboard() {
     queryKey: ["admin-users"],
     queryFn: async () => {
       const res = await apiFetch(API_ENDPOINTS.admin.users);
-      if (!res.ok) return [];
       return res.json();
     },
     enabled: isAuthenticated,
@@ -244,7 +243,6 @@ export default function AdminDashboard() {
     queryKey: ["admin-artisans"],
     queryFn: async () => {
       const res = await apiFetch(API_ENDPOINTS.admin.artisans);
-      if (!res.ok) return [];
       return res.json();
     },
     enabled: isAuthenticated,

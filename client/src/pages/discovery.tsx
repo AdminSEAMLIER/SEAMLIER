@@ -95,13 +95,17 @@ export default function Discovery() {
   };
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-8 bg-white text-black">
-      {/* Header Section */}
-      <div className="bg-zinc-50 border-b border-gray-100">
+    <div className="min-h-screen pb-20 lg:pb-8 bg-white">
+      <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
-          <h1 className="font-serif text-3xl lg:text-4xl text-black mb-2">
-            {t('discovery.title')}
-          </h1>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
+              <Search className="h-5 w-5 text-[#722F37]" />
+            </div>
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+              {t('discovery.title')}
+            </h1>
+          </div>
           <p className="text-gray-500 mb-6">
             {t('discovery.adjustFilters')}
           </p>
@@ -112,7 +116,8 @@ export default function Discovery() {
               placeholder={t('landing.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-12 bg-white border-gray-200 focus:border-black focus:ring-black text-black"
+              className="pl-12 h-12 bg-white border-gray-200 focus:border-[#722F37] focus:ring-[#722F37]"
+              data-testid="input-search-discovery"
             />
           </div>
         </div>
@@ -120,18 +125,16 @@ export default function Discovery() {
 
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6">
         <div className="flex flex-col gap-6">
-          {/* Selectors with Fixed Contrast */}
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-black" />
+              <MapPin className="h-4 w-4 text-[#722F37]" />
               <Select value={selectedCity} onValueChange={setSelectedCity}>
-                <SelectTrigger className="w-[160px] bg-white border-gray-200 text-black">
+                <SelectTrigger className="w-[160px] bg-white border-gray-200" data-testid="select-city">
                   <SelectValue placeholder={t('discovery.filterByCity')} />
                 </SelectTrigger>
-                {/* Point 3: Forçage du fond blanc et texte noir */}
                 <SelectContent className="bg-white border-gray-200">
                   {cities.map((city) => (
-                    <SelectItem key={city} value={city} className="text-black focus:bg-gray-100 focus:text-black">
+                    <SelectItem key={city} value={city} className="focus:bg-gray-100">
                       {getCityLabel(city)}
                     </SelectItem>
                   ))}
@@ -140,24 +143,23 @@ export default function Discovery() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 text-black" />
+              <Star className="h-4 w-4 text-[#722F37]" />
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[180px] bg-white border-gray-200 text-black">
+                <SelectTrigger className="w-[180px] bg-white border-gray-200" data-testid="select-sort">
                   <SelectValue placeholder={t('discovery.sortBy')} />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200">
-                  <SelectItem value="default" className="text-black focus:bg-gray-100">{t('discovery.sortBy')}</SelectItem>
-                  <SelectItem value="rating" className="text-black focus:bg-gray-100">{t('discovery.bestRating')}</SelectItem>
-                  <SelectItem value="reviews" className="text-black focus:bg-gray-100">{t('discovery.mostReviews')}</SelectItem>
+                  <SelectItem value="default" className="focus:bg-gray-100">{t('discovery.sortBy')}</SelectItem>
+                  <SelectItem value="rating" className="focus:bg-gray-100">{t('discovery.bestRating')}</SelectItem>
+                  <SelectItem value="reviews" className="focus:bg-gray-100">{t('discovery.mostReviews')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {/* Specialty Chips */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Scissors className="h-4 w-4 text-black" />
+              <Scissors className="h-4 w-4 text-[#722F37]" />
               <span className="text-sm font-medium text-gray-700">{t('discovery.specialties')}:</span>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -167,16 +169,15 @@ export default function Discovery() {
                   label={specialty.key === "all" ? t('discovery.allSpecialties') : t(`specialties.${specialty.key}`)}
                   isActive={selectedFilter === specialty.key}
                   onClick={() => setSelectedFilter(specialty.key)}
-                  className={selectedFilter === specialty.key ? "bg-black text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}
+                  className={selectedFilter === specialty.key ? "bg-[#722F37] text-white border-[#722F37]" : "bg-white text-gray-600 border-gray-200 hover:border-[#722F37] hover:text-[#722F37]"}
                 />
               ))}
             </div>
           </div>
         </div>
 
-        {/* Tailors Grid */}
         <div className="mt-12">
-          <h2 className="font-serif text-2xl text-black mb-6">
+          <h2 className="font-serif text-2xl text-[#722F37] mb-6">
             Nos Artisans
           </h2>
 
@@ -193,18 +194,17 @@ export default function Discovery() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-              <Scissors className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-lg font-medium text-gray-900">{t('discovery.noResults')}</p>
+            <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-200">
+              <Scissors className="h-12 w-12 mx-auto mb-4 text-[#722F37]/30" />
+              <p className="text-lg font-medium text-[#722F37]">{t('discovery.noResults')}</p>
               <p className="text-sm text-gray-500 mt-1">{t('discovery.adjustFilters')}</p>
             </div>
           )}
         </div>
 
-        {/* Portfolio Section */}
         {portfolio && portfolio.length > 0 && (
           <div className="mt-20 border-t border-gray-100 pt-12">
-            <h2 className="font-serif text-2xl text-black mb-6">
+            <h2 className="font-serif text-2xl text-[#722F37] mb-6">
               {t('tailor.portfolio')}
             </h2>
 

@@ -71,12 +71,12 @@ export default function Messages() {
       <div className="lg:flex lg:h-[calc(100vh-4rem)]">
         <aside 
           className={cn(
-            "lg:w-80 lg:border-r lg:border-border lg:flex lg:flex-col bg-muted/50",
+            "lg:w-80 lg:border-r lg:border-gray-100 lg:flex lg:flex-col bg-gray-50",
             selectedConversationId ? "hidden lg:flex" : "flex flex-col h-[calc(100vh-4rem)]"
           )}
         >
           <div className="p-4 border-b border-border bg-white flex items-center justify-between gap-3">
-            <h1 className="font-serif text-2xl text-primary">Messages</h1>
+            <h1 className="font-serif text-2xl text-[#722F37]">Messages</h1>
             <Button
               variant="outline"
               size="sm"
@@ -192,7 +192,7 @@ export default function Messages() {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/50">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
                 {messagesLoading ? (
                   <div className="space-y-4">
                     {Array.from({ length: 3 }).map((_, i) => (
@@ -273,7 +273,7 @@ export default function Messages() {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
               <MessageCircle className="h-16 w-16 text-muted-foreground/50 mb-4" />
-              <h2 className="font-serif text-xl text-primary mb-2">Vos messages</h2>
+              <h2 className="font-serif text-xl text-[#722F37] mb-2">Vos messages</h2>
               <p className="text-muted-foreground">
                 Sélectionnez une conversation pour voir les messages
               </p>
