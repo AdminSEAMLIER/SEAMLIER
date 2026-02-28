@@ -16,7 +16,7 @@ export const API_ENDPOINTS = {
 };
 
 export async function apiFetch(url: string, options: RequestInit = {}) {
-  return fetch(url, {
+  const res = await fetch(url, {
     ...options,
     credentials: "include",
     headers: {
@@ -24,4 +24,16 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
       ...options.headers,
     },
   });
+  if (!res.ok) {
+    let errorMessage = res.statusText;
+    try {
+      const body = await res.json();
+      errorMessage = body.message || body.error || JSON.stringify(body);
+    } catch {
+      const text = await res.text().catch(() => "");
+      if (text) errorMessage = text;
+    }
+    throw new Error(errorMessage || `Request failed: ${res.status}`);
+  }
+  return res;
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, Ruler, BookOpen, Search, Loader2, FolderKanban, MessageCircle, ShoppingBag } from "lucide-react";
+import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, Ruler, BookOpen, Search, Loader2, FolderKanban, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -354,14 +354,6 @@ export default function ProfilParticulier() {
                     <MessageCircle className="h-5 w-5 text-[#722F37]" />
                   </div>
                   <span className="text-xs text-gray-500 text-center">{t('nav.messages')}</span>
-                </div>
-              </Link>
-              <Link href="/marketplace">
-                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer hover:bg-gray-100" data-testid="link-marketplace">
-                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
-                    <ShoppingBag className="h-5 w-5 text-[#722F37]" />
-                  </div>
-                  <span className="text-xs text-gray-500 text-center">{t('nav.marketplace')}</span>
                 </div>
               </Link>
               <Link href="/mes-projets">

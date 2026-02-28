@@ -43,10 +43,10 @@ export default function ProductDetail() {
       <div className="min-h-screen flex items-center justify-center pb-20 lg:pb-8 bg-white">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">Produit non trouvé</p>
-          <Link href="/marketplace">
+          <Link href="/dashboard-client">
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour à la boutique
+              Retour
             </Button>
           </Link>
         </div>
@@ -64,7 +64,7 @@ export default function ProductDetail() {
         />
         
         <div className="absolute top-4 left-4 right-4 flex justify-between">
-          <Link href="/marketplace">
+          <Link href="/dashboard-client">
             <Button 
               variant="ghost" 
               size="icon" 

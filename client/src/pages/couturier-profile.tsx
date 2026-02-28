@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PortfolioCard, PortfolioCardSkeleton } from "@/components/portfolio-card";
-import { ProductCard, ProductCardSkeleton } from "@/components/product-card";
 import { ReviewCard, ReviewCardSkeleton } from "@/components/review-card";
 import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -22,7 +21,7 @@ import {
   Share2,
   Heart
 } from "lucide-react";
-import type { TailorWithUser, PortfolioWithTailor, ProductWithTailor, ReviewWithUser } from "@shared/schema";
+import type { TailorWithUser, PortfolioWithTailor, ReviewWithUser } from "@shared/schema";
 
 export default function CouturierProfile() {
   const { t } = useTranslation();
@@ -36,11 +35,6 @@ export default function CouturierProfile() {
 
   const { data: portfolio, isLoading: portfolioLoading } = useQuery<PortfolioWithTailor[]>({
     queryKey: ["/api/tailors", tailorId, "portfolio"],
-    enabled: !!tailorId,
-  });
-
-  const { data: products, isLoading: productsLoading } = useQuery<ProductWithTailor[]>({
-    queryKey: ["/api/tailors", tailorId, "products"],
     enabled: !!tailorId,
   });
 
@@ -199,15 +193,12 @@ export default function CouturierProfile() {
         </Card>
 
         <Tabs defaultValue="portfolio" className="mt-6">
-          <TabsList className="w-full grid grid-cols-3 bg-transparent border-b border-border rounded-none h-auto p-0">
+          <TabsList className="w-full grid grid-cols-2 bg-transparent border-b border-border rounded-none h-auto p-0">
             <TabsTrigger value="portfolio" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none bg-transparent py-3 text-sm">
               {t('tailorProfile.portfolio')}
             </TabsTrigger>
-            <TabsTrigger value="boutique" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none bg-transparent py-3 text-sm">
-              {t('tailorProfile.shop')}
-            </TabsTrigger>
             <TabsTrigger value="avis" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none bg-transparent py-3 text-sm">
-              Avis
+              {t('tailorProfile.reviewsTab')}
             </TabsTrigger>
           </TabsList>
 
@@ -227,26 +218,6 @@ export default function CouturierProfile() {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 {t('tailorProfile.noPortfolio')}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="boutique" className="mt-4">
-            {productsLoading ? (
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                {[...Array(6)].map((_, i) => (
-                  <ProductCardSkeleton key={i} />
-                ))}
-              </div>
-            ) : products && products.length > 0 ? (
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                {t('tailorProfile.noProducts')}
               </div>
             )}
           </TabsContent>

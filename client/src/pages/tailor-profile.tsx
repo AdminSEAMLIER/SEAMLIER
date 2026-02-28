@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PortfolioCard, PortfolioCardSkeleton } from "@/components/portfolio-card";
-import { ProductCard, ProductCardSkeleton } from "@/components/product-card";
 import { ReviewCard, ReviewCardSkeleton } from "@/components/review-card";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -26,7 +25,7 @@ import {
   Share2,
   Heart
 } from "lucide-react";
-import type { TailorWithUser, PortfolioWithTailor, ProductWithTailor, ReviewWithUser } from "@shared/schema";
+import type { TailorWithUser, PortfolioWithTailor, ReviewWithUser } from "@shared/schema";
 
 // Helper function to get full name from firstName + lastName
 const getFullName = (user: { firstName?: string | null; lastName?: string | null }) => {
@@ -76,11 +75,6 @@ export default function TailorProfile() {
 
   const { data: portfolio, isLoading: portfolioLoading } = useQuery<PortfolioWithTailor[]>({
     queryKey: ["/api/tailors", tailorId, "portfolio"],
-    enabled: !!tailorId,
-  });
-
-  const { data: products, isLoading: productsLoading } = useQuery<ProductWithTailor[]>({
-    queryKey: ["/api/tailors", tailorId, "products"],
     enabled: !!tailorId,
   });
 
@@ -241,12 +235,9 @@ export default function TailorProfile() {
         </div>
 
         <Tabs defaultValue="portfolio" className="mt-8">
-          <TabsList className="w-full grid grid-cols-3 bg-transparent border-b border-gray-200 rounded-none h-auto p-0">
+          <TabsList className="w-full grid grid-cols-2 bg-transparent border-b border-gray-200 rounded-none h-auto p-0">
             <TabsTrigger value="portfolio" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#722F37] data-[state=active]:bg-transparent data-[state=active]:text-[#722F37] data-[state=active]:shadow-none bg-transparent py-3" data-testid="tab-portfolio">
               {t('tailorProfile.portfolio')} ({portfolio?.length || 0})
-            </TabsTrigger>
-            <TabsTrigger value="products" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#722F37] data-[state=active]:bg-transparent data-[state=active]:text-[#722F37] data-[state=active]:shadow-none bg-transparent py-3" data-testid="tab-products">
-              {t('tailorProfile.shop')} ({products?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="reviews" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#722F37] data-[state=active]:bg-transparent data-[state=active]:text-[#722F37] data-[state=active]:shadow-none bg-transparent py-3" data-testid="tab-reviews">
               {t('tailorProfile.reviewsTab')} ({reviews?.length || 0})
@@ -266,24 +257,6 @@ export default function TailorProfile() {
               ) : (
                 <div className="col-span-full text-center py-12">
                   <p className="text-gray-500">{t('tailorProfile.noRealisations')}</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="products" className="mt-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {productsLoading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <ProductCardSkeleton key={i} />
-                ))
-              ) : products && products.length > 0 ? (
-                products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12">
-                  <p className="text-gray-500">{t('tailorProfile.noProducts')}</p>
                 </div>
               )}
             </div>

@@ -883,7 +883,7 @@ export default function AdminDashboard() {
                 <>
                   <div>
                     <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Tableau de Bord</h1>
-                    <p className="text-gray-500 mt-1 text-sm">Vue globale de la marketplace SEAMLiER</p>
+                    <p className="text-gray-500 mt-1 text-sm">Vue globale de la plateforme SEAMLiER</p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                     {stats.map((stat) => (
@@ -968,7 +968,7 @@ export default function AdminDashboard() {
                 <>
                   <div>
                     <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Projets & Séquestre</h1>
-                    <p className="text-gray-500 mt-1 text-sm">Gestion des flux financiers de la marketplace</p>
+                    <p className="text-gray-500 mt-1 text-sm">Gestion des flux financiers de la plateforme</p>
                   </div>
                   <Card className="border-none shadow-sm overflow-hidden bg-white">
                     <div className="p-5 border-b border-gray-50 flex items-center justify-between gap-4 flex-wrap">

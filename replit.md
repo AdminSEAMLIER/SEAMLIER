@@ -85,7 +85,13 @@ shared/              # Shared code (schema, types)
 ### Bug Fixes (December 2024)
 - **Product Detail Page**: Added `/product/:id` route and full product detail page with image, title, price, seller info, and action buttons
 - **Messaging System**: Wired message sending to POST `/api/messages` with useMutation and proper cache invalidation
-- **Marketplace/Search Filtering**: Migrated from malformed server-side filtering to proper client-side filtering using useMemo
+
+### Boutique Removal & Deletion Fixes (February 2026)
+- **Boutique/Marketplace Removed**: Completely removed from all interfaces (bottom-nav, desktop-header, tailor profiles, profil-particulier, App.tsx routes)
+- **Tailor Profiles**: Now show only 2 tabs (Portfolio, Avis) instead of 3
+- **Delete Cascade**: `deleteUser` and `deleteUnverifiedUsers` now cascade-delete all FK-dependent rows (messages, conversations, measurements, reviews, projects, appointments, preferences, tailor data)
+- **apiFetch Error Handling**: Now throws on non-OK responses with parsed error messages from server JSON (body.message or body.error)
+- **Measurements API**: GET/POST `/api/measurements` routes confirmed in bundle (2 occurrences)
 
 ### Professional Registration Flow (January 2026)
 - **Replit Auth Integration**: Professionals authenticate via Replit Auth with `?role=tailor`
@@ -153,7 +159,7 @@ shared/              # Shared code (schema, types)
 
 ### Route Structure (February 2026)
 - **Public**: `/` (landing), `/connexion`, `/inscription`, `/inscription/particulier`, `/inscription/professionnel`, `/recherche`, `/profil-pro/:id`
-- **Client (protected)**: `/dashboard-client`, `/decouverte`, `/mesures`, `/magazine`, `/marketplace`, `/messages`, `/mon-profil`, `/mes-projets`, `/suivi-projet/:id`, `/product/:id`, `/tailor/:id`
+- **Client (protected)**: `/dashboard-client`, `/decouverte`, `/mesures`, `/magazine`, `/messages`, `/mon-profil`, `/mes-projets`, `/suivi-projet/:id`, `/product/:id`, `/tailor/:id`
 - **Pro (protected)**: `/dashboard-pro`, `/gestion-demandes`, `/atelier`, `/atelier/:id`, `/messagerie`, `/vitrine-pro`, `/portefeuille`, `/pro-profil`
 - **Admin (protected + role=admin)**: `/admin/dashboard`
 - **API Config**: `client/src/lib/api-config.ts` with `apiFetch()` helper and `API_ENDPOINTS` constants
@@ -161,10 +167,9 @@ shared/              # Shared code (schema, types)
 ### Complete Feature Set
 - Discovery page with hero section and featured tailors
 - Search page with specialty, location, rating, and price filters
-- Marketplace with product cards and category filters
 - Messages with conversation list and real-time chat
 - Profile page with user info and menu options
-- Individual tailor profiles with tabs (Portfolio, Boutique, Avis)
+- Individual tailor profiles with tabs (Portfolio, Avis)
 - Individual product detail pages
 - Professional registration with profile setup flow
 - Admin dashboard at `/admin/seamlier` with 10 tabs (artisans, settings, etc.)

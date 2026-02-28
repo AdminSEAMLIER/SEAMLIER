@@ -47,7 +47,6 @@ import ProParametres from "@/pages/pro-parametres";
 import ProModifierMotDePasse from "@/pages/pro-modifier-mot-de-passe";
 import ProNotifications from "@/pages/pro-notifications";
 import ProSetup from "@/pages/pro-setup";
-import Marketplace from "@/pages/marketplace";
 import MesProjets from "@/pages/mes-projets";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -178,12 +177,6 @@ function Router() {
       <Route path="/magazine/:id">
         <ProtectedRoute>
           <ClientLayout><MagazineDetail /></ClientLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/marketplace">
-        <ProtectedRoute>
-          <ClientLayout><Marketplace /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
