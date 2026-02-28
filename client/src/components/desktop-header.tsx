@@ -16,6 +16,7 @@ const particulierNavItems = [
   { icon: Compass, labelKey: "nav.search", path: "/decouverte" },
   { icon: MessageCircle, labelKey: "nav.messages", path: "/messages" },
   { icon: Ruler, labelKey: "nav.measures", path: "/mesures" },
+  { icon: BookOpen, labelKey: "nav.magazine", path: "/magazine" },
   { icon: User, labelKey: "nav.profile", path: "/mon-profil" },
 ];
 
