@@ -74,6 +74,8 @@ export interface IStorage {
   deleteAppointment(id: string): Promise<void>;
 
   getAllUsers(): Promise<Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'role' | 'createdAt' | 'emailVerified'>[]>;
+  deleteUnverifiedUsers(): Promise<number>;
+  deleteUser(id: string): Promise<void>;
 
   getAdminArtisans(): Promise<AdminArtisan[]>;
   getAdminArtisan(id: string): Promise<AdminArtisan | undefined>;
@@ -513,6 +515,38 @@ class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("getAllUsers error:", error);
       return [];
+    }
+  }
+
+  async deleteUnverifiedUsers(): Promise<number> {
+    try {
+      const unverified = await db.select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.emailVerified, false), sql`${users.role} != 'admin'`));
+      
+      if (unverified.length === 0) return 0;
+      
+      const ids = unverified.map(u => u.id);
+      for (const id of ids) {
+        await db.delete(messages).where(eq(messages.senderId, id));
+        await db.delete(tailors).where(eq(tailors.userId, id));
+        await db.delete(users).where(eq(users.id, id));
+      }
+      return ids.length;
+    } catch (error) {
+      console.error("deleteUnverifiedUsers error:", error);
+      throw error;
+    }
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    try {
+      await db.delete(messages).where(eq(messages.senderId, id));
+      await db.delete(tailors).where(eq(tailors.userId, id));
+      await db.delete(users).where(eq(users.id, id));
+    } catch (error) {
+      console.error("deleteUser error:", error);
+      throw error;
     }
   }
 

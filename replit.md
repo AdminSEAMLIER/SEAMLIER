@@ -112,6 +112,7 @@ shared/              # Shared code (schema, types)
 ### Production Readiness (February 2026)
 - **Pro Dashboard**: Starter limit gauge (0/10 fiches with progress bar), upgrade-to-Pro modal, plan status card
 - **Admin Dashboard Cleanup**: All mock data removed, empty states for all sections, real data from DB only
+- **Admin Artisans Tab**: Loads real artisans from `GET /api/admin/artisans`, validate/deactivate/delete actions per artisan
 - **Role Separation**: Admin sees global metrics and artisan management; Pro dashboard shows individual artisan limits
 - **Sessions**: PostgreSQL session store with httpOnly/secure cookies (1-week TTL)
 - **Build**: Vite frontend (670KB / 183KB gzip) + esbuild server bundle
@@ -131,7 +132,13 @@ shared/              # Shared code (schema, types)
 - **Admin CRUD**: `GET/POST /api/admin/articles`, `PUT/DELETE /api/admin/articles/:id`
 - **Public API**: `GET /api/articles` (published only), `GET /api/articles/:id`
 - **Admin Dashboard**: Magazine tab now persists articles to database (was local state only)
+- **Image Upload**: Base64 image upload in article creation form (MEDIUMTEXT column for storage)
 - **Client Magazine Page**: Shows published articles from DB with category badges, excerpts, dates
+
+### Contact Support Messaging (February 2026)
+- **Messages Page**: "Support" button in conversation sidebar header
+- **Flow**: Clicking creates/opens conversation with admin user (id: admin-001) via `POST /api/conversations`
+- **Backend**: Uses existing `getOrCreateConversation()` storage method — reuses existing conversation if one exists
 
 ### Auth Architecture (February 2026)
 - **Single Auth System**: Passport.js local strategy (email/password with bcrypt)

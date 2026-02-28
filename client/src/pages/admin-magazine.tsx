@@ -183,6 +183,7 @@ export default function AdminDashboard() {
   const [newArticleTitle, setNewArticleTitle] = useState("");
   const [newArticleCategory, setNewArticleCategory] = useState("");
   const [newArticleContent, setNewArticleContent] = useState("");
+  const [newArticleImageUrl, setNewArticleImageUrl] = useState("");
   const [selectedCouturier, setSelectedCouturier] = useState<string | null>(null);
   const [couturierDialogMode, setCouturierDialogMode] = useState<"view" | "edit" | null>(null);
   const [couturierDialogId, setCouturierDialogId] = useState<string | null>(null);
@@ -325,6 +326,47 @@ export default function AdminDashboard() {
     },
   });
 
+  const deleteUnverifiedMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiFetch("/api/admin/users/unverified", { method: "DELETE" });
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast({ title: "Comptes supprimés", description: `${data.deleted} compte(s) non activé(s) supprimé(s).` });
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de supprimer les comptes.", variant: "destructive" });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiFetch(`/api/admin/users/${id}`, { method: "DELETE" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast({ title: "Compte supprimé" });
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de supprimer ce compte.", variant: "destructive" });
+    },
+  });
+
+  const toggleUserStatusMutation = useMutation({
+    mutationFn: async ({ id, emailVerified }: { id: string; emailVerified: boolean }) => {
+      const res = await apiFetch(`/api/admin/users/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ emailVerified }),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast({ title: "Statut mis à jour" });
+    },
+  });
+
   const { data: dbSettings } = useQuery<Record<string, string>>({
     queryKey: ["admin-settings"],
     queryFn: async () => {
@@ -384,7 +426,35 @@ export default function AdminDashboard() {
 
   const [measureProfiles] = useState<MeasureProfile[]>([]);
 
-  const [couturiers, setCouturiers] = useState<CouturierData[]>([]);
+  const { data: rawArtisans = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/artisans"],
+    enabled: isAuthenticated,
+  });
+  const couturiers: CouturierData[] = rawArtisans.map((a: any) => ({
+    id: a.id,
+    name: `${a.firstName || ""} ${a.lastName || ""}`.trim(),
+    location: a.city || "",
+    specialty: a.specialty || "",
+    status: a.status === "Vérifié" ? "Vérifié" : a.status === "Non vérifié" ? "Non vérifié" : "En attente",
+    selected: false,
+    firstName: a.firstName || "",
+    lastName: a.lastName || "",
+    birthDate: a.birthDate || "",
+    nationality: a.nationality || "",
+    idType: a.idType || "",
+    idNumber: a.idNumber || "",
+    phone: a.phone || "",
+    email: a.email || "",
+    address: a.address || "",
+    siret: a.siret || "",
+    companyName: a.companyName || "",
+    legalForm: a.legalForm || "",
+    tvaNumber: a.tvaNumber || "",
+    iban: a.iban || "",
+    registrationDate: a.joinDate || a.createdAt || "",
+    yearsExperience: a.yearsExperience || 0,
+    bio: a.bio || "",
+  }));
 
   const { data: articles = [] } = useQuery<Article[]>({
     queryKey: ["/api/admin/articles"],
@@ -504,6 +574,18 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleArticleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Image trop volumineuse", description: "Maximum 5 Mo", variant: "destructive" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => setNewArticleImageUrl(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const createArticle = async () => {
     if (!newArticleTitle.trim()) return;
     try {
@@ -514,6 +596,7 @@ export default function AdminDashboard() {
           category: newArticleCategory || "Non catégorisé",
           content: newArticleContent,
           excerpt: newArticleContent ? newArticleContent.substring(0, 200) : null,
+          imageUrl: newArticleImageUrl || null,
           status: "Brouillon",
         }),
       });
@@ -521,6 +604,7 @@ export default function AdminDashboard() {
       setNewArticleTitle("");
       setNewArticleCategory("");
       setNewArticleContent("");
+      setNewArticleImageUrl("");
       setShowNewArticle(false);
       toast({ title: "Article créé", description: "Le brouillon a été enregistré." });
     } catch (error) {
@@ -529,9 +613,6 @@ export default function AdminDashboard() {
   };
 
   const toggleCouturierSelect = (id: string) => {
-    setCouturiers(prev => prev.map(c =>
-      c.id === id ? { ...c, selected: !c.selected } : c
-    ));
     setSelectedCouturier(id);
   };
 
@@ -551,13 +632,56 @@ export default function AdminDashboard() {
     setEditForm({});
   };
 
-  const saveCouturierEdit = () => {
+  const saveCouturierEdit = async () => {
     if (!couturierDialogId) return;
-    setCouturiers(prev => prev.map(c =>
-      c.id === couturierDialogId ? { ...c, ...editForm, name: `${editForm.firstName || c.firstName} ${editForm.lastName || c.lastName}` } : c
-    ));
-    toast({ title: "Profil mis à jour", description: "Les informations du couturier ont été enregistrées." });
-    closeCouturierDialog();
+    try {
+      await apiFetch(`/api/admin/artisans/${couturierDialogId}`, {
+        method: "PUT",
+        body: JSON.stringify(editForm),
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/artisans"] });
+      toast({ title: "Profil mis à jour", description: "Les informations du couturier ont été enregistrées." });
+      closeCouturierDialog();
+    } catch (error) {
+      toast({ title: "Erreur", description: "Impossible de mettre à jour le profil", variant: "destructive" });
+    }
+  };
+
+  const validateCouturier = async (id: string) => {
+    try {
+      await apiFetch(`/api/admin/artisans/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ status: "Vérifié" }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/artisans"] });
+      toast({ title: "Artisan validé", description: "Le statut a été mis à jour." });
+    } catch (error) {
+      toast({ title: "Erreur", description: "Impossible de valider l'artisan", variant: "destructive" });
+    }
+  };
+
+  const deactivateCouturier = async (id: string) => {
+    try {
+      await apiFetch(`/api/admin/artisans/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ status: "Non vérifié" }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/artisans"] });
+      toast({ title: "Artisan désactivé", description: "Le statut a été mis à jour." });
+    } catch (error) {
+      toast({ title: "Erreur", description: "Impossible de désactiver l'artisan", variant: "destructive" });
+    }
+  };
+
+  const deleteCouturier = async (id: string) => {
+    try {
+      await apiFetch(`/api/admin/artisans/${id}`, { method: "DELETE" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/artisans"] });
+      toast({ title: "Artisan supprimé", description: "L'artisan a été retiré." });
+      closeCouturierDialog();
+    } catch (error) {
+      toast({ title: "Erreur", description: "Impossible de supprimer l'artisan", variant: "destructive" });
+    }
   };
 
   const dialogCouturier = couturiers.find(c => c.id === couturierDialogId);
@@ -1153,10 +1277,17 @@ export default function AdminDashboard() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
+                          {couturiers.length === 0 && (
+                            <tr>
+                              <td colSpan={6} className="px-5 py-12 text-center text-sm text-gray-400">
+                                Aucun artisan enregistré. Ajoutez-en via le bouton ci-dessus.
+                              </td>
+                            </tr>
+                          )}
                           {couturiers.map(c => (
                             <tr key={c.id} className={cn("transition-colors", selectedCouturier === c.id ? "bg-[#722F37]/5" : "hover:bg-gray-50/50")} data-testid={`row-couturier-${c.id}`}>
                               <td className="px-5 py-3">
-                                <input type="checkbox" checked={c.selected} onChange={() => toggleCouturierSelect(c.id)} className="rounded border-gray-300 text-[#722F37] focus:ring-[#722F37]" data-testid={`checkbox-couturier-${c.id}`} />
+                                <input type="checkbox" checked={selectedCouturier === c.id} onChange={() => toggleCouturierSelect(c.id)} className="rounded border-gray-300 text-[#722F37] focus:ring-[#722F37]" data-testid={`checkbox-couturier-${c.id}`} />
                               </td>
                               <td className="px-5 py-3">
                                 <div className="flex items-center gap-3">
@@ -1175,12 +1306,25 @@ export default function AdminDashboard() {
                                 <Badge className={cn("text-[10px] border-none font-bold", c.status === "Vérifié" ? "bg-green-100 text-green-700" : c.status === "En attente" ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500")} data-testid={`badge-couturier-status-${c.id}`}>{c.status}</Badge>
                               </td>
                               <td className="px-5 py-3 text-right">
-                                <div className="flex justify-end gap-2">
-                                  <Button size="sm" variant="outline" className="h-8 text-[11px]" onClick={() => openCouturierDialog(c.id, "edit")} data-testid={`button-edit-couturier-${c.id}`}>
-                                    <Pencil size={14} className="mr-1" /> Editer
+                                <div className="flex justify-end gap-1.5 flex-wrap">
+                                  {c.status !== "Vérifié" && (
+                                    <Button size="sm" variant="outline" className="h-7 text-[10px] border-green-200 text-green-700 hover:bg-green-50" onClick={() => validateCouturier(c.id)} data-testid={`button-validate-couturier-${c.id}`}>
+                                      <CheckCircle size={12} className="mr-1" /> Valider
+                                    </Button>
+                                  )}
+                                  {c.status === "Vérifié" && (
+                                    <Button size="sm" variant="outline" className="h-7 text-[10px] border-amber-200 text-amber-700 hover:bg-amber-50" onClick={() => deactivateCouturier(c.id)} data-testid={`button-deactivate-couturier-${c.id}`}>
+                                      <XCircle size={12} className="mr-1" /> Désactiver
+                                    </Button>
+                                  )}
+                                  <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => openCouturierDialog(c.id, "edit")} data-testid={`button-edit-couturier-${c.id}`}>
+                                    <Pencil size={12} className="mr-1" /> Editer
                                   </Button>
-                                  <Button size="sm" variant="outline" className="h-8 text-[11px]" onClick={() => openCouturierDialog(c.id, "view")} data-testid={`button-view-couturier-${c.id}`}>
-                                    <Eye size={14} className="mr-1" /> Voir
+                                  <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => openCouturierDialog(c.id, "view")} data-testid={`button-view-couturier-${c.id}`}>
+                                    <Eye size={12} className="mr-1" /> Voir
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="h-7 text-[10px] border-red-200 text-red-600 hover:bg-red-50" onClick={() => deleteCouturier(c.id)} data-testid={`button-delete-couturier-${c.id}`}>
+                                    <Trash2 size={12} className="mr-1" /> Suppr.
                                   </Button>
                                 </div>
                               </td>
@@ -1519,11 +1663,32 @@ export default function AdminDashboard() {
                 });
                 const totalVerified = dbUsers.filter((u: any) => u.emailVerified).length;
 
+                const totalUnverified = dbUsers.filter((u: any) => !u.emailVerified && u.role !== 'admin').length;
+
                 return (
                 <>
-                  <div>
-                    <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title-users">Utilisateurs</h1>
-                    <p className="text-gray-500 mt-1 text-sm">Gestion des comptes inscrits sur la plateforme</p>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title-users">Utilisateurs</h1>
+                      <p className="text-gray-500 mt-1 text-sm">Gestion des comptes inscrits sur la plateforme</p>
+                    </div>
+                    {totalUnverified > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-red-200 text-red-600 hover:bg-red-50 gap-1.5"
+                        onClick={() => {
+                          if (confirm(`Supprimer ${totalUnverified} compte(s) non activé(s) ? Cette action est irréversible.`)) {
+                            deleteUnverifiedMutation.mutate();
+                          }
+                        }}
+                        disabled={deleteUnverifiedMutation.isPending}
+                        data-testid="button-delete-unverified"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Supprimer non activés ({totalUnverified})
+                      </Button>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -1647,7 +1812,8 @@ export default function AdminDashboard() {
                                 <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
                                 <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
                                 <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Statut</th>
-                                <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date d'inscription</th>
+                                <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Inscription</th>
+                                <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1683,6 +1849,34 @@ export default function AdminDashboard() {
                                   </td>
                                   <td className="p-4 text-gray-500 text-xs">
                                     {u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                                  </td>
+                                  <td className="p-4">
+                                    {u.role !== 'admin' && (
+                                      <div className="flex items-center gap-1">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className={cn("h-7 px-2 text-xs", u.emailVerified ? "text-orange-600 hover:text-orange-700" : "text-green-600 hover:text-green-700")}
+                                          onClick={() => toggleUserStatusMutation.mutate({ id: u.id, emailVerified: !u.emailVerified })}
+                                          data-testid={`button-toggle-${u.id}`}
+                                        >
+                                          {u.emailVerified ? "Désactiver" : "Activer"}
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 px-2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                          onClick={() => {
+                                            if (confirm(`Supprimer le compte de ${u.firstName} ${u.lastName} ?`)) {
+                                              deleteUserMutation.mutate(u.id);
+                                            }
+                                          }}
+                                          data-testid={`button-delete-user-${u.id}`}
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                      </div>
+                                    )}
                                   </td>
                                 </tr>
                               ))}
@@ -2276,6 +2470,24 @@ export default function AdminDashboard() {
                       <CardContent className="p-5 space-y-4">
                         <Input placeholder="Titre de l'article" value={newArticleTitle} onChange={e => setNewArticleTitle(e.target.value)} className="h-11 font-semibold" data-testid="input-article-title" />
                         <Input placeholder="Catégorie (ex: Tendances, Conseils, Portrait)" value={newArticleCategory} onChange={e => setNewArticleCategory(e.target.value)} className="h-10 text-sm" data-testid="input-article-category" />
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1.5">Image de couverture</label>
+                          <div className="flex items-center gap-3">
+                            <label className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#722F37] hover:bg-[#722F37]/5 transition-colors" data-testid="button-upload-article-image">
+                              <Upload className="h-4 w-4 text-gray-400" />
+                              <span className="text-sm text-gray-500">Choisir une image</span>
+                              <input type="file" accept="image/*" className="hidden" onChange={handleArticleImageChange} />
+                            </label>
+                            {newArticleImageUrl && (
+                              <div className="relative">
+                                <img src={newArticleImageUrl} alt="Aperçu" className="h-16 w-24 object-cover rounded-lg border" />
+                                <button onClick={() => setNewArticleImageUrl("")} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs">
+                                  <X size={12} />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                         <Textarea placeholder="Contenu de l'article..." value={newArticleContent} onChange={e => setNewArticleContent(e.target.value)} className="min-h-[120px] text-sm" data-testid="input-article-content" />
                         <div className="flex justify-end gap-3">
                           <Button variant="outline" onClick={() => setShowNewArticle(false)} data-testid="button-cancel-article">Annuler</Button>

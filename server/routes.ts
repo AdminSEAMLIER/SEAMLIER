@@ -637,6 +637,42 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/admin/users/unverified", requireAdmin, async (req, res) => {
+    try {
+      const count = await storage.deleteUnverifiedUsers();
+      res.json({ deleted: count });
+    } catch (error) {
+      console.error("Error deleting unverified users:", error);
+      res.status(500).json({ error: "Failed to delete unverified users" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const userId = req.params.id;
+      if (userId === (req.user as any)?.id) {
+        return res.status(400).json({ error: "Cannot delete your own account" });
+      }
+      await storage.deleteUser(userId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ error: "Failed to delete user" });
+    }
+  });
+
+  app.patch("/api/admin/users/:id/status", requireAdmin, async (req, res) => {
+    try {
+      const { emailVerified } = req.body;
+      const updated = await storage.updateUser(req.params.id, { emailVerified });
+      if (!updated) return res.status(404).json({ error: "User not found" });
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating user status:", error);
+      res.status(500).json({ error: "Failed to update user status" });
+    }
+  });
+
   app.get("/api/admin/artisans", requireAdmin, async (req, res) => {
     try {
       const artisans = await storage.getAdminArtisans();

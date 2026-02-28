@@ -3,14 +3,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, ImagePlus, ArrowLeft, MessageCircle } from "lucide-react";
+import { Send, ImagePlus, ArrowLeft, MessageCircle, Headset } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 import type { ConversationWithParticipant, MessageWithSender } from "@shared/schema";
 
 export default function Messages() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const queryClient = useQueryClient();
@@ -42,6 +44,22 @@ export default function Messages() {
     },
   });
 
+  const contactSupportMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/conversations", {
+        participantId: "admin-001",
+      });
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      setSelectedConversationId(data.id);
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de contacter le support", variant: "destructive" });
+    },
+  });
+
   const handleSendMessage = () => {
     if (!messageInput.trim() || !selectedConversationId) return;
     sendMessageMutation.mutate(messageInput.trim());
@@ -57,8 +75,19 @@ export default function Messages() {
             selectedConversationId ? "hidden lg:flex" : "flex flex-col h-[calc(100vh-4rem)]"
           )}
         >
-          <div className="p-4 border-b border-border bg-white">
+          <div className="p-4 border-b border-border bg-white flex items-center justify-between gap-3">
             <h1 className="font-serif text-2xl text-primary">Messages</h1>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs gap-1.5 border-[#722F37]/30 text-[#722F37] hover:bg-[#722F37]/5"
+              onClick={() => contactSupportMutation.mutate()}
+              disabled={contactSupportMutation.isPending}
+              data-testid="button-contact-support"
+            >
+              <Headset className="h-3.5 w-3.5" />
+              Support
+            </Button>
           </div>
           
           <div className="flex-1 overflow-y-auto">

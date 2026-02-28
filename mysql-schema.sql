@@ -279,3 +279,6 @@ ALTER TABLE `users` MODIFY COLUMN `profile_image_url` MEDIUMTEXT DEFAULT NULL;
 
 -- Set existing admin user as verified
 UPDATE `users` SET `email_verified` = TRUE WHERE `email` = 'admin@seamlier.fr';
+
+-- Ensure magazine article image_url supports base64 images
+ALTER TABLE `magazine_articles` MODIFY COLUMN `image_url` MEDIUMTEXT DEFAULT NULL;
