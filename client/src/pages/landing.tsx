@@ -262,6 +262,7 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
         </div>
       </section>
 
+      {!embedded && (
       <section className="py-16 lg:py-24 px-2 md:px-8 bg-[#5a1f25]">
         <div className="w-full max-w-7xl mx-auto text-center">
           <h2 className="font-serif text-3xl lg:text-4xl text-white mb-4">
@@ -278,6 +279,7 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
           </Link>
         </div>
       </section>
+      )}
 
       {!embedded && (
       <footer className="bg-white border-t border-gray-100 py-8 px-2 md:px-8">
