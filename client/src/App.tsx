@@ -152,7 +152,7 @@ function Router() {
       {/* Client routes */}
       <Route path="/dashboard-client">
         <ProtectedRoute>
-          <ClientLayout><Home /></ClientLayout>
+          <ClientLayout><Landing embedded /></ClientLayout>
         </ProtectedRoute>
       </Route>
 

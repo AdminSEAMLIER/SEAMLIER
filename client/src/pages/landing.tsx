@@ -25,7 +25,7 @@ const cities = [
   { name: "Nice", image: niceImg },
 ];
 
-export default function Landing() {
+export default function Landing({ embedded }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
   const [, setPageLocation] = useWouterLocation();
   const { toast } = useToast();
@@ -72,7 +72,8 @@ export default function Landing() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className={embedded ? "bg-white" : "min-h-screen bg-white"}>
+      {!embedded && (
       <header className="border-b border-gray-100 sticky top-0 z-50 bg-white">
         <div className="w-full px-2 md:px-8 py-2 md:py-4 flex items-center justify-between gap-1 md:gap-2">
           <Logo className="text-[#722F37] shrink-0" textClassName="text-base lg:text-lg text-[#722F37]" />
@@ -102,6 +103,7 @@ export default function Landing() {
           </div>
         </div>
       </header>
+      )}
 
       <section className="relative py-20 lg:py-28 px-4 md:px-8 overflow-hidden">
         <div 
@@ -277,6 +279,7 @@ export default function Landing() {
         </div>
       </section>
 
+      {!embedded && (
       <footer className="bg-white border-t border-gray-100 py-8 px-2 md:px-8">
         <div className="w-full">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -291,6 +294,7 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+      )}
     </div>
   );
 }
