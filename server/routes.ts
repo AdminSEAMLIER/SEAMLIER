@@ -313,12 +313,18 @@ export async function registerRoutes(
 
   app.post("/api/measurements", requireAuth, async (req: any, res) => {
     try {
-      const data = { ...req.body, userId: req.authUserId };
+      const userId = req.authUserId;
+      console.log("[measurements] POST userId:", userId, "body:", JSON.stringify(req.body));
+      const data = { ...req.body, userId };
       const result = await storage.upsertMeasurements(data);
       res.json(result);
-    } catch (error) {
-      console.error("Failed to save measurements:", error);
-      res.status(500).json({ error: "Failed to save measurements" });
+    } catch (error: any) {
+      console.error("[measurements] FULL ERROR:", error);
+      console.error("[measurements] error.message:", error?.message);
+      console.error("[measurements] error.code:", error?.code);
+      console.error("[measurements] error.sqlMessage:", error?.sqlMessage);
+      console.error("[measurements] error.sql:", error?.sql);
+      res.status(500).json({ error: "Failed to save measurements", detail: error?.message || String(error) });
     }
   });
 
@@ -637,14 +643,19 @@ export async function registerRoutes(
   app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
     try {
       const userId = req.params.id;
+      console.log("[admin] DELETE user:", userId);
       if (userId === (req.user as any)?.id) {
         return res.status(400).json({ error: "Cannot delete your own account" });
       }
       await storage.deleteUser(userId);
+      console.log("[admin] User deleted successfully:", userId);
       res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      res.status(500).json({ error: "Failed to delete user" });
+    } catch (error: any) {
+      console.error("[admin] DELETE user FULL ERROR:", error);
+      console.error("[admin] error.message:", error?.message);
+      console.error("[admin] error.code:", error?.code);
+      console.error("[admin] error.sqlMessage:", error?.sqlMessage);
+      res.status(500).json({ error: "Failed to delete user", detail: error?.message || String(error) });
     }
   });
 

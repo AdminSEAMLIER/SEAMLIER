@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { BookOpen, Clock, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { MagazineArticle } from "@shared/schema";
@@ -39,44 +40,45 @@ export default function Magazine() {
         ) : articles.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {articles.map(article => (
-              <article
-                key={article.id}
-                className="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow"
-                data-testid={`card-article-${article.id}`}
-              >
-                {article.imageUrl && (
-                  <img
-                    src={article.imageUrl}
-                    alt={article.title}
-                    className="w-full h-48 object-cover"
-                  />
-                )}
-                <div className="p-5">
-                  {article.category && (
-                    <Badge variant="outline" className="text-[10px] text-[#722F37] border-[#722F37]/30 mb-3">
-                      {article.category}
-                    </Badge>
+              <Link key={article.id} href={`/magazine/${article.id}`} className="block">
+                <article
+                  className="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                  data-testid={`card-article-${article.id}`}
+                >
+                  {article.imageUrl && (
+                    <img
+                      src={article.imageUrl}
+                      alt={article.title}
+                      className="w-full h-48 object-cover"
+                    />
                   )}
-                  <h2 className="font-serif text-lg text-gray-900 mb-2 line-clamp-2">
-                    {article.title}
-                  </h2>
-                  {article.excerpt && (
-                    <p className="text-gray-500 text-sm line-clamp-3 mb-4">{article.excerpt}</p>
-                  )}
-                  <div className="flex items-center gap-4 text-xs text-gray-400">
-                    {article.createdAt && (
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {new Date(article.createdAt).toLocaleDateString("fr-FR")}
-                      </span>
+                  <div className="p-5">
+                    {article.category && (
+                      <Badge variant="outline" className="text-[10px] text-[#722F37] border-[#722F37]/30 mb-3">
+                        {article.category}
+                      </Badge>
                     )}
-                    <span className="flex items-center gap-1">
-                      <Eye className="h-3 w-3" />
-                      {article.views || 0}
-                    </span>
+                    <h2 className="font-serif text-lg text-gray-900 mb-2 line-clamp-2">
+                      {article.title}
+                    </h2>
+                    {article.excerpt && (
+                      <p className="text-gray-500 text-sm line-clamp-3 mb-4">{article.excerpt}</p>
+                    )}
+                    <div className="flex items-center gap-4 text-xs text-gray-400">
+                      {article.createdAt && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(article.createdAt).toLocaleDateString("fr-FR")}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Eye className="h-3 w-3" />
+                        {article.views || 0}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </article>
+                </article>
+              </Link>
             ))}
           </div>
         ) : (

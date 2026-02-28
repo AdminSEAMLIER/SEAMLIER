@@ -545,6 +545,7 @@ class DatabaseStorage implements IStorage {
     await db.delete(projects).where(eq(projects.clientId, id));
     await db.delete(appointments).where(eq(appointments.clientId, id));
     await db.delete(userPreferences).where(eq(userPreferences.userId, id));
+    await db.update(magazineArticles).set({ authorId: null }).where(eq(magazineArticles.authorId, id));
     const userTailors = await db.select({ id: tailors.id }).from(tailors).where(eq(tailors.userId, id));
     for (const t of userTailors) {
       await db.delete(portfolioItems).where(eq(portfolioItems.tailorId, t.id));

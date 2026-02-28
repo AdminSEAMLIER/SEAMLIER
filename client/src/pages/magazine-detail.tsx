@@ -1,18 +1,33 @@
 import { useRoute, Link } from "wouter";
-import { articles } from "@/data/magazine";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Clock, Calendar } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Clock, Calendar, Eye, Loader2 } from "lucide-react";
+import type { MagazineArticle } from "@shared/schema";
 
 export default function MagazineDetail() {
   const [, params] = useRoute("/magazine/:id");
-  const article = articles.find(a => a.id === Number(params?.id));
+  const articleId = params?.id;
+
+  const { data: article, isLoading } = useQuery<MagazineArticle>({
+    queryKey: ["/api/articles", articleId],
+    enabled: !!articleId,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-[#722F37]" />
+      </div>
+    );
+  }
 
   if (!article) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-white">
         <p className="mb-4 text-gray-500">Article introuvable</p>
         <Link href="/magazine">
-          <Button className="bg-[#722F37]">Retour au magazine</Button>
+          <Button className="bg-[#722F37]" data-testid="button-back-magazine">Retour au magazine</Button>
         </Link>
       </div>
     );
@@ -22,44 +37,60 @@ export default function MagazineDetail() {
     <div className="min-h-screen bg-white pb-24">
       <article className="max-w-3xl mx-auto px-4 pt-8">
         <Link href="/magazine">
-          <Button variant="ghost" className="mb-8 text-gray-500 hover:text-[#722F37] pl-0">
+          <Button variant="ghost" className="mb-8 text-gray-500 hover:text-[#722F37] pl-0" data-testid="button-back">
             <ArrowLeft className="mr-2 h-4 w-4" /> Retour au magazine
           </Button>
         </Link>
 
         <header className="mb-10">
-          <span className="text-[#722F37] font-bold uppercase tracking-widest text-xs">
-            {article.category}
-          </span>
-          <h1 className="text-4xl md:text-5xl font-serif font-bold mt-4 mb-6 text-gray-900 leading-tight">
+          {article.category && (
+            <Badge variant="outline" className="text-[10px] text-[#722F37] border-[#722F37]/30 mb-4">
+              {article.category}
+            </Badge>
+          )}
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold mt-2 mb-6 text-gray-900 leading-tight" data-testid="text-article-title">
             {article.title}
           </h1>
           <div className="flex items-center gap-6 text-gray-400 text-sm">
+            {article.createdAt && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                {new Date(article.createdAt).toLocaleDateString("fr-FR", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </div>
+            )}
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" /> {article.date}
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4" /> 5 min de lecture
+              <Eye className="h-4 w-4" />
+              {article.views || 0} vues
             </div>
           </div>
         </header>
 
-        <div className="rounded-3xl overflow-hidden shadow-xl mb-12">
-          <img 
-            src={article.image} 
-            alt={article.title} 
-            className="w-full h-auto max-h-[500px] object-cover" 
-          />
-        </div>
+        {article.imageUrl && (
+          <div className="rounded-2xl overflow-hidden shadow-lg mb-12">
+            <img
+              src={article.imageUrl}
+              alt={article.title}
+              className="w-full h-auto max-h-[500px] object-cover"
+              data-testid="img-article"
+            />
+          </div>
+        )}
 
-        <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
-          <p className="text-xl font-medium text-gray-900 mb-8 italic border-l-4 border-[#722F37] pl-6">
+        {article.excerpt && (
+          <p className="text-xl font-medium text-gray-700 mb-8 italic border-l-4 border-[#722F37] pl-6" data-testid="text-article-excerpt">
             {article.excerpt}
           </p>
-          <p>
-            Contenu de l'article à venir... (Vous pouvez modifier ce texte dans le fichier magazine-detail.tsx).
-          </p>
-        </div>
+        )}
+
+        {article.content && (
+          <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap" data-testid="text-article-content">
+            {article.content}
+          </div>
+        )}
       </article>
     </div>
   );
