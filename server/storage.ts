@@ -513,8 +513,22 @@ class DatabaseStorage implements IStorage {
       }).from(users).orderBy(desc(users.createdAt));
       return result || [];
     } catch (error) {
-      console.error("getAllUsers error:", error);
-      return [];
+      console.error("getAllUsers error (trying fallback without emailVerified):", error);
+      try {
+        const fallback = await db.select({
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          phone: users.phone,
+          role: users.role,
+          createdAt: users.createdAt,
+        }).from(users).orderBy(desc(users.createdAt));
+        return (fallback || []).map((u: any) => ({ ...u, emailVerified: false }));
+      } catch (fallbackError) {
+        console.error("getAllUsers fallback error:", fallbackError);
+        return [];
+      }
     }
   }
 

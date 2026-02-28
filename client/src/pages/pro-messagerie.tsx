@@ -1,12 +1,14 @@
 import { useTranslation } from "react-i18next";
-import { MessageSquare, Search, Send, Users } from "lucide-react";
+import { MessageSquare, Search, Send, Users, Headset } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState, useEffect } from "react";
-import { useSearch } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useSearch, useLocation } from "wouter";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface Conversation {
   id: string;
@@ -26,11 +28,30 @@ interface Message {
 
 export default function ProMessagerie() {
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const searchString = useSearch();
   const [showChat, setShowChat] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
+
+  const contactSupportMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/conversations", {
+        participantId: "admin-001",
+      });
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      setLocation("/messagerie?support=" + data.id);
+      toast({ title: "Support", description: "Conversation avec le support ouverte." });
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de contacter le support", variant: "destructive" });
+    },
+  });
 
   // Fetch real conversations from API (empty for now)
   const { data: conversations = [], isLoading } = useQuery<Conversation[]>({
@@ -92,13 +113,26 @@ export default function ProMessagerie() {
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
       <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-              <MessageSquare className="h-5 w-5 text-[#722F37]" />
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
+                <MessageSquare className="h-5 w-5 text-[#722F37]" />
+              </div>
+              <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+                {t('nav.messaging')}
+              </h1>
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
-              {t('nav.messaging')}
-            </h1>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs gap-1.5 border-[#722F37]/30 text-[#722F37] hover:bg-[#722F37]/5"
+              onClick={() => contactSupportMutation.mutate()}
+              disabled={contactSupportMutation.isPending}
+              data-testid="button-contact-support"
+            >
+              <Headset className="h-3.5 w-3.5" />
+              Support
+            </Button>
           </div>
           <p className="text-gray-600 mt-2">
             {t('pro.searchConversations')}
