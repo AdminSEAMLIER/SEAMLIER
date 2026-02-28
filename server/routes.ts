@@ -904,6 +904,15 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/download/seamlier-deploy.zip", (req, res) => {
+    const filePath = path.resolve("seamlier-deploy.zip");
+    res.download(filePath, "seamlier-deploy.zip", (err) => {
+      if (err) {
+        res.status(404).send("Fichier non trouvé");
+      }
+    });
+  });
+
   return httpServer;
 }
 
