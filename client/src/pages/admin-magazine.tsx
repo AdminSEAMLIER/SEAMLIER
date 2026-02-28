@@ -369,7 +369,6 @@ export default function AdminDashboard() {
     queryKey: ["admin-settings"],
     queryFn: async () => {
       const res = await apiFetch(API_ENDPOINTS.admin.settings);
-      if (!res.ok) return {};
       return res.json();
     },
     enabled: isAuthenticated,
@@ -470,18 +469,14 @@ export default function AdminDashboard() {
         body: JSON.stringify({ email: loginEmail, password: loginPassword }),
       });
       const data = await response.json();
-      if (response.ok && data) {
-        if (data.role !== 'admin') {
-          toast({ title: "Accès refusé", description: "Ce compte n'a pas les droits administrateur.", variant: "destructive" });
-          setLoginLoading(false);
-          return;
-        }
-        await queryClient.invalidateQueries({ queryKey: ["auth-user"] });
-        setIsAuthenticated(true);
-        toast({ title: "Accès autorisé", description: "Bienvenue sur la console d'administration." });
-      } else {
-        toast({ title: "Erreur d'authentification", description: data?.message || "Email ou mot de passe incorrect.", variant: "destructive" });
+      if (data.role !== 'admin') {
+        toast({ title: "Accès refusé", description: "Ce compte n'a pas les droits administrateur.", variant: "destructive" });
+        setLoginLoading(false);
+        return;
       }
+      await queryClient.invalidateQueries({ queryKey: ["auth-user"] });
+      setIsAuthenticated(true);
+      toast({ title: "Accès autorisé", description: "Bienvenue sur la console d'administration." });
     } catch {
       toast({ title: "Erreur", description: "Impossible de se connecter au serveur.", variant: "destructive" });
     } finally {
