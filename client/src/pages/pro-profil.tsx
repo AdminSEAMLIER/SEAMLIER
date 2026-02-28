@@ -363,27 +363,27 @@ export default function ProProfil() {
           <CardContent className="bg-white">
             <div className="grid grid-cols-3 gap-3">
               <Link href="/gestion-demandes">
-                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-testid="link-demandes">
-                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
+                <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer" data-testid="link-demandes">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-2">
                     <FileText className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-sm text-gray-600 text-center">{t('nav.requests')}</span>
+                  <span className="text-sm text-[#722F37] font-medium text-center">{t('nav.requests')}</span>
                 </div>
               </Link>
               <Link href="/atelier">
-                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-testid="link-projets">
-                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
+                <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer" data-testid="link-projets">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-2">
                     <FolderKanban className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-sm text-gray-600 text-center">{t('nav.projects')}</span>
+                  <span className="text-sm text-[#722F37] font-medium text-center">{t('nav.projects')}</span>
                 </div>
               </Link>
               <Link href="/portefeuille">
-                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-testid="link-planning">
-                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
+                <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer" data-testid="link-planning">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-2">
                     <TrendingUp className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-sm text-gray-600 text-center">{t('nav.planning')}</span>
+                  <span className="text-sm text-[#722F37] font-medium text-center">{t('nav.planning')}</span>
                 </div>
               </Link>
             </div>

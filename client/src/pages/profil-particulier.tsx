@@ -341,43 +341,43 @@ export default function ProfilParticulier() {
           <CardContent>
             <div className="grid grid-cols-3 gap-3">
               <Link href="/decouverte">
-                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer hover:bg-gray-100" data-testid="link-recherche">
-                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
+                <div className="flex flex-col items-center p-4 bg-gray-100 rounded-md transition-colors cursor-pointer hover:bg-gray-200" data-testid="link-recherche">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-2">
                     <Search className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-xs text-gray-500 text-center">{t('nav.search')}</span>
+                  <span className="text-xs text-[#722F37] font-medium text-center">{t('nav.search')}</span>
                 </div>
               </Link>
               <Link href="/messages">
-                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer hover:bg-gray-100" data-testid="link-messages">
-                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
+                <div className="flex flex-col items-center p-4 bg-gray-100 rounded-md transition-colors cursor-pointer hover:bg-gray-200" data-testid="link-messages">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-2">
                     <MessageCircle className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-xs text-gray-500 text-center">{t('nav.messages')}</span>
+                  <span className="text-xs text-[#722F37] font-medium text-center">{t('nav.messages')}</span>
                 </div>
               </Link>
               <Link href="/mes-projets">
-                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer hover:bg-gray-100" data-testid="link-mes-projets">
-                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
+                <div className="flex flex-col items-center p-4 bg-gray-100 rounded-md transition-colors cursor-pointer hover:bg-gray-200" data-testid="link-mes-projets">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-2">
                     <FolderKanban className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-xs text-gray-500 text-center">{t('nav.projects')}</span>
+                  <span className="text-xs text-[#722F37] font-medium text-center">{t('nav.projects')}</span>
                 </div>
               </Link>
               <Link href="/mesures">
-                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer hover:bg-gray-100" data-testid="link-mesures">
-                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
+                <div className="flex flex-col items-center p-4 bg-gray-100 rounded-md transition-colors cursor-pointer hover:bg-gray-200" data-testid="link-mesures">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-2">
                     <Ruler className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-xs text-gray-500 text-center">{t('nav.measures')}</span>
+                  <span className="text-xs text-[#722F37] font-medium text-center">{t('nav.measures')}</span>
                 </div>
               </Link>
               <Link href="/magazine">
-                <div className="flex flex-col items-center p-4 bg-gray-50 rounded-md transition-colors cursor-pointer hover:bg-gray-100" data-testid="link-magazine">
-                  <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
+                <div className="flex flex-col items-center p-4 bg-gray-100 rounded-md transition-colors cursor-pointer hover:bg-gray-200" data-testid="link-magazine">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-2">
                     <BookOpen className="h-5 w-5 text-[#722F37]" />
                   </div>
-                  <span className="text-xs text-gray-500 text-center">{t('nav.magazine')}</span>
+                  <span className="text-xs text-[#722F37] font-medium text-center">{t('nav.magazine')}</span>
                 </div>
               </Link>
             </div>
