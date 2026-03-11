@@ -35,39 +35,39 @@ export interface IStorage {
   getUserByVerificationToken(token: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
-  
+
   getTailors(): Promise<TailorWithUser[]>;
   getTailor(id: string): Promise<TailorWithUser | undefined>;
   getTailorByUserId(userId: string): Promise<Tailor | undefined>;
   createTailor(tailor: InsertTailor): Promise<Tailor>;
   updateTailor(id: string, updates: Partial<InsertTailor>): Promise<Tailor | undefined>;
-  
+
   getPortfolioItems(): Promise<PortfolioWithTailor[]>;
   getPortfolioItemsByTailor(tailorId: string): Promise<PortfolioItem[]>;
   createPortfolioItem(item: InsertPortfolioItem): Promise<PortfolioItem>;
-  
+
   getProducts(): Promise<ProductWithTailor[]>;
   getProductsByTailor(tailorId: string): Promise<Product[]>;
   getProduct(id: string): Promise<ProductWithTailor | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
-  
+
   getReviewsByTailor(tailorId: string): Promise<ReviewWithUser[]>;
   createReview(review: InsertReview): Promise<Review>;
-  
+
   getConversations(userId: string): Promise<ConversationWithParticipant[]>;
   getOrCreateConversation(participant1Id: string, participant2Id: string): Promise<Conversation>;
   getMessages(conversationId: string): Promise<MessageWithSender[]>;
   createMessage(message: InsertMessage): Promise<Message>;
-  
+
   getMeasurements(userId: string): Promise<Measurements | undefined>;
   upsertMeasurements(measurements: InsertMeasurements): Promise<Measurements>;
-  
+
   getProjectsByTailor(tailorId: string): Promise<ProjectWithClient[]>;
   getProjectsByClient(clientId: string): Promise<ProjectWithTailor[]>;
   getProject(id: string): Promise<ProjectWithClient | undefined>;
   createProject(project: InsertProject): Promise<Project>;
   updateProject(id: string, updates: Partial<InsertProject>): Promise<Project | undefined>;
-  
+
   getAppointmentsByTailor(tailorId: string): Promise<AppointmentWithClient[]>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment | undefined>;
@@ -159,9 +159,9 @@ class DatabaseStorage implements IStorage {
       const result = await db.select()
         .from(tailors)
         .innerJoin(users, eq(tailors.userId, users.id));
-      
+
       if (!result || !Array.isArray(result)) return [];
-      
+
       return result.map(row => ({
         ...row.tailors,
         user: row.users
@@ -177,7 +177,7 @@ class DatabaseStorage implements IStorage {
       .from(tailors)
       .innerJoin(users, eq(tailors.userId, users.id))
       .where(eq(tailors.id, id));
-    
+
     if (!result || result.length === 0) return undefined;
     return { ...result[0].tailors, user: result[0].users };
   }
@@ -209,9 +209,9 @@ class DatabaseStorage implements IStorage {
         .innerJoin(tailors, eq(portfolioItems.tailorId, tailors.id))
         .innerJoin(users, eq(tailors.userId, users.id))
         .orderBy(desc(portfolioItems.createdAt));
-      
+
       if (!result || !Array.isArray(result)) return [];
-      
+
       return result.map(row => ({
         ...row.portfolio_items,
         tailor: { ...row.tailors, user: row.users }
@@ -242,9 +242,9 @@ class DatabaseStorage implements IStorage {
         .from(products)
         .innerJoin(tailors, eq(products.tailorId, tailors.id))
         .innerJoin(users, eq(tailors.userId, users.id));
-      
+
       if (!result || !Array.isArray(result)) return [];
-      
+
       return result.map(row => ({
         ...row.products,
         tailor: { ...row.tailors, user: row.users }
@@ -267,7 +267,7 @@ class DatabaseStorage implements IStorage {
       .innerJoin(tailors, eq(products.tailorId, tailors.id))
       .innerJoin(users, eq(tailors.userId, users.id))
       .where(eq(products.id, id));
-    
+
     if (!result || result.length === 0) return undefined;
     return { ...result[0].products, tailor: { ...result[0].tailors, user: result[0].users } };
   }
@@ -285,9 +285,9 @@ class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(reviews.userId, users.id))
       .where(eq(reviews.tailorId, tailorId))
       .orderBy(desc(reviews.createdAt));
-    
+
     if (!result || !Array.isArray(result)) return [];
-    
+
     return result.map(row => ({
       ...row.reviews,
       user: row.users
@@ -309,32 +309,32 @@ class DatabaseStorage implements IStorage {
         eq(conversations.participant2Id, userId)
       ))
       .orderBy(desc(conversations.lastMessageAt));
-    
+
     const conversationsWithParticipants: ConversationWithParticipant[] = [];
-    
+
     for (const conv of result) {
       const otherParticipantId = conv.participant1Id === userId 
         ? conv.participant2Id 
         : conv.participant1Id;
-      
+
       const otherResult = await db.select()
         .from(users)
         .where(eq(users.id, otherParticipantId));
-      
+
       const unreadMessages = await db.select()
         .from(messages)
         .where(and(
           eq(messages.conversationId, conv.id),
           eq(messages.isRead, false)
         ));
-      
+
       conversationsWithParticipants.push({
         ...conv,
         otherParticipant: otherResult[0],
         unreadCount: unreadMessages.filter(m => m.senderId !== userId).length
       });
     }
-    
+
     return conversationsWithParticipants;
   }
 
@@ -345,9 +345,9 @@ class DatabaseStorage implements IStorage {
         and(eq(conversations.participant1Id, participant1Id), eq(conversations.participant2Id, participant2Id)),
         and(eq(conversations.participant1Id, participant2Id), eq(conversations.participant2Id, participant1Id))
       ));
-    
+
     if (existing.length > 0) return existing[0];
-    
+
     const id = generateUUID();
     await db.insert(conversations).values({ participant1Id, participant2Id, id });
     const result = await db.select().from(conversations).where(eq(conversations.id, id));
@@ -360,9 +360,9 @@ class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(messages.senderId, users.id))
       .where(eq(messages.conversationId, conversationId))
       .orderBy(messages.sentAt);
-    
+
     if (!result || !Array.isArray(result)) return [];
-    
+
     return result.map(row => ({
       ...row.messages,
       sender: row.users
@@ -372,14 +372,14 @@ class DatabaseStorage implements IStorage {
   async createMessage(message: InsertMessage): Promise<Message> {
     const id = generateUUID();
     await db.insert(messages).values({ ...message, id });
-    
+
     await db.update(conversations)
       .set({ 
         lastMessageAt: new Date(),
         lastMessagePreview: message.content.substring(0, 100)
       })
       .where(eq(conversations.id, message.conversationId));
-    
+
     const result = await db.select().from(messages).where(eq(messages.id, id));
     return result[0];
   }
@@ -392,20 +392,31 @@ class DatabaseStorage implements IStorage {
   }
 
   async upsertMeasurements(data: InsertMeasurements): Promise<Measurements> {
-    const existing = await this.getMeasurements(data.userId);
-    
-    if (existing) {
-      await db.update(measurements)
-        .set({ ...data, updatedAt: new Date() })
-        .where(eq(measurements.userId, data.userId));
-      const result = await db.select().from(measurements).where(eq(measurements.userId, data.userId));
+    try {
+      console.log("[storage] upsertMeasurements called with userId:", data.userId);
+      const existing = await this.getMeasurements(data.userId);
+      console.log("[storage] existing measurements:", existing ? existing.id : "none");
+
+      if (existing) {
+        const { userId, ...updateData } = data;
+        await db.update(measurements)
+          .set({ ...updateData, updatedAt: new Date() })
+          .where(eq(measurements.userId, data.userId));
+        const result = await db.select().from(measurements).where(eq(measurements.userId, data.userId));
+        return result[0];
+      }
+
+      const id = generateUUID();
+      console.log("[storage] inserting new measurements with id:", id);
+      await db.insert(measurements).values({ ...data, id });
+      const result = await db.select().from(measurements).where(eq(measurements.id, id));
       return result[0];
+    } catch (error: any) {
+      console.error("[storage] upsertMeasurements FULL ERROR:", error);
+      console.error("[storage] error.sqlMessage:", error?.sqlMessage);
+      console.error("[storage] error.code:", error?.code);
+      throw error;
     }
-    
-    const id = generateUUID();
-    await db.insert(measurements).values({ ...data, id });
-    const result = await db.select().from(measurements).where(eq(measurements.id, id));
-    return result[0];
   }
 
   async getProjectsByTailor(tailorId: string): Promise<ProjectWithClient[]> {
@@ -414,9 +425,9 @@ class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(projects.clientId, users.id))
       .where(eq(projects.tailorId, tailorId))
       .orderBy(desc(projects.createdAt));
-    
+
     if (!result || !Array.isArray(result)) return [];
-    
+
     return result.map(row => ({
       ...row.projects,
       client: row.users
@@ -430,9 +441,9 @@ class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(tailors.userId, users.id))
       .where(eq(projects.clientId, clientId))
       .orderBy(desc(projects.updatedAt));
-    
+
     if (!result || !Array.isArray(result)) return [];
-    
+
     return result.map(row => ({
       ...row.projects,
       tailor: row.tailors,
@@ -445,7 +456,7 @@ class DatabaseStorage implements IStorage {
       .from(projects)
       .innerJoin(users, eq(projects.clientId, users.id))
       .where(eq(projects.id, id));
-    
+
     if (!result || result.length === 0) return undefined;
     return { ...result[0].projects, client: result[0].users };
   }
@@ -471,9 +482,9 @@ class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(appointments.clientId, users.id))
       .where(eq(appointments.tailorId, tailorId))
       .orderBy(appointments.scheduledAt);
-    
+
     if (!result || !Array.isArray(result)) return [];
-    
+
     return result.map(row => ({
       ...row.appointments,
       client: row.users
@@ -532,6 +543,8 @@ class DatabaseStorage implements IStorage {
     }
   }
 
+  // ===== BUG FIX 2: cascadeDeleteUser =====
+  // Correction: reviews.clientId n'existe pas, la colonne est reviews.userId
   private async cascadeDeleteUser(id: string): Promise<void> {
     await db.delete(messages).where(eq(messages.senderId, id));
     const userConvos = await db.select({ id: conversations.id }).from(conversations)
@@ -541,7 +554,8 @@ class DatabaseStorage implements IStorage {
       await db.delete(conversations).where(eq(conversations.id, c.id));
     }
     await db.delete(measurements).where(eq(measurements.userId, id));
-    await db.delete(reviews).where(eq(reviews.clientId, id));
+    // FIX: était reviews.clientId — corrigé en reviews.userId
+    await db.delete(reviews).where(eq(reviews.userId, id));
     await db.delete(projects).where(eq(projects.clientId, id));
     await db.delete(appointments).where(eq(appointments.clientId, id));
     await db.delete(userPreferences).where(eq(userPreferences.userId, id));
@@ -563,9 +577,9 @@ class DatabaseStorage implements IStorage {
       const unverified = await db.select({ id: users.id })
         .from(users)
         .where(and(eq(users.emailVerified, false), sql`${users.role} != 'admin'`));
-      
+
       if (unverified.length === 0) return 0;
-      
+
       for (const u of unverified) {
         await this.cascadeDeleteUser(u.id);
       }

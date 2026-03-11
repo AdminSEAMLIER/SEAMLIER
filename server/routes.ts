@@ -632,11 +632,15 @@ export async function registerRoutes(
 
   app.delete("/api/admin/users/unverified", requireAdmin, async (req, res) => {
     try {
+      console.log("[admin] DELETE unverified users");
       const count = await storage.deleteUnverifiedUsers();
+      console.log("[admin] Deleted", count, "unverified users");
       res.json({ deleted: count });
-    } catch (error) {
-      console.error("Error deleting unverified users:", error);
-      res.status(500).json({ error: "Failed to delete unverified users" });
+    } catch (error: any) {
+      console.error("[admin] DELETE unverified FULL ERROR:", error);
+      console.error("[admin] error.sqlMessage:", error?.sqlMessage);
+      console.error("[admin] error.code:", error?.code);
+      res.status(500).json({ error: "Failed to delete unverified users", detail: error?.message || String(error) });
     }
   });
 
@@ -686,9 +690,20 @@ export async function registerRoutes(
       const { firstName, lastName, email, phone, specialty, city, bio,
               yearsExperience, siret, companyName, subscriptionPlan, ...rest } = req.body;
 
+      console.log("[admin] POST artisan body:", JSON.stringify({ firstName, lastName, email, specialty, city }));
+
       const artisan = await storage.createAdminArtisan({
-        firstName, lastName, email, phone, specialty, city, bio,
-        yearsExperience, siret, companyName, subscriptionPlan,
+        firstName: firstName || "",
+        lastName: lastName || "",
+        email: email || null,
+        phone: phone || null,
+        specialty: specialty || "Couture",
+        city: city || "Non renseignée",
+        bio: bio || null,
+        yearsExperience: parseInt(yearsExperience) || 0,
+        siret: siret || null,
+        companyName: companyName || null,
+        subscriptionPlan: subscriptionPlan || "Starter",
         ...rest,
       });
 
@@ -746,9 +761,11 @@ export async function registerRoutes(
       }
 
       res.status(201).json(artisan);
-    } catch (error) {
-      console.error("Error creating admin artisan:", error);
-      res.status(500).json({ error: "Failed to create artisan" });
+    } catch (error: any) {
+      console.error("[admin] POST artisan FULL ERROR:", error);
+      console.error("[admin] error.sqlMessage:", error?.sqlMessage);
+      console.error("[admin] error.code:", error?.code);
+      res.status(500).json({ error: "Failed to create artisan", detail: error?.message || String(error) });
     }
   });
 

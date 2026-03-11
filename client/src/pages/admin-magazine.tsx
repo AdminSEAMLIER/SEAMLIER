@@ -184,6 +184,11 @@ export default function AdminDashboard() {
   const [newArticleCategory, setNewArticleCategory] = useState("");
   const [newArticleContent, setNewArticleContent] = useState("");
   const [newArticleImageUrl, setNewArticleImageUrl] = useState("");
+  const [editingArticleId, setEditingArticleId] = useState<string | null>(null);
+  const [editArticleTitle, setEditArticleTitle] = useState("");
+  const [editArticleCategory, setEditArticleCategory] = useState("");
+  const [editArticleContent, setEditArticleContent] = useState("");
+  const [editArticleImageUrl, setEditArticleImageUrl] = useState("");
   const [selectedCouturier, setSelectedCouturier] = useState<string | null>(null);
   const [couturierDialogMode, setCouturierDialogMode] = useState<"view" | "edit" | null>(null);
   const [couturierDialogId, setCouturierDialogId] = useState<string | null>(null);
@@ -602,6 +607,47 @@ export default function AdminDashboard() {
       toast({ title: "Article créé", description: "Le brouillon a été enregistré." });
     } catch (error) {
       toast({ title: "Erreur", description: "Impossible de créer l'article", variant: "destructive" });
+    }
+  };
+
+  const openEditArticle = (article: any) => {
+    setEditingArticleId(article.id);
+    setEditArticleTitle(article.title || "");
+    setEditArticleCategory(article.category || "");
+    setEditArticleContent(article.content || "");
+    setEditArticleImageUrl(article.imageUrl || "");
+  };
+
+  const handleEditArticleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Image trop volumineuse", description: "Maximum 5 Mo", variant: "destructive" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => setEditArticleImageUrl(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const saveEditArticle = async () => {
+    if (!editingArticleId || !editArticleTitle.trim()) return;
+    try {
+      await apiFetch(`/api/admin/articles/${editingArticleId}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          title: editArticleTitle,
+          category: editArticleCategory || "Non catégorisé",
+          content: editArticleContent,
+          excerpt: editArticleContent ? editArticleContent.substring(0, 200) : null,
+          imageUrl: editArticleImageUrl || null,
+        }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/articles"] });
+      setEditingArticleId(null);
+      toast({ title: "Article modifié", description: "Les modifications ont été enregistrées." });
+    } catch (error) {
+      toast({ title: "Erreur", description: "Impossible de modifier l'article", variant: "destructive" });
     }
   };
 
@@ -2522,6 +2568,9 @@ export default function AdminDashboard() {
                               <td className="px-5 py-3 text-right text-sm text-gray-600">{(a.views || 0).toLocaleString()}</td>
                               <td className="px-5 py-3 text-right">
                                 <div className="flex justify-end gap-2">
+                                  <Button size="sm" variant="outline" className="h-8 text-[11px] font-bold" onClick={() => openEditArticle(a)} data-testid={`button-edit-article-${a.id}`}>
+                                    <Pencil size={12} className="mr-1" /> Modifier
+                                  </Button>
                                   <Button size="sm" variant="outline" className={cn("h-8 text-[11px] font-bold")} onClick={() => publishArticle(a.id)} data-testid={`button-toggle-article-${a.id}`}>
                                     {a.status === "Brouillon" ? "Publier" : "Dépublier"}
                                   </Button>
@@ -2539,6 +2588,41 @@ export default function AdminDashboard() {
                       </table>
                     </div>
                   </Card>
+
+                  <Dialog open={!!editingArticleId} onOpenChange={(open) => { if (!open) setEditingArticleId(null); }}>
+                    <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" data-testid="dialog-edit-article">
+                      <DialogHeader>
+                        <DialogTitle className="text-lg font-bold text-[#722F37]">Modifier l'article</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 py-2">
+                        <Input placeholder="Titre de l'article" value={editArticleTitle} onChange={e => setEditArticleTitle(e.target.value)} className="h-11 font-semibold" data-testid="input-edit-article-title" />
+                        <Input placeholder="Catégorie" value={editArticleCategory} onChange={e => setEditArticleCategory(e.target.value)} className="h-10 text-sm" data-testid="input-edit-article-category" />
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1.5">Image de couverture</label>
+                          <div className="flex items-center gap-3">
+                            <label className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#722F37] hover:bg-[#722F37]/5 transition-colors">
+                              <Upload className="h-4 w-4 text-gray-400" />
+                              <span className="text-sm text-gray-500">Changer l'image</span>
+                              <input type="file" accept="image/*" className="hidden" onChange={handleEditArticleImageChange} />
+                            </label>
+                            {editArticleImageUrl && (
+                              <div className="relative">
+                                <img src={editArticleImageUrl} alt="Aperçu" className="h-16 w-24 object-cover rounded-lg border" />
+                                <button onClick={() => setEditArticleImageUrl("")} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs">
+                                  <X size={12} />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <Textarea placeholder="Contenu de l'article..." value={editArticleContent} onChange={e => setEditArticleContent(e.target.value)} className="min-h-[200px] text-sm" data-testid="input-edit-article-content" />
+                      </div>
+                      <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={() => setEditingArticleId(null)} data-testid="button-cancel-edit-article">Annuler</Button>
+                        <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white font-bold" onClick={saveEditArticle} disabled={!editArticleTitle.trim()} data-testid="button-save-edit-article">Enregistrer</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </>
               )}
 
