@@ -2152,23 +2152,21 @@ export default function AdminDashboard() {
                                 <Badge className={cn("text-[10px] border-none font-bold", a.status === "Vérifié" ? "bg-green-100 text-green-700" : a.status === "Rejeté" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700")} data-testid={`badge-artisan-status-${a.id}`}>{a.status}</Badge>
                               </td>
                               <td className="px-5 py-3 text-right">
-                                {a.status === "En attente" ? (
-                                  <div className="flex justify-end gap-2">
-                                    <Button size="sm" variant="outline" className="h-8 text-[11px]" onClick={() => openArtisanDossier(a.id, "view")} data-testid={`button-dossier-${a.id}`}>
-                                      <Eye size={14} className="mr-1" /> Dossier
-                                    </Button>
-                                    <Button size="sm" className="bg-[#722F37] h-8 text-[11px] font-bold" onClick={() => approveArtisan(a.id)} data-testid={`button-approve-${a.id}`}>
-                                      <CheckCircle size={14} className="mr-1" /> Approuver
-                                    </Button>
-                                    <Button size="sm" variant="destructive" className="h-8 text-[11px]" onClick={() => rejectArtisan(a.id)} data-testid={`button-reject-${a.id}`}>
-                                      <XCircle size={14} className="mr-1" /> Rejeter
-                                    </Button>
-                                  </div>
-                                ) : (
+                                <div className="flex justify-end gap-2">
                                   <Button size="sm" variant="outline" className="h-8 text-[11px]" onClick={() => openArtisanDossier(a.id, "view")} data-testid={`button-dossier-${a.id}`}>
                                     <Eye size={14} className="mr-1" /> Dossier
                                   </Button>
-                                )}
+                                  {a.status !== "Vérifié" && (
+                                    <Button size="sm" className="bg-[#722F37] h-8 text-[11px] font-bold" onClick={() => approveArtisan(a.id)} data-testid={`button-approve-${a.id}`}>
+                                      <CheckCircle size={14} className="mr-1" /> Approuver
+                                    </Button>
+                                  )}
+                                  {a.status !== "Rejeté" && (
+                                    <Button size="sm" variant="destructive" className="h-8 text-[11px]" onClick={() => rejectArtisan(a.id)} data-testid={`button-reject-${a.id}`}>
+                                      <XCircle size={14} className="mr-1" /> Rejeter
+                                    </Button>
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           ))}
