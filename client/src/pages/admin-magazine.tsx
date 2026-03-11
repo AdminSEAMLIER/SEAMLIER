@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { API_ENDPOINTS, apiFetch } from "@/lib/api-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -178,6 +178,7 @@ export default function AdminDashboard() {
   const [messageSearch, setMessageSearch] = useState("");
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [adminUser, setAdminUser] = useState<any>(null);
   const [selectedMeasure, setSelectedMeasure] = useState<MeasureProfile | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showNewArticle, setShowNewArticle] = useState(false);
@@ -257,6 +258,15 @@ export default function AdminDashboard() {
       localStorage.setItem(ADMIN_AUTH_KEY, isAuthenticated ? "true" : "false");
     } catch {}
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated && !adminUser) {
+      fetch("/api/auth/user", { credentials: "include" })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => { if (data && data.role === "admin") setAdminUser(data); })
+        .catch(() => {});
+    }
+  }, [isAuthenticated, adminUser]);
 
   const [projects, setProjects] = useState<Project[]>([]);
 
@@ -492,6 +502,7 @@ export default function AdminDashboard() {
         setLoginLoading(false);
         return;
       }
+      setAdminUser(data);
       await queryClient.invalidateQueries({ queryKey: ["auth-user"] });
       setIsAuthenticated(true);
       toast({ title: "Accès autorisé", description: "Bienvenue sur la console d'administration." });
@@ -538,25 +549,49 @@ export default function AdminDashboard() {
   };
 
   const markMessageRead = (id: string) => {
-    setMessages(prev => prev.map(m =>
-      m.id === id ? { ...m, read: true } : m
-    ));
     setSelectedMessage(id);
+    setSelectedConversationId(id);
   };
 
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [adminReplyText, setAdminReplyText] = useState("");
+
+  const { data: adminConversations = [] } = useQuery<any[]>({
+    queryKey: ["/api/conversations"],
+    enabled: isAuthenticated,
+  });
+
+  const { data: adminMessages = [] } = useQuery<any[]>({
+    queryKey: ["/api/messages", selectedConversationId],
+    enabled: !!selectedConversationId,
+    queryFn: async () => {
+      const res = await fetch(`/api/messages/${selectedConversationId}`, { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    refetchInterval: 5000,
+  });
+
+  const sendAdminReplyMutation = useMutation({
+    mutationFn: async (content: string) => {
+      return apiRequest("POST", "/api/messages", {
+        conversationId: selectedConversationId,
+        senderId: adminUser?.id || "",
+        content,
+        sentAt: new Date().toISOString(),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/messages", selectedConversationId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      setAdminReplyText("");
+      toast({ title: "Réponse envoyée" });
+    },
+  });
+
   const sendReply = () => {
-    if (!replyText.trim() || !selectedMessage) return;
-    const newReply: ReplyMessage = {
-      id: String(Date.now()),
-      text: replyText.trim(),
-      date: new Date().toLocaleDateString("fr-FR") + " " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
-      sender: "admin",
-    };
-    setMessages(prev => prev.map(m =>
-      m.id === selectedMessage ? { ...m, replies: [...m.replies, newReply] } : m
-    ));
-    setReplyText("");
-    toast({ title: "Réponse envoyée", description: "Le message a été envoyé avec succès." });
+    if (!adminReplyText.trim() || !selectedConversationId) return;
+    sendAdminReplyMutation.mutate(adminReplyText.trim());
   };
 
   const publishArticle = async (id: string) => {
@@ -769,7 +804,7 @@ export default function AdminDashboard() {
   const totalRevenue = projects.filter(p => p.status === "Libéré").reduce((sum, p) => sum + parseInt(p.amount.replace(/[^\d]/g, "")), 0);
   const pendingProjects = projects.filter(p => p.status === "Bloqué").length;
   const verifiedArtisans = artisans.filter(a => a.status === "Vérifié").length;
-  const unreadMessages = messages.filter(m => !m.read).length;
+  const unreadMessages = adminConversations.reduce((sum: number, c: any) => sum + (c.unreadCount || 0), 0);
 
   const filteredProjects = useMemo(() => projects.filter(p =>
     p.client.toLowerCase().includes(projectSearch.toLowerCase()) ||
@@ -782,12 +817,6 @@ export default function AdminDashboard() {
     a.city.toLowerCase().includes(artisanSearch.toLowerCase())
   ), [artisans, artisanSearch]);
 
-  const filteredMessages = useMemo(() => messages.filter(m =>
-    m.from.toLowerCase().includes(messageSearch.toLowerCase()) ||
-    m.subject.toLowerCase().includes(messageSearch.toLowerCase())
-  ), [messages, messageSearch]);
-
-  const currentMessage = messages.find(m => m.id === selectedMessage);
 
   if (!isAuthenticated) {
     return (
@@ -1082,79 +1111,65 @@ export default function AdminDashboard() {
               {activeTab === "messaging" && (
                 <>
                   <div>
-                    <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Messagerie Admin</h1>
-                    <p className="text-gray-500 mt-1 text-sm">Support et modération centralisée</p>
+                    <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Messagerie Support</h1>
+                    <p className="text-gray-500 mt-1 text-sm">Conversations avec les utilisateurs</p>
                   </div>
                   <div className="grid lg:grid-cols-3 gap-6" style={{ minHeight: "60vh" }}>
                     <Card className="border-none shadow-sm overflow-hidden bg-white lg:col-span-1 flex flex-col">
                       <div className="p-4 border-b border-gray-50">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                          <Input placeholder="Rechercher..." value={messageSearch} onChange={e => setMessageSearch(e.target.value)} className="pl-10 h-9 text-sm" data-testid="input-search-messages" />
-                        </div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Conversations ({adminConversations.length})</p>
                       </div>
                       <div className="overflow-y-auto flex-1">
-                        {filteredMessages.map(m => (
-                          <button key={m.id} onClick={() => markMessageRead(m.id)} className={cn("w-full text-left p-4 border-b border-gray-50 hover-elevate transition-colors", selectedMessage === m.id && "bg-[#722F37]/5 border-l-2 border-l-[#722F37]")} data-testid={`message-item-${m.id}`}>
+                        {adminConversations.map((c: any) => (
+                          <button key={c.id} onClick={() => { setSelectedConversationId(c.id); setSelectedMessage(c.id); }} className={cn("w-full text-left p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors", selectedConversationId === c.id && "bg-[#722F37]/5 border-l-2 border-l-[#722F37]")} data-testid={`conv-item-${c.id}`}>
                             <div className="flex justify-between items-start mb-1 gap-2">
-                              <span className="text-sm font-semibold text-gray-900 truncate">{m.from}</span>
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                {!m.read && <span className="w-2 h-2 rounded-full bg-[#722F37]" data-testid={`indicator-unread-${m.id}`} />}
-                                <span className="text-[10px] text-gray-400">{m.date}</span>
-                              </div>
+                              <span className="text-sm font-semibold text-gray-900 truncate">
+                                {c.otherParticipant?.firstName || ""} {c.otherParticipant?.lastName || "Utilisateur"}
+                              </span>
+                              <span className="text-[10px] text-gray-400 flex-shrink-0">
+                                {c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleDateString("fr-FR") : ""}
+                              </span>
                             </div>
-                            <p className="text-xs font-medium text-gray-700 mb-1">{m.subject}</p>
-                            <div className="flex items-center gap-2">
-                              <Badge className={cn("text-[9px] border-none px-1.5 py-0.5", m.type === "support" ? "bg-blue-50 text-blue-600" : m.type === "signalement" ? "bg-red-50 text-red-600" : "bg-gray-100 text-gray-600")}>{m.type}</Badge>
-                              <p className="text-[11px] text-gray-400 truncate">{m.preview}</p>
-                            </div>
+                            <p className="text-xs text-gray-500 truncate">{c.lastMessagePreview || "Nouvelle conversation"}</p>
+                            <Badge className="text-[9px] border-none px-1.5 py-0.5 bg-blue-50 text-blue-600 mt-1">support</Badge>
                           </button>
                         ))}
-                        {filteredMessages.length === 0 && (
-                          <p className="text-sm text-gray-400 text-center py-8">Aucun message trouvé</p>
+                        {adminConversations.length === 0 && (
+                          <p className="text-sm text-gray-400 text-center py-8">Aucune conversation</p>
                         )}
                       </div>
                     </Card>
                     <Card className="border-none shadow-sm overflow-hidden bg-white lg:col-span-2 flex flex-col">
-                      {currentMessage ? (
+                      {selectedConversationId ? (
                         <>
                           <div className="p-5 border-b border-gray-50">
-                            <div className="flex justify-between items-start gap-3 flex-wrap">
-                              <div>
-                                <h3 className="text-lg font-semibold text-gray-900" data-testid="text-message-subject">{currentMessage.subject}</h3>
-                                <p className="text-sm text-gray-500" data-testid="text-message-from">De : {currentMessage.from} - {currentMessage.date}</p>
-                              </div>
-                              <Badge className={cn("text-[10px] border-none", currentMessage.type === "support" ? "bg-blue-50 text-blue-600" : currentMessage.type === "signalement" ? "bg-red-50 text-red-600" : "bg-gray-100 text-gray-600")} data-testid="badge-message-type">{currentMessage.type}</Badge>
-                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900" data-testid="text-conv-title">
+                              Conversation support
+                            </h3>
                           </div>
                           <div className="flex-1 p-5 overflow-y-auto space-y-3" data-testid="message-thread">
-                            <div className="bg-gray-50 rounded-lg p-4">
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                                  <User size={12} className="text-gray-500" />
-                                </div>
-                                <span className="text-xs font-semibold text-gray-600">{currentMessage.from}</span>
-                                <span className="text-[10px] text-gray-400">{currentMessage.date}</span>
-                              </div>
-                              <p className="text-sm text-gray-700 leading-relaxed" data-testid="text-message-content">{currentMessage.preview}</p>
-                            </div>
-                            {currentMessage.replies.map((reply) => (
-                              <div key={reply.id} className="bg-[#722F37]/5 rounded-lg p-4 ml-6" data-testid={`reply-message-${reply.id}`}>
+                            {adminMessages.map((msg: any) => (
+                              <div key={msg.id} className={cn("rounded-lg p-4", msg.senderId === adminUser?.id ? "bg-[#722F37]/5 ml-6" : "bg-gray-50 mr-6")} data-testid={`msg-${msg.id}`}>
                                 <div className="flex items-center gap-2 mb-2">
-                                  <div className="w-6 h-6 rounded-full bg-[#722F37]/20 flex items-center justify-center flex-shrink-0">
-                                    <ShieldCheck size={12} className="text-[#722F37]" />
+                                  <div className={cn("w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0", msg.senderId === adminUser?.id ? "bg-[#722F37]/20" : "bg-gray-200")}>
+                                    {msg.senderId === adminUser?.id ? <ShieldCheck size={12} className="text-[#722F37]" /> : <User size={12} className="text-gray-500" />}
                                   </div>
-                                  <span className="text-xs font-semibold text-[#722F37]">Admin SEAMLiER</span>
-                                  <span className="text-[10px] text-gray-400">{reply.date}</span>
+                                  <span className={cn("text-xs font-semibold", msg.senderId === adminUser?.id ? "text-[#722F37]" : "text-gray-600")}>
+                                    {msg.senderId === adminUser?.id ? "Admin" : (msg.sender?.firstName || "Utilisateur")}
+                                  </span>
+                                  <span className="text-[10px] text-gray-400">{msg.sentAt ? new Date(msg.sentAt).toLocaleString("fr-FR") : ""}</span>
                                 </div>
-                                <p className="text-sm text-gray-700 leading-relaxed" data-testid={`text-reply-content-${reply.id}`}>{reply.text}</p>
+                                <p className="text-sm text-gray-700 leading-relaxed">{msg.content}</p>
                               </div>
                             ))}
+                            {adminMessages.length === 0 && (
+                              <p className="text-sm text-gray-400 text-center py-8">Aucun message dans cette conversation</p>
+                            )}
                           </div>
                           <div className="p-4 border-t border-gray-50">
-                            <Textarea placeholder="Répondre..." value={replyText} onChange={e => setReplyText(e.target.value)} className="min-h-[80px] text-sm" data-testid="input-admin-reply" />
+                            <Textarea placeholder="Répondre..." value={adminReplyText} onChange={e => setAdminReplyText(e.target.value)} className="min-h-[80px] text-sm" data-testid="input-admin-reply" />
                             <div className="flex justify-end mt-3">
-                              <Button className="bg-[#722F37]" onClick={sendReply} data-testid="button-send-reply">
+                              <Button className="bg-[#722F37]" onClick={sendReply} disabled={sendAdminReplyMutation.isPending} data-testid="button-send-reply">
                                 <Send size={16} className="mr-2" /> Envoyer
                               </Button>
                             </div>
@@ -1164,7 +1179,7 @@ export default function AdminDashboard() {
                         <div className="flex-1 flex items-center justify-center">
                           <div className="text-center">
                             <MessageSquare className="mx-auto text-gray-200 h-16 w-16 mb-4" />
-                            <p className="text-gray-400" data-testid="text-no-message-selected">Sélectionnez un message</p>
+                            <p className="text-gray-400" data-testid="text-no-message-selected">Sélectionnez une conversation</p>
                           </div>
                         </div>
                       )}
