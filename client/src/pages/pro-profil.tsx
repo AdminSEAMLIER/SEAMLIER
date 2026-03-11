@@ -33,18 +33,33 @@ export default function ProProfil() {
     enabled: !!user,
   });
 
+  const { data: dbProfile, isLoading: profileLoading } = useQuery<any>({
+    queryKey: ["/api/users/me"],
+    enabled: !!user,
+    staleTime: 0,
+    refetchOnMount: "always",
+    queryFn: async () => {
+      const res = await fetch("/api/users/me", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch profile");
+      return res.json();
+    },
+  });
+
+  const isLoading = authLoading || profileLoading;
+
   useEffect(() => {
-    if (user) {
+    const source = dbProfile || user;
+    if (source) {
       setProfile({
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        email: user.email || "",
-        phone: (user as any).phone || "",
-        location: (user as any).location || "",
-        profileImageUrl: user.profileImageUrl || "",
+        firstName: source.firstName || "",
+        lastName: source.lastName || "",
+        email: source.email || "",
+        phone: source.phone || "",
+        location: source.location || "",
+        profileImageUrl: source.profileImageUrl || "",
       });
     }
-  }, [user]);
+  }, [dbProfile, user]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -59,16 +74,17 @@ export default function ProProfil() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["auth-user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       setIsEditing(false);
       toast({
         title: t('profile.updated'),
         description: t('profile.updatedDesc'),
       });
     },
-    onError: () => {
+    onError: (err: any) => {
       toast({
         title: "Erreur",
-        description: "Impossible de sauvegarder le profil",
+        description: err?.message || "Impossible de sauvegarder le profil",
         variant: "destructive",
       });
     },
@@ -90,6 +106,7 @@ export default function ProProfil() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["auth-user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       toast({
         title: t('profile.photoUpdated'),
         description: t('profile.photoUpdatedDesc'),

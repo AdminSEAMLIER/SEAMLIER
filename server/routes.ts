@@ -168,6 +168,18 @@ export async function registerRoutes(
   });
 
   // Session-based user update (used by profile page)
+  app.get("/api/users/me", requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.authUserId);
+      if (!user) return res.status(404).json({ error: "User not found" });
+      const { password: _, verificationToken: __, ...safeUser } = user as any;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Error fetching own profile:", error);
+      res.status(500).json({ error: "Failed to fetch profile" });
+    }
+  });
+
   app.patch("/api/users/:id", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
