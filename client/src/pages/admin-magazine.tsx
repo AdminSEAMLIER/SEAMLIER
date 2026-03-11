@@ -16,7 +16,8 @@ import {
   CheckCircle, XCircle, ChevronRight,
   ArrowUpRight, X, Upload, MapPin, Pencil,
   User, Building2, Phone, CreditCard, Briefcase, Hash,
-  Globe, Bell, Palette, Shield, Database, Key, ToggleLeft
+  Globe, Bell, Palette, Shield, Database, Key, ToggleLeft,
+  Bold, Italic, Underline
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -189,6 +190,30 @@ export default function AdminDashboard() {
   const [editArticleCategory, setEditArticleCategory] = useState("");
   const [editArticleContent, setEditArticleContent] = useState("");
   const [editArticleImageUrl, setEditArticleImageUrl] = useState("");
+  const newArticleRef = useRef<HTMLTextAreaElement>(null);
+  const editArticleRef = useRef<HTMLTextAreaElement>(null);
+
+  const applyFormat = (
+    ref: React.RefObject<HTMLTextAreaElement | null>,
+    setter: (val: string) => void,
+    tag: string
+  ) => {
+    const el = ref.current;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const text = el.value;
+    const selected = text.substring(start, end);
+    if (!selected) return;
+    const wrapped = `<${tag}>${selected}</${tag}>`;
+    const newText = text.substring(0, start) + wrapped + text.substring(end);
+    setter(newText);
+    setTimeout(() => {
+      el.focus();
+      el.setSelectionRange(start, start + wrapped.length);
+    }, 0);
+  };
+
   const [selectedCouturier, setSelectedCouturier] = useState<string | null>(null);
   const [couturierDialogMode, setCouturierDialogMode] = useState<"view" | "edit" | null>(null);
   const [couturierDialogId, setCouturierDialogId] = useState<string | null>(null);
@@ -2515,7 +2540,13 @@ export default function AdminDashboard() {
                             )}
                           </div>
                         </div>
-                        <Textarea placeholder="Contenu de l'article..." value={newArticleContent} onChange={e => setNewArticleContent(e.target.value)} className="min-h-[120px] text-sm" data-testid="input-article-content" />
+                        <div className="flex items-center gap-1 mb-1">
+                          <button type="button" className="p-1.5 rounded hover:bg-gray-100 text-gray-500" title="Gras" onClick={() => applyFormat(newArticleRef, setNewArticleContent, "b")} data-testid="button-format-bold"><Bold className="h-4 w-4" /></button>
+                          <button type="button" className="p-1.5 rounded hover:bg-gray-100 text-gray-500" title="Italique" onClick={() => applyFormat(newArticleRef, setNewArticleContent, "i")} data-testid="button-format-italic"><Italic className="h-4 w-4" /></button>
+                          <button type="button" className="p-1.5 rounded hover:bg-gray-100 text-gray-500" title="Souligné" onClick={() => applyFormat(newArticleRef, setNewArticleContent, "u")} data-testid="button-format-underline"><Underline className="h-4 w-4" /></button>
+                          <span className="text-[10px] text-gray-400 ml-2">Sélectionnez du texte puis cliquez</span>
+                        </div>
+                        <Textarea ref={newArticleRef} placeholder="Contenu de l'article..." value={newArticleContent} onChange={e => setNewArticleContent(e.target.value)} className="min-h-[120px] text-sm" data-testid="input-article-content" />
                         <div className="flex justify-end gap-3">
                           <Button variant="outline" onClick={() => setShowNewArticle(false)} data-testid="button-cancel-article">Annuler</Button>
                           <Button className="bg-[#722F37] font-bold" onClick={createArticle} data-testid="button-save-article">Enregistrer</Button>
@@ -2603,7 +2634,13 @@ export default function AdminDashboard() {
                             )}
                           </div>
                         </div>
-                        <Textarea placeholder="Contenu de l'article..." value={editArticleContent} onChange={e => setEditArticleContent(e.target.value)} className="min-h-[200px] text-sm" data-testid="input-edit-article-content" />
+                        <div className="flex items-center gap-1 mb-1">
+                          <button type="button" className="p-1.5 rounded hover:bg-gray-100 text-gray-500" title="Gras" onClick={() => applyFormat(editArticleRef, setEditArticleContent, "b")} data-testid="button-edit-format-bold"><Bold className="h-4 w-4" /></button>
+                          <button type="button" className="p-1.5 rounded hover:bg-gray-100 text-gray-500" title="Italique" onClick={() => applyFormat(editArticleRef, setEditArticleContent, "i")} data-testid="button-edit-format-italic"><Italic className="h-4 w-4" /></button>
+                          <button type="button" className="p-1.5 rounded hover:bg-gray-100 text-gray-500" title="Souligné" onClick={() => applyFormat(editArticleRef, setEditArticleContent, "u")} data-testid="button-edit-format-underline"><Underline className="h-4 w-4" /></button>
+                          <span className="text-[10px] text-gray-400 ml-2">Sélectionnez du texte puis cliquez</span>
+                        </div>
+                        <Textarea ref={editArticleRef} placeholder="Contenu de l'article..." value={editArticleContent} onChange={e => setEditArticleContent(e.target.value)} className="min-h-[200px] text-sm" data-testid="input-edit-article-content" />
                       </div>
                       <DialogFooter className="gap-2">
                         <Button variant="outline" onClick={() => setEditingArticleId(null)} data-testid="button-cancel-edit-article">Annuler</Button>

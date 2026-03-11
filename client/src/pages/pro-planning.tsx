@@ -43,38 +43,7 @@ export default function ProPlanning() {
   const weekDaysEn = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const weekDays = i18n.language === 'fr' ? weekDaysFr : weekDaysEn;
 
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    {
-      id: "1",
-      client: "Claire Beaumont",
-      typeKey: "pro.fitting",
-      projectKey: "pro.weddingDress",
-      time: "10:00",
-      duration: "1h",
-      locationKey: "pro.atWorkshop",
-      date: new Date().toISOString().split('T')[0],
-    },
-    {
-      id: "2",
-      client: "Marc Lefebvre",
-      typeKey: "pro.measurements",
-      projectKey: "pro.suit3Piece",
-      time: "14:00",
-      duration: "45min",
-      locationKey: "pro.atHome",
-      date: new Date().toISOString().split('T')[0],
-    },
-    {
-      id: "3",
-      client: "Sophie Martin",
-      typeKey: "pro.consultation",
-      projectKey: "pro.newRequestLabel",
-      time: "16:30",
-      duration: "30min",
-      locationKey: "pro.video",
-      date: new Date().toISOString().split('T')[0],
-    },
-  ]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   const formatDate = (date: Date) => {
     const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';

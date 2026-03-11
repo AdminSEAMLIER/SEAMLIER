@@ -692,6 +692,11 @@ export async function registerRoutes(
 
       console.log("[admin] POST artisan body:", JSON.stringify({ firstName, lastName, email, specialty, city }));
 
+      const {
+        legalForm, tvaNumber, iban, birthDate, nationality,
+        idType, idNumber, address, paymentStatus
+      } = rest;
+
       const artisan = await storage.createAdminArtisan({
         firstName: firstName || "",
         lastName: lastName || "",
@@ -704,7 +709,16 @@ export async function registerRoutes(
         siret: siret || null,
         companyName: companyName || null,
         subscriptionPlan: subscriptionPlan || "Starter",
-        ...rest,
+        legalForm: legalForm || null,
+        tvaNumber: tvaNumber || null,
+        iban: iban || null,
+        birthDate: birthDate || null,
+        nationality: nationality || null,
+        idType: idType || null,
+        idNumber: idNumber || null,
+        address: address || null,
+        paymentStatus: paymentStatus || "En attente",
+        joinDate: new Date().toLocaleDateString("fr-FR"),
       });
 
       if (email) {
@@ -722,6 +736,7 @@ export async function registerRoutes(
               profileImageUrl: null,
               phone: phone || null,
               location: city || null,
+              emailVerified: true,
             });
 
             await storage.createTailor({

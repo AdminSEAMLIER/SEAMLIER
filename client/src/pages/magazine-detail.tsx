@@ -87,9 +87,11 @@ export default function MagazineDetail() {
         )}
 
         {article.content && (
-          <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap" data-testid="text-article-content">
-            {article.content}
-          </div>
+          <div
+            className="prose prose-lg max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap"
+            data-testid="text-article-content"
+            dangerouslySetInnerHTML={{ __html: article.content.replace(/</g, '&lt;').replace(/&lt;(\/?(b|i|u|strong|em))>/g, '<$1>') }}
+          />
         )}
       </article>
     </div>
