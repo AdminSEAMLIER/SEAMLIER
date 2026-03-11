@@ -392,6 +392,15 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/conversations/unread-count", requireAuth, async (req: any, res) => {
+    try {
+      const count = await storage.getUnreadCount(req.authUserId);
+      res.json({ count });
+    } catch (error) {
+      res.json({ count: 0 });
+    }
+  });
+
   app.get("/api/messages/:conversationId", requireAuth, async (req: any, res) => {
     try {
       const msgs = await storage.getMessages(req.params.conversationId);
@@ -400,6 +409,15 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to fetch messages:", error);
       res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  app.patch("/api/messages/:conversationId/read", requireAuth, async (req: any, res) => {
+    try {
+      await storage.markMessagesAsRead(req.params.conversationId, req.authUserId);
+      res.json({ ok: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to mark as read" });
     }
   });
 

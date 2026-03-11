@@ -1,17 +1,27 @@
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Home, FileText, FolderKanban, MessageSquare, Calendar, User } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
 
 export function ProBottomNav() {
   const { t } = useTranslation();
   const [location] = useLocation();
+  const { isAuthenticated } = useAuth();
+
+  const { data: unreadData } = useQuery<{ count: number }>({
+    queryKey: ["/api/conversations/unread-count"],
+    refetchInterval: 15000,
+    enabled: isAuthenticated,
+  });
+  const unreadCount = unreadData?.count || 0;
 
   const navItems = [
     { icon: Home, labelKey: "nav.proHome", href: "/dashboard-pro" },
     { icon: FileText, labelKey: "nav.requests", href: "/gestion-demandes" },
     { icon: FolderKanban, labelKey: "nav.projects", href: "/atelier" },
-    { icon: MessageSquare, labelKey: "nav.messaging", href: "/messagerie" },
+    { icon: MessageSquare, labelKey: "nav.messaging", href: "/messagerie", isMessages: true },
     { icon: User, labelKey: "nav.profile", href: "/pro-profil" },
   ];
 
@@ -36,7 +46,17 @@ export function ProBottomNav() {
                 )}
                 data-testid={`nav-pro-${item.labelKey.split('.')[1]}`}
               >
-                <item.icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
+                <div className="relative">
+                  <item.icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
+                  {item.isMessages && unreadCount > 0 && (
+                    <span
+                      className="absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-[2px]"
+                      data-testid="badge-pro-unread-count"
+                    >
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </div>
                 <span className="text-[10px] font-medium">{t(item.labelKey)}</span>
               </button>
             </Link>

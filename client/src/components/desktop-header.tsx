@@ -1,6 +1,7 @@
 import { Home, Compass, MessageCircle, Ruler, BookOpen, User, FileText, FolderKanban, Calendar, ArrowLeftRight, Briefcase, Users, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +15,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 const particulierNavItems = [
   { icon: Home, labelKey: "nav.home", path: "/dashboard-client" },
   { icon: Compass, labelKey: "nav.search", path: "/decouverte" },
-  { icon: MessageCircle, labelKey: "nav.messages", path: "/messages" },
+  { icon: MessageCircle, labelKey: "nav.messages", path: "/messages", isMessages: true },
   { icon: Ruler, labelKey: "nav.measures", path: "/mesures" },
   { icon: BookOpen, labelKey: "nav.magazine", path: "/magazine" },
   { icon: User, labelKey: "nav.profile", path: "/mon-profil" },
@@ -24,7 +25,7 @@ const proNavItems = [
   { icon: Home, labelKey: "nav.proHome", path: "/dashboard-pro" },
   { icon: FileText, labelKey: "nav.requests", path: "/gestion-demandes" },
   { icon: FolderKanban, labelKey: "nav.projects", path: "/atelier" },
-  { icon: MessageCircle, labelKey: "nav.messaging", path: "/messagerie" },
+  { icon: MessageCircle, labelKey: "nav.messaging", path: "/messagerie", isMessages: true },
   { icon: Calendar, labelKey: "nav.planning", path: "/portefeuille" },
   { icon: User, labelKey: "nav.profile", path: "/pro-profil" },
 ];
@@ -41,6 +42,13 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
   const basePath = mode === "professionnel" ? "/dashboard-pro" : "/dashboard-client";
   
   const userInitials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() || 'U' : 'U';
+
+  const { data: unreadData } = useQuery<{ count: number }>({
+    queryKey: ["/api/conversations/unread-count"],
+    refetchInterval: 15000,
+    enabled: isAuthenticated,
+  });
+  const unreadCount = unreadData?.count || 0;
 
   return (
     <header 
@@ -68,12 +76,19 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
                 <Button
                   variant="ghost"
                   className={cn(
-                    "gap-2 text-foreground",
+                    "gap-2 text-foreground relative",
                     isActive && "bg-muted text-[#722F37]"
                   )}
                   data-testid={`nav-desktop-${item.labelKey.split('.')[1]}`}
                 >
-                  <Icon className="h-4 w-4" />
+                  <div className="relative">
+                    <Icon className="h-4 w-4" />
+                    {item.isMessages && unreadCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-[2px]">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
+                  </div>
                   <span>{t(item.labelKey)}</span>
                 </Button>
               </Link>
@@ -84,7 +99,6 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
         <div className="flex items-center gap-2">
           <LanguageToggle />
           <ThemeToggle />
-          {/* Bell notification hidden until feature is active */}
           {isAuthenticated && user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

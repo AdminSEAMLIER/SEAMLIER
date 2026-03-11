@@ -58,6 +58,8 @@ export interface IStorage {
   getOrCreateConversation(participant1Id: string, participant2Id: string): Promise<Conversation>;
   getMessages(conversationId: string): Promise<MessageWithSender[]>;
   createMessage(message: InsertMessage): Promise<Message>;
+  markMessagesAsRead(conversationId: string, userId: string): Promise<void>;
+  getUnreadCount(userId: string): Promise<number>;
 
   getMeasurements(userId: string): Promise<Measurements | undefined>;
   upsertMeasurements(measurements: InsertMeasurements): Promise<Measurements>;
@@ -417,6 +419,26 @@ class DatabaseStorage implements IStorage {
 
     const result = await db.select().from(messages).where(eq(messages.id, id));
     return result[0];
+  }
+
+  async markMessagesAsRead(conversationId: string, userId: string): Promise<void> {
+    await pool.query(
+      `UPDATE messages SET is_read = 1 WHERE conversation_id = ? AND sender_id != ? AND is_read = 0`,
+      [conversationId, userId]
+    );
+  }
+
+  async getUnreadCount(userId: string): Promise<number> {
+    const [rows] = await pool.query(
+      `SELECT COUNT(*) as count FROM messages m
+       JOIN conversations c ON m.conversation_id COLLATE utf8mb4_unicode_ci = c.id COLLATE utf8mb4_unicode_ci
+       WHERE (c.participant1_id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci
+           OR c.participant2_id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci)
+         AND m.sender_id COLLATE utf8mb4_unicode_ci != ? COLLATE utf8mb4_unicode_ci
+         AND m.is_read = 0`,
+      [userId, userId, userId]
+    ) as any[];
+    return Number(rows[0]?.count) || 0;
   }
 
   async getMeasurements(userId: string): Promise<Measurements | undefined> {

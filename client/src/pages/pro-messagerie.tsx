@@ -39,7 +39,15 @@ export default function ProMessagerie() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (selectedConversationId && user?.id) {
+      apiRequest("PATCH", `/api/messages/${selectedConversationId}/read`, {})
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/conversations/unread-count"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+        })
+        .catch(() => {});
+    }
+  }, [messages, selectedConversationId]);
 
   const contactSupportMutation = useMutation({
     mutationFn: async () => {
