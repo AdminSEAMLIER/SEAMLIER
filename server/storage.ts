@@ -361,20 +361,23 @@ class DatabaseStorage implements IStorage {
   async getMessages(conversationId: string): Promise<MessageWithSender[]> {
     const result = await db.select()
       .from(messages)
-      .innerJoin(users, eq(messages.senderId, users.id))
+      .leftJoin(users, eq(messages.senderId, users.id))
       .where(eq(messages.conversationId, conversationId))
       .orderBy(messages.sentAt);
+
+    console.log(`[getMessages] conversationId=${conversationId} → ${result?.length ?? 0} rows`);
 
     if (!result || !Array.isArray(result)) return [];
 
     return result.map(row => ({
       ...row.messages,
-      sender: row.users
+      sender: row.users ?? null
     }));
   }
 
   async createMessage(message: InsertMessage): Promise<Message> {
     const id = generateUUID();
+    console.log(`[createMessage] conversationId=${message.conversationId} senderId=${message.senderId}`);
     await db.insert(messages).values({ ...message, id });
 
     await db.update(conversations)

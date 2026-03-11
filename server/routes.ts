@@ -382,8 +382,9 @@ export async function registerRoutes(
 
   app.get("/api/messages/:conversationId", requireAuth, async (req: any, res) => {
     try {
-      const messages = await storage.getMessages(req.params.conversationId);
-      res.json(messages);
+      const msgs = await storage.getMessages(req.params.conversationId);
+      console.log(`[GET /api/messages/${req.params.conversationId}] returning ${msgs.length} messages, user=${req.authUserId}`);
+      res.json(msgs);
     } catch (error) {
       console.error("Failed to fetch messages:", error);
       res.status(500).json({ error: "Failed to fetch messages" });
