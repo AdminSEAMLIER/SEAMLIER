@@ -352,6 +352,21 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/support/conversation", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const admin = await storage.getAdminUser();
+      if (!admin) {
+        return res.status(404).json({ error: "Aucun administrateur trouvé" });
+      }
+      const conversation = await storage.getOrCreateConversation(userId, admin.id);
+      res.json(conversation);
+    } catch (error) {
+      console.error("Failed to create support conversation:", error);
+      res.status(500).json({ error: "Failed to create support conversation" });
+    }
+  });
+
   app.get("/api/messages/:conversationId", requireAuth, async (req: any, res) => {
     try {
       const messages = await storage.getMessages(req.params.conversationId);

@@ -74,6 +74,7 @@ export interface IStorage {
   deleteAppointment(id: string): Promise<void>;
 
   getAllUsers(): Promise<Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'role' | 'createdAt' | 'emailVerified'>[]>;
+  getAdminUser(): Promise<Pick<User, 'id'> | undefined>;
   deleteUnverifiedUsers(): Promise<number>;
   deleteUser(id: string): Promise<void>;
 
@@ -540,6 +541,19 @@ class DatabaseStorage implements IStorage {
         console.error("getAllUsers fallback error:", fallbackError);
         return [];
       }
+    }
+  }
+
+  async getAdminUser(): Promise<Pick<User, 'id'> | undefined> {
+    try {
+      const result = await db.select({ id: users.id })
+        .from(users)
+        .where(eq(users.role, 'admin'))
+        .limit(1);
+      return result[0];
+    } catch (error) {
+      console.error("getAdminUser error:", error);
+      return undefined;
     }
   }
 

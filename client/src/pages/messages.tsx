@@ -46,9 +46,7 @@ export default function Messages() {
 
   const contactSupportMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/conversations", {
-        participantId: "admin-001",
-      });
+      const res = await apiRequest("POST", "/api/support/conversation", {});
       return res.json();
     },
     onSuccess: (data: any) => {
