@@ -236,20 +236,12 @@ export default function AdminDashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
 
   const { data: dbUsers = [], isLoading: usersLoading } = useQuery<any[]>({
-    queryKey: ["admin-users"],
-    queryFn: async () => {
-      const res = await apiFetch(API_ENDPOINTS.admin.users);
-      return res.json();
-    },
+    queryKey: [API_ENDPOINTS.admin.users],
     enabled: isAuthenticated,
   });
 
   const { data: dbArtisans = [], isLoading: artisansLoading } = useQuery<any[]>({
-    queryKey: ["admin-artisans"],
-    queryFn: async () => {
-      const res = await apiFetch(API_ENDPOINTS.admin.artisans);
-      return res.json();
-    },
+    queryKey: [API_ENDPOINTS.admin.artisans],
     enabled: isAuthenticated,
   });
 
@@ -291,7 +283,7 @@ export default function AdminDashboard() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-artisans"] });
+      queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.admin.artisans] });
       toast({ title: "Artisan ajouté", description: "L'artisan a été ajouté avec succès." });
       setShowAddArtisan(false);
       setNewArtisan({
@@ -316,7 +308,7 @@ export default function AdminDashboard() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-artisans"] });
+      queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.admin.artisans] });
     },
   });
 
@@ -325,7 +317,7 @@ export default function AdminDashboard() {
       await apiFetch(API_ENDPOINTS.admin.artisan(id), { method: "DELETE" });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-artisans"] });
+      queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.admin.artisans] });
     },
   });
 
@@ -335,11 +327,11 @@ export default function AdminDashboard() {
       return res.json();
     },
     onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.admin.users] });
       toast({ title: "Comptes supprimés", description: `${data.deleted} compte(s) non activé(s) supprimé(s).` });
     },
-    onError: () => {
-      toast({ title: "Erreur", description: "Impossible de supprimer les comptes.", variant: "destructive" });
+    onError: (error: any) => {
+      toast({ title: "Erreur", description: error?.message || "Impossible de supprimer les comptes.", variant: "destructive" });
     },
   });
 
@@ -348,7 +340,7 @@ export default function AdminDashboard() {
       await apiFetch(`/api/admin/users/${id}`, { method: "DELETE" });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.admin.users] });
       toast({ title: "Compte supprimé" });
     },
     onError: () => {
@@ -365,17 +357,13 @@ export default function AdminDashboard() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.admin.users] });
       toast({ title: "Statut mis à jour" });
     },
   });
 
   const { data: dbSettings } = useQuery<Record<string, string>>({
-    queryKey: ["admin-settings"],
-    queryFn: async () => {
-      const res = await apiFetch(API_ENDPOINTS.admin.settings);
-      return res.json();
-    },
+    queryKey: [API_ENDPOINTS.admin.settings],
     enabled: isAuthenticated,
   });
 
@@ -414,7 +402,7 @@ export default function AdminDashboard() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
+      queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.admin.settings] });
       toast({ title: "Paramètres sauvegardés", description: "Les modifications ont été enregistrées avec succès." });
     },
     onError: () => {

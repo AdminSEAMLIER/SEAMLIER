@@ -543,32 +543,47 @@ class DatabaseStorage implements IStorage {
     }
   }
 
-  // ===== BUG FIX 2: cascadeDeleteUser =====
-  // Correction: reviews.clientId n'existe pas, la colonne est reviews.userId
   private async cascadeDeleteUser(id: string): Promise<void> {
-    await db.delete(messages).where(eq(messages.senderId, id));
-    const userConvos = await db.select({ id: conversations.id }).from(conversations)
-      .where(or(eq(conversations.participant1Id, id), eq(conversations.participant2Id, id)));
-    for (const c of userConvos) {
-      await db.delete(messages).where(eq(messages.conversationId, c.id));
-      await db.delete(conversations).where(eq(conversations.id, c.id));
+    const safeDelete = async (label: string, fn: () => Promise<any>) => {
+      try { await fn(); } catch (e: any) {
+        console.error(`[cascade] ${label} failed for user ${id}:`, e?.sqlMessage || e?.message);
+      }
+    };
+
+    await safeDelete("messages.senderId", () => db.delete(messages).where(eq(messages.senderId, id)));
+
+    try {
+      const userConvos = await db.select({ id: conversations.id }).from(conversations)
+        .where(or(eq(conversations.participant1Id, id), eq(conversations.participant2Id, id)));
+      for (const c of userConvos) {
+        await safeDelete(`messages.conversationId=${c.id}`, () => db.delete(messages).where(eq(messages.conversationId, c.id)));
+        await safeDelete(`conversations.id=${c.id}`, () => db.delete(conversations).where(eq(conversations.id, c.id)));
+      }
+    } catch (e: any) {
+      console.error("[cascade] conversations lookup failed:", e?.sqlMessage || e?.message);
     }
-    await db.delete(measurements).where(eq(measurements.userId, id));
-    // FIX: était reviews.clientId — corrigé en reviews.userId
-    await db.delete(reviews).where(eq(reviews.userId, id));
-    await db.delete(projects).where(eq(projects.clientId, id));
-    await db.delete(appointments).where(eq(appointments.clientId, id));
-    await db.delete(userPreferences).where(eq(userPreferences.userId, id));
-    await db.update(magazineArticles).set({ authorId: null }).where(eq(magazineArticles.authorId, id));
-    const userTailors = await db.select({ id: tailors.id }).from(tailors).where(eq(tailors.userId, id));
-    for (const t of userTailors) {
-      await db.delete(portfolioItems).where(eq(portfolioItems.tailorId, t.id));
-      await db.delete(products).where(eq(products.tailorId, t.id));
-      await db.delete(reviews).where(eq(reviews.tailorId, t.id));
-      await db.delete(projects).where(eq(projects.tailorId, t.id));
-      await db.delete(appointments).where(eq(appointments.tailorId, t.id));
+
+    await safeDelete("measurements", () => db.delete(measurements).where(eq(measurements.userId, id)));
+    await safeDelete("reviews.userId", () => db.delete(reviews).where(eq(reviews.userId, id)));
+    await safeDelete("projects.clientId", () => db.delete(projects).where(eq(projects.clientId, id)));
+    await safeDelete("appointments.clientId", () => db.delete(appointments).where(eq(appointments.clientId, id)));
+    await safeDelete("userPreferences", () => db.delete(userPreferences).where(eq(userPreferences.userId, id)));
+    await safeDelete("magazineArticles.authorId", () => db.update(magazineArticles).set({ authorId: null }).where(eq(magazineArticles.authorId, id)));
+
+    try {
+      const userTailors = await db.select({ id: tailors.id }).from(tailors).where(eq(tailors.userId, id));
+      for (const t of userTailors) {
+        await safeDelete(`portfolioItems.tailorId=${t.id}`, () => db.delete(portfolioItems).where(eq(portfolioItems.tailorId, t.id)));
+        await safeDelete(`products.tailorId=${t.id}`, () => db.delete(products).where(eq(products.tailorId, t.id)));
+        await safeDelete(`reviews.tailorId=${t.id}`, () => db.delete(reviews).where(eq(reviews.tailorId, t.id)));
+        await safeDelete(`projects.tailorId=${t.id}`, () => db.delete(projects).where(eq(projects.tailorId, t.id)));
+        await safeDelete(`appointments.tailorId=${t.id}`, () => db.delete(appointments).where(eq(appointments.tailorId, t.id)));
+      }
+    } catch (e: any) {
+      console.error("[cascade] tailors lookup failed:", e?.sqlMessage || e?.message);
     }
-    await db.delete(tailors).where(eq(tailors.userId, id));
+
+    await safeDelete("tailors", () => db.delete(tailors).where(eq(tailors.userId, id)));
     await db.delete(users).where(eq(users.id, id));
   }
 
@@ -576,16 +591,29 @@ class DatabaseStorage implements IStorage {
     try {
       const unverified = await db.select({ id: users.id })
         .from(users)
-        .where(and(eq(users.emailVerified, false), sql`${users.role} != 'admin'`));
+        .where(and(
+          sql`(${users.emailVerified} = false OR ${users.emailVerified} = 0 OR ${users.emailVerified} IS NULL)`,
+          sql`${users.role} != 'admin'`
+        ));
+
+      console.log("[storage] Found", unverified.length, "unverified users to delete:", unverified.map(u => u.id));
 
       if (unverified.length === 0) return 0;
 
+      let deleted = 0;
       for (const u of unverified) {
-        await this.cascadeDeleteUser(u.id);
+        try {
+          await this.cascadeDeleteUser(u.id);
+          deleted++;
+          console.log("[storage] Successfully deleted user:", u.id);
+        } catch (userError: any) {
+          console.error("[storage] Failed to delete user", u.id, ":", userError?.sqlMessage || userError?.message || userError);
+        }
       }
-      return unverified.length;
-    } catch (error) {
+      return deleted;
+    } catch (error: any) {
       console.error("deleteUnverifiedUsers error:", error);
+      console.error("deleteUnverifiedUsers sqlMessage:", error?.sqlMessage);
       throw error;
     }
   }
