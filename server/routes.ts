@@ -355,15 +355,23 @@ export async function registerRoutes(
   app.post("/api/support/conversation", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
+      console.log("[support] userId:", userId);
       const admin = await storage.getAdminUser();
+      console.log("[support] admin found:", admin ? admin.id : "NONE");
       if (!admin) {
         return res.status(404).json({ error: "Aucun administrateur trouvé" });
       }
+      if (userId === admin.id) {
+        return res.status(400).json({ error: "L'admin ne peut pas se contacter lui-même" });
+      }
       const conversation = await storage.getOrCreateConversation(userId, admin.id);
+      console.log("[support] conversation:", conversation?.id);
       res.json(conversation);
-    } catch (error) {
-      console.error("Failed to create support conversation:", error);
-      res.status(500).json({ error: "Failed to create support conversation" });
+    } catch (error: any) {
+      console.error("[support] FULL ERROR:", error);
+      console.error("[support] sqlMessage:", error?.sqlMessage);
+      console.error("[support] code:", error?.code);
+      res.status(500).json({ error: "Failed to create support conversation", detail: error?.sqlMessage || error?.message });
     }
   });
 

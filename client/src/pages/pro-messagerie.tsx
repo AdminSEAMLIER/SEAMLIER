@@ -45,8 +45,9 @@ export default function ProMessagerie() {
       setSelectedConversationId(data.id);
       toast({ title: "Support", description: "Conversation avec le support ouverte." });
     },
-    onError: () => {
-      toast({ title: "Erreur", description: "Impossible de contacter le support", variant: "destructive" });
+    onError: (error: any) => {
+      console.error("[pro-messagerie] support error:", error);
+      toast({ title: "Erreur", description: error?.message || "Impossible de contacter le support", variant: "destructive" });
     },
   });
 
