@@ -90,9 +90,11 @@ export interface IStorage {
 
   getMagazineArticles(publishedOnly?: boolean): Promise<MagazineArticle[]>;
   getMagazineArticle(id: string): Promise<MagazineArticle | undefined>;
+  incrementArticleViews(id: string): Promise<void>;
   createMagazineArticle(article: InsertMagazineArticle): Promise<MagazineArticle>;
   updateMagazineArticle(id: string, updates: Partial<InsertMagazineArticle>): Promise<MagazineArticle | undefined>;
   deleteMagazineArticle(id: string): Promise<void>;
+  deleteAllConversations(): Promise<void>;
 
   getAdminSettings(): Promise<AdminSetting[]>;
   getAdminSetting(key: string): Promise<AdminSetting | undefined>;
@@ -834,6 +836,21 @@ class DatabaseStorage implements IStorage {
 
   async deleteMagazineArticle(id: string): Promise<void> {
     await db.delete(magazineArticles).where(eq(magazineArticles.id, id));
+  }
+
+  async incrementArticleViews(id: string): Promise<void> {
+    try {
+      await db.update(magazineArticles)
+        .set({ views: sql`${magazineArticles.views} + 1` })
+        .where(eq(magazineArticles.id, id));
+    } catch (error) {
+      console.error("incrementArticleViews error:", error);
+    }
+  }
+
+  async deleteAllConversations(): Promise<void> {
+    await db.delete(messages);
+    await db.delete(conversations);
   }
 }
 

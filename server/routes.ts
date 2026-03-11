@@ -2,6 +2,9 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+import { tailors, users } from "../shared/schema";
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
@@ -390,8 +393,9 @@ export async function registerRoutes(
   app.post("/api/messages", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
+      const { sentAt, ...bodyWithoutSentAt } = req.body;
       const message = await storage.createMessage({
-        ...req.body,
+        ...bodyWithoutSentAt,
         senderId: userId,
       });
       res.status(201).json(message);
@@ -840,7 +844,48 @@ export async function registerRoutes(
 
   app.put("/api/admin/artisans/:id", requireAdmin, async (req, res) => {
     try {
-      const artisan = await storage.updateAdminArtisan(req.params.id, req.body);
+      const rawId = req.params.id;
+
+      if (rawId.startsWith("reg-")) {
+        const tailorId = rawId.replace(/^reg-/, "");
+        const { status, subscriptionPlan, ...rest } = req.body;
+
+        if (status === "Vérifié") {
+          await db.update(tailors).set({ isVerified: true }).where(eq(tailors.id, tailorId));
+        } else if (status === "Rejeté") {
+          await db.update(tailors).set({ isVerified: false }).where(eq(tailors.id, tailorId));
+        }
+        if (subscriptionPlan) {
+          await db.update(tailors).set({ subscriptionPlan }).where(eq(tailors.id, tailorId));
+        }
+
+        const updated = await db.select({
+          tailorId: tailors.id, userId: tailors.userId, isVerified: tailors.isVerified,
+          specialties: tailors.specialties, experience: tailors.experience,
+          subscriptionPlan: tailors.subscriptionPlan, bio: tailors.bio,
+          firstName: users.firstName, lastName: users.lastName, email: users.email,
+          phone: users.phone, location: users.location, createdAt: users.createdAt,
+        }).from(tailors).innerJoin(users, eq(tailors.userId, users.id)).where(eq(tailors.id, tailorId));
+
+        if (!updated[0]) return res.status(404).json({ error: "Tailor not found" });
+        const t = updated[0];
+        return res.json({
+          id: rawId,
+          firstName: t.firstName || "",
+          lastName: t.lastName || "",
+          specialty: (t.specialties && t.specialties.length > 0) ? t.specialties[0] : "Non spécifié",
+          status: t.isVerified ? "Vérifié" : status === "Rejeté" ? "Rejeté" : "En attente",
+          city: t.location || "",
+          email: t.email || "",
+          phone: t.phone || "",
+          bio: t.bio || null,
+          subscriptionPlan: t.subscriptionPlan || "Starter",
+          paymentStatus: "En attente",
+          createdAt: t.createdAt || new Date(),
+        });
+      }
+
+      const artisan = await storage.updateAdminArtisan(rawId, req.body);
       if (!artisan) {
         return res.status(404).json({ error: "Artisan not found" });
       }
@@ -858,6 +903,16 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error deleting admin artisan:", error);
       res.status(500).json({ error: "Failed to delete artisan" });
+    }
+  });
+
+  app.delete("/api/admin/conversations", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteAllConversations();
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting conversations:", error);
+      res.status(500).json({ error: "Failed to delete conversations" });
     }
   });
 
@@ -955,6 +1010,7 @@ export async function registerRoutes(
     try {
       const article = await storage.getMagazineArticle(req.params.id);
       if (!article) return res.status(404).json({ error: "Article not found" });
+      storage.incrementArticleViews(req.params.id).catch(() => {});
       res.json(article);
     } catch (error) {
       console.error("Error fetching article:", error);

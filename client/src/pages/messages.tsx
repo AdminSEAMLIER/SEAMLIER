@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -16,9 +16,11 @@ export default function Messages() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const queryClient = useQueryClient();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: conversations, isLoading: conversationsLoading } = useQuery<ConversationWithParticipant[]>({
     queryKey: ["/api/conversations"],
+    refetchInterval: 5000,
   });
 
   const { data: messages, isLoading: messagesLoading } = useQuery<MessageWithSender[]>({
@@ -29,8 +31,12 @@ export default function Messages() {
       if (!res.ok) throw new Error("Failed to fetch messages");
       return res.json();
     },
-    refetchInterval: 4000,
+    refetchInterval: 3000,
   });
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const selectedConversation = conversations?.find(c => c.id === selectedConversationId);
 
@@ -38,15 +44,15 @@ export default function Messages() {
     mutationFn: async (content: string) => {
       return apiRequest("POST", "/api/messages", {
         conversationId: selectedConversationId,
-        senderId: user?.id?.toString() || "",
         content,
-        sentAt: new Date().toISOString(),
-        isRead: false,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/messages", selectedConversationId] });
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible d'envoyer le message", variant: "destructive" });
     },
   });
 
@@ -247,6 +253,7 @@ export default function Messages() {
                     </p>
                   </div>
                 )}
+                <div ref={messagesEndRef} />
               </div>
 
               <div className="p-4 border-t border-border bg-white">

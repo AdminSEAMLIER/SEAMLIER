@@ -61,15 +61,15 @@ export default function ProMessagerie() {
     mutationFn: async (content: string) => {
       return apiRequest("POST", "/api/messages", {
         conversationId: selectedConversationId,
-        senderId: user?.id?.toString() || "",
         content,
-        sentAt: new Date().toISOString(),
-        isRead: false,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/messages", selectedConversationId] });
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible d'envoyer le message", variant: "destructive" });
     },
   });
 

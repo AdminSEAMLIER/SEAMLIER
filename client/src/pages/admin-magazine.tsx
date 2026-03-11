@@ -185,11 +185,13 @@ export default function AdminDashboard() {
   const [newArticleTitle, setNewArticleTitle] = useState("");
   const [newArticleCategory, setNewArticleCategory] = useState("");
   const [newArticleContent, setNewArticleContent] = useState("");
+  const [newArticleExcerpt, setNewArticleExcerpt] = useState("");
   const [newArticleImageUrl, setNewArticleImageUrl] = useState("");
   const [editingArticleId, setEditingArticleId] = useState<string | null>(null);
   const [editArticleTitle, setEditArticleTitle] = useState("");
   const [editArticleCategory, setEditArticleCategory] = useState("");
   const [editArticleContent, setEditArticleContent] = useState("");
+  const [editArticleExcerpt, setEditArticleExcerpt] = useState("");
   const [editArticleImageUrl, setEditArticleImageUrl] = useState("");
   const newArticleRef = useRef<HTMLTextAreaElement>(null);
   const editArticleRef = useRef<HTMLTextAreaElement>(null);
@@ -641,7 +643,7 @@ export default function AdminDashboard() {
           title: newArticleTitle,
           category: newArticleCategory || "Non catégorisé",
           content: newArticleContent,
-          excerpt: newArticleContent ? newArticleContent.substring(0, 200) : null,
+          excerpt: newArticleExcerpt.trim() || null,
           imageUrl: newArticleImageUrl || null,
           status: "Brouillon",
         }),
@@ -650,6 +652,7 @@ export default function AdminDashboard() {
       setNewArticleTitle("");
       setNewArticleCategory("");
       setNewArticleContent("");
+      setNewArticleExcerpt("");
       setNewArticleImageUrl("");
       setShowNewArticle(false);
       toast({ title: "Article créé", description: "Le brouillon a été enregistré." });
@@ -663,6 +666,7 @@ export default function AdminDashboard() {
     setEditArticleTitle(article.title || "");
     setEditArticleCategory(article.category || "");
     setEditArticleContent(article.content || "");
+    setEditArticleExcerpt(article.excerpt || "");
     setEditArticleImageUrl(article.imageUrl || "");
   };
 
@@ -687,7 +691,7 @@ export default function AdminDashboard() {
           title: editArticleTitle,
           category: editArticleCategory || "Non catégorisé",
           content: editArticleContent,
-          excerpt: editArticleContent ? editArticleContent.substring(0, 200) : null,
+          excerpt: editArticleExcerpt.trim() || null,
           imageUrl: editArticleImageUrl || null,
         }),
       });
@@ -879,10 +883,10 @@ export default function AdminDashboard() {
   ];
 
   const stats = [
-    { label: "Demandes en attente", val: String(pendingProjects), icon: Clock, color: "text-[#722F37]", bg: "bg-[#722F37]/5", trend: "+3", tab: "projects" },
-    { label: "Projets totaux", val: String(projects.length), icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-50", trend: "+2", tab: "projects" },
-    { label: "Revenus libérés", val: `${totalRevenue.toLocaleString()} €`, icon: ShoppingBag, color: "text-green-600", bg: "bg-green-50", trend: "+18%", tab: "projects" },
-    { label: "Artisans vérifiés", val: `${verifiedArtisans}/${artisans.length}`, icon: ShieldCheck, color: "text-amber-600", bg: "bg-amber-50", trend: "+1", tab: "artisans" },
+    { label: "Demandes en attente", val: String(pendingProjects), icon: Clock, color: "text-[#722F37]", bg: "bg-[#722F37]/5", tab: "projects" },
+    { label: "Projets totaux", val: String(projects.length), icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-50", tab: "projects" },
+    { label: "Revenus libérés", val: `${totalRevenue.toLocaleString()} €`, icon: ShoppingBag, color: "text-green-600", bg: "bg-green-50", tab: "projects" },
+    { label: "Artisans vérifiés", val: `${verifiedArtisans}/${artisans.length}`, icon: ShieldCheck, color: "text-amber-600", bg: "bg-amber-50", tab: "artisans" },
   ];
 
   const sidebarStyle = {
@@ -974,10 +978,6 @@ export default function AdminDashboard() {
                             <div className={cn("p-2 rounded-lg", stat.bg)}>
                               <stat.icon size={18} className={stat.color} />
                             </div>
-                            <span className="text-[11px] font-bold flex items-center gap-0.5 text-green-600">
-                              <ArrowUpRight size={12} />
-                              {stat.trend}
-                            </span>
                           </div>
                           <p className="text-sm font-medium text-gray-500 mt-3">{stat.label}</p>
                           <p className="text-2xl lg:text-3xl font-bold text-gray-900 mt-1">{stat.val}</p>
@@ -1116,8 +1116,28 @@ export default function AdminDashboard() {
                   </div>
                   <div className="grid lg:grid-cols-3 gap-6" style={{ minHeight: "60vh" }}>
                     <Card className="border-none shadow-sm overflow-hidden bg-white lg:col-span-1 flex flex-col">
-                      <div className="p-4 border-b border-gray-50">
+                      <div className="p-4 border-b border-gray-50 flex items-center justify-between gap-2">
                         <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Conversations ({adminConversations.length})</p>
+                        {adminConversations.length > 0 && (
+                          <button
+                            onClick={async () => {
+                              if (!confirm("Supprimer toutes les conversations ? Cette action est irréversible.")) return;
+                              try {
+                                await apiFetch("/api/admin/conversations", { method: "DELETE" });
+                                queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+                                setSelectedConversationId(null);
+                                setSelectedMessage(null);
+                                toast({ title: "Conversations supprimées" });
+                              } catch {
+                                toast({ title: "Erreur", description: "Impossible de supprimer les conversations", variant: "destructive" });
+                              }
+                            }}
+                            className="text-[10px] text-red-500 hover:text-red-700 font-semibold px-2 py-0.5 rounded hover:bg-red-50 transition-colors"
+                            data-testid="button-delete-all-conversations"
+                          >
+                            Tout supprimer
+                          </button>
+                        )}
                       </div>
                       <div className="overflow-y-auto flex-1">
                         {adminConversations.map((c: any) => (
@@ -2560,6 +2580,7 @@ export default function AdminDashboard() {
                           <span className="text-[10px] text-gray-400 ml-2">Sélectionnez du texte puis cliquez</span>
                         </div>
                         <Textarea ref={newArticleRef} placeholder="Contenu de l'article..." value={newArticleContent} onChange={e => setNewArticleContent(e.target.value)} className="min-h-[120px] text-sm" data-testid="input-article-content" />
+                        <Textarea placeholder="Extrait / résumé (affiché sur la liste des articles)" value={newArticleExcerpt} onChange={e => setNewArticleExcerpt(e.target.value)} className="min-h-[60px] text-sm" data-testid="input-article-excerpt" />
                         <div className="flex justify-end gap-3">
                           <Button variant="outline" onClick={() => setShowNewArticle(false)} data-testid="button-cancel-article">Annuler</Button>
                           <Button className="bg-[#722F37] font-bold" onClick={createArticle} data-testid="button-save-article">Enregistrer</Button>
@@ -2654,6 +2675,7 @@ export default function AdminDashboard() {
                           <span className="text-[10px] text-gray-400 ml-2">Sélectionnez du texte puis cliquez</span>
                         </div>
                         <Textarea ref={editArticleRef} placeholder="Contenu de l'article..." value={editArticleContent} onChange={e => setEditArticleContent(e.target.value)} className="min-h-[200px] text-sm" data-testid="input-edit-article-content" />
+                        <Textarea placeholder="Extrait / résumé (affiché sur la liste des articles)" value={editArticleExcerpt} onChange={e => setEditArticleExcerpt(e.target.value)} className="min-h-[60px] text-sm" data-testid="input-edit-article-excerpt" />
                       </div>
                       <DialogFooter className="gap-2">
                         <Button variant="outline" onClick={() => setEditingArticleId(null)} data-testid="button-cancel-edit-article">Annuler</Button>
