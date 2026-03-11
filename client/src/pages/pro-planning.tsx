@@ -200,8 +200,10 @@ export default function ProPlanning() {
 
             <div className="grid grid-cols-7 gap-1">
               {weekDays.map((day, index) => {
-                const date = new Date();
-                date.setDate(date.getDate() - date.getDay() + 1 + index);
+                const ref = new Date(selectedDate);
+                const dow = ref.getDay();
+                const mondayOffset = dow === 0 ? -6 : 1 - dow;
+                const date = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate() + mondayOffset + index);
                 const isToday = date.toDateString() === new Date().toDateString();
                 const isSelected = date.toDateString() === selectedDate.toDateString();
                 

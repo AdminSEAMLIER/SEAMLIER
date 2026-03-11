@@ -1,40 +1,39 @@
 import { useTranslation } from "react-i18next";
-import { MessageSquare, Search, Send, Users, Headset } from "lucide-react";
+import { MessageSquare, Search, Send, Users, Headset, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useState, useEffect } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useState, useEffect, useRef } from "react";
 import { useSearch, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-
-interface Conversation {
-  id: string;
-  name: string;
-  lastMessage: string;
-  time: string;
-  unread: number;
-  projectType: string;
-}
-
-interface Message {
-  id: string;
-  sender: string;
-  text: string;
-  time: string;
-}
+import type { ConversationWithParticipant, MessageWithSender } from "@shared/schema";
 
 export default function ProMessagerie() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
-  const searchString = useSearch();
-  const [showChat, setShowChat] = useState(false);
+  const { user } = useAuth();
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
-  const [chatMessages, setChatMessages] = useState<Message[]>([]);
-  const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { data: conversations = [], isLoading } = useQuery<ConversationWithParticipant[]>({
+    queryKey: ["/api/conversations"],
+  });
+
+  const { data: messages = [], isLoading: messagesLoading } = useQuery<MessageWithSender[]>({
+    queryKey: ["/api/messages", selectedConversationId],
+    enabled: !!selectedConversationId,
+  });
+
+  const selectedConversation = conversations.find(c => c.id === selectedConversationId);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const contactSupportMutation = useMutation({
     mutationFn: async () => {
@@ -43,9 +42,9 @@ export default function ProMessagerie() {
       });
       return res.json();
     },
-    onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-      setLocation("/messagerie?support=" + data.id);
+    onSuccess: async (data: any) => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      setSelectedConversationId(data.id);
       toast({ title: "Support", description: "Conversation avec le support ouverte." });
     },
     onError: () => {
@@ -53,60 +52,26 @@ export default function ProMessagerie() {
     },
   });
 
-  // Fetch real conversations from API (empty for now)
-  const { data: conversations = [], isLoading } = useQuery<Conversation[]>({
-    queryKey: ["/api/pro/conversations"],
-    enabled: false, // Disabled until API is implemented
+  const sendMessageMutation = useMutation({
+    mutationFn: async (content: string) => {
+      return apiRequest("POST", "/api/messages", {
+        conversationId: selectedConversationId,
+        senderId: user?.id?.toString() || "",
+        content,
+        sentAt: new Date().toISOString(),
+        isRead: false,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/messages", selectedConversationId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+    },
   });
 
-  // Check for new conversation from accepted request
-  useEffect(() => {
-    const params = new URLSearchParams(searchString);
-    if (params.get('newConversation') === 'true') {
-      const acceptedRequest = sessionStorage.getItem('acceptedRequest');
-      if (acceptedRequest) {
-        const { clientName, projectType, autoMessage } = JSON.parse(acceptedRequest);
-        
-        const newConv: Conversation = {
-          id: `new-${Date.now()}`,
-          name: clientName,
-          lastMessage: autoMessage,
-          time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-          unread: 0,
-          projectType: projectType,
-        };
-
-        setSelectedConv(newConv);
-        setChatMessages([{
-          id: "auto-1",
-          sender: "pro",
-          text: `${t('pro.acceptanceMessageFull', { projectType })}`,
-          time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        }]);
-        
-        setShowChat(true);
-        sessionStorage.removeItem('acceptedRequest');
-      }
-    }
-  }, [searchString, t]);
-
   const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-    
-    const now = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    setChatMessages([...chatMessages, {
-      id: `msg-${Date.now()}`,
-      sender: "pro",
-      text: newMessage,
-      time: now,
-    }]);
+    if (!newMessage.trim() || !selectedConversationId) return;
+    sendMessageMutation.mutate(newMessage.trim());
     setNewMessage("");
-  };
-
-  const handleSelectConversation = (conv: Conversation) => {
-    setSelectedConv(conv);
-    setChatMessages([]);
-    setShowChat(true);
   };
 
   return (
@@ -141,21 +106,8 @@ export default function ProMessagerie() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 lg:px-6 py-6">
-        {!showChat ? (
+        {!selectedConversationId ? (
           <>
-            <Card className="border border-gray-100 bg-white shadow-sm mb-6">
-              <CardContent className="p-4 bg-white">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input 
-                    placeholder={t('pro.searchConversations')} 
-                    className="pl-9 border-gray-200"
-                    data-testid="input-search-conversations"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
             {isLoading ? (
               <Card className="border border-gray-100 bg-white shadow-sm">
                 <CardContent className="p-8 bg-white text-center">
@@ -180,26 +132,33 @@ export default function ProMessagerie() {
                 <Card 
                   key={conv.id} 
                   className="border border-gray-100 bg-white shadow-sm mb-3 cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => handleSelectConversation(conv)}
+                  onClick={() => setSelectedConversationId(conv.id)}
+                  data-testid={`conversation-${conv.id}`}
                 >
                   <CardContent className="p-4 bg-white">
                     <div className="flex gap-3">
                       <Avatar className="h-12 w-12 border border-gray-100 flex-shrink-0">
+                        <AvatarImage src={conv.otherParticipant.profileImageUrl || undefined} />
                         <AvatarFallback className="bg-[#722F37]/10 text-[#722F37]">
-                          {conv.name.split(' ').map(n => n[0]).join('')}
+                          {(conv.otherParticipant.firstName || "?").charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-medium text-gray-900 truncate">{conv.name}</span>
-                          <span className="text-xs text-gray-400 flex-shrink-0">{conv.time}</span>
+                          <span className="font-medium text-gray-900 truncate">
+                            {[conv.otherParticipant.firstName, conv.otherParticipant.lastName].filter(Boolean).join(" ")}
+                          </span>
+                          {conv.lastMessageAt && (
+                            <span className="text-xs text-gray-400 flex-shrink-0">
+                              {new Date(conv.lastMessageAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                            </span>
+                          )}
                         </div>
-                        <p className="text-sm text-gray-500 truncate">{conv.lastMessage}</p>
-                        <span className="text-xs text-[#722F37]">{conv.projectType}</span>
+                        <p className="text-sm text-gray-500 truncate">{conv.lastMessagePreview || "Aucun message"}</p>
                       </div>
-                      {conv.unread > 0 && (
+                      {conv.unreadCount > 0 && (
                         <span className="w-5 h-5 rounded-full bg-[#722F37] text-white text-xs flex items-center justify-center flex-shrink-0">
-                          {conv.unread}
+                          {conv.unreadCount}
                         </span>
                       )}
                     </div>
@@ -208,54 +167,78 @@ export default function ProMessagerie() {
               ))
             )}
           </>
-        ) : selectedConv && (
+        ) : !selectedConversation ? (
+          <Card className="border border-gray-100 bg-white shadow-sm">
+            <CardContent className="p-8 bg-white text-center">
+              <Button variant="ghost" onClick={() => setSelectedConversationId(null)} className="mb-4 text-gray-500" data-testid="button-back-loading">
+                <ArrowLeft className="h-4 w-4 mr-2" /> Retour
+              </Button>
+              <p className="text-gray-400">Chargement de la conversation...</p>
+            </CardContent>
+          </Card>
+        ) : (
           <Card className="border border-gray-100 bg-white shadow-sm">
             <CardHeader className="border-b border-gray-100">
               <div className="flex items-center gap-3">
                 <Button 
                   variant="ghost" 
-                  size="sm" 
-                  onClick={() => setShowChat(false)}
+                  size="icon" 
+                  onClick={() => setSelectedConversationId(null)}
                   className="text-gray-500"
+                  data-testid="button-back-messages"
                 >
-                  {t('pro.back')}
+                  <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <Avatar className="h-10 w-10 border border-gray-100">
+                  <AvatarImage src={selectedConversation.otherParticipant.profileImageUrl || undefined} />
                   <AvatarFallback className="bg-[#722F37]/10 text-[#722F37]">
-                    {selectedConv.name.split(' ').map(n => n[0]).join('')}
+                    {(selectedConversation.otherParticipant.firstName || "?").charAt(0)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium text-gray-900">{selectedConv.name}</p>
-                  <p className="text-sm text-[#722F37]">{selectedConv.projectType}</p>
+                  <p className="font-medium text-gray-900">
+                    {[selectedConversation.otherParticipant.firstName, selectedConversation.otherParticipant.lastName].filter(Boolean).join(" ")}
+                  </p>
+                  <p className="text-xs text-gray-500">En ligne</p>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="p-0 bg-white">
               <div className="h-80 overflow-y-auto p-4 space-y-4 bg-gray-50">
-                {chatMessages.length > 0 ? (
-                  chatMessages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex ${msg.sender === 'pro' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                          msg.sender === 'pro'
-                            ? 'bg-[#722F37] text-white'
-                            : 'bg-white border border-gray-200 text-gray-900'
-                        }`}
-                      >
-                        <p>{msg.text}</p>
-                        <p className={`text-xs mt-1 ${msg.sender === 'pro' ? 'text-white/70' : 'text-gray-400'}`}>
-                          {msg.time}
-                        </p>
-                      </div>
-                    </div>
-                  ))
+                {messagesLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-400 text-sm">Chargement...</p>
+                  </div>
+                ) : messages.length > 0 ? (
+                  <>
+                    {messages.map((msg) => {
+                      const isSent = msg.senderId !== selectedConversation.otherParticipant.id;
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`flex ${isSent ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                              isSent
+                                ? 'bg-[#722F37] text-white rounded-br-sm'
+                                : 'bg-white border border-gray-200 text-gray-900 rounded-bl-sm'
+                            }`}
+                            data-testid={`message-${msg.id}`}
+                          >
+                            <p className="text-sm">{msg.content}</p>
+                            <p className={`text-[10px] mt-1 ${isSent ? 'text-white/70' : 'text-gray-400'}`}>
+                              {msg.sentAt ? new Date(msg.sentAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ""}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
+                  </>
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-400 text-sm">{t('pro.startConversation')}</p>
+                    <p className="text-gray-400 text-sm">Envoyez votre premier message</p>
                   </div>
                 )}
               </div>
@@ -265,8 +248,8 @@ export default function ProMessagerie() {
                   <Input
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                    placeholder={t('pro.typeMessage')}
+                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                    placeholder="Écrivez votre message..."
                     className="flex-1 border-gray-200"
                     data-testid="input-message"
                   />
@@ -274,6 +257,7 @@ export default function ProMessagerie() {
                     className="bg-[#722F37] hover:bg-[#5a252c]" 
                     size="icon" 
                     onClick={handleSendMessage}
+                    disabled={!newMessage.trim() || sendMessageMutation.isPending}
                     data-testid="button-send"
                   >
                     <Send className="h-4 w-4" />
