@@ -702,8 +702,41 @@ export async function registerRoutes(
 
   app.get("/api/admin/artisans", requireAdmin, async (req, res) => {
     try {
-      const artisans = await storage.getAdminArtisans();
-      res.json(artisans);
+      const manualArtisans = await storage.getAdminArtisans();
+      const registeredTailors = await storage.getRegisteredTailors();
+
+      const manualEmails = new Set(manualArtisans.map(a => a.email?.toLowerCase()).filter(Boolean));
+
+      const mergedFromTailors = registeredTailors
+        .filter(t => !manualEmails.has(t.email?.toLowerCase()))
+        .map(t => ({
+          id: `reg-${t.tailorId}`,
+          firstName: t.firstName || "",
+          lastName: t.lastName || "",
+          specialty: (t.specialties && t.specialties.length > 0) ? t.specialties[0] : "Non spécifié",
+          status: t.isVerified ? "Vérifié" : "En attente",
+          city: t.location || "",
+          email: t.email || "",
+          phone: t.phone || "",
+          birthDate: null,
+          nationality: null,
+          idType: null,
+          idNumber: null,
+          address: null,
+          siret: null,
+          companyName: null,
+          legalForm: null,
+          tvaNumber: null,
+          iban: null,
+          yearsExperience: t.experience || null,
+          bio: t.bio || null,
+          joinDate: null,
+          subscriptionPlan: t.subscriptionPlan || "Starter",
+          paymentStatus: "En attente",
+          createdAt: t.createdAt || new Date(),
+        }));
+
+      res.json([...manualArtisans, ...mergedFromTailors]);
     } catch (error) {
       console.error("Error fetching admin artisans:", error);
       res.status(500).json({ error: "Failed to fetch artisans" });

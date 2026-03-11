@@ -79,6 +79,7 @@ export interface IStorage {
   deleteUser(id: string): Promise<void>;
 
   getAdminArtisans(): Promise<AdminArtisan[]>;
+  getRegisteredTailors(): Promise<any[]>;
   getAdminArtisan(id: string): Promise<AdminArtisan | undefined>;
   createAdminArtisan(artisan: InsertAdminArtisan): Promise<AdminArtisan>;
   updateAdminArtisan(id: string, updates: Partial<InsertAdminArtisan>): Promise<AdminArtisan | undefined>;
@@ -670,6 +671,33 @@ class DatabaseStorage implements IStorage {
       return await db.select().from(adminArtisans).orderBy(desc(adminArtisans.createdAt));
     } catch (error) {
       console.error("getAdminArtisans error:", error);
+      return [];
+    }
+  }
+
+  async getRegisteredTailors(): Promise<any[]> {
+    try {
+      const result = await db.select({
+        tailorId: tailors.id,
+        userId: tailors.userId,
+        bio: tailors.bio,
+        specialties: tailors.specialties,
+        experience: tailors.experience,
+        isVerified: tailors.isVerified,
+        subscriptionPlan: tailors.subscriptionPlan,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        phone: users.phone,
+        location: users.location,
+        createdAt: users.createdAt,
+      })
+        .from(tailors)
+        .innerJoin(users, eq(tailors.userId, users.id))
+        .where(eq(users.emailVerified, true));
+      return result;
+    } catch (error) {
+      console.error("getRegisteredTailors error:", error);
       return [];
     }
   }
