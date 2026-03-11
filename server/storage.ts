@@ -164,7 +164,8 @@ class DatabaseStorage implements IStorage {
     try {
       const result = await db.select()
         .from(tailors)
-        .innerJoin(users, eq(tailors.userId, users.id));
+        .innerJoin(users, eq(tailors.userId, users.id))
+        .where(eq(tailors.isVerified, true));
 
       if (!result || !Array.isArray(result)) return [];
 

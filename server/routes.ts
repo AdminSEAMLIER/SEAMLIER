@@ -929,11 +929,22 @@ export async function registerRoutes(
 
   app.delete("/api/admin/artisans/:id", requireAdmin, async (req, res) => {
     try {
-      await storage.deleteAdminArtisan(req.params.id);
+      const rawId = req.params.id;
+      if (rawId.startsWith("reg-")) {
+        const tailorId = rawId.replace(/^reg-/, "");
+        const tailor = await db.select({ userId: tailors.userId })
+          .from(tailors)
+          .where(eq(tailors.id, tailorId));
+        if (tailor[0]?.userId) {
+          await storage.deleteUser(tailor[0].userId);
+        }
+      } else {
+        await storage.deleteAdminArtisan(rawId);
+      }
       res.status(204).send();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting admin artisan:", error);
-      res.status(500).json({ error: "Failed to delete artisan" });
+      res.status(500).json({ error: "Failed to delete artisan", detail: error?.sqlMessage || error?.message });
     }
   });
 
