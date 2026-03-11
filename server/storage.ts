@@ -395,13 +395,27 @@ class DatabaseStorage implements IStorage {
   async upsertMeasurements(data: InsertMeasurements): Promise<Measurements> {
     try {
       console.log("[storage] upsertMeasurements called with userId:", data.userId);
+      const cleanData = {
+        userId: data.userId,
+        neck: data.neck ?? null,
+        bust: data.bust ?? null,
+        waist: data.waist ?? null,
+        hips: data.hips ?? null,
+        shoulders: data.shoulders ?? null,
+        armLength: data.armLength ?? null,
+        backLength: data.backLength ?? null,
+        inseam: data.inseam ?? null,
+        height: data.height ?? null,
+        weight: data.weight ?? null,
+      };
+
       const existing = await this.getMeasurements(data.userId);
       console.log("[storage] existing measurements:", existing ? existing.id : "none");
 
       if (existing) {
-        const { userId, ...updateData } = data;
+        const { userId, ...updateFields } = cleanData;
         await db.update(measurements)
-          .set({ ...updateData, updatedAt: new Date() })
+          .set({ ...updateFields, updatedAt: new Date() })
           .where(eq(measurements.userId, data.userId));
         const result = await db.select().from(measurements).where(eq(measurements.userId, data.userId));
         return result[0];
@@ -409,7 +423,7 @@ class DatabaseStorage implements IStorage {
 
       const id = generateUUID();
       console.log("[storage] inserting new measurements with id:", id);
-      await db.insert(measurements).values({ ...data, id });
+      await db.insert(measurements).values({ ...cleanData, id });
       const result = await db.select().from(measurements).where(eq(measurements.id, id));
       return result[0];
     } catch (error: any) {

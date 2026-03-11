@@ -710,91 +710,87 @@ export async function registerRoutes(
 
   app.post("/api/admin/artisans", requireAdmin, async (req, res) => {
     try {
-      const { firstName, lastName, email, phone, specialty, city, bio,
-              yearsExperience, siret, companyName, subscriptionPlan, ...rest } = req.body;
+      const b = req.body;
+      console.log("[admin] POST artisan body keys:", Object.keys(b));
 
-      console.log("[admin] POST artisan body:", JSON.stringify({ firstName, lastName, email, specialty, city }));
-
-      const {
-        legalForm, tvaNumber, iban, birthDate, nationality,
-        idType, idNumber, address, paymentStatus
-      } = rest;
-
-      const artisan = await storage.createAdminArtisan({
-        firstName: firstName || "",
-        lastName: lastName || "",
-        email: email || null,
-        phone: phone || null,
-        specialty: specialty || "Couture",
-        city: city || "Non renseignée",
-        bio: bio || null,
-        yearsExperience: parseInt(yearsExperience) || 0,
-        siret: siret || null,
-        companyName: companyName || null,
-        subscriptionPlan: subscriptionPlan || "Starter",
-        legalForm: legalForm || null,
-        tvaNumber: tvaNumber || null,
-        iban: iban || null,
-        birthDate: birthDate || null,
-        nationality: nationality || null,
-        idType: idType || null,
-        idNumber: idNumber || null,
-        address: address || null,
-        paymentStatus: paymentStatus || "En attente",
+      const artisanData = {
+        firstName: b.firstName || "",
+        lastName: b.lastName || "",
+        email: b.email || null,
+        phone: b.phone || null,
+        specialty: b.specialty || "Couture",
+        city: b.city || "Non renseignée",
+        status: b.status || "En attente",
+        bio: b.bio || null,
+        yearsExperience: parseInt(b.yearsExperience) || 0,
+        siret: b.siret || null,
+        companyName: b.companyName || null,
+        subscriptionPlan: b.subscriptionPlan || "Starter",
+        legalForm: b.legalForm || null,
+        tvaNumber: b.tvaNumber || null,
+        iban: b.iban || null,
+        birthDate: b.birthDate || null,
+        nationality: b.nationality || null,
+        idType: b.idType || null,
+        idNumber: b.idNumber || null,
+        address: b.address || null,
+        paymentStatus: b.paymentStatus || "En attente",
         joinDate: new Date().toLocaleDateString("fr-FR"),
-      });
+      };
 
-      if (email) {
+      const artisan = await storage.createAdminArtisan(artisanData);
+
+      if (b.email) {
         try {
-          const existingUser = await storage.getUserByEmail(email);
+          const existingUser = await storage.getUserByEmail(b.email);
           if (!existingUser) {
             const bcrypt = await import("bcrypt");
             const tempPassword = await bcrypt.hash("Seamlier2026!", 12);
             const newUser = await storage.createUser({
-              email,
+              email: b.email,
               password: tempPassword,
-              firstName: firstName || null,
-              lastName: lastName || null,
+              firstName: b.firstName || null,
+              lastName: b.lastName || null,
               role: "tailor",
               profileImageUrl: null,
-              phone: phone || null,
-              location: city || null,
+              phone: b.phone || null,
+              location: b.city || null,
               emailVerified: true,
             });
 
             await storage.createTailor({
               userId: newUser.id,
-              bio: bio || null,
-              specialties: specialty ? [specialty] : [],
-              experience: parseInt(yearsExperience) || 0,
+              bio: b.bio || null,
+              specialties: b.specialty ? [b.specialty] : [],
+              experience: parseInt(b.yearsExperience) || 0,
               coverImageUrl: null,
               isVerified: false,
               rating: 0,
               reviewCount: 0,
               portfolioCount: 0,
-              subscriptionPlan: subscriptionPlan || "Starter",
+              subscriptionPlan: b.subscriptionPlan || "Starter",
             });
-            console.log(`Created user+tailor for admin artisan: ${email}`);
+            console.log(`[admin] Created user+tailor for artisan: ${b.email}`);
           } else {
             const existingTailor = await storage.getTailorByUserId(existingUser.id);
             if (!existingTailor) {
               await storage.createTailor({
                 userId: existingUser.id,
-                bio: bio || null,
-                specialties: specialty ? [specialty] : [],
-                experience: parseInt(yearsExperience) || 0,
+                bio: b.bio || null,
+                specialties: b.specialty ? [b.specialty] : [],
+                experience: parseInt(b.yearsExperience) || 0,
                 coverImageUrl: null,
                 isVerified: false,
                 rating: 0,
                 reviewCount: 0,
                 portfolioCount: 0,
-                subscriptionPlan: subscriptionPlan || "Starter",
+                subscriptionPlan: b.subscriptionPlan || "Starter",
               });
-              console.log(`Created tailor profile for existing user: ${email}`);
+              console.log(`[admin] Created tailor for existing user: ${b.email}`);
             }
           }
-        } catch (syncError) {
-          console.error("Error syncing admin artisan to tailors:", syncError);
+        } catch (syncError: any) {
+          console.error("[admin] Error syncing artisan:", syncError?.sqlMessage || syncError?.message);
         }
       }
 
