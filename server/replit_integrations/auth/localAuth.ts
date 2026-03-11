@@ -12,7 +12,7 @@ import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail
 // ─── Session ────────────────────────────────────────────────────────────────
 
 export function getSession() {
-  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 semaine
+  const sessionTtl = 315360e6; // ~10 ans
   const MySQLStore = mysqlSession(session as any);
 
   const dbUrl = process.env.MYSQL_DATABASE_URL || process.env.DATABASE_URL || "";
@@ -24,6 +24,8 @@ export function getSession() {
     password: url.password,
     database: url.pathname.replace("/", ""),
     createDatabaseTable: true,
+    expiration: 315360e6,
+    checkExpirationInterval: 9e5,
     schema: {
       tableName: "sessions",
       columnNames: {
@@ -44,7 +46,7 @@ export function getSession() {
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "lax" : "lax",
+      sameSite: "lax",
       maxAge: sessionTtl,
     },
   });
