@@ -132,6 +132,7 @@ CREATE TABLE IF NOT EXISTS `measurements` (
   `inseam` FLOAT DEFAULT NULL,
   `height` FLOAT DEFAULT NULL,
   `weight` FLOAT DEFAULT NULL,
+  `photo_url` MEDIUMTEXT DEFAULT NULL,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `measurements_user_id_unique` (`user_id`),

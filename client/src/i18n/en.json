@@ -392,7 +392,13 @@
     "legLength": "Leg length",
     "inseam": "Inseam",
     "save": "Save my measurements",
-    "autoShare": "Your measurements will be automatically shared with tailors when you place orders"
+    "autoShare": "Your measurements will be automatically shared with tailors when you place orders",
+    "referencePhoto": "Reference photo",
+    "addPhoto": "Add a photo",
+    "addPhotoHint": "Take a photo or choose from your gallery",
+    "savePhotoHint": "Click Save to keep this photo",
+    "fileTooLarge": "File too large",
+    "fileTooLargeDesc": "Photo must not exceed 5 MB"
   },
   "discovery": {
     "title": "Discover our tailors",

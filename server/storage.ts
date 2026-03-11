@@ -407,6 +407,7 @@ class DatabaseStorage implements IStorage {
         inseam: data.inseam ?? null,
         height: data.height ?? null,
         weight: data.weight ?? null,
+        photoUrl: data.photoUrl ?? null,
       };
 
       const existing = await this.getMeasurements(data.userId);

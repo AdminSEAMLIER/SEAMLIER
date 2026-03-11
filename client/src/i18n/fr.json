@@ -392,7 +392,13 @@
     "legLength": "Longueur de jambe",
     "inseam": "Entrejambe",
     "save": "Enregistrer mes mesures",
-    "autoShare": "Vos mesures seront automatiquement partagées avec les couturiers lors de vos commandes"
+    "autoShare": "Vos mesures seront automatiquement partagées avec les couturiers lors de vos commandes",
+    "referencePhoto": "Photo de référence",
+    "addPhoto": "Ajouter une photo",
+    "addPhotoHint": "Prenez une photo ou choisissez depuis votre galerie",
+    "savePhotoHint": "Cliquez sur Enregistrer pour sauvegarder cette photo",
+    "fileTooLarge": "Fichier trop volumineux",
+    "fileTooLargeDesc": "La photo ne doit pas dépasser 5 Mo"
   },
   "discovery": {
     "title": "Découvrez nos couturiers",

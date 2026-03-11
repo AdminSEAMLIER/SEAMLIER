@@ -314,7 +314,9 @@ export async function registerRoutes(
   app.post("/api/measurements", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
-      console.log("[measurements] POST userId:", userId, "body:", JSON.stringify(req.body));
+      const logBody = { ...req.body };
+      if (logBody.photoUrl) logBody.photoUrl = `[base64 ${logBody.photoUrl.length} chars]`;
+      console.log("[measurements] POST userId:", userId, "body:", JSON.stringify(logBody));
       const data = { ...req.body, userId };
       const result = await storage.upsertMeasurements(data);
       res.json(result);

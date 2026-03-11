@@ -1,10 +1,10 @@
 import { useTranslation } from "react-i18next";
-import { Ruler, Camera, Save, HelpCircle, Loader2 } from "lucide-react";
+import { Ruler, Camera, Save, HelpCircle, Loader2, X, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -68,6 +68,8 @@ export default function Mesures() {
   const { user } = useAuth();
   const userId = user?.id?.toString() || "";
   const [activeMeasurement, setActiveMeasurement] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [values, setValues] = useState<Record<string, string>>({
     tour_cou: "",
     largeur_epaules: "",
@@ -96,6 +98,9 @@ export default function Mesures() {
         longueur_bras: savedMeasurements.armLength?.toString() || "",
         longueur_jambe: savedMeasurements.inseam?.toString() || "",
       });
+      if (savedMeasurements.photoUrl) {
+        setPhotoUrl(savedMeasurements.photoUrl);
+      }
     }
   }, [savedMeasurements]);
 
@@ -112,6 +117,7 @@ export default function Mesures() {
         inseam: parseFloat(values.longueur_jambe) || null,
         height: null,
         weight: null,
+        photoUrl: photoUrl,
       });
     },
     onSuccess: () => {
@@ -136,6 +142,34 @@ export default function Mesures() {
 
   const handleChange = (id: string, value: string) => {
     setValues(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: t('measures.fileTooLarge'),
+        description: t('measures.fileTooLargeDesc'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPhotoUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDeletePhoto = () => {
+    setPhotoUrl(null);
   };
 
   const measurements = [
@@ -198,19 +232,78 @@ export default function Mesures() {
         </Card>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg text-primary">{t('measures.visualGuide')}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex justify-center py-6">
-              <BodyDiagram activeMeasurement={activeMeasurement} />
-            </CardContent>
-            <div className="px-6 pb-6">
-              <p className="text-sm text-muted-foreground text-center">
-                {t('measures.clickToSee')}
-              </p>
-            </div>
-          </Card>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg text-primary">{t('measures.visualGuide')}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex justify-center py-6">
+                <BodyDiagram activeMeasurement={activeMeasurement} />
+              </CardContent>
+              <div className="px-6 pb-6">
+                <p className="text-sm text-muted-foreground text-center">
+                  {t('measures.clickToSee')}
+                </p>
+              </div>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg text-primary flex items-center gap-2">
+                  <Camera className="h-5 w-5" />
+                  {t('measures.referencePhoto')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handlePhotoSelect}
+                  data-testid="input-photo-file"
+                />
+
+                {photoUrl ? (
+                  <div className="relative">
+                    <img
+                      src={photoUrl}
+                      alt="Photo de mesures"
+                      className="w-full rounded-lg object-cover max-h-[300px]"
+                      data-testid="img-measurement-photo"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleDeletePhoto}
+                      className="absolute top-2 right-2 bg-white/90 hover:bg-white rounded-full p-1.5 shadow-md transition-colors"
+                      data-testid="button-delete-photo"
+                    >
+                      <X className="h-4 w-4 text-red-600" />
+                    </button>
+                    <p className="text-xs text-muted-foreground mt-2 text-center">
+                      {t('measures.savePhotoHint')}
+                    </p>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full border-2 border-dashed border-gray-200 rounded-lg p-8 flex flex-col items-center gap-3 hover:border-[#722F37]/40 hover:bg-gray-50 transition-colors cursor-pointer"
+                    data-testid="button-add-photo"
+                  >
+                    <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
+                      <ImageIcon className="h-7 w-7 text-gray-400" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-700">{t('measures.addPhoto')}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{t('measures.addPhotoHint')}</p>
+                    </div>
+                  </button>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
           <Card>
             <CardHeader>
@@ -273,7 +366,12 @@ export default function Mesures() {
             )}
             {t('measures.save')}
           </Button>
-          <Button variant="outline" size="icon" data-testid="button-scan">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            data-testid="button-scan"
+            onClick={() => fileInputRef.current?.click()}
+          >
             <Camera className="h-5 w-5" />
           </Button>
         </div>

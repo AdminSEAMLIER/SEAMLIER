@@ -106,6 +106,7 @@ export const measurements = mysqlTable("measurements", {
   inseam: float("inseam"),
   height: float("height"),
   weight: float("weight"),
+  photoUrl: text("photo_url"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
