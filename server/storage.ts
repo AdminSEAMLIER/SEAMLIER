@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
 import { 
   users, tailors, portfolioItems, products, reviews, 
@@ -359,19 +359,37 @@ class DatabaseStorage implements IStorage {
   }
 
   async getMessages(conversationId: string): Promise<MessageWithSender[]> {
-    const result = await db.select()
-      .from(messages)
-      .leftJoin(users, eq(messages.senderId, users.id))
-      .where(eq(messages.conversationId, conversationId))
-      .orderBy(messages.sentAt);
+    const [rows] = await pool.query(
+      `SELECT m.id, m.conversation_id as conversationId, m.sender_id as senderId,
+              m.content, m.sent_at as sentAt, m.is_read as isRead,
+              u.id as u_id, u.first_name as u_firstName, u.last_name as u_lastName,
+              u.email as u_email, u.role as u_role, u.profile_image_url as u_profileImageUrl
+       FROM messages m
+       LEFT JOIN users u ON m.sender_id = u.id
+       WHERE m.conversation_id = ?
+       ORDER BY m.sent_at ASC`,
+      [conversationId]
+    ) as any[];
 
-    console.log(`[getMessages] conversationId=${conversationId} → ${result?.length ?? 0} rows`);
+    console.log(`[getMessages] conversationId=${conversationId} → ${rows?.length ?? 0} rows`);
 
-    if (!result || !Array.isArray(result)) return [];
+    if (!rows || !Array.isArray(rows)) return [];
 
-    return result.map(row => ({
-      ...row.messages,
-      sender: row.users ?? null
+    return rows.map((row: any) => ({
+      id: row.id,
+      conversationId: row.conversationId,
+      senderId: row.senderId,
+      content: row.content,
+      sentAt: row.sentAt,
+      isRead: !!row.isRead,
+      sender: row.u_id ? {
+        id: row.u_id,
+        firstName: row.u_firstName,
+        lastName: row.u_lastName,
+        email: row.u_email,
+        role: row.u_role,
+        profileImageUrl: row.u_profileImageUrl,
+      } : null
     }));
   }
 

@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq } from "drizzle-orm";
 import { tailors, users } from "../shared/schema";
 
@@ -926,6 +926,26 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error deleting conversations:", error);
       res.status(500).json({ error: "Failed to delete conversations" });
+    }
+  });
+
+  // Admin debug - raw messages inspection
+  app.get("/api/admin/debug/messages/:conversationId", requireAdmin, async (req, res) => {
+    try {
+      const [convRows] = await pool.query(
+        `SELECT * FROM conversations WHERE id = ? LIMIT 1`,
+        [req.params.conversationId]
+      ) as any[];
+      const [msgRows] = await pool.query(
+        `SELECT * FROM messages WHERE conversation_id = ? ORDER BY sent_at ASC`,
+        [req.params.conversationId]
+      ) as any[];
+      const [allConvRows] = await pool.query(
+        `SELECT id, participant1_id, participant2_id, last_message_preview, last_message_at FROM conversations ORDER BY last_message_at DESC LIMIT 10`
+      ) as any[];
+      res.json({ conversation: convRows[0] ?? null, messages: msgRows, recentConversations: allConvRows });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 
