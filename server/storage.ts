@@ -584,7 +584,16 @@ class DatabaseStorage implements IStorage {
     }
 
     await safeDelete("tailors", () => db.delete(tailors).where(eq(tailors.userId, id)));
-    await db.delete(users).where(eq(users.id, id));
+
+    try {
+      await db.execute(sql`SET FOREIGN_KEY_CHECKS = 0`);
+      await db.delete(users).where(eq(users.id, id));
+      await db.execute(sql`SET FOREIGN_KEY_CHECKS = 1`);
+    } catch (e: any) {
+      await db.execute(sql`SET FOREIGN_KEY_CHECKS = 1`);
+      console.error(`[cascade] FINAL delete users.id=${id} failed:`, e?.sqlMessage || e?.message);
+      throw e;
+    }
   }
 
   async deleteUnverifiedUsers(): Promise<number> {
