@@ -24,6 +24,12 @@ export default function Messages() {
   const { data: messages, isLoading: messagesLoading } = useQuery<MessageWithSender[]>({
     queryKey: ["/api/messages", selectedConversationId],
     enabled: !!selectedConversationId,
+    queryFn: async () => {
+      const res = await fetch(`/api/messages/${selectedConversationId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch messages");
+      return res.json();
+    },
+    refetchInterval: 4000,
   });
 
   const selectedConversation = conversations?.find(c => c.id === selectedConversationId);
