@@ -306,40 +306,50 @@ class DatabaseStorage implements IStorage {
   }
 
   async getConversations(userId: string): Promise<ConversationWithParticipant[]> {
-    const result = await db.select()
-      .from(conversations)
-      .where(or(
-        eq(conversations.participant1Id, userId),
-        eq(conversations.participant2Id, userId)
-      ))
-      .orderBy(desc(conversations.lastMessageAt));
+    const [rows] = await pool.query(
+      `SELECT 
+        c.id, c.participant1_id as participant1Id, c.participant2_id as participant2Id,
+        c.last_message_at as lastMessageAt, c.last_message_preview as lastMessagePreview,
+        c.created_at as createdAt,
+        u.id as u_id, u.first_name as u_firstName, u.last_name as u_lastName,
+        u.email as u_email, u.role as u_role, u.profile_image_url as u_profileImageUrl,
+        (SELECT COUNT(*) FROM messages m 
+         WHERE m.conversation_id COLLATE utf8mb4_unicode_ci = c.id COLLATE utf8mb4_unicode_ci
+           AND m.is_read = 0 
+           AND m.sender_id COLLATE utf8mb4_unicode_ci != ? COLLATE utf8mb4_unicode_ci
+        ) as unreadCount
+       FROM conversations c
+       LEFT JOIN users u ON (
+         CASE WHEN c.participant1_id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci
+              THEN c.participant2_id COLLATE utf8mb4_unicode_ci = u.id COLLATE utf8mb4_unicode_ci
+              ELSE c.participant1_id COLLATE utf8mb4_unicode_ci = u.id COLLATE utf8mb4_unicode_ci
+         END
+       )
+       WHERE c.participant1_id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci
+          OR c.participant2_id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci
+       ORDER BY c.last_message_at DESC`,
+      [userId, userId, userId, userId]
+    ) as any[];
 
-    const conversationsWithParticipants: ConversationWithParticipant[] = [];
+    if (!rows || !Array.isArray(rows)) return [];
 
-    for (const conv of result) {
-      const otherParticipantId = conv.participant1Id === userId 
-        ? conv.participant2Id 
-        : conv.participant1Id;
-
-      const otherResult = await db.select()
-        .from(users)
-        .where(eq(users.id, otherParticipantId));
-
-      const unreadMessages = await db.select()
-        .from(messages)
-        .where(and(
-          eq(messages.conversationId, conv.id),
-          eq(messages.isRead, false)
-        ));
-
-      conversationsWithParticipants.push({
-        ...conv,
-        otherParticipant: otherResult[0],
-        unreadCount: unreadMessages.filter(m => m.senderId !== userId).length
-      });
-    }
-
-    return conversationsWithParticipants;
+    return rows.map((row: any) => ({
+      id: row.id,
+      participant1Id: row.participant1Id,
+      participant2Id: row.participant2Id,
+      lastMessageAt: row.lastMessageAt,
+      lastMessagePreview: row.lastMessagePreview,
+      createdAt: row.createdAt,
+      otherParticipant: row.u_id ? {
+        id: row.u_id,
+        firstName: row.u_firstName,
+        lastName: row.u_lastName,
+        email: row.u_email,
+        role: row.u_role,
+        profileImageUrl: row.u_profileImageUrl,
+      } : undefined,
+      unreadCount: Number(row.unreadCount) || 0,
+    }));
   }
 
   async getOrCreateConversation(participant1Id: string, participant2Id: string): Promise<Conversation> {
@@ -365,7 +375,7 @@ class DatabaseStorage implements IStorage {
               u.id as u_id, u.first_name as u_firstName, u.last_name as u_lastName,
               u.email as u_email, u.role as u_role, u.profile_image_url as u_profileImageUrl
        FROM messages m
-       LEFT JOIN users u ON m.sender_id = u.id
+       LEFT JOIN users u ON m.sender_id COLLATE utf8mb4_unicode_ci = u.id COLLATE utf8mb4_unicode_ci
        WHERE m.conversation_id = ?
        ORDER BY m.sent_at ASC`,
       [conversationId]
