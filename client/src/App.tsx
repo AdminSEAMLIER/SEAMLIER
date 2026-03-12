@@ -124,11 +124,22 @@ function ProLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function HomeRoute() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return null;
+  if (isAuthenticated && user) {
+    if (user.role === "admin") return <Redirect to="/admin/dashboard" />;
+    if (user.role === "tailor") return <Redirect to="/dashboard-pro" />;
+    return <Redirect to="/dashboard-client" />;
+  }
+  return <Landing />;
+}
+
 function Router() {
   return (
     <Switch>
       {/* Public routes */}
-      <Route path="/" component={Landing} />
+      <Route path="/" component={HomeRoute} />
       <Route path="/connexion" component={Connexion} />
       <Route path="/connexion/particulier" component={ConnexionParticulier} />
       <Route path="/connexion/professionnel" component={ConnexionProfessionnel} />
