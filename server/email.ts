@@ -165,6 +165,122 @@ export async function sendVerificationEmail(
   }
 }
 
+export async function sendTailorVerifiedEmail(
+  email: string,
+  firstName?: string | null
+): Promise<boolean> {
+  const mailer = getTransporter();
+  if (!mailer) {
+    console.log(`[EMAIL DISABLED] Tailor verified notification for ${email}`);
+    return false;
+  }
+
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@seamlier.fr";
+  const baseUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const dashboardUrl = `${baseUrl}/dashboard-pro`;
+  const name = firstName || "Artisan";
+
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Votre profil est en ligne - Seamlier</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5f3f0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f5f3f0">
+    <tr>
+      <td align="center" style="padding:40px 16px">
+        <table role="presentation" width="580" cellspacing="0" cellpadding="0" border="0" style="max-width:580px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.06)">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#722F37;padding:36px 40px;text-align:center">
+              <h1 style="margin:0;color:#ffffff;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:400;letter-spacing:3px">SEAMLIER</h1>
+              <div style="width:40px;height:1px;background-color:rgba(255,255,255,0.35);margin:12px auto 0"></div>
+            </td>
+          </tr>
+
+          <!-- Icon -->
+          <tr>
+            <td align="center" style="padding:36px 40px 0">
+              <div style="width:64px;height:64px;background-color:#f0fdf4;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:2px solid #16a34a">
+                <span style="font-size:28px">✓</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:24px 40px 36px;text-align:center">
+              <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:400">Félicitations, ${name} !</h2>
+              <div style="width:32px;height:2px;background-color:#722F37;margin:8px auto 20px"></div>
+              <p style="margin:0 0 16px;color:#4b5563;font-size:15px;line-height:1.7;text-align:left">
+                Votre profil d'artisan a été <strong style="color:#16a34a">vérifié et validé</strong> par notre équipe.
+                Vous êtes désormais visible sur <strong style="color:#1f2937">Seamlier</strong> et les clients peuvent vous trouver dans les résultats de recherche.
+              </p>
+              <p style="margin:0 0 28px;color:#4b5563;font-size:15px;line-height:1.7;text-align:left">
+                Connectez-vous à votre tableau de bord pour compléter votre vitrine, ajouter des photos de votre travail et recevoir vos premières demandes.
+              </p>
+
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center" style="padding:0 0 32px">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td style="background-color:#722F37;border-radius:8px">
+                          <a href="${dashboardUrl}" target="_blank" style="display:inline-block;padding:16px 48px;color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none;letter-spacing:0.5px">
+                            Accéder à mon tableau de bord
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <div style="background-color:#faf9f7;border-radius:8px;padding:16px 20px;text-align:left">
+                <p style="margin:0 0 8px;color:#1f2937;font-size:13px;font-weight:600">Prochaines étapes :</p>
+                <p style="margin:0 0 6px;color:#4b5563;font-size:13px;line-height:1.6">• Complétez votre vitrine avec des photos de vos créations</p>
+                <p style="margin:0 0 6px;color:#4b5563;font-size:13px;line-height:1.6">• Ajoutez vos spécialités et votre expérience</p>
+                <p style="margin:0;color:#4b5563;font-size:13px;line-height:1.6">• Attendez vos premières demandes de clients !</p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#faf9f7;padding:24px 40px;border-top:1px solid #f0eeeb;text-align:center">
+              <p style="margin:0 0 8px;color:#722F37;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:2px">SEAMLIER</p>
+              <a href="https://www.seamlier.fr" style="color:#722F37;font-size:12px;text-decoration:none">www.seamlier.fr</a>
+              <p style="margin:12px 0 0;color:#d1d5db;font-size:11px">&copy; 2026 Seamlier. Tous droits r&eacute;serv&eacute;s.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    await mailer.sendMail({
+      from: `"SEAMLIER" <${from}>`,
+      to: email,
+      subject: "🎉 Votre profil est maintenant visible sur SEAMLIER",
+      html,
+    });
+    console.log(`Tailor verified email sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error(`Failed to send tailor verified email to ${email}:`, error);
+    return false;
+  }
+}
+
 export async function sendPasswordResetEmail(email: string, token: string, firstName?: string | null): Promise<boolean> {
   const mailer = getTransporter();
   if (!mailer) {
