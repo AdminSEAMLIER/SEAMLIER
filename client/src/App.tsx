@@ -1,4 +1,5 @@
 import { Switch, Route, Link, useLocation, Redirect } from "wouter";
+import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -14,7 +15,6 @@ import { useAuth } from "@/hooks/use-auth";
 
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
-import Home from "@/pages/home";
 import Discovery from "@/pages/discovery";
 import Messages from "@/pages/messages";
 import Mesures from "@/pages/mesures";
@@ -52,6 +52,14 @@ import ProSetup from "@/pages/pro-setup";
 import MesProjets from "@/pages/mes-projets";
 import DashboardClient from "@/pages/dashboard-client";
 
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+  }, [location]);
+  return null;
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
 
@@ -59,7 +67,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
         <div className="w-10 h-10 border-4 border-[#722F37] border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-zinc-600 font-medium">Chargement...</p>
       </div>
     );
   }
@@ -141,6 +148,55 @@ function HomeRoute() {
   return <Landing />;
 }
 
+function ClientRoutes() {
+  return (
+    <ProtectedRoute>
+      <ClientLayout>
+        <ScrollToTop />
+        <Switch>
+          <Route path="/dashboard-client" component={DashboardClient} />
+          <Route path="/decouverte" component={Discovery} />
+          <Route path="/mesures" component={Mesures} />
+          <Route path="/magazine/:id" component={MagazineDetail} />
+          <Route path="/magazine" component={Magazine} />
+          <Route path="/messages" component={Messages} />
+          <Route path="/mon-profil/mot-de-passe" component={ModifierMotDePasse} />
+          <Route path="/mon-profil/notifications" component={PreferencesNotifications} />
+          <Route path="/mon-profil" component={ProfilParticulier} />
+          <Route path="/tailor/:id" component={TailorProfile} />
+          <Route path="/product/:id" component={ProductDetail} />
+          <Route path="/suivi-projet/:id" component={MesProjets} />
+          <Route path="/mes-projets" component={MesProjets} />
+        </Switch>
+      </ClientLayout>
+    </ProtectedRoute>
+  );
+}
+
+function ProRoutes() {
+  return (
+    <ProtectedRoute>
+      <ProLayout>
+        <ScrollToTop />
+        <Switch>
+          <Route path="/dashboard-pro/setup" component={ProSetup} />
+          <Route path="/dashboard-pro" component={ProDashboard} />
+          <Route path="/gestion-demandes" component={ProDemandes} />
+          <Route path="/atelier/:id" component={ProProjets} />
+          <Route path="/atelier" component={ProProjets} />
+          <Route path="/messagerie" component={ProMessagerie} />
+          <Route path="/vitrine-pro" component={ProProfil} />
+          <Route path="/portefeuille" component={ProPlanning} />
+          <Route path="/pro-profil/mot-de-passe" component={ProModifierMotDePasse} />
+          <Route path="/pro-profil/notifications" component={ProNotifications} />
+          <Route path="/pro-profil/parametres" component={ProParametres} />
+          <Route path="/pro-profil" component={ProProfil} />
+        </Switch>
+      </ProLayout>
+    </ProtectedRoute>
+  );
+}
+
 function Router() {
   return (
     <Switch>
@@ -171,157 +227,34 @@ function Router() {
         {(params: any) => <Redirect to={`/profil-pro/${params.id}`} />}
       </Route>
 
-      {/* Client routes */}
-      <Route path="/dashboard-client">
-        <ProtectedRoute>
-          <ClientLayout><DashboardClient /></ClientLayout>
-        </ProtectedRoute>
-      </Route>
+      {/* Client routes — all share persistent ClientRoutes layout */}
+      <Route path="/dashboard-client" component={ClientRoutes} />
+      <Route path="/decouverte" component={ClientRoutes} />
+      <Route path="/mesures" component={ClientRoutes} />
+      <Route path="/magazine/:id" component={ClientRoutes} />
+      <Route path="/magazine" component={ClientRoutes} />
+      <Route path="/messages" component={ClientRoutes} />
+      <Route path="/mon-profil/mot-de-passe" component={ClientRoutes} />
+      <Route path="/mon-profil/notifications" component={ClientRoutes} />
+      <Route path="/mon-profil" component={ClientRoutes} />
+      <Route path="/tailor/:id" component={ClientRoutes} />
+      <Route path="/product/:id" component={ClientRoutes} />
+      <Route path="/suivi-projet/:id" component={ClientRoutes} />
+      <Route path="/mes-projets" component={ClientRoutes} />
 
-      <Route path="/decouverte">
-        <ProtectedRoute>
-          <ClientLayout><Discovery /></ClientLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/mesures">
-        <ProtectedRoute>
-          <ClientLayout><Mesures /></ClientLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/magazine">
-        <ProtectedRoute>
-          <ClientLayout><Magazine /></ClientLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/magazine/:id">
-        <ProtectedRoute>
-          <ClientLayout><MagazineDetail /></ClientLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/messages">
-        <ProtectedRoute>
-          <ClientLayout><Messages /></ClientLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/mon-profil">
-        <ProtectedRoute>
-          <ClientLayout><ProfilParticulier /></ClientLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/mon-profil/mot-de-passe">
-        <ProtectedRoute>
-          <ClientLayout><ModifierMotDePasse /></ClientLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/mon-profil/notifications">
-        <ProtectedRoute>
-          <ClientLayout><PreferencesNotifications /></ClientLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/tailor/:id">
-        <ProtectedRoute>
-          <ClientLayout><TailorProfile /></ClientLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/product/:id">
-        <ProtectedRoute>
-          <ClientLayout><ProductDetail /></ClientLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/suivi-projet/:id">
-        <ProtectedRoute>
-          <ClientLayout><MesProjets /></ClientLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/mes-projets">
-        <ProtectedRoute>
-          <ClientLayout><MesProjets /></ClientLayout>
-        </ProtectedRoute>
-      </Route>
-
-      {/* Pro routes */}
-      <Route path="/dashboard-pro">
-        <ProtectedRoute>
-          <ProLayout><ProDashboard /></ProLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/dashboard-pro/setup">
-        <ProtectedRoute>
-          <ProLayout><ProSetup /></ProLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/gestion-demandes">
-        <ProtectedRoute>
-          <ProLayout><ProDemandes /></ProLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/atelier/:id">
-        <ProtectedRoute>
-          <ProLayout><ProProjets /></ProLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/atelier">
-        <ProtectedRoute>
-          <ProLayout><ProProjets /></ProLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/messagerie">
-        <ProtectedRoute>
-          <ProLayout><ProMessagerie /></ProLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/vitrine-pro">
-        <ProtectedRoute>
-          <ProLayout><ProProfil /></ProLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/portefeuille">
-        <ProtectedRoute>
-          <ProLayout><ProPlanning /></ProLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/pro-profil">
-        <ProtectedRoute>
-          <ProLayout><ProProfil /></ProLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/pro-profil/mot-de-passe">
-        <ProtectedRoute>
-          <ProLayout><ProModifierMotDePasse /></ProLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/pro-profil/notifications">
-        <ProtectedRoute>
-          <ProLayout><ProNotifications /></ProLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/pro-profil/parametres">
-        <ProtectedRoute>
-          <ProLayout><ProParametres /></ProLayout>
-        </ProtectedRoute>
-      </Route>
+      {/* Pro routes — all share persistent ProRoutes layout */}
+      <Route path="/dashboard-pro/setup" component={ProRoutes} />
+      <Route path="/dashboard-pro" component={ProRoutes} />
+      <Route path="/gestion-demandes" component={ProRoutes} />
+      <Route path="/atelier/:id" component={ProRoutes} />
+      <Route path="/atelier" component={ProRoutes} />
+      <Route path="/messagerie" component={ProRoutes} />
+      <Route path="/vitrine-pro" component={ProRoutes} />
+      <Route path="/portefeuille" component={ProRoutes} />
+      <Route path="/pro-profil/mot-de-passe" component={ProRoutes} />
+      <Route path="/pro-profil/notifications" component={ProRoutes} />
+      <Route path="/pro-profil/parametres" component={ProRoutes} />
+      <Route path="/pro-profil" component={ProRoutes} />
 
       {/* Admin routes */}
       <Route path="/admin/dashboard" component={AdminDashboard} />
