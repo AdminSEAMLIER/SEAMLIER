@@ -28,13 +28,14 @@ export default function DashboardClient() {
     queryKey: ["/api/client/projects"],
   });
 
-  const { data: unreadData } = useQuery<{ count: number }>({
-    queryKey: ["/api/conversations/unread-count"],
+  // FIX: utilise /api/conversations au lieu de /api/conversations/unread-count qui n'existe pas
+  const { data: conversations = [] } = useQuery<any[]>({
+    queryKey: ["/api/conversations"],
   });
 
   const featuredTailors = tailors?.slice(0, 3) || [];
   const activeProjects = projects.filter((p) => p.status !== "terminé").length;
-  const unreadCount = unreadData?.count || 0;
+  const unreadCount = conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
 
   const quickActions = [
     {
