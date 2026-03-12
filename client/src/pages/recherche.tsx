@@ -28,10 +28,12 @@ export default function Recherche() {
   const villeParam = urlParams.get("ville") || "";
   
   const [searchQuery, setSearchQuery] = useState(villeParam);
-  
+  const [activeFilter, setActiveFilter] = useState(villeParam);
+
   useEffect(() => {
     if (villeParam) {
       setSearchQuery(villeParam);
+      setActiveFilter(villeParam);
     }
   }, [villeParam]);
 
@@ -41,9 +43,9 @@ export default function Recherche() {
 
   const filteredTailors = tailors?.filter((tailor) => {
     const fullName = `${tailor.user.firstName || ''} ${tailor.user.lastName || ''}`.trim();
-    const matchesSearch = !searchQuery || 
-      fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tailor.user.location?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = !activeFilter ||
+      fullName.toLowerCase().includes(activeFilter.toLowerCase()) ||
+      tailor.user.location?.toLowerCase().includes(activeFilter.toLowerCase());
     return matchesSearch;
   });
 
@@ -91,6 +93,7 @@ export default function Recherche() {
                 placeholder={t('landing.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") setActiveFilter(searchQuery); }}
                 className="pl-10 h-12 text-base border-gray-200 bg-white"
                 data-testid="input-search-city"
               />
@@ -98,6 +101,7 @@ export default function Recherche() {
             <Button 
               className="h-12 px-6 bg-[#722F37] hover:bg-[#5a252c] text-white"
               data-testid="button-search"
+              onClick={() => setActiveFilter(searchQuery)}
             >
               <Search className="h-5 w-5 mr-2" />
               {t('landing.searchButton')}
@@ -108,12 +112,12 @@ export default function Recherche() {
             {cities.map((city) => (
               <Button
                 key={city}
-                variant={searchQuery.toLowerCase() === city.toLowerCase() ? "default" : "outline"}
+                variant={activeFilter.toLowerCase() === city.toLowerCase() ? "default" : "outline"}
                 size="sm"
-                className={searchQuery.toLowerCase() === city.toLowerCase() 
+                className={activeFilter.toLowerCase() === city.toLowerCase() 
                   ? "bg-[#722F37] hover:bg-[#5a252c] text-white" 
                   : "border-gray-300 text-gray-700 hover:bg-gray-100"}
-                onClick={() => setSearchQuery(city)}
+                onClick={() => { setSearchQuery(city); setActiveFilter(city); }}
                 data-testid={`button-city-${city.toLowerCase()}`}
               >
                 {city}
