@@ -14,7 +14,6 @@ import { useAuth } from "@/hooks/use-auth";
 
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
-import Home from "@/pages/home";
 import Discovery from "@/pages/discovery";
 import Messages from "@/pages/messages";
 import Mesures from "@/pages/mesures";
@@ -126,8 +125,7 @@ function ProLayout({ children }: { children: React.ReactNode }) {
 
 function HomeRoute() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return null;
-  if (isAuthenticated && user) {
+  if (!isLoading && isAuthenticated && user) {
     if (user.role === "admin") return <Redirect to="/admin/dashboard" />;
     if (user.role === "tailor") return <Redirect to="/dashboard-pro" />;
     return <Redirect to="/dashboard-client" />;
