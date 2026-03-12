@@ -765,8 +765,7 @@ class DatabaseStorage implements IStorage {
         createdAt: users.createdAt,
       })
         .from(tailors)
-        .innerJoin(users, eq(tailors.userId, users.id))
-        .where(eq(users.emailVerified, true));
+        .innerJoin(users, eq(tailors.userId, users.id));
       return result;
     } catch (error) {
       console.error("getRegisteredTailors error:", error);

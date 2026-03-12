@@ -747,11 +747,14 @@ export async function registerRoutes(
       const manualArtisans = await storage.getAdminArtisans();
       const registeredTailors = await storage.getRegisteredTailors();
 
-      const manualEmails = new Set(manualArtisans.map(a => a.email?.toLowerCase()).filter(Boolean));
+      // Priorité aux artisans enregistrés (reg-) — ils ont un vrai compte tailor
+      const registeredEmails = new Set(registeredTailors.map((t: any) => t.email?.toLowerCase()).filter(Boolean));
+
+      // Artisans manuels dont l'email n'est PAS dans les enregistrés (pas de doublon)
+      const filteredManual = manualArtisans.filter(a => !registeredEmails.has(a.email?.toLowerCase()));
 
       const mergedFromTailors = registeredTailors
-        .filter(t => !manualEmails.has(t.email?.toLowerCase()))
-        .map(t => ({
+        .map((t: any) => ({
           id: `reg-${t.tailorId}`,
           firstName: t.firstName || "",
           lastName: t.lastName || "",
@@ -778,7 +781,7 @@ export async function registerRoutes(
           createdAt: t.createdAt || new Date(),
         }));
 
-      res.json([...manualArtisans, ...mergedFromTailors]);
+      res.json([...filteredManual, ...mergedFromTailors]);
     } catch (error) {
       console.error("Error fetching admin artisans:", error);
       res.status(500).json({ error: "Failed to fetch artisans" });
@@ -927,6 +930,26 @@ export async function registerRoutes(
       if (!artisan) {
         return res.status(404).json({ error: "Artisan not found" });
       }
+
+      // Si l'artisan est validé, propager isVerified sur la table tailors (si un compte utilisateur existe)
+      const { status } = req.body;
+      if ((status === "Vérifié" || status === "Rejeté") && artisan.email) {
+        try {
+          const matchUser = await storage.getUserByEmail(artisan.email);
+          if (matchUser) {
+            const matchTailor = await storage.getTailorByUserId(matchUser.id);
+            if (matchTailor) {
+              await db.update(tailors)
+                .set({ isVerified: status === "Vérifié" })
+                .where(eq(tailors.id, matchTailor.id));
+              console.log(`[admin] Propagated isVerified=${status === "Vérifié"} to tailor ${matchTailor.id} for email ${artisan.email}`);
+            }
+          }
+        } catch (propagateErr) {
+          console.warn("[admin] Could not propagate isVerified to tailors:", propagateErr);
+        }
+      }
+
       res.json(artisan);
     } catch (error) {
       console.error("Error updating admin artisan:", error);
