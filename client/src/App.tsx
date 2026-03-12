@@ -126,7 +126,13 @@ function ProLayout({ children }: { children: React.ReactNode }) {
 
 function HomeRoute() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return null;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+        <div className="w-10 h-10 border-4 border-[#722F37] border-t-transparent rounded-full animate-spin mb-4" />
+      </div>
+    );
+  }
   if (isAuthenticated && user) {
     if (user.role === "admin") return <Redirect to="/admin/dashboard" />;
     if (user.role === "tailor") return <Redirect to="/dashboard-pro" />;
