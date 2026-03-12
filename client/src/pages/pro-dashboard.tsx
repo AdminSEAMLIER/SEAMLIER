@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -28,8 +28,6 @@ import {
   CheckCircle,
   Loader2,
   Sparkles,
-  X,
-  PartyPopper,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -43,8 +41,7 @@ export default function ProDashboard() {
   const { toast } = useToast();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showConfirmStep, setShowConfirmStep] = useState(false);
-  const [showVerifiedBanner, setShowVerifiedBanner] = useState(false);
-
+  
   const { data: products } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
@@ -57,25 +54,9 @@ export default function ProDashboard() {
     queryKey: ["/api/admin/settings"],
   });
 
-  const { data: planData } = useQuery<{ tailorId: string; subscriptionPlan: string; isVerified: boolean }>({
+  const { data: planData } = useQuery<{ tailorId: string; subscriptionPlan: string }>({
     queryKey: ["/api/professionnel/plan"],
   });
-
-  useEffect(() => {
-    if (!planData) return;
-    if (!planData.isVerified) return;
-    const key = `verifiedBannerDismissed_${planData.tailorId}`;
-    if (!localStorage.getItem(key)) {
-      setShowVerifiedBanner(true);
-    }
-  }, [planData]);
-
-  const dismissVerifiedBanner = () => {
-    if (planData?.tailorId) {
-      localStorage.setItem(`verifiedBannerDismissed_${planData.tailorId}`, "1");
-    }
-    setShowVerifiedBanner(false);
-  };
 
   const upgradeMutation = useMutation({
     mutationFn: async () => {
@@ -150,28 +131,6 @@ export default function ProDashboard() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 lg:px-6 py-6 space-y-6">
-
-        {/* Bannière de bienvenue : profil vérifié */}
-        {showVerifiedBanner && (
-          <div className="relative bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
-            <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
-              <PartyPopper className="h-5 w-5 text-green-700" />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-green-900 text-sm">Félicitations ! Votre profil est maintenant en ligne</p>
-              <p className="text-green-700 text-sm mt-0.5">
-                Vous êtes désormais visible sur SEAMLIER. Les clients peuvent vous trouver dans les résultats de recherche.
-              </p>
-            </div>
-            <button
-              onClick={dismissVerifiedBanner}
-              className="text-green-600 hover:text-green-800 p-1 rounded shrink-0"
-              data-testid="button-dismiss-verified-banner"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
 
         {currentPlan === "Starter" && (
           <Card className="border border-gray-100 bg-white shadow-sm" data-testid="card-starter-limit">

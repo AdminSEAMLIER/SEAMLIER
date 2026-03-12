@@ -40,7 +40,6 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
   const { user, isAuthenticated, logout } = useAuth();
   const navItems = mode === "professionnel" ? proNavItems : particulierNavItems;
   const basePath = mode === "professionnel" ? "/dashboard-pro" : "/dashboard-client";
-  const logoHref = mode === "professionnel" ? "/dashboard-pro" : "/dashboard-client";
   
   const userInitials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() || 'U' : 'U';
 
@@ -58,7 +57,7 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
     >
       <div className="flex items-center justify-between w-full max-w-7xl mx-auto px-6">
         <div className="flex items-center gap-4">
-          <Link href={logoHref}>
+          <Link href="/">
             <Logo className="text-[#722F37] cursor-pointer" textClassName="text-base text-[#722F37]" />
           </Link>
           {mode === "professionnel" && (

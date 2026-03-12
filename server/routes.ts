@@ -5,7 +5,6 @@ import { storage } from "./storage";
 import { db, pool } from "./db";
 import { eq } from "drizzle-orm";
 import { tailors, users } from "../shared/schema";
-import { sendTailorVerifiedEmail } from "./email";
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
@@ -50,7 +49,6 @@ export async function registerRoutes(
       res.json({
         tailorId: tailor.id,
         subscriptionPlan: tailor.subscriptionPlan || "Starter",
-        isVerified: tailor.isVerified ?? false,
       });
     } catch (error) {
       console.error("Error fetching plan:", error);
@@ -912,12 +910,6 @@ export async function registerRoutes(
 
         if (!updated[0]) return res.status(404).json({ error: "Tailor not found" });
         const t = updated[0];
-
-        // Envoyer email de notification au couturier si validé
-        if (status === "Vérifié" && t.email) {
-          sendTailorVerifiedEmail(t.email, t.firstName).catch(console.error);
-        }
-
         return res.json({
           id: rawId,
           firstName: t.firstName || "",
@@ -952,10 +944,6 @@ export async function registerRoutes(
                 .where(eq(tailors.id, matchTailor.id));
               console.log(`[admin] Propagated isVerified=${status === "Vérifié"} to tailor ${matchTailor.id} for email ${artisan.email}`);
             }
-          }
-          // Envoyer email de notification au couturier si validé
-          if (status === "Vérifié") {
-            sendTailorVerifiedEmail(artisan.email, artisan.firstName).catch(console.error);
           }
         } catch (propagateErr) {
           console.warn("[admin] Could not propagate isVerified to tailors:", propagateErr);
