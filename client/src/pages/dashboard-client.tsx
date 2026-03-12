@@ -1,0 +1,168 @@
+import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { Link } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { TailorCard, TailorCardSkeleton } from "@/components/tailor-card";
+import {
+  Compass,
+  Ruler,
+  MessageCircle,
+  BookOpen,
+  ClipboardList,
+  ChevronRight,
+  Scissors,
+  Star,
+} from "lucide-react";
+import type { TailorWithUser, ProjectWithTailor } from "@shared/schema";
+
+export default function DashboardClient() {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+
+  const { data: tailors, isLoading: tailorsLoading } = useQuery<TailorWithUser[]>({
+    queryKey: ["/api/tailors"],
+  });
+
+  const { data: projects = [] } = useQuery<ProjectWithTailor[]>({
+    queryKey: ["/api/client/projects"],
+  });
+
+  const { data: unreadData } = useQuery<{ count: number }>({
+    queryKey: ["/api/conversations/unread-count"],
+  });
+
+  const featuredTailors = tailors?.slice(0, 3) || [];
+  const activeProjects = projects.filter((p) => p.status !== "terminé").length;
+  const unreadCount = unreadData?.count || 0;
+
+  const quickActions = [
+    {
+      icon: Compass,
+      label: "Trouver un artisan",
+      sublabel: "Découvrez nos couturiers",
+      href: "/decouverte",
+      color: "bg-[#722F37]",
+    },
+    {
+      icon: Ruler,
+      label: "Mes mesures",
+      sublabel: "Gérer mon profil morpho",
+      href: "/mesures",
+      color: "bg-stone-700",
+    },
+    {
+      icon: ClipboardList,
+      label: "Mes projets",
+      sublabel: activeProjects > 0 ? `${activeProjects} en cours` : "Aucun projet actif",
+      href: "/mes-projets",
+      color: "bg-slate-700",
+    },
+    {
+      icon: MessageCircle,
+      label: "Messages",
+      sublabel: unreadCount > 0 ? `${unreadCount} non lu${unreadCount > 1 ? "s" : ""}` : "Aucun message",
+      href: "/messages",
+      color: "bg-zinc-700",
+      badge: unreadCount,
+    },
+  ];
+
+  return (
+    <div className="min-h-screen pb-24 bg-[#faf9f8]">
+      {/* Hero greeting */}
+      <div className="bg-[#722F37] text-white px-4 lg:px-8 pt-8 pb-12">
+        <div className="max-w-3xl mx-auto">
+          <p className="text-white/70 text-sm mb-1">Bienvenue sur SEAMLIER</p>
+          <h1 className="font-serif text-2xl lg:text-3xl font-medium">
+            Bonjour{user?.firstName ? `, ${user.firstName}` : ""} 👋
+          </h1>
+          <p className="text-white/80 mt-2 text-sm lg:text-base">
+            Trouvez le couturier idéal pour votre prochain projet.
+          </p>
+          <Link href="/decouverte">
+            <Button className="mt-5 bg-white text-[#722F37] hover:bg-white/90 font-semibold h-10 px-5 text-sm">
+              <Compass className="h-4 w-4 mr-2" />
+              Explorer les artisans
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      <div className="max-w-3xl mx-auto px-4 lg:px-8 -mt-4">
+        {/* Quick actions */}
+        <div className="grid grid-cols-2 gap-3 mb-8">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link key={action.href} href={action.href}>
+                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:border-[#722F37]/30 hover:shadow-md transition-all cursor-pointer relative overflow-hidden">
+                  {action.badge && action.badge > 0 ? (
+                    <span className="absolute top-3 right-3 min-w-[20px] h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                      {action.badge > 9 ? "9+" : action.badge}
+                    </span>
+                  ) : null}
+                  <div className={`w-9 h-9 rounded-lg ${action.color} flex items-center justify-center mb-3`}>
+                    <Icon className="h-5 w-5 text-white" />
+                  </div>
+                  <p className="font-semibold text-gray-900 text-sm leading-tight">{action.label}</p>
+                  <p className="text-gray-500 text-xs mt-0.5">{action.sublabel}</p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Featured tailors */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-serif text-xl text-[#722F37] flex items-center gap-2">
+              <Star className="h-5 w-5" />
+              Nos artisans
+            </h2>
+            <Link href="/decouverte">
+              <button className="text-[#722F37] text-sm font-medium flex items-center gap-1 hover:underline">
+                Voir tous <ChevronRight className="h-4 w-4" />
+              </button>
+            </Link>
+          </div>
+
+          {tailorsLoading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(3)].map((_, i) => <TailorCardSkeleton key={i} />)}
+            </div>
+          ) : featuredTailors.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {featuredTailors.map((tailor) => (
+                <TailorCard key={tailor.id} tailor={tailor} />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-dashed border-gray-200 py-10 text-center">
+              <Scissors className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm">Aucun artisan disponible pour le moment</p>
+            </div>
+          )}
+        </div>
+
+        {/* Magazine teaser */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[#722F37]/10 flex items-center justify-center">
+              <BookOpen className="h-5 w-5 text-[#722F37]" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 text-sm">Magazine SEAMLIER</p>
+              <p className="text-gray-500 text-xs">Tendances, conseils & inspirations couture</p>
+            </div>
+          </div>
+          <Link href="/magazine">
+            <Button variant="outline" size="sm" className="border-[#722F37] text-[#722F37] hover:bg-[#722F37] hover:text-white shrink-0">
+              Lire
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}

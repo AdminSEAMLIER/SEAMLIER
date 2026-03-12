@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { useState, useEffect } from "react";
 import { useSearch } from "wouter";
+import { Button } from "@/components/ui/button";
 import { Search, Scissors, MapPin, Star } from "lucide-react";
 import type { TailorWithUser, PortfolioWithTailor } from "@shared/schema";
 
@@ -47,6 +48,7 @@ export default function Discovery() {
 
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState(villeParam);
+  const [activeSearch, setActiveSearch] = useState(villeParam);
   const [sortBy, setSortBy] = useState("default");
   const matchingCity = villeParam && cities.includes(villeParam) ? villeParam : "all";
   const [selectedCity, setSelectedCity] = useState(matchingCity);
@@ -54,6 +56,7 @@ export default function Discovery() {
   useEffect(() => {
     if (villeParam) {
       setSearchQuery(villeParam);
+      setActiveSearch(villeParam);
       if (cities.includes(villeParam)) {
         setSelectedCity(villeParam);
       }
@@ -68,6 +71,12 @@ export default function Discovery() {
     queryKey: ["/api/portfolio"],
   });
 
+  const handleSearch = () => {
+    setActiveSearch(searchQuery);
+    if (cities.includes(searchQuery)) setSelectedCity(searchQuery);
+    else setSelectedCity("all");
+  };
+
   const getDbValueForFilter = (filterKey: string) => {
     const found = specialtyKeys.find(s => s.key === filterKey);
     return found?.dbValue || filterKey;
@@ -77,9 +86,9 @@ export default function Discovery() {
     const dbValue = getDbValueForFilter(selectedFilter);
     const matchesFilter = selectedFilter === "all" || tailor.specialties?.includes(dbValue);
     const fullName = `${tailor.user.firstName || ''} ${tailor.user.lastName || ''}`.trim();
-    const matchesSearch = !searchQuery || 
-      fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tailor.user.location?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = !activeSearch ||
+      fullName.toLowerCase().includes(activeSearch.toLowerCase()) ||
+      tailor.user.location?.toLowerCase().includes(activeSearch.toLowerCase());
     const matchesCity = selectedCity === "all" || 
       tailor.user.location?.toLowerCase().includes(selectedCity.toLowerCase());
     return matchesFilter && matchesSearch && matchesCity;
@@ -110,15 +119,26 @@ export default function Discovery() {
             {t('discovery.adjustFilters')}
           </p>
 
-          <div className="relative max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <Input
-              placeholder={t('landing.searchPlaceholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-12 bg-white border-gray-200 focus:border-[#722F37] focus:ring-[#722F37]"
-              data-testid="input-search-discovery"
-            />
+          <div className="flex gap-3 max-w-xl">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                placeholder={t('landing.searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+                className="pl-12 h-12 bg-white border-gray-200 focus:border-[#722F37] focus:ring-[#722F37]"
+                data-testid="input-search-discovery"
+              />
+            </div>
+            <Button
+              onClick={handleSearch}
+              className="h-12 px-5 bg-[#722F37] hover:bg-[#5a252c] text-white shrink-0"
+              data-testid="button-search-discovery"
+            >
+              <Search className="h-5 w-5 mr-2" />
+              Rechercher
+            </Button>
           </div>
         </div>
       </div>

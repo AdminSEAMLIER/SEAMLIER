@@ -50,6 +50,7 @@ import ProModifierMotDePasse from "@/pages/pro-modifier-mot-de-passe";
 import ProNotifications from "@/pages/pro-notifications";
 import ProSetup from "@/pages/pro-setup";
 import MesProjets from "@/pages/mes-projets";
+import DashboardClient from "@/pages/dashboard-client";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -156,7 +157,7 @@ function Router() {
       {/* Client routes */}
       <Route path="/dashboard-client">
         <ProtectedRoute>
-          <ClientLayout><Landing embedded /></ClientLayout>
+          <ClientLayout><DashboardClient /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
