@@ -1,4 +1,5 @@
 import { Switch, Route, Link, useLocation, Redirect } from "wouter";
+import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -123,6 +124,14 @@ function ProLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+  return null;
+}
+
 function HomeRoute() {
   const { user, isAuthenticated, isLoading } = useAuth();
   if (!isLoading && isAuthenticated && user) {
@@ -135,6 +144,8 @@ function HomeRoute() {
 
 function Router() {
   return (
+    <>
+    <ScrollToTop />
     <Switch>
       {/* Public routes */}
       <Route path="/" component={HomeRoute} />
@@ -321,6 +332,7 @@ function Router() {
 
       <Route component={NotFound} />
     </Switch>
+    </>
   );
 }
 

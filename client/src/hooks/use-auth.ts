@@ -13,22 +13,42 @@ interface User {
   location?: string;
 }
 
+const STORAGE_KEY = "seamlier_auth";
+
+function getCachedUser(): User | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedUser(user: User | null) {
+  try {
+    if (user) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  } catch {}
+}
+
 async function fetchUser(): Promise<User | null> {
   try {
     const response = await apiFetch(API_ENDPOINTS.auth.user);
-
     if (response.status === 401) {
+      setCachedUser(null);
       return null;
     }
-
     if (!response.ok) {
-      return null;
+      return getCachedUser();
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Erreur lors de la récupération de l'utilisateur:", error);
-    return null;
+    const user = await response.json();
+    setCachedUser(user);
+    return user;
+  } catch {
+    return getCachedUser();
   }
 }
 
@@ -45,11 +65,14 @@ export function useAuth() {
     queryFn: fetchUser,
     retry: false,
     staleTime: 1000 * 60 * 5,
+    initialData: getCachedUser,
+    initialDataUpdatedAt: 0,
   });
 
   const logoutMutation = useMutation({
     mutationFn: logoutRequest,
     onSuccess: () => {
+      setCachedUser(null);
       queryClient.setQueryData(["auth-user"], null);
       setLocation("/connexion");
     },
