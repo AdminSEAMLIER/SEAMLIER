@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearch } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,8 @@ export default function Messages() {
   const [messageInput, setMessageInput] = useState("");
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const searchStr = useSearch();
+  const tailorParam = new URLSearchParams(searchStr).get("tailor");
 
   const { data: conversations, isLoading: conversationsLoading } = useQuery<ConversationWithParticipant[]>({
     queryKey: ["/api/conversations"],
@@ -33,6 +36,17 @@ export default function Messages() {
     },
     refetchInterval: 3000,
   });
+
+  useEffect(() => {
+    if (!tailorParam || !user?.id || selectedConversationId) return;
+    apiRequest("POST", "/api/conversations", { tailorId: tailorParam })
+      .then(res => res.json())
+      .then((conv: any) => {
+        queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+        if (conv?.id) setSelectedConversationId(conv.id);
+      })
+      .catch(() => {});
+  }, [tailorParam, user?.id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

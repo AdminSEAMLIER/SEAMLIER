@@ -563,6 +563,23 @@ export default function AdminDashboard() {
     enabled: isAuthenticated,
   });
 
+  const { data: allPlatformConversations = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/all-conversations"],
+    enabled: isAuthenticated && activeTab === "messaging",
+    refetchInterval: 15000,
+  });
+  const [selectedPlatformConvId, setSelectedPlatformConvId] = useState<string | null>(null);
+  const { data: platformConvMessages = [] } = useQuery<any[]>({
+    queryKey: ["/api/messages", selectedPlatformConvId, "admin"],
+    enabled: !!selectedPlatformConvId,
+    queryFn: async () => {
+      const res = await fetch(`/api/messages/${selectedPlatformConvId}`, { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    refetchInterval: 5000,
+  });
+
   const { data: adminMessages = [] } = useQuery<any[]>({
     queryKey: ["/api/messages", selectedConversationId],
     enabled: !!selectedConversationId,
@@ -1200,6 +1217,87 @@ export default function AdminDashboard() {
                           <div className="text-center">
                             <MessageSquare className="mx-auto text-gray-200 h-16 w-16 mb-4" />
                             <p className="text-gray-400" data-testid="text-no-message-selected">Sélectionnez une conversation</p>
+                          </div>
+                        </div>
+                      )}
+                    </Card>
+                  </div>
+
+                  {/* All platform conversations */}
+                  <div>
+                    <h2 className="text-lg font-serif font-bold text-gray-800 mb-3">Surveillance des échanges plateforme</h2>
+                    <p className="text-sm text-gray-500 mb-4">Toutes les conversations entre artisans et clients — lecture seule</p>
+                  </div>
+                  <div className="grid lg:grid-cols-3 gap-6" style={{ minHeight: "50vh" }}>
+                    <Card className="border-none shadow-sm overflow-hidden bg-white lg:col-span-1 flex flex-col">
+                      <div className="p-4 border-b border-gray-50">
+                        <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Conversations ({allPlatformConversations.length})</p>
+                      </div>
+                      <div className="overflow-y-auto flex-1">
+                        {allPlatformConversations.length === 0 && (
+                          <p className="text-center text-sm text-gray-400 p-6">Aucune conversation</p>
+                        )}
+                        {allPlatformConversations.map((c: any) => {
+                          const p1Name = `${c.participant1?.firstName || ""} ${c.participant1?.lastName || ""}`.trim() || c.participant1?.email || "—";
+                          const p2Name = `${c.participant2?.firstName || ""} ${c.participant2?.lastName || ""}`.trim() || c.participant2?.email || "—";
+                          return (
+                            <button
+                              key={c.id}
+                              onClick={() => setSelectedPlatformConvId(c.id)}
+                              className={cn("w-full text-left p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors", selectedPlatformConvId === c.id && "bg-[#722F37]/5 border-l-2 border-l-[#722F37]")}
+                              data-testid={`platform-conv-${c.id}`}
+                            >
+                              <div className="flex items-start gap-2 mb-1">
+                                <span className="text-sm font-semibold text-gray-900 truncate flex-1">
+                                  {p1Name} ↔ {p2Name}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {c.participant1?.role && <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium", c.participant1.role === "tailor" ? "bg-[#722F37]/10 text-[#722F37]" : "bg-blue-50 text-blue-600")}>{c.participant1.role === "tailor" ? "Artisan" : "Client"}</span>}
+                                {c.participant2?.role && <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium", c.participant2.role === "tailor" ? "bg-[#722F37]/10 text-[#722F37]" : "bg-blue-50 text-blue-600")}>{c.participant2.role === "tailor" ? "Artisan" : "Client"}</span>}
+                                <span className="text-[10px] text-gray-400 ml-auto">{c.messageCount} msg</span>
+                              </div>
+                              {c.lastMessagePreview && <p className="text-xs text-gray-400 mt-1 truncate">{c.lastMessagePreview}</p>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </Card>
+                    <Card className="border-none shadow-sm overflow-hidden bg-white lg:col-span-2 flex flex-col">
+                      {selectedPlatformConvId ? (
+                        <>
+                          <div className="p-4 border-b border-gray-50 flex items-center gap-3">
+                            {(() => {
+                              const conv = allPlatformConversations.find((c: any) => c.id === selectedPlatformConvId);
+                              const p1Name = conv ? `${conv.participant1?.firstName || ""} ${conv.participant1?.lastName || ""}`.trim() || conv.participant1?.email : "—";
+                              const p2Name = conv ? `${conv.participant2?.firstName || ""} ${conv.participant2?.lastName || ""}`.trim() || conv.participant2?.email : "—";
+                              return <p className="text-sm font-semibold text-gray-800">{p1Name} ↔ {p2Name}</p>;
+                            })()}
+                            <span className="ml-auto text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded font-medium">Lecture seule</span>
+                          </div>
+                          <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ maxHeight: "400px" }}>
+                            {platformConvMessages.map((msg: any) => (
+                              <div key={msg.id} className="flex gap-3 items-start">
+                                <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 flex-shrink-0">
+                                  {msg.sender?.firstName?.[0] || msg.sender?.email?.[0] || "?"}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-baseline gap-2 mb-0.5">
+                                    <span className="text-xs font-semibold text-gray-700">{msg.sender?.firstName || ""} {msg.sender?.lastName || ""}</span>
+                                    <span className="text-[10px] text-gray-400">{msg.sentAt ? new Date(msg.sentAt).toLocaleString("fr-FR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" }) : ""}</span>
+                                  </div>
+                                  <p className="text-sm text-gray-700 bg-gray-50 rounded-lg px-3 py-2 inline-block">{msg.content}</p>
+                                </div>
+                              </div>
+                            ))}
+                            {platformConvMessages.length === 0 && <p className="text-center text-sm text-gray-400 py-8">Aucun message</p>}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex-1 flex items-center justify-center">
+                          <div className="text-center">
+                            <MessageSquare className="mx-auto text-gray-200 h-16 w-16 mb-4" />
+                            <p className="text-gray-400">Sélectionnez une conversation à surveiller</p>
                           </div>
                         </div>
                       )}

@@ -360,7 +360,14 @@ export async function registerRoutes(
   app.post("/api/conversations", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
-      const { participantId } = req.body;
+      let { participantId, tailorId } = req.body;
+      if (tailorId && !participantId) {
+        const tailor = await db.select({ userId: tailors.userId })
+          .from(tailors)
+          .where(eq(tailors.id, tailorId));
+        if (tailor[0]?.userId) participantId = tailor[0].userId;
+      }
+      if (!participantId) return res.status(400).json({ error: "participantId requis" });
       const conversation = await storage.getOrCreateConversation(userId, participantId);
       res.json(conversation);
     } catch (error) {
@@ -955,6 +962,33 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error deleting conversations:", error);
       res.status(500).json({ error: "Failed to delete conversations" });
+    }
+  });
+
+  // Admin - all platform conversations visibility
+  app.get("/api/admin/all-conversations", requireAdmin, async (req, res) => {
+    try {
+      const [rows] = await pool.query(
+        `SELECT c.id, c.last_message_preview as lastMessagePreview, c.last_message_at as lastMessageAt,
+                u1.id as u1_id, u1.first_name as u1_firstName, u1.last_name as u1_lastName, u1.email as u1_email, u1.role as u1_role,
+                u2.id as u2_id, u2.first_name as u2_firstName, u2.last_name as u2_lastName, u2.email as u2_email, u2.role as u2_role,
+                (SELECT COUNT(*) FROM messages m WHERE m.conversation_id COLLATE utf8mb4_unicode_ci = c.id COLLATE utf8mb4_unicode_ci) as messageCount
+         FROM conversations c
+         LEFT JOIN users u1 ON c.participant1_id COLLATE utf8mb4_unicode_ci = u1.id COLLATE utf8mb4_unicode_ci
+         LEFT JOIN users u2 ON c.participant2_id COLLATE utf8mb4_unicode_ci = u2.id COLLATE utf8mb4_unicode_ci
+         ORDER BY c.last_message_at DESC`
+      ) as any[];
+      res.json(Array.isArray(rows) ? rows.map((r: any) => ({
+        id: r.id,
+        lastMessagePreview: r.lastMessagePreview,
+        lastMessageAt: r.lastMessageAt,
+        messageCount: Number(r.messageCount) || 0,
+        participant1: r.u1_id ? { id: r.u1_id, firstName: r.u1_firstName, lastName: r.u1_lastName, email: r.u1_email, role: r.u1_role } : null,
+        participant2: r.u2_id ? { id: r.u2_id, firstName: r.u2_firstName, lastName: r.u2_lastName, email: r.u2_email, role: r.u2_role } : null,
+      })) : []);
+    } catch (error: any) {
+      console.error("Error fetching all conversations:", error);
+      res.status(500).json({ error: "Failed to fetch conversations" });
     }
   });
 
