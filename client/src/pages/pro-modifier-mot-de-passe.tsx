@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Eye, EyeOff, Lock, Save } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Lock, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function ProModifierMotDePasse() {
   const { t } = useTranslation();
@@ -20,37 +22,36 @@ export default function ProModifierMotDePasse() {
     confirmPassword: "",
   });
 
+  const changeMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/auth/change-password", {
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Erreur");
+      return data;
+    },
+    onSuccess: () => {
+      toast({ title: "Mot de passe modifié", description: "Votre mot de passe a été mis à jour avec succès." });
+      setFormData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (formData.newPassword !== formData.confirmPassword) {
-      toast({
-        title: "Erreur",
-        description: "Les mots de passe ne correspondent pas",
-        variant: "destructive",
-      });
+      toast({ title: "Erreur", description: "Les mots de passe ne correspondent pas", variant: "destructive" });
       return;
     }
-
     if (formData.newPassword.length < 8) {
-      toast({
-        title: "Erreur",
-        description: "Le mot de passe doit contenir au moins 8 caractères",
-        variant: "destructive",
-      });
+      toast({ title: "Erreur", description: "Le mot de passe doit contenir au moins 8 caractères", variant: "destructive" });
       return;
     }
-
-    toast({
-      title: "Mot de passe modifié",
-      description: "Votre mot de passe a été mis à jour avec succès",
-    });
-
-    setFormData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+    changeMutation.mutate();
   };
 
   return (
@@ -153,9 +154,10 @@ export default function ProModifierMotDePasse() {
               <Button 
                 type="submit"
                 className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white mt-4"
+                disabled={changeMutation.isPending}
                 data-testid="button-save-password"
               >
-                <Save className="h-4 w-4 mr-2" />
+                {changeMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                 Modifier le mot de passe
               </Button>
             </CardContent>

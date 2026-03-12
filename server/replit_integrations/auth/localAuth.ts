@@ -7,7 +7,8 @@ import type { Express, RequestHandler } from "express";
 import mysqlSession from "express-mysql-session";
 import { authStorage } from "./storage";
 import { storage } from "../../storage";
-import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail } from "../../email";
+import crypto from "crypto";
+import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail, sendPasswordResetEmail } from "../../email";
 
 // ─── Session ────────────────────────────────────────────────────────────────
 
@@ -239,6 +240,71 @@ export async function setupAuth(app: Express) {
       phone: user.phone || null,
       location: user.location || null,
     });
+  });
+
+  // ─── Changement de mot de passe (utilisateur connecté) ──────────────────────
+  app.post("/api/auth/change-password", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ message: "Non authentifié." });
+    }
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Tous les champs sont requis." });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ message: "Le nouveau mot de passe doit contenir au moins 8 caractères." });
+    }
+    try {
+      const userId = (req.user as any).id;
+      const user = await authStorage.getUserByEmail((req.user as any).email);
+      if (!user?.password) return res.status(400).json({ message: "Compte sans mot de passe." });
+      const match = await bcrypt.compare(currentPassword, user.password);
+      if (!match) return res.status(400).json({ message: "Mot de passe actuel incorrect." });
+      const hashed = await bcrypt.hash(newPassword, 12);
+      await storage.updateUser(userId, { password: hashed } as any);
+      res.json({ success: true, message: "Mot de passe modifié avec succès." });
+    } catch (error) {
+      console.error("change-password error:", error);
+      res.status(500).json({ message: "Erreur lors du changement de mot de passe." });
+    }
+  });
+
+  // ─── Mot de passe oublié ─────────────────────────────────────────────────────
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email requis." });
+    try {
+      const user = await authStorage.getUserByEmail(email);
+      // Always respond OK to not reveal if email exists
+      if (!user) return res.json({ success: true, message: "Si ce compte existe, un email a été envoyé." });
+      const token = crypto.randomBytes(32).toString("hex");
+      const expires = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
+      await storage.updateUser(user.id, { resetToken: token, resetTokenExpires: expires } as any);
+      sendPasswordResetEmail(email, token, user.firstName).catch(err => {
+        console.error("Failed to send reset email:", err);
+      });
+      res.json({ success: true, message: "Si ce compte existe, un email a été envoyé." });
+    } catch (error) {
+      console.error("forgot-password error:", error);
+      res.status(500).json({ message: "Erreur serveur." });
+    }
+  });
+
+  // ─── Réinitialisation du mot de passe (via token) ────────────────────────────
+  app.post("/api/auth/reset-password", async (req, res) => {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) return res.status(400).json({ message: "Token et mot de passe requis." });
+    if (newPassword.length < 8) return res.status(400).json({ message: "Le mot de passe doit contenir au moins 8 caractères." });
+    try {
+      const user = await storage.getUserByResetToken(token);
+      if (!user) return res.status(400).json({ message: "Lien invalide ou expiré. Veuillez refaire une demande." });
+      const hashed = await bcrypt.hash(newPassword, 12);
+      await storage.updateUser(user.id, { password: hashed, resetToken: null, resetTokenExpires: null } as any);
+      res.json({ success: true, message: "Mot de passe réinitialisé avec succès. Vous pouvez vous connecter." });
+    } catch (error) {
+      console.error("reset-password error:", error);
+      res.status(500).json({ message: "Erreur serveur." });
+    }
   });
 }
 

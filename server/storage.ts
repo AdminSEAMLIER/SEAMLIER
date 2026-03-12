@@ -33,6 +33,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByVerificationToken(token: string): Promise<User | undefined>;
+  getUserByResetToken(token: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
 
@@ -141,6 +142,21 @@ class DatabaseStorage implements IStorage {
       return result[0];
     } catch (error) {
       console.error("getUserByVerificationToken error:", error);
+      return undefined;
+    }
+  }
+
+  async getUserByResetToken(token: string): Promise<User | undefined> {
+    try {
+      const [rows] = await pool.query(
+        "SELECT * FROM users WHERE reset_token = ? AND reset_token_expires > NOW() LIMIT 1",
+        [token]
+      ) as any[];
+      if (!rows || rows.length === 0) return undefined;
+      const r = rows[0];
+      return { ...r, emailVerified: !!r.email_verified, firstName: r.first_name, lastName: r.last_name, profileImageUrl: r.profile_image_url, verificationToken: r.verification_token, verificationExpires: r.verification_expires, resetToken: r.reset_token, resetTokenExpires: r.reset_token_expires, createdAt: r.created_at, updatedAt: r.updated_at } as User;
+    } catch (error) {
+      console.error("getUserByResetToken error:", error);
       return undefined;
     }
   }

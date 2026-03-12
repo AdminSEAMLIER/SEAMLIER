@@ -42,6 +42,8 @@ import MentionsLegales from "@/pages/mentions-legales";
 import Confidentialite from "@/pages/confidentialite";
 import CGV from "@/pages/cgv";
 import ModifierMotDePasse from "@/pages/modifier-mot-de-passe";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
 import PreferencesNotifications from "@/pages/preferences-notifications";
 import ProParametres from "@/pages/pro-parametres";
 import ProModifierMotDePasse from "@/pages/pro-modifier-mot-de-passe";
@@ -129,6 +131,8 @@ function Router() {
       <Route path="/connexion" component={Connexion} />
       <Route path="/connexion/particulier" component={ConnexionParticulier} />
       <Route path="/connexion/professionnel" component={ConnexionProfessionnel} />
+      <Route path="/mot-de-passe-oublie" component={ForgotPassword} />
+      <Route path="/reinitialiser-mot-de-passe" component={ResetPassword} />
       <Route path="/inscription" component={Inscription} />
       <Route path="/inscription/particulier" component={InscriptionParticulier} />
       <Route path="/inscription/professionnel" component={InscriptionProfessionnel} />
