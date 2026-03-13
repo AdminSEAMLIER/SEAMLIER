@@ -72,6 +72,7 @@ export interface IStorage {
   updateProject(id: string, updates: Partial<InsertProject>): Promise<Project | undefined>;
 
   getAppointmentsByTailor(tailorId: string): Promise<AppointmentWithClient[]>;
+  getAppointmentsByClient(clientId: string): Promise<AppointmentWithClient[]>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment | undefined>;
   deleteAppointment(id: string): Promise<void>;
@@ -576,6 +577,21 @@ class DatabaseStorage implements IStorage {
       .from(appointments)
       .innerJoin(users, eq(appointments.clientId, users.id))
       .where(eq(appointments.tailorId, tailorId))
+      .orderBy(appointments.scheduledAt);
+
+    if (!result || !Array.isArray(result)) return [];
+
+    return result.map(row => ({
+      ...row.appointments,
+      client: row.users
+    }));
+  }
+
+  async getAppointmentsByClient(clientId: string): Promise<AppointmentWithClient[]> {
+    const result = await db.select()
+      .from(appointments)
+      .innerJoin(users, eq(appointments.clientId, users.id))
+      .where(eq(appointments.clientId, clientId))
       .orderBy(appointments.scheduledAt);
 
     if (!result || !Array.isArray(result)) return [];

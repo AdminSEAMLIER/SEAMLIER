@@ -6,13 +6,13 @@ let transporter: nodemailer.Transporter | null = null;
 function getTransporter(): nodemailer.Transporter | null {
   if (transporter) return transporter;
 
-  const host = process.env.SMTP_HOST;
-  const port = parseInt(process.env.SMTP_PORT || "587");
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const host = process.env.SMTP_HOST || "mail.seamlier.fr";
+  const port = parseInt(process.env.SMTP_PORT || "465");
+  const user = process.env.SMTP_USER || "contact@seamlier.fr";
+  const pass = process.env.EMAIL_PASSWORD || process.env.SMTP_PASS;
 
-  if (!host || !user || !pass) {
-    console.warn("SMTP not configured — email sending disabled. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM.");
+  if (!pass) {
+    console.warn("SMTP not configured — email sending disabled. Set EMAIL_PASSWORD (or SMTP_PASS).");
     return null;
   }
 

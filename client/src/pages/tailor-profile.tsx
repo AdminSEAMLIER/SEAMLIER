@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,11 +9,14 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PortfolioCard, PortfolioCardSkeleton } from "@/components/portfolio-card";
 import { ReviewCard, ReviewCardSkeleton } from "@/components/review-card";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { 
   Star, 
   MapPin, 
@@ -47,25 +50,65 @@ export default function TailorProfile() {
   const [bookingDate, setBookingDate] = useState("");
   const [bookingTime, setBookingTime] = useState("");
   const [bookingMessage, setBookingMessage] = useState("");
+  const [bookingType, setBookingType] = useState("consultation");
+
+  const [devisOpen, setDevisOpen] = useState(false);
+  const [devisDescription, setDevisDescription] = useState("");
+  const [devisGarment, setDevisGarment] = useState("");
+
+  const bookingMutation = useMutation({
+    mutationFn: () => {
+      if (!bookingDate || !bookingTime) throw new Error("Champs requis");
+      const scheduledAt = new Date(`${bookingDate}T${bookingTime}:00`).toISOString();
+      return apiRequest("POST", "/api/appointments", {
+        tailorId: tailorId,
+        type: bookingType,
+        scheduledAt,
+        duration: 60,
+        notes: bookingMessage || null,
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Rendez-vous demandé", description: `Votre demande pour le ${bookingDate} à ${bookingTime} a été envoyée.` });
+      queryClient.invalidateQueries({ queryKey: ["/api/client/appointments"] });
+      setBookingOpen(false);
+      setBookingDate("");
+      setBookingTime("");
+      setBookingMessage("");
+    },
+    onError: (err: any) => {
+      toast({ title: "Erreur", description: err?.message || "Impossible d'envoyer la demande.", variant: "destructive" });
+    },
+  });
+
+  const devisMutation = useMutation({
+    mutationFn: () => {
+      if (!devisDescription) throw new Error("Description requise");
+      return apiRequest("POST", "/api/projects", {
+        tailorId: tailorId,
+        title: devisGarment || "Demande de devis",
+        description: devisDescription,
+        status: "pending",
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Devis demandé", description: "Votre demande de devis a été envoyée au couturier." });
+      queryClient.invalidateQueries({ queryKey: ["/api/client/projects"] });
+      setDevisOpen(false);
+      setDevisDescription("");
+      setDevisGarment("");
+    },
+    onError: (err: any) => {
+      toast({ title: "Erreur", description: err?.message || "Impossible d'envoyer la demande.", variant: "destructive" });
+    },
+  });
 
   const handleBooking = () => {
     if (!bookingDate || !bookingTime) {
-      toast({
-        title: "Champs requis",
-        description: "Veuillez sélectionner une date et une heure.",
-        variant: "destructive",
-      });
+      toast({ title: "Champs requis", description: "Veuillez sélectionner une date et une heure.", variant: "destructive" });
       return;
     }
-    
-    toast({
-      title: "Demande envoyée",
-      description: `Votre demande de rendez-vous pour le ${bookingDate} à ${bookingTime} a été envoyée.`,
-    });
-    setBookingOpen(false);
-    setBookingDate("");
-    setBookingTime("");
-    setBookingMessage("");
+    bookingMutation.mutate();
   };
 
   const { data: tailor, isLoading: tailorLoading } = useQuery<TailorWithUser>({
@@ -215,21 +258,30 @@ export default function TailorProfile() {
             </p>
           )}
 
-          <div className="flex gap-3 mt-6">
-            <Link href={`/messages?tailor=${tailorId}`} className="flex-1">
-              <Button className="w-full h-12 bg-[#722F37] hover:bg-[#5a252c] text-white" data-testid="button-contact">
-                <MessageCircle className="h-5 w-5 mr-2" />
-                Envoyer un message
+          <div className="flex flex-col gap-3 mt-6">
+            <div className="flex gap-3">
+              <Link href={`/messages?tailor=${tailorId}`} className="flex-1">
+                <Button className="w-full h-12 bg-[#722F37] hover:bg-[#5a252c] text-white" data-testid="button-contact">
+                  <MessageCircle className="h-5 w-5 mr-2" />
+                  Envoyer un message
+                </Button>
+              </Link>
+              <Button
+                variant="outline"
+                className="flex-1 h-12 border-[#722F37] text-[#722F37]"
+                data-testid="button-book"
+                onClick={() => setBookingOpen(true)}
+              >
+                <Calendar className="h-5 w-5 mr-2" />
+                Prendre rendez-vous
               </Button>
-            </Link>
-            <Button 
-              variant="outline" 
-              className="flex-1 h-12 border-[#722F37] text-[#722F37]" 
-              data-testid="button-book"
-              onClick={() => setBookingOpen(true)}
+            </div>
+            <Button
+              className="w-full h-12 bg-white border border-[#722F37] text-[#722F37] hover:bg-[#722F37]/5"
+              data-testid="button-request-quote"
+              onClick={() => setDevisOpen(true)}
             >
-              <Calendar className="h-5 w-5 mr-2" />
-              Prendre rendez-vous
+              Demander un devis
             </Button>
           </div>
         </div>
@@ -292,6 +344,19 @@ export default function TailorProfile() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
+              <Label>Type de rendez-vous</Label>
+              <Select value={bookingType} onValueChange={setBookingType}>
+                <SelectTrigger data-testid="select-booking-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="consultation">Consultation</SelectItem>
+                  <SelectItem value="measurements">Prise de mesures</SelectItem>
+                  <SelectItem value="fitting">Essayage</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="booking-date">Date</Label>
               <Input
                 id="booking-date"
@@ -331,19 +396,73 @@ export default function TailorProfile() {
             </div>
           </div>
           <div className="flex gap-3">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex-1"
               onClick={() => setBookingOpen(false)}
+              disabled={bookingMutation.isPending}
             >
               Annuler
             </Button>
-            <Button 
+            <Button
               className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
               onClick={handleBooking}
+              disabled={bookingMutation.isPending || !bookingDate || !bookingTime}
               data-testid="button-confirm-booking"
             >
-              Confirmer
+              {bookingMutation.isPending ? "Envoi…" : "Confirmer"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={devisOpen} onOpenChange={setDevisOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Demander un devis</DialogTitle>
+            <DialogDescription>
+              Décrivez votre projet à {tailor ? getFullName(tailor.user) : 'ce couturier'} pour recevoir un devis personnalisé.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="devis-garment">Type de vêtement / projet</Label>
+              <Input
+                id="devis-garment"
+                placeholder="Ex: Robe de mariée, costume, retouche..."
+                value={devisGarment}
+                onChange={(e) => setDevisGarment(e.target.value)}
+                data-testid="input-devis-garment"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="devis-description">Description du projet *</Label>
+              <Textarea
+                id="devis-description"
+                placeholder="Décrivez vos besoins, contraintes, délais souhaités..."
+                value={devisDescription}
+                onChange={(e) => setDevisDescription(e.target.value)}
+                rows={4}
+                data-testid="input-devis-description"
+              />
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setDevisOpen(false)}
+              disabled={devisMutation.isPending}
+            >
+              Annuler
+            </Button>
+            <Button
+              className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+              onClick={() => devisMutation.mutate()}
+              disabled={devisMutation.isPending || !devisDescription}
+              data-testid="button-confirm-devis"
+            >
+              {devisMutation.isPending ? "Envoi…" : "Envoyer la demande"}
             </Button>
           </div>
         </DialogContent>

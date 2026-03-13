@@ -615,17 +615,45 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/tailor/appointments", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const appointments = await storage.getAppointmentsByTailor(tailor.id);
+      res.json(appointments);
+    } catch (error) {
+      console.error("Failed to fetch tailor appointments:", error);
+      res.status(500).json({ error: "Failed to fetch appointments" });
+    }
+  });
+
+  app.get("/api/client/appointments", requireAuth, async (req: any, res) => {
+    try {
+      const clientId = req.authUserId;
+      const result = await storage.getAppointmentsByClient(clientId);
+      res.json(result);
+    } catch (error) {
+      console.error("Failed to fetch client appointments:", error);
+      res.status(500).json({ error: "Failed to fetch appointments" });
+    }
+  });
+
   app.post("/api/appointments", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
-      if (!tailor) {
-        return res.status(403).json({ error: "Not a tailor" });
+
+      let appointmentData: any;
+      if (tailor) {
+        appointmentData = { ...req.body, tailorId: tailor.id };
+      } else {
+        const { tailorId, ...rest } = req.body;
+        if (!tailorId) return res.status(400).json({ error: "tailorId requis" });
+        appointmentData = { ...rest, tailorId, clientId: userId };
       }
-      const appointment = await storage.createAppointment({
-        ...req.body,
-        tailorId: tailor.id,
-      });
+
+      const appointment = await storage.createAppointment(appointmentData);
       res.status(201).json(appointment);
     } catch (error) {
       console.error("Failed to create appointment:", error);
