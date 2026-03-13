@@ -470,6 +470,52 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/tailor/projects", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const projects = await storage.getProjectsByTailor(tailor.id);
+      res.json(projects);
+    } catch (error) {
+      console.error("Error fetching tailor projects:", error);
+      res.status(500).json({ error: "Failed to fetch projects" });
+    }
+  });
+
+  app.get("/api/tailor/requests", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const all = await storage.getProjectsByTailor(tailor.id);
+      const pending = all.filter((p: any) => p.status === "pending" || p.status === "new");
+      res.json(pending);
+    } catch (error) {
+      console.error("Error fetching tailor requests:", error);
+      res.status(500).json({ error: "Failed to fetch requests" });
+    }
+  });
+
+  app.patch("/api/projects/:id/status", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const project = await storage.getProject(req.params.id);
+      if (!project || project.tailorId !== tailor.id) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      const { status } = req.body;
+      if (!status) return res.status(400).json({ error: "status is required" });
+      const updated = await storage.updateProject(req.params.id, { status });
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating project status:", error);
+      res.status(500).json({ error: "Failed to update status" });
+    }
+  });
+
   app.patch("/api/projects/:id/step", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
