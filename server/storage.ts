@@ -112,6 +112,15 @@ function generateUUID(): string {
   });
 }
 
+function parseTailorSpecialties<T extends Record<string, any>>(tailor: T): T {
+  if (!tailor) return tailor;
+  if (typeof tailor.specialties === 'string') {
+    try { tailor.specialties = JSON.parse(tailor.specialties); } catch { tailor.specialties = []; }
+  }
+  if (!Array.isArray(tailor.specialties)) tailor.specialties = [];
+  return tailor;
+}
+
 class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
     try {
@@ -185,10 +194,7 @@ class DatabaseStorage implements IStorage {
 
       if (!result || !Array.isArray(result)) return [];
 
-      return result.map(row => ({
-        ...row.tailors,
-        user: row.users
-      }));
+      return result.map(row => parseTailorSpecialties({ ...row.tailors, user: row.users }));
     } catch (error) {
       console.error("getTailors error:", error);
       return [];
@@ -202,19 +208,19 @@ class DatabaseStorage implements IStorage {
       .where(eq(tailors.id, id));
 
     if (!result || result.length === 0) return undefined;
-    return { ...result[0].tailors, user: result[0].users };
+    return parseTailorSpecialties({ ...result[0].tailors, user: result[0].users });
   }
 
   async getTailorByUserId(userId: string): Promise<Tailor | undefined> {
     const result = await db.select().from(tailors).where(eq(tailors.userId, userId));
-    return result[0];
+    return result[0] ? parseTailorSpecialties(result[0]) : undefined;
   }
 
   async createTailor(tailor: InsertTailor): Promise<Tailor> {
     const id = generateUUID();
     await db.insert(tailors).values({ ...tailor, id } as any);
     const result = await db.select().from(tailors).where(eq(tailors.id, id));
-    return result[0];
+    return parseTailorSpecialties(result[0]);
   }
 
   async updateTailor(id: string, updates: Partial<InsertTailor>): Promise<Tailor | undefined> {
@@ -222,7 +228,7 @@ class DatabaseStorage implements IStorage {
       .set(updates as any)
       .where(eq(tailors.id, id));
     const result = await db.select().from(tailors).where(eq(tailors.id, id));
-    return result[0];
+    return result[0] ? parseTailorSpecialties(result[0]) : undefined;
   }
 
   async getPortfolioItems(): Promise<PortfolioWithTailor[]> {
@@ -237,7 +243,7 @@ class DatabaseStorage implements IStorage {
 
       return result.map(row => ({
         ...row.portfolio_items,
-        tailor: { ...row.tailors, user: row.users }
+        tailor: parseTailorSpecialties({ ...row.tailors, user: row.users })
       }));
     } catch (error) {
       console.error("getPortfolioItems error:", error);
@@ -270,7 +276,7 @@ class DatabaseStorage implements IStorage {
 
       return result.map(row => ({
         ...row.products,
-        tailor: { ...row.tailors, user: row.users }
+        tailor: parseTailorSpecialties({ ...row.tailors, user: row.users })
       }));
     } catch (error) {
       console.error("getProducts error:", error);
@@ -292,7 +298,7 @@ class DatabaseStorage implements IStorage {
       .where(eq(products.id, id));
 
     if (!result || result.length === 0) return undefined;
-    return { ...result[0].products, tailor: { ...result[0].tailors, user: result[0].users } };
+    return { ...result[0].products, tailor: parseTailorSpecialties({ ...result[0].tailors, user: result[0].users }) };
   }
 
   async createProduct(product: InsertProduct): Promise<Product> {
@@ -535,7 +541,7 @@ class DatabaseStorage implements IStorage {
 
     return result.map(row => ({
       ...row.projects,
-      tailor: row.tailors,
+      tailor: parseTailorSpecialties(row.tailors),
       tailorUser: row.users,
     }));
   }

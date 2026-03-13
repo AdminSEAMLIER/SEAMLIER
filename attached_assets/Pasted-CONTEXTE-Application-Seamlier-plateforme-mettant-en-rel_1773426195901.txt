@@ -1,0 +1,80 @@
+CONTEXTE
+Application Seamlier — plateforme mettant en relation clients et couturiers/artisans. Stack : Node.js/TypeScript/Drizzle ORM/MySQL/Express. Plusieurs bugs critiques à corriger.
+
+BUG 1 — Demande de rendez-vous non reçue par le professionnel
+Le client peut soumettre une demande de RDV mais le professionnel ne la voit pas.
+
+Vérifie que la route POST /api/appointments existe dans server/routes.ts et insère bien dans la table appointments
+Vérifie que la route GET /api/tailor/appointments existe et retourne les RDV du pro connecté
+Dans server/storage.ts, vérifie que createAppointment et getAppointmentsByTailor(tailorId) existent dans DatabaseStorage
+Dans client/src/pages/pro-planning.tsx (ou la page planning du pro), vérifie que le useQuery appelle bien /api/tailor/appointments et non des données fictives (enabled: false)
+Dans la page côté client qui permet de demander un RDV (probablement tailor-profile.tsx ou couturier-profile.tsx), vérifie que le formulaire appelle bien POST /api/appointments avec les champs : tailorId, type, scheduledAt, duration, notes
+
+
+BUG 2 — Pas de possibilité pour le client de demander un devis
+Ajoute un bouton "Demander un devis" sur la page profil du couturier (client/src/pages/couturier-profile.tsx ou tailor-profile.tsx) qui :
+
+Ouvre une modale avec un formulaire : description du projet, type de vêtement, budget estimé, deadline souhaitée
+Soumet via POST /api/projects avec les champs : tailorId, title, description, amount, deadline, status: "pending"
+Affiche un message de confirmation après envoi
+Le pro doit voir cette demande dans sa page /gestion-demandes via GET /api/tailor/projects
+
+Vérifie que la route POST /api/projects existe dans server/routes.ts et que createProject existe dans server/storage.ts.
+
+BUG 3 — Déconnexion au rafraîchissement de la page
+Quand l'utilisateur actualise la page, il est déconnecté. C'est un problème de session.
+
+Dans server/index.ts ou le fichier qui configure Express, vérifie la config des sessions :
+
+resave: false → mettre resave: true
+saveUninitialized: false → laisser false
+cookie.maxAge doit être long (ex: 315360000000 = 10 ans)
+cookie.secure doit être false si pas de HTTPS strict, ou true avec trustProxy
+
+
+Vérifie que le store MySQL des sessions a expiration aligné sur le même maxAge
+Dans client/src/hooks/use-auth.ts, vérifie que staleTime est suffisamment long (ex: 5 * 60 * 1000 = 5 minutes) pour ne pas refetcher la session à chaque rendu
+Ajoute app.set('trust proxy', 1) dans la config Express si le site est derrière un proxy (o2switch utilise un proxy)
+
+
+BUG 4 — Mot de passe oublié ne déclenche pas d'email
+La page /mot-de-passe-oublie existe mais n'envoie pas d'email.
+
+Installe nodemailer si pas déjà présent : npm install nodemailer @types/nodemailer
+Dans server/routes.ts, vérifie que la route POST /api/auth/forgot-password :
+
+Reçoit l'email de l'utilisateur
+Vérifie que l'utilisateur existe dans la table users
+Génère un token unique (crypto.randomBytes(32).toString('hex'))
+Stocke ce token dans la table users avec une expiration (ex: colonne reset_token et reset_token_expires)
+Envoie un email avec nodemailer contenant le lien : https://seamlier.fr/reinitialiser-mot-de-passe?token=XXXX
+
+
+Vérifie que la route POST /api/auth/reset-password :
+
+Reçoit le token et le nouveau mot de passe
+Vérifie que le token existe et n'est pas expiré
+Hash le nouveau mot de passe avec bcrypt
+Met à jour le mot de passe dans users et efface le token
+
+
+Config nodemailer à utiliser : SMTP o2switch (le serveur est hébergé chez o2switch) :
+
+tsconst transporter = nodemailer.createTransporter({
+  host: 'mail.seamlier.fr',
+  port: 465,
+  secure: true,
+  auth: {
+    user: 'contact@seamlier.fr',
+    pass: 'MOT_DE_PASSE_EMAIL' // à remplacer par le vrai mot de passe
+  }
+});
+
+Dans client/src/pages/forgot-password.tsx, vérifie que le formulaire appelle bien POST /api/auth/forgot-password
+Dans client/src/pages/reset-password.tsx, vérifie que le formulaire appelle bien POST /api/auth/reset-password avec le token récupéré depuis l'URL (?token=XXX)
+Si les colonnes reset_token et reset_token_expires n'existent pas dans la table users, ajoute-les via une migration SQL dans mysql-schema.sql et exécute-la
+
+IMPORTANT : Le mot de passe de l'email contact@seamlier.fr doit être renseigné. Mets une variable d'environnement EMAIL_PASSWORD dans le fichier .env et utilise process.env.EMAIL_PASSWORD dans le code.
+
+APRÈS TOUTES LES MODIFICATIONS
+Lance npm run build pour recompiler. Le déploiement se fait via ZIP sur o2switch.
