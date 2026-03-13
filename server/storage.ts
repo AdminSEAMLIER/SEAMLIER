@@ -103,6 +103,10 @@ export interface IStorage {
   getAdminSettings(): Promise<AdminSetting[]>;
   getAdminSetting(key: string): Promise<AdminSetting | undefined>;
   upsertAdminSetting(key: string, value: string): Promise<AdminSetting>;
+
+  getAllProjectsForAdmin(): Promise<any[]>;
+  getAllAppointmentsForAdmin(): Promise<any[]>;
+  getMeasurementsByUserId(userId: string): Promise<Measurements | undefined>;
 }
 
 function generateUUID(): string {
@@ -942,6 +946,70 @@ class DatabaseStorage implements IStorage {
   async deleteAllConversations(): Promise<void> {
     await db.delete(messages);
     await db.delete(conversations);
+  }
+
+  async getMeasurementsByUserId(userId: string): Promise<Measurements | undefined> {
+    const result = await db.select().from(measurements).where(eq(measurements.userId, userId));
+    return result[0];
+  }
+
+  async getAllProjectsForAdmin(): Promise<any[]> {
+    const [rows] = await pool.query(`
+      SELECT
+        p.id,
+        p.title,
+        p.description,
+        p.status,
+        p.amount,
+        p.created_at,
+        CONCAT(cu.first_name, ' ', cu.last_name) AS client_name,
+        CONCAT(tu.first_name, ' ', tu.last_name) AS tailor_name
+      FROM projects p
+      INNER JOIN users cu ON p.client_id = cu.id
+      INNER JOIN tailors t ON p.tailor_id = t.id
+      INNER JOIN users tu ON t.user_id = tu.id
+      ORDER BY p.created_at DESC
+    `) as any[];
+    if (!Array.isArray(rows)) return [];
+    return rows.map((r: any) => ({
+      id: r.id,
+      client: r.client_name || "—",
+      artisan: r.tailor_name || "—",
+      description: r.description || r.title || "—",
+      date: r.created_at ? new Date(r.created_at).toLocaleDateString("fr-FR") : "—",
+      amount: r.amount ? `${r.amount}€` : "—",
+      status: (r.status === "completed") ? "Libéré" : "Bloqué",
+    }));
+  }
+
+  async getAllAppointmentsForAdmin(): Promise<any[]> {
+    const [rows] = await pool.query(`
+      SELECT
+        a.id,
+        a.type,
+        a.scheduled_at,
+        a.status,
+        CONCAT(cu.first_name, ' ', cu.last_name) AS client_name,
+        CONCAT(tu.first_name, ' ', tu.last_name) AS tailor_name
+      FROM appointments a
+      INNER JOIN users cu ON a.client_id = cu.id
+      INNER JOIN tailors t ON a.tailor_id = t.id
+      INNER JOIN users tu ON t.user_id = tu.id
+      ORDER BY a.scheduled_at ASC
+    `) as any[];
+    if (!Array.isArray(rows)) return [];
+    return rows.map((r: any) => {
+      const dt = r.scheduled_at ? new Date(r.scheduled_at) : null;
+      return {
+        id: r.id,
+        title: r.type || "Rendez-vous",
+        client: r.client_name || "—",
+        artisan: r.tailor_name || "—",
+        date: dt ? dt.toLocaleDateString("fr-FR") : "—",
+        time: dt ? dt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "—",
+        status: r.status === "confirmed" ? "Confirmé" : r.status === "cancelled" ? "Annulé" : "En attente",
+      };
+    });
   }
 }
 

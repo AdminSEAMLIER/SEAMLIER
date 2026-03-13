@@ -21,7 +21,7 @@ export function BottomNav() {
 
   const { data: unreadData } = useQuery<{ count: number }>({
     queryKey: ["/api/conversations/unread-count"],
-    refetchInterval: 15000,
+    refetchInterval: 5000,
     enabled: isAuthenticated,
   });
   const unreadCount = unreadData?.count || 0;

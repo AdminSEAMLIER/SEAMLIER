@@ -1184,6 +1184,42 @@ export async function registerRoutes(
     }
   });
 
+  // Tailor reads a specific client's measurements (for project view)
+  app.get("/api/tailor/client/:clientId/measurements", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const meas = await storage.getMeasurementsByUserId(req.params.clientId);
+      res.json(meas || null);
+    } catch (error) {
+      console.error("Failed to fetch client measurements:", error);
+      res.status(500).json({ error: "Failed to fetch measurements" });
+    }
+  });
+
+  // Admin: all projects
+  app.get("/api/admin/all-projects", requireAdmin, async (req, res) => {
+    try {
+      const data = await storage.getAllProjectsForAdmin();
+      res.json(data);
+    } catch (error) {
+      console.error("admin all-projects error:", error);
+      res.status(500).json({ error: "Failed to fetch projects" });
+    }
+  });
+
+  // Admin: all appointments
+  app.get("/api/admin/all-appointments", requireAdmin, async (req, res) => {
+    try {
+      const data = await storage.getAllAppointmentsForAdmin();
+      res.json(data);
+    } catch (error) {
+      console.error("admin all-appointments error:", error);
+      res.status(500).json({ error: "Failed to fetch appointments" });
+    }
+  });
+
   // Email verification
   app.get("/api/verify-email", async (req, res) => {
     try {

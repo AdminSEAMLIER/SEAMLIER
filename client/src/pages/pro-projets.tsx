@@ -1,9 +1,10 @@
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { FolderKanban, Clock, Euro, User, ChevronRight, Ruler, Calendar, MessageSquare, Phone, Mail, Camera, Image, Users, CheckCircle, Circle, Loader2 } from "lucide-react";
+import { FolderKanban, Clock, Euro, User, ChevronRight, Ruler, Calendar, MessageSquare, Phone, Mail, Camera, Image, Users, CheckCircle, Circle, Loader2, Check, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
@@ -28,10 +29,43 @@ export default function ProProjets() {
   const { toast } = useToast();
   const [selectedProject, setSelectedProject] = useState<ProjectWithClient | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [quoteAmount, setQuoteAmount] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: projects = [], isLoading } = useQuery<ProjectWithClient[]>({
     queryKey: ["/api/projects"],
+  });
+
+  const clientId = selectedProject?.client?.id;
+  const { data: clientMeasurements } = useQuery<any>({
+    queryKey: ["/api/tailor/client", clientId, "measurements"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/tailor/client/${clientId}/measurements`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!clientId && isDetailOpen,
+    staleTime: 60000,
+  });
+
+  const validateQuoteMutation = useMutation({
+    mutationFn: async ({ projectId, amount, status }: { projectId: string; amount?: number; status: string }) => {
+      const body: any = { status };
+      if (amount !== undefined) body.amount = amount;
+      const res = await apiRequest("PATCH", `/api/projects/${projectId}`, body);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      if (selectedProject) {
+        setSelectedProject({ ...selectedProject, status: data.status, amount: data.amount });
+      }
+      setQuoteAmount("");
+      toast({ title: "Devis mis à jour", description: "Le client a été notifié." });
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de mettre à jour le devis.", variant: "destructive" });
+    },
   });
 
   const stepMutation = useMutation({
@@ -53,6 +87,7 @@ export default function ProProjets() {
 
   const handleOpenProject = (project: ProjectWithClient) => {
     setSelectedProject(project);
+    setQuoteAmount("");
     setIsDetailOpen(true);
   };
 
@@ -239,6 +274,50 @@ export default function ProProjets() {
                 </div>
               </div>
 
+              {selectedProject.status === "pending" && (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm font-semibold text-yellow-800 mb-3">Valider le devis</p>
+                  <p className="text-xs text-yellow-700 mb-3">Saisissez le montant et acceptez ou refusez cette demande.</p>
+                  <div className="flex gap-2 mb-3">
+                    <div className="relative flex-1">
+                      <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        type="number"
+                        placeholder="Montant €"
+                        value={quoteAmount}
+                        onChange={e => setQuoteAmount(e.target.value)}
+                        className="pl-9 h-9 text-sm"
+                        min="0"
+                        data-testid="input-quote-amount"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white gap-1"
+                      disabled={!quoteAmount || validateQuoteMutation.isPending}
+                      onClick={() => validateQuoteMutation.mutate({ projectId: selectedProject.id, amount: parseFloat(quoteAmount), status: "in_progress" })}
+                      data-testid="button-accept-quote"
+                    >
+                      <Check className="h-4 w-4" />
+                      Accepter
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 border-red-200 text-red-600 hover:bg-red-50 gap-1"
+                      disabled={validateQuoteMutation.isPending}
+                      onClick={() => validateQuoteMutation.mutate({ projectId: selectedProject.id, status: "cancelled" })}
+                      data-testid="button-reject-quote"
+                    >
+                      <X className="h-4 w-4" />
+                      Refuser
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-3">Étapes de confection</p>
                 <div className="space-y-1">
@@ -293,6 +372,42 @@ export default function ProProjets() {
                   <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Mise à jour...
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <Ruler className="h-4 w-4 text-[#722F37]" />
+                  <p className="text-sm font-semibold text-gray-700">Mesures du client</p>
+                </div>
+                {!clientMeasurements ? (
+                  <p className="text-xs text-gray-400 italic">Aucune fiche de mesures enregistrée.</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                    {[
+                      ["Poitrine", clientMeasurements.bust],
+                      ["Taille", clientMeasurements.waist],
+                      ["Hanches", clientMeasurements.hips],
+                      ["Épaules", clientMeasurements.shoulders],
+                      ["Longueur dos", clientMeasurements.backLength],
+                      ["Longueur bras", clientMeasurements.armLength],
+                      ["Entrejambe", clientMeasurements.inseam],
+                      ["Tour de cou", clientMeasurements.neck],
+                      ["Taille (cm)", clientMeasurements.height],
+                      ["Poids (kg)", clientMeasurements.weight],
+                    ].filter(([, val]) => val !== null && val !== undefined).map(([label, val]) => {
+                      const unit = (label as string).includes("kg") ? "kg" : "cm";
+                      return (
+                        <div key={label as string} className="flex justify-between py-0.5 border-b border-gray-100">
+                          <span className="text-gray-500">{label as string}</span>
+                          <span className="font-medium text-gray-800">{val} {unit}</span>
+                        </div>
+                      );
+                    })}
+                    {clientMeasurements.notes && (
+                      <div className="col-span-2 mt-1 text-gray-500 italic">{clientMeasurements.notes}</div>
+                    )}
                   </div>
                 )}
               </div>

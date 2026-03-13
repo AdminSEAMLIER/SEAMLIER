@@ -270,7 +270,15 @@ export default function AdminDashboard() {
     }
   }, [isAuthenticated, adminUser]);
 
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [sequestreOverrides, setSequestreOverrides] = useState<Record<string, "Bloqué" | "Libéré">>({});
+  const { data: rawProjects = [] } = useQuery<Project[]>({
+    queryKey: ["/api/admin/all-projects"],
+    refetchInterval: 30000,
+  });
+  const projects = rawProjects.map(p => ({
+    ...p,
+    status: sequestreOverrides[p.id] ?? p.status,
+  }));
 
   const { data: dbUsers = [], isLoading: usersLoading } = useQuery<any[]>({
     queryKey: [API_ENDPOINTS.admin.users],
@@ -449,7 +457,10 @@ export default function AdminDashboard() {
 
   const [messages, setMessages] = useState<Message[]>([]);
 
-  const [planningEvents] = useState<PlanningEvent[]>([]);
+  const { data: planningEvents = [] } = useQuery<PlanningEvent[]>({
+    queryKey: ["/api/admin/all-appointments"],
+    refetchInterval: 30000,
+  });
 
   const [measureProfiles] = useState<MeasureProfile[]>([]);
 
@@ -526,12 +537,12 @@ export default function AdminDashboard() {
   }, [toast]);
 
   const toggleSequestre = (id: string) => {
-    setProjects(prev => prev.map(p =>
-      p.id === id ? { ...p, status: p.status === "Bloqué" ? "Libéré" as const : "Bloqué" as const } : p
-    ));
     const project = projects.find(p => p.id === id);
+    const currentStatus = project?.status ?? "Bloqué";
+    const newStatus: "Bloqué" | "Libéré" = currentStatus === "Bloqué" ? "Libéré" : "Bloqué";
+    setSequestreOverrides(prev => ({ ...prev, [id]: newStatus }));
     toast({
-      title: project?.status === "Bloqué" ? "Fonds libérés" : "Fonds bloqués",
+      title: newStatus === "Libéré" ? "Fonds libérés" : "Fonds bloqués",
       description: `Séquestre mis à jour pour ${project?.client}`,
     });
   };

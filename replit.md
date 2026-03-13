@@ -68,6 +68,19 @@ server/              # Express backend
 shared/              # Shared code (schema, types)
 ```
 
+## Recent Changes (March 2026)
+
+### Pro Dashboard Enhancements
+- **Client Measurements in Project View**: Tailors can now see a client's full measurement profile (bust, waist, hips, shoulders, arm length, back length, inseam, neck, height, weight) directly inside the project detail dialog. Route: `GET /api/tailor/client/:clientId/measurements`
+- **Quote Validation**: For projects with "pending" status, the pro sees a "Valider le devis" section with a price input and Accept/Reject buttons. Accept → sets amount + status "in_progress"; Reject → sets status "cancelled". Uses `PATCH /api/projects/:id`
+- **Message Notifications**: Reduced polling interval from 15s to 5s in bottom-nav and desktop-header for faster badge updates after mark-as-read
+
+### Admin Dashboard Real-Time Data
+- **Planning Tab**: Now fetches real appointment data from `GET /api/admin/all-appointments`, showing all appointments with client/tailor names, date, time, and mapped status (scheduled → "En attente", confirmed → "Confirmé", cancelled → "Annulé")
+- **Projects Tab**: Now fetches real project data from `GET /api/admin/all-projects`, showing all projects with client/tailor names, amount, and mapped sequestre status. Toggle remains UI-only (no DB field for sequestre)
+- Both tabs refresh every 30 seconds
+- New storage methods: `getAllProjectsForAdmin()`, `getAllAppointmentsForAdmin()`, `getMeasurementsByUserId()`
+
 ## Recent Changes (January 2026)
 
 ### Schema Migration
