@@ -29,7 +29,7 @@ export function TailorCard({ tailor, linkPrefix = "/tailor" }: TailorCardProps) 
           />
         </div>
         
-        <CardContent className="p-4">
+        <CardContent className="p-4 min-h-[128px]">
           <div className="flex items-start gap-3">
             <Avatar className="h-12 w-12 border-2 border-white shadow-sm -mt-8 relative z-10">
               <AvatarImage src={tailor.user.profileImageUrl || undefined} alt={fullName} />
@@ -90,9 +90,9 @@ export function TailorCardSkeleton() {
   return (
     <Card className="overflow-hidden border border-border">
       <div className="h-40 skeleton-shimmer" />
-      <CardContent className="p-4">
+      <CardContent className="p-4 min-h-[128px]">
         <div className="flex items-start gap-3">
-          <div className="h-12 w-12 rounded-full skeleton-shimmer -mt-8" />
+          <div className="h-12 w-12 rounded-full skeleton-shimmer -mt-8 flex-shrink-0" />
           <div className="flex-1 pt-1 space-y-2">
             <div className="h-4 w-32 skeleton-shimmer rounded" />
             <div className="h-3 w-24 skeleton-shimmer rounded" />

@@ -66,7 +66,7 @@ export function useAuth() {
     retry: false,
     staleTime: 1000 * 60 * 5,
     initialData: getCachedUser,
-    initialDataUpdatedAt: 0,
+    initialDataUpdatedAt: Date.now,
   });
 
   const logoutMutation = useMutation({
