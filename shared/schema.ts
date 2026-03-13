@@ -118,6 +118,8 @@ export const projects = mysqlTable("projects", {
   clientId: varchar("client_id", { length: 36 }).notNull().references(() => users.id),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
+  clothingType: varchar("clothing_type", { length: 100 }),
+  requestedPrice: float("requested_price"),
   status: varchar("status", { length: 50 }).notNull().default("pending"),
   progress: int("progress").default(0),
   currentStep: varchar("current_step", { length: 50 }).default("prise_mesures"),

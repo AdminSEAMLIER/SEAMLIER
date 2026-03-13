@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -26,7 +26,10 @@ import {
   Clock, 
   ArrowLeft,
   Share2,
-  Heart
+  Heart,
+  Camera,
+  Euro,
+  X
 } from "lucide-react";
 import type { TailorWithUser, PortfolioWithTailor, ReviewWithUser } from "@shared/schema";
 
@@ -55,6 +58,25 @@ export default function TailorProfile() {
   const [devisOpen, setDevisOpen] = useState(false);
   const [devisDescription, setDevisDescription] = useState("");
   const [devisGarment, setDevisGarment] = useState("");
+  const [devisPhoto, setDevisPhoto] = useState<string | null>(null);
+  const [devisRequestedPrice, setDevisRequestedPrice] = useState("");
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDevisPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setDevisPhoto(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const resetDevisForm = () => {
+    setDevisDescription("");
+    setDevisGarment("");
+    setDevisPhoto(null);
+    setDevisRequestedPrice("");
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
 
   const bookingMutation = useMutation({
     mutationFn: () => {
@@ -88,6 +110,9 @@ export default function TailorProfile() {
         tailorId: tailorId,
         title: devisGarment || "Demande de devis",
         description: devisDescription,
+        clothingType: devisGarment || null,
+        requestedPrice: devisRequestedPrice ? parseFloat(devisRequestedPrice) : null,
+        modelPhotoUrl: devisPhoto || null,
         status: "pending",
       });
     },
@@ -95,8 +120,7 @@ export default function TailorProfile() {
       toast({ title: "Devis demandé", description: "Votre demande de devis a été envoyée au couturier." });
       queryClient.invalidateQueries({ queryKey: ["/api/client/projects"] });
       setDevisOpen(false);
-      setDevisDescription("");
-      setDevisGarment("");
+      resetDevisForm();
     },
     onError: (err: any) => {
       toast({ title: "Erreur", description: err?.message || "Impossible d'envoyer la demande.", variant: "destructive" });
@@ -416,15 +440,15 @@ export default function TailorProfile() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={devisOpen} onOpenChange={setDevisOpen}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={devisOpen} onOpenChange={(open) => { setDevisOpen(open); if (!open) resetDevisForm(); }}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Demander un devis</DialogTitle>
             <DialogDescription>
               Décrivez votre projet à {tailor ? getFullName(tailor.user) : 'ce couturier'} pour recevoir un devis personnalisé.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="devis-garment">Type de vêtement / projet</Label>
               <Input
@@ -439,19 +463,70 @@ export default function TailorProfile() {
               <Label htmlFor="devis-description">Description du projet *</Label>
               <Textarea
                 id="devis-description"
-                placeholder="Décrivez vos besoins, contraintes, délais souhaités..."
+                placeholder="Décrivez vos besoins, matières souhaitées, délais, inspirations..."
                 value={devisDescription}
                 onChange={(e) => setDevisDescription(e.target.value)}
-                rows={4}
+                rows={3}
                 data-testid="input-devis-description"
               />
             </div>
+            <div className="space-y-2">
+              <Label>Photo d'inspiration (optionnel)</Label>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleDevisPhoto}
+                data-testid="input-devis-photo"
+              />
+              {devisPhoto ? (
+                <div className="relative rounded-lg overflow-hidden border border-gray-200">
+                  <img src={devisPhoto} alt="Inspiration" className="w-full h-36 object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => { setDevisPhoto(null); if (photoInputRef.current) photoInputRef.current.value = ""; }}
+                    className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded-full p-1 shadow"
+                    data-testid="button-remove-photo"
+                  >
+                    <X className="h-4 w-4 text-gray-600" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  className="w-full h-24 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-[#722F37]/40 hover:text-[#722F37] transition-colors"
+                  data-testid="button-add-photo"
+                >
+                  <Camera className="h-6 w-6" />
+                  <span className="text-xs">Ajouter une photo d'inspiration</span>
+                </button>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="devis-price">Budget estimé (optionnel)</Label>
+              <div className="relative">
+                <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="devis-price"
+                  type="number"
+                  placeholder="Votre budget approximatif"
+                  value={devisRequestedPrice}
+                  onChange={(e) => setDevisRequestedPrice(e.target.value)}
+                  className="pl-9"
+                  min="0"
+                  data-testid="input-devis-price"
+                />
+              </div>
+              <p className="text-xs text-gray-400">Le professionnel pourra ajuster ce montant dans son devis.</p>
+            </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 pt-2">
             <Button
               variant="outline"
               className="flex-1"
-              onClick={() => setDevisOpen(false)}
+              onClick={() => { setDevisOpen(false); resetDevisForm(); }}
               disabled={devisMutation.isPending}
             >
               Annuler

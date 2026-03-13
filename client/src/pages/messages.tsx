@@ -38,6 +38,13 @@ export default function Messages() {
   });
 
   useEffect(() => {
+    if (!user?.id) return;
+    apiRequest("PATCH", "/api/messages/all/read", {})
+      .then(() => queryClient.invalidateQueries({ queryKey: ["/api/conversations/unread-count"] }))
+      .catch(() => {});
+  }, [user?.id]);
+
+  useEffect(() => {
     if (!tailorParam || !user?.id || selectedConversationId) return;
     apiRequest("POST", "/api/conversations", { tailorId: tailorParam })
       .then(res => res.json())

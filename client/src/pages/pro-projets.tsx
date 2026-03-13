@@ -275,9 +275,30 @@ export default function ProProjets() {
               </div>
 
               {selectedProject.status === "pending" && (
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm font-semibold text-yellow-800 mb-3">Valider le devis</p>
-                  <p className="text-xs text-yellow-700 mb-3">Saisissez le montant et acceptez ou refusez cette demande.</p>
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg space-y-3">
+                  <p className="text-sm font-semibold text-yellow-800">Demande de devis reçue</p>
+                  {(selectedProject as any).clothingType && (
+                    <div className="flex gap-2 text-xs">
+                      <span className="text-yellow-700 font-medium">Type :</span>
+                      <span className="text-yellow-900">{(selectedProject as any).clothingType}</span>
+                    </div>
+                  )}
+                  {(selectedProject as any).requestedPrice && (
+                    <div className="flex gap-2 text-xs">
+                      <span className="text-yellow-700 font-medium">Budget client :</span>
+                      <span className="text-yellow-900 font-bold">{(selectedProject as any).requestedPrice}€</span>
+                    </div>
+                  )}
+                  {selectedProject.description && (
+                    <p className="text-xs text-yellow-800 bg-yellow-100/60 rounded p-2">{selectedProject.description}</p>
+                  )}
+                  {selectedProject.modelPhotoUrl && (
+                    <div className="rounded-lg overflow-hidden">
+                      <img src={selectedProject.modelPhotoUrl} alt="Inspiration" className="w-full h-32 object-cover rounded" />
+                    </div>
+                  )}
+                  <div className="pt-1 border-t border-yellow-200">
+                    <p className="text-xs text-yellow-700 mb-2 font-medium">Votre proposition de prix :</p>
                   <div className="flex gap-2 mb-3">
                     <div className="relative flex-1">
                       <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -314,6 +335,7 @@ export default function ProProjets() {
                       <X className="h-4 w-4" />
                       Refuser
                     </Button>
+                  </div>
                   </div>
                 </div>
               )}

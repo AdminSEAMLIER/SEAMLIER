@@ -428,6 +428,15 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/messages/all/read", requireAuth, async (req: any, res) => {
+    try {
+      await storage.markAllMessagesAsRead(req.authUserId);
+      res.json({ ok: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to mark all as read" });
+    }
+  });
+
   app.post("/api/messages", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
@@ -588,9 +597,27 @@ export async function registerRoutes(
 
   app.patch("/api/projects/:id", requireAuth, async (req: any, res) => {
     try {
+      const prevProject = await storage.getProject(req.params.id);
       const project = await storage.updateProject(req.params.id, req.body);
       if (!project) {
         return res.status(404).json({ error: "Project not found" });
+      }
+      // Auto-message when tailor accepts/validates (status becomes in_progress)
+      if (req.body.status === "in_progress" && prevProject?.status !== "in_progress") {
+        try {
+          const tailor = await storage.getTailor(project.tailorId);
+          if (tailor?.userId && project.clientId) {
+            const conv = await storage.getOrCreateConversation(tailor.userId, project.clientId);
+            const garmentLabel = project.clothingType || project.title || "votre commande";
+            await storage.createMessage({
+              conversationId: conv.id,
+              senderId: tailor.userId,
+              content: `🎉 Bonne nouvelle ! La confection de ${garmentLabel} vient de démarrer. Pensez à prendre votre premier rendez-vous pour qu'on puisse commencer dans les meilleures conditions !`,
+            });
+          }
+        } catch (msgErr) {
+          console.error("Auto-message error on project start:", msgErr);
+        }
       }
       res.json(project);
     } catch (error) {

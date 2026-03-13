@@ -38,6 +38,13 @@ export default function ProMessagerie() {
   const selectedConversation = conversations.find(c => c.id === selectedConversationId);
 
   useEffect(() => {
+    if (!user?.id) return;
+    apiRequest("PATCH", "/api/messages/all/read", {})
+      .then(() => queryClient.invalidateQueries({ queryKey: ["/api/conversations/unread-count"] }))
+      .catch(() => {});
+  }, [user?.id]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     if (selectedConversationId && user?.id) {
       apiRequest("PATCH", `/api/messages/${selectedConversationId}/read`, {})
