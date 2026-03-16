@@ -27,6 +27,7 @@ interface DisplayAppointment {
   notes: string | null;
   status: string;
   isLocal: boolean;
+  isPast: boolean;
 }
 
 function localDate(d: Date): string {
@@ -49,6 +50,7 @@ function toDisplay(apt: AppointmentWithClient): DisplayAppointment {
     notes: apt.notes || null,
     status: apt.status,
     isLocal: false,
+    isPast: dt < new Date(),
   };
 }
 
@@ -321,22 +323,27 @@ export default function ProPlanning() {
           filteredAppointments.map((apt) => (
             <Card
               key={apt.id}
-              className="border border-gray-100 bg-white shadow-sm mb-3 cursor-pointer hover:border-[#722F37]/30 transition-colors"
+              className={`border shadow-sm mb-3 cursor-pointer transition-colors ${apt.isPast ? "border-gray-100 bg-gray-50 opacity-60" : "border-gray-100 bg-white hover:border-[#722F37]/30"}`}
               data-testid={`card-appointment-${apt.id}`}
               onClick={() => { setSelectedAppointment(apt); setIsDetailOpen(true); }}
             >
-              <CardContent className="p-4 bg-white">
+              <CardContent className={`p-4 ${apt.isPast ? "bg-gray-50" : "bg-white"}`}>
                 <div className="flex gap-4">
                   <div className="text-center min-w-[50px]">
-                    <p className="text-lg font-bold text-[#722F37]">{apt.time}</p>
+                    <p className={`text-lg font-bold ${apt.isPast ? "text-gray-400" : "text-[#722F37]"}`}>{apt.time}</p>
                     <p className="text-xs text-gray-500">{formatDuration(apt.durationMin)}</p>
                   </div>
                   <div className="flex-1 border-l border-gray-100 pl-4">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <Badge className={`${getTypeColor(apt.typeKey)} border-none`}>
+                      <Badge className={`${apt.isPast ? "bg-gray-100 text-gray-400" : getTypeColor(apt.typeKey)} border-none`}>
                         {getTypeLabel(apt.typeKey)}
                       </Badge>
-                      {apt.status === "pending" && (
+                      {apt.isPast && (
+                        <Badge className="bg-gray-100 text-gray-400 border-none text-xs">
+                          {i18n.language === "fr" ? "Passé" : "Past"}
+                        </Badge>
+                      )}
+                      {!apt.isPast && apt.status === "pending" && (
                         <Badge className="bg-yellow-100 text-yellow-700 border-none text-xs">
                           {i18n.language === "fr" ? "En attente" : "Pending"}
                         </Badge>

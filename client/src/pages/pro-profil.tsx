@@ -189,6 +189,9 @@ export default function ProProfil() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tailor/portfolio"] });
+      if (tailorProfile?.id) {
+        queryClient.invalidateQueries({ queryKey: ["/api/tailors", tailorProfile.id, "portfolio"] });
+      }
       setIsAddingPortfolio(false);
       setNewPortfolioTitle("");
       setNewPortfolioCategory("");
@@ -204,6 +207,9 @@ export default function ProProfil() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tailor/portfolio"] });
+      if (tailorProfile?.id) {
+        queryClient.invalidateQueries({ queryKey: ["/api/tailors", tailorProfile.id, "portfolio"] });
+      }
       toast({ title: "Photo supprimée" });
     },
     onError: () => toast({ title: "Erreur", description: "Impossible de supprimer la photo.", variant: "destructive" }),

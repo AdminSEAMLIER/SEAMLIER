@@ -98,8 +98,13 @@ export default function MesProjets() {
       return res.json();
     },
     onSuccess: () => {
+      const tailorId = reviewProject?.tailorId;
       setReviewProject(null);
       setReviewComment(""); setReviewRating(5);
+      if (tailorId) {
+        queryClient.invalidateQueries({ queryKey: ["/api/tailors", tailorId] });
+        queryClient.invalidateQueries({ queryKey: ["/api/tailors", tailorId, "reviews"] });
+      }
       toast({ title: isFr ? "Avis envoyé, merci !" : "Review submitted, thanks!" });
     },
     onError: (err: any) => toast({ title: "Erreur", description: err?.message, variant: "destructive" }),

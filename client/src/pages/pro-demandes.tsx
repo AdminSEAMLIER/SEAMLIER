@@ -42,9 +42,13 @@ export default function ProDemandes() {
     queryKey: ["/api/tailor/projects"],
   });
 
-  const projects = allProjects.filter((p) =>
-    p.status === "pending" || p.status === "quoted" || p.status === "cancelled"
-  );
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const projects = allProjects.filter((p) => {
+    if (p.status === "pending" || p.status === "quoted" || p.status === "cancelled") return true;
+    if (p.status === "in_progress" && p.createdAt && new Date(p.createdAt) >= startOfMonth) return true;
+    return false;
+  });
 
   const quoteMutation = useMutation({
     mutationFn: async ({ projectId, status, amount }: { projectId: string; status: string; amount?: number }) => {
