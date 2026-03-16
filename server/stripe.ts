@@ -93,8 +93,12 @@ export function registerStripeRoutes(app: Express) {
       if (!projectId) return res.status(400).json({ error: "Champ manquant : projectId" });
       if (!prixConfection) return res.status(400).json({ error: "Champ manquant : prixConfection" });
       if (!planArtisan) return res.status(400).json({ error: "Champ manquant : planArtisan" });
+      const plan = planArtisan.toLowerCase();
+      if (!["starter", "premium", "pro"].includes(plan)) {
+        return res.status(400).json({ error: `Plan inconnu : "${planArtisan}" (attendu : starter, pro ou premium)` });
+      }
 
-      const montants = calc(prixConfection, planArtisan);
+      const montants = calc(prixConfection, plan);
       const pi = await stripe.paymentIntents.create({
         amount: montants.centimes.totalClient,
         currency: "eur",
