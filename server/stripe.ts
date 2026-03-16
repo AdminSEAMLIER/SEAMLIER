@@ -105,17 +105,26 @@ export function registerStripeRoutes(app: Express) {
         description: `SEAMLiER - Commande #${projectId}`,
       });
 
-      // Persiste le PI et les montants sur le projet
-      await storage.updateProject(projectId, {
-        stripePaymentIntentId: pi.id,
-        paymentStatus: "awaiting_payment",
-        amountTotal: montants.centimes.totalClient,
-        amountArtisan: montants.centimes.montantArtisan,
-      } as any);
       console.log(`[Stripe] Projet ${projectId} → PI ${pi.id} créé (${montants.centimes.totalClient / 100} €)`);
 
+      // Persiste le PI et les montants (non bloquant : si la DB échoue on continue)
+      try {
+        await storage.updateProject(projectId, {
+          stripePaymentIntentId: pi.id,
+          paymentStatus: "awaiting_payment",
+          amountTotal: montants.centimes.totalClient,
+          amountArtisan: montants.centimes.montantArtisan,
+        } as any);
+      } catch (dbErr: any) {
+        console.error(`[Stripe] updateProject DB error (non bloquant):`, dbErr?.message ?? dbErr);
+      }
+
       res.json({ clientSecret: pi.client_secret, montants: montants.euros });
-    } catch (err: any) { res.status(500).json({ error: err.message }); }
+    } catch (err: any) {
+      const msg = err?.message ?? String(err) ?? "Erreur interne Stripe";
+      console.error("[Stripe] /payment/create error:", msg);
+      res.status(500).json({ error: msg });
+    }
   });
 
   // ── Confirmation client (travail reçu) ────────────────────────────────────
