@@ -121,9 +121,10 @@ interface PaymentButtonProps {
   projectId: string;
   prixConfection: number;
   planArtisan: string;
+  label?: string;
 }
 
-export default function PaymentButton({ projectId, prixConfection, planArtisan }: PaymentButtonProps) {
+export default function PaymentButton({ projectId, prixConfection, planArtisan, label }: PaymentButtonProps) {
   const { i18n } = useTranslation();
   const isFr = i18n.language === "fr";
   const [open, setOpen] = useState(false);
@@ -176,7 +177,7 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan }
         ) : paid ? (
           <><CheckCircle className="h-4 w-4 mr-1" />{isFr ? "Payé" : "Paid"}</>
         ) : (
-          <><CreditCard className="h-4 w-4 mr-1" />{isFr ? "Payer" : "Pay"}</>
+          <><CreditCard className="h-4 w-4 mr-1" />{label ?? (isFr ? "Payer" : "Pay")}</>
         )}
       </Button>
 

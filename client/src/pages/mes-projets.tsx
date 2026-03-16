@@ -192,6 +192,7 @@ export default function MesProjets() {
             const currentStepIndex = FABRICATION_STEPS.findIndex(s => s.key === (project.currentStep || "prise_mesures"));
             const tailorName = `${project.tailorUser?.firstName || ""} ${project.tailorUser?.lastName || ""}`.trim();
             const isQuoted = project.status === "quoted";
+            const isInProgress = project.status === "in_progress";
             const isCompleted = project.status === "completed";
 
             return (
@@ -238,13 +239,6 @@ export default function MesProjets() {
                           <CheckCircle className="h-4 w-4 mr-1" />
                           {isFr ? "Accepter" : "Accept"}
                         </Button>
-                        {project.amount && project.amount > 0 && (
-                          <PaymentButton
-                            projectId={project.id}
-                            prixConfection={project.amount}
-                            planArtisan={project.tailor?.subscriptionPlan ?? "starter"}
-                          />
-                        )}
                         <Button
                           size="sm"
                           variant="outline"
@@ -344,6 +338,14 @@ export default function MesProjets() {
                       <Calendar className="h-4 w-4" />
                       {isFr ? "Prendre RDV" : "Book"}
                     </Button>
+                    {isInProgress && project.amount && project.amount > 0 && (
+                      <PaymentButton
+                        projectId={project.id}
+                        prixConfection={project.amount}
+                        planArtisan={project.tailor?.subscriptionPlan ?? "starter"}
+                        label={isFr ? "Payer le devis" : "Pay quote"}
+                      />
+                    )}
                     {isCompleted && (
                       <Button
                         size="sm"
