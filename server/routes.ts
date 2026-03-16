@@ -690,20 +690,43 @@ export async function registerRoutes(
       const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
 
-      let appointmentData: any;
+      let tailorId: string;
+      let clientId: string;
+
       if (tailor) {
-        appointmentData = { ...req.body, tailorId: tailor.id };
+        tailorId = tailor.id;
+        const cid = req.body.clientId;
+        if (!cid) return res.status(400).json({ error: "clientId requis pour un pro" });
+        clientId = cid;
       } else {
-        const { tailorId, ...rest } = req.body;
+        tailorId = req.body.tailorId;
         if (!tailorId) return res.status(400).json({ error: "tailorId requis" });
-        appointmentData = { ...rest, tailorId, clientId: userId };
+        clientId = userId;
       }
 
-      const appointment = await storage.createAppointment(appointmentData);
-      res.status(201).json(appointment);
-    } catch (error) {
+      const { scheduledAt, type, duration, notes, location, status, projectId } = req.body;
+      const newId = require("crypto").randomUUID();
+      await pool.query(
+        `INSERT INTO appointments (id, tailor_id, client_id, project_id, type, location, scheduled_at, duration, notes, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          newId,
+          tailorId,
+          clientId,
+          projectId || null,
+          type || "consultation",
+          location || null,
+          new Date(scheduledAt),
+          duration || 60,
+          notes || null,
+          status || "scheduled",
+        ]
+      );
+      const [rows] = await pool.query(`SELECT * FROM appointments WHERE id = ?`, [newId]) as any[];
+      res.status(201).json(rows[0] || { id: newId });
+    } catch (error: any) {
       console.error("Failed to create appointment:", error);
-      res.status(500).json({ error: "Failed to create appointment" });
+      res.status(500).json({ error: error?.message || "Failed to create appointment" });
     }
   });
 
