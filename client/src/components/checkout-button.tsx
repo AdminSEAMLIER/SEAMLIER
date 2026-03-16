@@ -7,10 +7,8 @@ import { CreditCard, CheckCircle, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api-config";
 import { useTranslation } from "react-i18next";
 
-const _pubKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? "";
-const stripePromise = _pubKey.startsWith("pk_")
-  ? loadStripe(_pubKey).catch(() => null)
-  : Promise.resolve(null);
+const _pubKey = "pk_test_51SvLQMLyrGmm31qYQ5lETIK5onU6ZL6Y3NqqmOKcHejTSKZYBuuCjMmnJIrQPCqAKRQC7dmzU0VtZOQUNtJcJHEg00PQl0I0U7";
+const stripePromise = loadStripe(_pubKey).catch(() => null);
 
 // ── Formulaire interne (doit être dans <Elements>) ─────────────────────────
 interface FormProps {
@@ -134,7 +132,7 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
   const [montants, setMontants] = useState<FormProps["montants"] | null>(null);
   const [paid, setPaid] = useState(false);
 
-  if (!_pubKey.startsWith("pk_") || !stripePromise) return null;
+  if (!stripePromise) return null;
 
   const openDialog = async () => {
     setLoading(true);
