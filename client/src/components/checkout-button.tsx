@@ -143,7 +143,7 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
     setClientSecret(null);
     setMontants(null);
     try {
-      const res = await fetch("/public/stripe-payment.php", {
+      const res = await fetch("/api/stripe/payment/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
