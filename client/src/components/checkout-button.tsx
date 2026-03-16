@@ -136,17 +136,24 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
   if (!stripePromise) return null;
 
   const openDialog = async () => {
+    // Ouvre la dialog immédiatement avec le spinner
+    setOpen(true);
     setLoading(true);
     setFetchError(null);
+    setClientSecret(null);
+    setMontants(null);
     try {
       const data = await apiFetch("/api/stripe/payment/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId, prixConfection, planArtisan }),
       });
+      console.log("[PaymentButton] Réponse API:", data);
+      if (!data?.clientSecret) {
+        throw new Error(`Réponse inattendue du serveur : ${JSON.stringify(data)}`);
+      }
       setClientSecret(data.clientSecret);
       setMontants(data.montants);
-      setOpen(true);
     } catch (err: any) {
       const msg = err?.message ?? String(err) ?? "Erreur inconnue";
       console.error("[PaymentButton] Erreur /api/stripe/payment/create", {
@@ -155,7 +162,6 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
         erreurObjet: err,
       });
       setFetchError(msg);
-      setOpen(true);
     } finally {
       setLoading(false);
     }
@@ -200,7 +206,12 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
             </DialogTitle>
           </DialogHeader>
 
-          {paid ? (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-10 gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-[#722F37]" />
+              <p className="text-sm text-gray-500">{isFr ? "Initialisation du paiement…" : "Initializing payment…"}</p>
+            </div>
+          ) : paid ? (
             <div className="text-center py-6 space-y-3">
               <CheckCircle className="h-14 w-14 text-green-500 mx-auto" />
               <p className="text-gray-700 font-medium">
@@ -238,11 +249,7 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
                 onClose={handleClose}
               />
             </Elements>
-          ) : (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-[#722F37]" />
-            </div>
-          )}
+          ) : null}
         </DialogContent>
       </Dialog>
     </>
