@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, TrendingUp, Star, Settings, FileText, FolderKanban, Loader2, Briefcase, ImageIcon } from "lucide-react";
+import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, TrendingUp, Star, Settings, FileText, FolderKanban, Loader2, Briefcase, ImageIcon, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -169,6 +169,72 @@ export default function ProProfil() {
       bannerSaveMutation.mutate(base64);
     };
     reader.readAsDataURL(file);
+  };
+
+  const [isAddingPortfolio, setIsAddingPortfolio] = useState(false);
+  const [newPortfolioTitle, setNewPortfolioTitle] = useState("");
+  const [newPortfolioCategory, setNewPortfolioCategory] = useState("");
+  const [newPortfolioImage, setNewPortfolioImage] = useState<string>("");
+  const portfolioInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: portfolioItems = [], isLoading: portfolioLoading } = useQuery<any[]>({
+    queryKey: ["/api/tailor/portfolio"],
+    enabled: !!user,
+  });
+
+  const addPortfolioMutation = useMutation({
+    mutationFn: async (data: { imageUrl: string; title: string; category?: string }) => {
+      const res = await apiRequest("POST", "/api/portfolio", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tailor/portfolio"] });
+      setIsAddingPortfolio(false);
+      setNewPortfolioTitle("");
+      setNewPortfolioCategory("");
+      setNewPortfolioImage("");
+      toast({ title: "Photo ajoutée !", description: "Votre portfolio a été mis à jour." });
+    },
+    onError: () => toast({ title: "Erreur", description: "Impossible d'ajouter la photo.", variant: "destructive" }),
+  });
+
+  const deletePortfolioMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/portfolio/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tailor/portfolio"] });
+      toast({ title: "Photo supprimée" });
+    },
+    onError: () => toast({ title: "Erreur", description: "Impossible de supprimer la photo.", variant: "destructive" }),
+  });
+
+  const handlePortfolioImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      toast({ title: "Image trop lourde", description: "Max 8 Mo", variant: "destructive" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => setNewPortfolioImage(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleAddPortfolio = () => {
+    if (!newPortfolioImage) {
+      toast({ title: "Image requise", description: "Veuillez sélectionner une photo.", variant: "destructive" });
+      return;
+    }
+    if (!newPortfolioTitle.trim()) {
+      toast({ title: "Titre requis", description: "Veuillez donner un titre.", variant: "destructive" });
+      return;
+    }
+    addPortfolioMutation.mutate({
+      imageUrl: newPortfolioImage,
+      title: newPortfolioTitle.trim(),
+      category: newPortfolioCategory.trim() || undefined,
+    });
   };
 
   const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
@@ -426,6 +492,123 @@ export default function ProProfil() {
                   )}
                   {t('profile.save')}
                 </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border border-gray-100 bg-white shadow-sm mb-6">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+            <CardTitle className="text-lg text-[#722F37] flex items-center gap-2">
+              <ImageIcon className="h-5 w-5" />
+              Mon Portfolio
+            </CardTitle>
+            <Button
+              size="sm"
+              className="bg-[#722F37] hover:bg-[#5a252c] text-white gap-1"
+              onClick={() => setIsAddingPortfolio(!isAddingPortfolio)}
+              data-testid="button-add-portfolio"
+            >
+              <Camera className="h-4 w-4" />
+              Ajouter
+            </Button>
+          </CardHeader>
+          <CardContent className="bg-white">
+            {isAddingPortfolio && (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4 space-y-3">
+                <div
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-[#722F37] transition-colors"
+                  onClick={() => portfolioInputRef.current?.click()}
+                >
+                  {newPortfolioImage ? (
+                    <img src={newPortfolioImage} alt="preview" className="w-full h-40 object-cover rounded-lg" />
+                  ) : (
+                    <div className="py-4">
+                      <Camera className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">Cliquez pour sélectionner une photo</p>
+                      <p className="text-xs text-gray-400 mt-1">JPG, PNG — max 8 Mo</p>
+                    </div>
+                  )}
+                  <input
+                    ref={portfolioInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePortfolioImageChange}
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-700 mb-1 block">Titre *</Label>
+                  <Input
+                    placeholder="Ex: Robe de soirée sur mesure"
+                    value={newPortfolioTitle}
+                    onChange={(e) => setNewPortfolioTitle(e.target.value)}
+                    data-testid="input-portfolio-title"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-700 mb-1 block">Catégorie</Label>
+                  <Input
+                    placeholder="Ex: Robe, Costume, Retouche…"
+                    value={newPortfolioCategory}
+                    onChange={(e) => setNewPortfolioCategory(e.target.value)}
+                    data-testid="input-portfolio-category"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+                    onClick={handleAddPortfolio}
+                    disabled={addPortfolioMutation.isPending}
+                    data-testid="button-save-portfolio"
+                  >
+                    {addPortfolioMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Publier"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-gray-200"
+                    onClick={() => { setIsAddingPortfolio(false); setNewPortfolioImage(""); setNewPortfolioTitle(""); setNewPortfolioCategory(""); }}
+                  >
+                    Annuler
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {portfolioLoading ? (
+              <div className="flex justify-center py-6">
+                <Loader2 className="h-6 w-6 animate-spin text-[#722F37]" />
+              </div>
+            ) : portfolioItems.length === 0 && !isAddingPortfolio ? (
+              <div className="text-center py-8 text-gray-400">
+                <ImageIcon className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">Votre portfolio est vide.</p>
+                <p className="text-xs mt-1">Ajoutez des photos de vos créations.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {portfolioItems.map((item: any) => (
+                  <div key={item.id} className="relative group rounded-lg overflow-hidden aspect-square bg-gray-100" data-testid={`portfolio-item-${item.id}`}>
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 p-1">
+                      <p className="text-white text-xs font-medium text-center line-clamp-2">{item.title}</p>
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        className="h-7 w-7 bg-red-500/90"
+                        onClick={() => deletePortfolioMutation.mutate(item.id)}
+                        disabled={deletePortfolioMutation.isPending}
+                        data-testid={`button-delete-portfolio-${item.id}`}
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>

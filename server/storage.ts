@@ -46,6 +46,7 @@ export interface IStorage {
   getPortfolioItems(): Promise<PortfolioWithTailor[]>;
   getPortfolioItemsByTailor(tailorId: string): Promise<PortfolioItem[]>;
   createPortfolioItem(item: InsertPortfolioItem): Promise<PortfolioItem>;
+  deletePortfolioItem(id: string): Promise<void>;
 
   getProducts(): Promise<ProductWithTailor[]>;
   getProductsByTailor(tailorId: string): Promise<Product[]>;
@@ -269,6 +270,10 @@ class DatabaseStorage implements IStorage {
     await db.insert(portfolioItems).values({ ...item, id });
     const result = await db.select().from(portfolioItems).where(eq(portfolioItems.id, id));
     return result[0];
+  }
+
+  async deletePortfolioItem(id: string): Promise<void> {
+    await db.delete(portfolioItems).where(eq(portfolioItems.id, id));
   }
 
   async getProducts(): Promise<ProductWithTailor[]> {

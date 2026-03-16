@@ -774,6 +774,19 @@ export async function registerRoutes(
   });
 
   // Portfolio management for tailors
+  app.get("/api/tailor/portfolio", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const items = await storage.getPortfolioItemsByTailor(tailor.id);
+      res.json(items);
+    } catch (error) {
+      console.error("Failed to fetch tailor portfolio:", error);
+      res.status(500).json({ error: "Failed to fetch portfolio" });
+    }
+  });
+
   app.post("/api/portfolio", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
@@ -789,6 +802,16 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to add portfolio item:", error);
       res.status(500).json({ error: "Failed to add portfolio item" });
+    }
+  });
+
+  app.delete("/api/portfolio/:id", requireAuth, async (req: any, res) => {
+    try {
+      await storage.deletePortfolioItem(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Failed to delete portfolio item:", error);
+      res.status(500).json({ error: "Failed to delete portfolio item" });
     }
   });
 

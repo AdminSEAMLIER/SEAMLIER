@@ -172,8 +172,12 @@ export default function ProProjets() {
   };
 
   const activeCount = projects.filter(p => p.status === 'in_progress').length;
-  const completedCount = projects.filter(p => p.status === 'completed').length;
-  const cancelledCount = projects.filter(p => p.status === 'cancelled').length;
+  const now = new Date();
+  const completedThisMonth = projects.filter(p => {
+    if (p.status !== 'completed') return false;
+    const d = p.createdAt ? new Date(p.createdAt) : null;
+    return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
 
   return (
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
@@ -196,18 +200,14 @@ export default function ProProjets() {
       <div className="max-w-2xl mx-auto px-4 lg:px-6 py-6">
         <Card className="border border-gray-100 bg-white shadow-sm mb-6">
           <CardContent className="p-4 bg-white">
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xl font-bold text-[#722F37]">{activeCount}</p>
-                <p className="text-xs text-gray-500">{t('pro.activeProjects')}</p>
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div className="p-4 bg-[#722F37]/5 rounded-xl">
+                <p className="text-3xl font-bold text-[#722F37]">{activeCount}</p>
+                <p className="text-sm text-gray-600 mt-1">En cours</p>
               </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xl font-bold text-red-500">{cancelledCount}</p>
-                <p className="text-xs text-gray-500">Annulés</p>
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xl font-bold text-green-600">{completedCount}</p>
-                <p className="text-xs text-gray-500">{t('pro.completedThisMonth')}</p>
+              <div className="p-4 bg-green-50 rounded-xl">
+                <p className="text-3xl font-bold text-green-600">{completedThisMonth}</p>
+                <p className="text-sm text-gray-600 mt-1">Terminés ce mois</p>
               </div>
             </div>
           </CardContent>

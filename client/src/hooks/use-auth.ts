@@ -60,7 +60,8 @@ export function useAuth() {
     queryKey: ["auth-user"],
     queryFn: fetchUser,
     retry: false,
-    staleTime: 1000 * 60 * 5,
+    staleTime: Infinity,
+    gcTime: Infinity,
     initialData: getCachedUser,
     initialDataUpdatedAt: Date.now,
   });
