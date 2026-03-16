@@ -1,3 +1,4 @@
+import { registerStripeRoutes } from "./stripe";
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
@@ -1415,6 +1416,7 @@ export async function registerRoutes(
     });
   });
 
+    registerStripeRoutes(app);
   return httpServer;
 }
 
