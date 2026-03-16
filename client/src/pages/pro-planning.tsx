@@ -29,9 +29,13 @@ interface DisplayAppointment {
   isLocal: boolean;
 }
 
+function localDate(d: Date): string {
+  return d.toLocaleDateString("en-CA");
+}
+
 function toDisplay(apt: AppointmentWithClient): DisplayAppointment {
   const dt = new Date(apt.scheduledAt);
-  const date = dt.toISOString().split("T")[0];
+  const date = localDate(dt);
   const time = dt.toTimeString().slice(0, 5);
   const clientName = `${apt.client.firstName || ""} ${apt.client.lastName || ""}`.trim() || apt.client.email || "Client";
   return {
@@ -174,7 +178,7 @@ export default function ProPlanning() {
 
   const displayAppointments: DisplayAppointment[] = rawAppointments.map(toDisplay);
 
-  const selectedDateStr = selectedDate.toISOString().split("T")[0];
+  const selectedDateStr = localDate(selectedDate);
   const filteredAppointments = displayAppointments
     .filter((apt) => apt.date === selectedDateStr)
     .sort((a, b) => a.time.localeCompare(b.time));
@@ -243,7 +247,7 @@ export default function ProPlanning() {
                 const date = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate() + mondayOffset + index);
                 const isToday = date.toDateString() === new Date().toDateString();
                 const isSelected = date.toDateString() === selectedDate.toDateString();
-                const dateStr = date.toISOString().split("T")[0];
+                const dateStr = localDate(date);
                 const hasAppointments = datesWithAppointments.has(dateStr);
 
                 return (
@@ -285,7 +289,7 @@ export default function ProPlanning() {
           <Button
             size="sm"
             className="bg-[#722F37] hover:bg-[#5a252c] text-white gap-1"
-            onClick={() => { setIsNewOpen(true); setNewDate(selectedDate.toISOString().split("T")[0]); }}
+            onClick={() => { setIsNewOpen(true); setNewDate(localDate(selectedDate)); }}
             data-testid="button-new-appointment"
           >
             <Plus className="h-4 w-4" />

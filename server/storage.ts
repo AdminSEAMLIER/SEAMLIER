@@ -347,6 +347,7 @@ class DatabaseStorage implements IStorage {
         c.created_at as createdAt,
         u.id as u_id, u.first_name as u_firstName, u.last_name as u_lastName,
         u.email as u_email, u.role as u_role, u.profile_image_url as u_profileImageUrl,
+        t.id as t_tailorId,
         (SELECT COUNT(*) FROM messages m 
          WHERE m.conversation_id COLLATE utf8mb4_unicode_ci = c.id COLLATE utf8mb4_unicode_ci
            AND m.is_read = 0 
@@ -359,6 +360,7 @@ class DatabaseStorage implements IStorage {
               ELSE c.participant1_id COLLATE utf8mb4_unicode_ci = u.id COLLATE utf8mb4_unicode_ci
          END
        )
+       LEFT JOIN tailors t ON t.user_id COLLATE utf8mb4_unicode_ci = u.id COLLATE utf8mb4_unicode_ci
        WHERE c.participant1_id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci
           OR c.participant2_id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci
        ORDER BY c.last_message_at DESC`,
@@ -382,6 +384,7 @@ class DatabaseStorage implements IStorage {
         role: row.u_role,
         profileImageUrl: row.u_profileImageUrl,
       } : undefined,
+      otherParticipantTailorId: row.t_tailorId || null,
       unreadCount: Number(row.unreadCount) || 0,
     }));
   }

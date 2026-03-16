@@ -86,20 +86,24 @@ export default function ProDashboard() {
   const measureCount = 0;
   const limitPercent = Math.min(100, (measureCount / STARTER_LIMIT) * 100);
 
-  const conversationCount = conversations?.length ?? 0;
+  const { data: unreadData } = useQuery<{ count: number }>({
+    queryKey: ["/api/conversations/unread-count"],
+    refetchInterval: 5000,
+  });
+  const unreadCount = unreadData?.count ?? 0;
   const productCount = products?.length ?? 0;
 
   const stats = [
     { label: t('pro.thisMonth'), value: "0€", icon: Euro },
     { label: t('pro.activeProjects'), value: String(productCount), icon: FolderKanban },
-    { label: t('pro.newRequests'), value: String(conversationCount), icon: FileText },
+    { label: t('pro.newRequests'), value: String(unreadCount), icon: FileText },
     { label: t('pro.averageRating'), value: "-", icon: Star },
   ];
 
   const quickLinks = [
     { label: t('nav.requests'), icon: FileText, href: "/gestion-demandes", count: 0 },
     { label: t('nav.projects'), icon: FolderKanban, href: "/atelier", count: productCount },
-    { label: t('nav.messaging'), icon: MessageSquare, href: "/messagerie", count: conversationCount },
+    { label: t('nav.messaging'), icon: MessageSquare, href: "/messagerie", count: unreadCount },
     { label: t('nav.planning'), icon: Calendar, href: "/portefeuille", count: 0 },
   ];
 

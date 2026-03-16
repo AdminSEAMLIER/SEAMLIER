@@ -37,10 +37,6 @@ function setCachedUser(user: User | null) {
 async function fetchUser(): Promise<User | null> {
   try {
     const response = await apiFetch(API_ENDPOINTS.auth.user);
-    if (response.status === 401) {
-      setCachedUser(null);
-      return null;
-    }
     if (!response.ok) {
       return getCachedUser();
     }

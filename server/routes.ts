@@ -736,6 +736,26 @@ export async function registerRoutes(
       if (!appointment) {
         return res.status(404).json({ error: "Appointment not found" });
       }
+
+      if (req.body.status === "confirmed") {
+        try {
+          const tailor = await storage.getTailor(appointment.tailorId);
+          if (tailor?.userId && appointment.clientId) {
+            const conv = await storage.getOrCreateConversation(tailor.userId, appointment.clientId);
+            const dt = new Date(appointment.scheduledAt);
+            const dateStr = dt.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+            const timeStr = dt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+            await storage.createMessage({
+              conversationId: conv.id,
+              senderId: tailor.userId,
+              content: `✅ Votre rendez-vous du ${dateStr} à ${timeStr} a été confirmé. À bientôt !`,
+            });
+          }
+        } catch (msgErr) {
+          console.error("Auto-message error on appointment confirm:", msgErr);
+        }
+      }
+
       res.json(appointment);
     } catch (error) {
       console.error("Failed to update appointment:", error);

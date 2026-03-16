@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
-import { FileText, Clock, MapPin, Euro, CheckCircle, XCircle, MessageSquare, Users, Loader2 } from "lucide-react";
+import { FileText, Clock, MapPin, Euro, CheckCircle, XCircle, MessageSquare, Users, Loader2, Send, Shirt, Image } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-config";
@@ -12,20 +14,16 @@ import type { ProjectWithClient } from "@shared/schema";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
-type FilterType = "all" | "pending" | "accepted" | "refused";
+type FilterType = "all" | "pending" | "quoted" | "cancelled";
 
 function statusBadge(status: string) {
   switch (status) {
     case "pending":
-    case "new":
-      return <Badge className="bg-yellow-100 text-yellow-700 border-none">En attente</Badge>;
-    case "accepted":
-    case "en_cours":
-      return <Badge className="bg-blue-100 text-blue-700 border-none">Accepté</Badge>;
-    case "refused":
-      return <Badge className="bg-red-100 text-red-700 border-none">Refusé</Badge>;
-    case "terminé":
-      return <Badge className="bg-green-100 text-green-700 border-none">Terminé</Badge>;
+      return <Badge className="bg-yellow-100 text-yellow-700 border-none">Nouvelle demande</Badge>;
+    case "quoted":
+      return <Badge className="bg-blue-100 text-blue-700 border-none">Devis envoyé</Badge>;
+    case "cancelled":
+      return <Badge className="bg-red-100 text-red-700 border-none">Annulé / Refusé</Badge>;
     default:
       return <Badge className="bg-gray-100 text-gray-600 border-none">{status}</Badge>;
   }
@@ -37,61 +35,58 @@ export default function ProDemandes() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const [openQuoteId, setOpenQuoteId] = useState<string | null>(null);
+  const [quoteAmounts, setQuoteAmounts] = useState<Record<string, string>>({});
 
-  const { data: projects = [], isLoading } = useQuery<ProjectWithClient[]>({
+  const { data: allProjects = [], isLoading } = useQuery<ProjectWithClient[]>({
     queryKey: ["/api/tailor/projects"],
   });
 
-  const statusMutation = useMutation({
-    mutationFn: async ({ projectId, status }: { projectId: string; status: string }) => {
-      const res = await apiFetch(`/api/projects/${projectId}/status`, {
+  const projects = allProjects.filter((p) =>
+    p.status === "pending" || p.status === "quoted" || p.status === "cancelled"
+  );
+
+  const quoteMutation = useMutation({
+    mutationFn: async ({ projectId, status, amount }: { projectId: string; status: string; amount?: number }) => {
+      const res = await apiFetch(`/api/projects/${projectId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, ...(amount != null ? { amount } : {}) }),
       });
       if (!res.ok) throw new Error("Erreur lors de la mise à jour");
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tailor/projects"] });
+      setOpenQuoteId(null);
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de mettre à jour ce projet.", variant: "destructive" });
     },
   });
 
-  const handleAccept = (project: ProjectWithClient) => {
-    statusMutation.mutate(
-      { projectId: project.id, status: "accepted" },
+  const handleSendQuote = (project: ProjectWithClient) => {
+    const amount = parseFloat(quoteAmounts[project.id] || "");
+    if (!amount || isNaN(amount) || amount <= 0) {
+      toast({ title: "Montant invalide", description: "Veuillez saisir un montant valide.", variant: "destructive" });
+      return;
+    }
+    quoteMutation.mutate(
+      { projectId: project.id, status: "quoted", amount },
       {
         onSuccess: () => {
-          toast({
-            title: t("pro.requestAccepted"),
-            description: t("pro.redirectingToMessaging"),
-          });
-          sessionStorage.setItem(
-            "acceptedRequest",
-            JSON.stringify({
-              clientName: `${project.client.firstName} ${project.client.lastName}`.trim(),
-              projectType: project.title,
-              autoMessage: t("pro.acceptanceMessage"),
-            })
-          );
-          setTimeout(() => setLocation("/messagerie?newConversation=true"), 500);
-        },
-        onError: () => {
-          toast({ title: "Erreur", description: "Impossible d'accepter ce projet.", variant: "destructive" });
+          toast({ title: "Devis envoyé !", description: "Le client a été notifié par message." });
         },
       }
     );
   };
 
   const handleDecline = (projectId: string) => {
-    statusMutation.mutate(
-      { projectId, status: "refused" },
+    quoteMutation.mutate(
+      { projectId, status: "cancelled" },
       {
         onSuccess: () => {
-          toast({ title: t("pro.requestDeclined"), description: t("pro.requestDeclinedDesc") });
-        },
-        onError: () => {
-          toast({ title: "Erreur", description: "Impossible de refuser ce projet.", variant: "destructive" });
+          toast({ title: "Demande refusée", description: "La demande a été déclinée." });
         },
       }
     );
@@ -99,22 +94,15 @@ export default function ProDemandes() {
 
   const filtered = projects.filter((p) => {
     if (activeFilter === "all") return true;
-    if (activeFilter === "pending") return p.status === "pending" || p.status === "new";
-    if (activeFilter === "accepted") return p.status === "accepted" || p.status === "en_cours";
-    if (activeFilter === "refused") return p.status === "refused";
+    if (activeFilter === "pending") return p.status === "pending";
+    if (activeFilter === "quoted") return p.status === "quoted";
+    if (activeFilter === "cancelled") return p.status === "cancelled";
     return true;
   });
 
-  const countPending = projects.filter((p) => p.status === "pending" || p.status === "new").length;
-
-  const formatDeadline = (deadline: string | null | undefined) => {
-    if (!deadline) return "—";
-    try {
-      return format(new Date(deadline), "d MMM yyyy", { locale: fr });
-    } catch {
-      return deadline;
-    }
-  };
+  const countPending = projects.filter((p) => p.status === "pending").length;
+  const countQuoted = projects.filter((p) => p.status === "quoted").length;
+  const countCancelled = projects.filter((p) => p.status === "cancelled").length;
 
   const formatDate = (date: string | null | undefined) => {
     if (!date) return "";
@@ -140,7 +128,7 @@ export default function ProDemandes() {
               <Badge className="bg-[#722F37] text-white border-none ml-1">{countPending}</Badge>
             )}
           </div>
-          <p className="text-gray-600 mt-2">{t("pro.requestsSubtitle")}</p>
+          <p className="text-gray-600 mt-2">Gérez les demandes clients et envoyez vos devis.</p>
         </div>
       </div>
 
@@ -150,10 +138,10 @@ export default function ProDemandes() {
             <div className="flex gap-2 overflow-x-auto pb-1">
               {(
                 [
-                  { key: "all", label: "Tous", count: projects.length },
-                  { key: "pending", label: "En attente", count: countPending },
-                  { key: "accepted", label: "Acceptés", count: projects.filter((p) => p.status === "accepted" || p.status === "en_cours").length },
-                  { key: "refused", label: "Refusés", count: projects.filter((p) => p.status === "refused").length },
+                  { key: "all", label: "Toutes", count: projects.length },
+                  { key: "pending", label: "Nouvelles", count: countPending },
+                  { key: "quoted", label: "Devis envoyés", count: countQuoted },
+                  { key: "cancelled", label: "Refusées", count: countCancelled },
                 ] as { key: FilterType; label: string; count: number }[]
               ).map((f) => (
                 <Button
@@ -189,17 +177,16 @@ export default function ProDemandes() {
                 <Users className="h-8 w-8 text-gray-400" />
               </div>
               <h3 className="font-serif text-xl text-[#722F37] mb-2">
-                {t("pro.noRequestsTitle")}
+                Aucune demande
               </h3>
-              <p className="text-gray-500 mb-2">{t("pro.noRequestsDesc")}</p>
-              <p className="text-gray-400 text-sm">{t("pro.noRequestsHint")}</p>
+              <p className="text-gray-500 mb-2">Vous n'avez pas encore de demandes clients.</p>
             </CardContent>
           </Card>
         ) : (
           filtered.map((project) => {
             const clientName = `${project.client?.firstName || ""} ${project.client?.lastName || ""}`.trim() || "Client";
-            const isMutating = statusMutation.isPending && (statusMutation.variables?.projectId === project.id);
-            const isPending = project.status === "pending" || project.status === "new";
+            const isMutating = quoteMutation.isPending && (quoteMutation.variables?.projectId === project.id);
+            const isQuoteOpen = openQuoteId === project.id;
 
             return (
               <Card
@@ -208,14 +195,14 @@ export default function ProDemandes() {
                 data-testid={`card-project-${project.id}`}
               >
                 <CardContent className="p-5 bg-white">
-                  <div className="flex items-start justify-between gap-4 mb-4">
+                  <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h3 className="font-semibold text-[#722F37] truncate">{project.title || "Projet sans titre"}</h3>
                         {statusBadge(project.status)}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
-                        <span>{clientName}</span>
+                        <span className="font-medium text-gray-700">{clientName}</span>
                         {project.client?.location && (
                           <>
                             <span>•</span>
@@ -232,58 +219,131 @@ export default function ProDemandes() {
                     </span>
                   </div>
 
-                  {project.description && (
-                    <p className="text-gray-600 text-sm mb-4">{project.description}</p>
+                  {(project as any).clothingType && (
+                    <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-2">
+                      <Shirt className="h-4 w-4 text-[#722F37]" />
+                      <span className="font-medium">{(project as any).clothingType}</span>
+                    </div>
                   )}
 
-                  <div className="flex flex-wrap gap-4 text-sm mb-4">
-                    {project.amount != null && (
+                  {project.description && (
+                    <p className="text-gray-600 text-sm mb-3 bg-gray-50 rounded-lg p-3">{project.description}</p>
+                  )}
+
+                  <div className="flex flex-wrap gap-4 text-sm mb-3">
+                    {(project as any).requestedPrice != null && (
                       <div className="flex items-center gap-1 text-gray-600">
                         <Euro className="h-4 w-4 text-[#722F37]" />
-                        <span>{project.amount} €</span>
+                        <span>Budget client : <strong>{(project as any).requestedPrice}€</strong></span>
+                      </div>
+                    )}
+                    {project.status === "quoted" && project.amount != null && (
+                      <div className="flex items-center gap-1 text-blue-600">
+                        <Euro className="h-4 w-4" />
+                        <span>Votre devis : <strong>{project.amount}€</strong></span>
                       </div>
                     )}
                     {project.deadline && (
                       <div className="flex items-center gap-1 text-gray-600">
                         <Clock className="h-4 w-4 text-[#722F37]" />
-                        <span>{formatDeadline(project.deadline)}</span>
+                        <span>{formatDate(project.deadline)}</span>
                       </div>
                     )}
                   </div>
 
-                  {isPending && (
-                    <div className="flex gap-2 pt-4 border-t border-gray-100">
+                  {(project as any).modelPhotoUrl && (
+                    <div className="mb-3">
+                      <a href={(project as any).modelPhotoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-[#722F37] hover:underline">
+                        <Image className="h-4 w-4" />
+                        Voir la photo modèle
+                      </a>
+                    </div>
+                  )}
+
+                  {project.status === "quoted" && (
+                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-blue-700 mb-3">
+                      ✉️ Devis envoyé au client. En attente de sa réponse.
+                    </div>
+                  )}
+
+                  {project.status === "pending" && (
+                    <>
+                      {isQuoteOpen ? (
+                        <div className="border-t border-gray-100 pt-4 space-y-3">
+                          <Label className="text-sm font-medium text-gray-700">Montant du devis (€)</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              type="number"
+                              min="1"
+                              placeholder="Ex: 150"
+                              value={quoteAmounts[project.id] || ""}
+                              onChange={(e) => setQuoteAmounts((prev) => ({ ...prev, [project.id]: e.target.value }))}
+                              className="flex-1"
+                              data-testid={`input-quote-amount-${project.id}`}
+                            />
+                            <Button
+                              className="bg-[#722F37] hover:bg-[#5a252c] text-white gap-1"
+                              onClick={() => handleSendQuote(project)}
+                              disabled={isMutating}
+                              data-testid={`button-send-quote-${project.id}`}
+                            >
+                              {isMutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                              Envoyer
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="border-gray-200"
+                              onClick={() => setOpenQuoteId(null)}
+                            >
+                              Annuler
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2 pt-4 border-t border-gray-100">
+                          <Button
+                            className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white gap-1"
+                            onClick={() => setOpenQuoteId(project.id)}
+                            disabled={isMutating}
+                            data-testid={`button-open-quote-${project.id}`}
+                          >
+                            <Euro className="h-4 w-4" />
+                            Envoyer un devis
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="border-gray-200"
+                            size="icon"
+                            onClick={() => setLocation("/messagerie")}
+                            data-testid={`button-message-${project.id}`}
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="border-gray-200 text-gray-500"
+                            size="icon"
+                            onClick={() => handleDecline(project.id)}
+                            disabled={isMutating}
+                            data-testid={`button-decline-${project.id}`}
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {project.status !== "pending" && project.status !== "cancelled" && (
+                    <div className="pt-3 border-t border-gray-100 flex justify-end">
                       <Button
-                        className="flex-1 bg-white border-2 border-[#722F37] text-[#722F37] hover:bg-[#722F37]/10"
-                        onClick={() => handleAccept(project)}
-                        disabled={isMutating}
-                        data-testid={`button-accept-${project.id}`}
-                      >
-                        {isMutating ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                        )}
-                        {t("pro.accept")}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="border-gray-200"
-                        size="icon"
+                        variant="ghost"
+                        size="sm"
+                        className="text-gray-500 gap-1"
                         onClick={() => setLocation("/messagerie")}
-                        data-testid={`button-message-${project.id}`}
                       >
                         <MessageSquare className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="border-gray-200 text-gray-500"
-                        size="icon"
-                        onClick={() => handleDecline(project.id)}
-                        disabled={isMutating}
-                        data-testid={`button-decline-${project.id}`}
-                      >
-                        <XCircle className="h-4 w-4" />
+                        Messagerie
                       </Button>
                     </div>
                   )}

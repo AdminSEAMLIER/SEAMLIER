@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSearch } from "wouter";
+import { useSearch, Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -226,8 +226,16 @@ export default function Messages() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h2 className="font-medium text-foreground">{[selectedConversation.otherParticipant.firstName, selectedConversation.otherParticipant.lastName].filter(Boolean).join(" ")}</h2>
-                  <p className="text-xs text-muted-foreground">En ligne</p>
+                  {selectedConversation.otherParticipantTailorId ? (
+                    <Link href={`/profil-pro/${selectedConversation.otherParticipantTailorId}`}>
+                      <h2 className="font-medium text-foreground hover:text-[#722F37] hover:underline cursor-pointer transition-colors">
+                        {[selectedConversation.otherParticipant.firstName, selectedConversation.otherParticipant.lastName].filter(Boolean).join(" ")}
+                      </h2>
+                    </Link>
+                  ) : (
+                    <h2 className="font-medium text-foreground">{[selectedConversation.otherParticipant.firstName, selectedConversation.otherParticipant.lastName].filter(Boolean).join(" ")}</h2>
+                  )}
+                  <p className="text-xs text-muted-foreground">{selectedConversation.otherParticipant.role === "tailor" ? "Artisan" : "Client"}</p>
                 </div>
               </div>
 
