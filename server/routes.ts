@@ -1348,6 +1348,38 @@ export async function registerRoutes(
     }
   });
 
+  // Admin - Measurements
+  app.get("/api/admin/measures", requireAdmin, async (req, res) => {
+    try {
+      const data = await storage.getAllMeasurementsForAdmin();
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching admin measures:", error);
+      res.status(500).json({ error: "Failed to fetch measures" });
+    }
+  });
+
+  // Admin - Reviews
+  app.get("/api/admin/reviews", requireAdmin, async (req, res) => {
+    try {
+      const data = await storage.getAllReviewsForAdmin();
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching admin reviews:", error);
+      res.status(500).json({ error: "Failed to fetch reviews" });
+    }
+  });
+
+  app.delete("/api/admin/reviews/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteReview(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      res.status(500).json({ error: "Failed to delete review" });
+    }
+  });
+
   // Email verification
   app.get("/api/verify-email", async (req, res) => {
     try {

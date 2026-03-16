@@ -17,7 +17,7 @@ import {
   ArrowUpRight, X, Upload, MapPin, Pencil,
   User, Building2, Phone, CreditCard, Briefcase, Hash,
   Globe, Bell, Palette, Shield, Database, Key, ToggleLeft,
-  Bold, Italic, Underline
+  Bold, Italic, Underline, Star, Package
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -161,6 +161,37 @@ type Article = {
   createdAt: string | null;
 };
 
+type AdminMeasure = {
+  id: string;
+  userId: string;
+  clientName: string;
+  email: string;
+  neck: number | null;
+  bust: number | null;
+  waist: number | null;
+  hips: number | null;
+  shoulders: number | null;
+  armLength: number | null;
+  backLength: number | null;
+  inseam: number | null;
+  height: number | null;
+  weight: number | null;
+  filledCount: number;
+  totalFields: number;
+  status: "Complet" | "Incomplet" | "Vide";
+  updatedAt: string;
+};
+
+type AdminReview = {
+  id: string;
+  rating: number;
+  comment: string | null;
+  tailorId: string;
+  tailorName: string;
+  clientName: string;
+  createdAt: string;
+};
+
 export default function AdminDashboard() {
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -179,7 +210,7 @@ export default function AdminDashboard() {
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [adminUser, setAdminUser] = useState<any>(null);
-  const [selectedMeasure, setSelectedMeasure] = useState<MeasureProfile | null>(null);
+  const [selectedMeasure, setSelectedMeasure] = useState<AdminMeasure | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showNewArticle, setShowNewArticle] = useState(false);
   const [newArticleTitle, setNewArticleTitle] = useState("");
@@ -462,7 +493,26 @@ export default function AdminDashboard() {
     refetchInterval: 30000,
   });
 
-  const [measureProfiles] = useState<MeasureProfile[]>([]);
+  const { data: measureProfiles = [] } = useQuery<AdminMeasure[]>({
+    queryKey: ["/api/admin/measures"],
+    enabled: isAuthenticated,
+  });
+
+  const { data: adminReviews = [], isLoading: reviewsLoading } = useQuery<AdminReview[]>({
+    queryKey: ["/api/admin/reviews"],
+    enabled: isAuthenticated,
+  });
+
+  const deleteReviewMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiFetch(`/api/admin/reviews/${id}`, { method: "DELETE" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
+      toast({ title: "Avis supprimé" });
+    },
+    onError: () => toast({ title: "Erreur", description: "Impossible de supprimer cet avis.", variant: "destructive" }),
+  });
 
   const { data: rawArtisans = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/artisans"],
@@ -885,11 +935,13 @@ export default function AdminDashboard() {
   const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, id: "overview" },
     { label: "Inscrits", icon: User, id: "users" },
+    { label: "Artisans", icon: Users, id: "artisans" },
     { label: "Projets", icon: ShoppingBag, id: "projects" },
+    { label: "Abonnements", icon: CreditCard, id: "subscriptions" },
     { label: "Messagerie", icon: MessageSquare, id: "messaging" },
     { label: "Planning", icon: Calendar, id: "planning" },
     { label: "Mesures", icon: Ruler, id: "measures" },
-    { label: "Artisans", icon: Users, id: "artisans" },
+    { label: "Avis", icon: Star, id: "reviews" },
     { label: "Magazine", icon: FileText, id: "magazine" },
   ];
 
@@ -1290,10 +1342,6 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {(() => {
-                    return null;
-                  })()}
-
                   <div className="grid lg:grid-cols-3 gap-6">
                     <Card className="border-none shadow-sm">
                       <CardContent className="p-5">
@@ -1301,8 +1349,8 @@ export default function AdminDashboard() {
                         <div className="space-y-3">
                           <div className="flex justify-between text-sm"><span className="text-gray-500">Profils complets</span><span className="font-bold text-green-600" data-testid="text-complete-profiles">{measureProfiles.filter(m => m.status === "Complet").length}</span></div>
                           <div className="flex justify-between text-sm"><span className="text-gray-500">Incomplets</span><span className="font-bold text-amber-600" data-testid="text-incomplete-profiles">{measureProfiles.filter(m => m.status === "Incomplet").length}</span></div>
-                          <div className="flex justify-between text-sm"><span className="text-gray-500">En attente</span><span className="font-bold text-gray-400" data-testid="text-waiting-profiles">{measureProfiles.filter(m => m.status === "En attente").length}</span></div>
-                          <div className="flex justify-between text-sm pt-2 border-t border-gray-50"><span className="text-gray-500">Total mesures</span><span className="font-bold text-[#722F37]" data-testid="text-total-measures">{measureProfiles.reduce((s, m) => s + m.measurements, 0)}</span></div>
+                          <div className="flex justify-between text-sm"><span className="text-gray-500">Vides</span><span className="font-bold text-gray-400" data-testid="text-waiting-profiles">{measureProfiles.filter(m => m.status === "Vide").length}</span></div>
+                          <div className="flex justify-between text-sm pt-2 border-t border-gray-50"><span className="text-gray-500">Total profils</span><span className="font-bold text-[#722F37]" data-testid="text-total-measures">{measureProfiles.length}</span></div>
                           <div className="pt-2 border-t border-gray-50 space-y-1">
                             <div className="flex justify-between text-sm">
                               <span className="text-gray-500">Artisans Starter</span>
@@ -1318,25 +1366,31 @@ export default function AdminDashboard() {
                     </Card>
                     <Card className="border-none shadow-sm bg-white lg:col-span-2 overflow-hidden">
                       <div className="p-5 border-b border-gray-50">
-                        <CardTitle className="text-base font-serif">Profils clients</CardTitle>
+                        <CardTitle className="text-base font-serif">Profils clients ({measureProfiles.length})</CardTitle>
                       </div>
                       <div className="overflow-x-auto">
                         <table className="w-full text-left" data-testid="table-measures">
                           <thead>
                             <tr className="text-[11px] uppercase tracking-wider text-gray-400 bg-gray-50/30">
                               <th className="px-5 py-3 font-bold">Client</th>
-                              <th className="px-5 py-3 font-bold">Mesures</th>
+                              <th className="px-5 py-3 font-bold">Renseignées</th>
                               <th className="px-5 py-3 font-bold">Dernière MAJ</th>
                               <th className="px-5 py-3 font-bold text-center">Statut</th>
                               <th className="px-5 py-3 text-right font-bold">Action</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-50">
+                            {measureProfiles.length === 0 && (
+                              <tr><td colSpan={5} className="px-5 py-8 text-center text-sm text-gray-400">Aucun profil de mesures enregistré</td></tr>
+                            )}
                             {measureProfiles.map(mp => (
                               <tr key={mp.id} className="hover:bg-gray-50/50 transition-colors" data-testid={`row-measure-${mp.id}`}>
-                                <td className="px-5 py-3 text-sm font-semibold">{mp.client}</td>
-                                <td className="px-5 py-3 text-sm text-gray-600">{mp.measurements} mesures</td>
-                                <td className="px-5 py-3 text-xs text-gray-500">{mp.lastUpdate}</td>
+                                <td className="px-5 py-3">
+                                  <p className="text-sm font-semibold">{mp.clientName}</p>
+                                  <p className="text-xs text-gray-400">{mp.email}</p>
+                                </td>
+                                <td className="px-5 py-3 text-sm text-gray-600">{mp.filledCount}/{mp.totalFields}</td>
+                                <td className="px-5 py-3 text-xs text-gray-500">{mp.updatedAt}</td>
                                 <td className="px-5 py-3 text-center">
                                   <Badge className={cn("text-[10px] border-none font-bold", mp.status === "Complet" ? "bg-green-100 text-green-700" : mp.status === "Incomplet" ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500")} data-testid={`badge-measure-status-${mp.id}`}>{mp.status}</Badge>
                                 </td>
@@ -1439,20 +1493,31 @@ export default function AdminDashboard() {
                       <DialogHeader>
                         <DialogTitle className="font-serif text-lg flex items-center gap-3" data-testid="text-measure-client">
                           <Ruler size={20} className="text-[#722F37]" />
-                          {selectedMeasure?.client}
+                          {selectedMeasure?.clientName}
                         </DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4 pt-2">
                         <div className="flex items-center justify-between gap-3 flex-wrap">
                           <Badge className={cn("text-[10px] border-none font-bold", selectedMeasure?.status === "Complet" ? "bg-green-100 text-green-700" : selectedMeasure?.status === "Incomplet" ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500")} data-testid="badge-measure-detail-status">{selectedMeasure?.status}</Badge>
-                          <span className="text-xs text-gray-400" data-testid="text-measure-update">MAJ : {selectedMeasure?.lastUpdate}</span>
+                          <span className="text-xs text-gray-400" data-testid="text-measure-update">MAJ : {selectedMeasure?.updatedAt}</span>
                         </div>
-                        {selectedMeasure?.details && selectedMeasure.details.length > 0 ? (
+                        {selectedMeasure && selectedMeasure.filledCount > 0 ? (
                           <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-measure-details">
-                            {selectedMeasure.details.map((d, i) => (
+                            {[
+                              { label: "Tour de cou", value: selectedMeasure.neck },
+                              { label: "Tour de poitrine", value: selectedMeasure.bust },
+                              { label: "Tour de taille", value: selectedMeasure.waist },
+                              { label: "Tour de hanches", value: selectedMeasure.hips },
+                              { label: "Épaules", value: selectedMeasure.shoulders },
+                              { label: "Longueur de bras", value: selectedMeasure.armLength },
+                              { label: "Longueur dos", value: selectedMeasure.backLength },
+                              { label: "Entrejambe", value: selectedMeasure.inseam },
+                              { label: "Taille", value: selectedMeasure.height },
+                              { label: "Poids", value: selectedMeasure.weight },
+                            ].filter(d => d.value != null).map((d, i) => (
                               <div key={i} className="flex justify-between items-center py-1.5 border-b border-gray-50" data-testid={`measure-detail-${i}`}>
                                 <span className="text-sm text-gray-500">{d.label}</span>
-                                <span className="text-sm font-semibold text-gray-900">{d.value}</span>
+                                <span className="text-sm font-semibold text-gray-900">{d.value} cm</span>
                               </div>
                             ))}
                           </div>
@@ -1463,7 +1528,7 @@ export default function AdminDashboard() {
                           </div>
                         )}
                         <div className="flex justify-between items-center pt-2 border-t border-gray-100 gap-3 flex-wrap">
-                          <span className="text-xs text-gray-400">{selectedMeasure?.measurements} mesure{(selectedMeasure?.measurements ?? 0) > 1 ? "s" : ""} enregistrée{(selectedMeasure?.measurements ?? 0) > 1 ? "s" : ""}</span>
+                          <span className="text-xs text-gray-400">{selectedMeasure?.filledCount}/{selectedMeasure?.totalFields} champs renseignés</span>
                           <Button variant="outline" size="sm" onClick={() => setSelectedMeasure(null)} data-testid="button-close-measure-detail">Fermer</Button>
                         </div>
                       </div>
@@ -2544,6 +2609,208 @@ export default function AdminDashboard() {
                   </Dialog>
                 </>
               )}
+
+              {/* ===== REVIEWS ===== */}
+              {activeTab === "reviews" && (
+                <>
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div>
+                      <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900">Avis clients</h1>
+                      <p className="text-gray-500 mt-1 text-sm">Modération des évaluations laissées sur les artisans</p>
+                    </div>
+                    <div className="flex gap-3 flex-wrap">
+                      <Badge className="bg-[#722F37]/5 text-[#722F37] border-none px-3 py-1">{adminReviews.length} avis</Badge>
+                      <Badge className="bg-amber-50 text-amber-700 border-none px-3 py-1">{adminReviews.filter(r => r.rating <= 2).length} négatifs</Badge>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {[5,4,3,2,1].slice(0,4).map(star => (
+                      <Card key={star} className="border-none shadow-sm">
+                        <CardContent className="p-4 flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center">
+                            <Star size={16} className="text-amber-500 fill-amber-400" />
+                          </div>
+                          <div>
+                            <p className="text-xl font-bold text-gray-900">{adminReviews.filter(r => r.rating === star).length}</p>
+                            <p className="text-xs text-gray-500">{star} étoile{star > 1 ? "s" : ""}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <Card className="border-none shadow-sm overflow-hidden bg-white">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="text-[11px] uppercase tracking-wider text-gray-400 bg-gray-50/30">
+                            <th className="px-5 py-3 font-bold">Client</th>
+                            <th className="px-5 py-3 font-bold">Artisan</th>
+                            <th className="px-5 py-3 font-bold">Note</th>
+                            <th className="px-5 py-3 font-bold">Commentaire</th>
+                            <th className="px-5 py-3 font-bold">Date</th>
+                            <th className="px-5 py-3 text-center font-bold">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {reviewsLoading && (
+                            <tr><td colSpan={6} className="px-5 py-8 text-center text-sm text-gray-400">Chargement…</td></tr>
+                          )}
+                          {!reviewsLoading && adminReviews.length === 0 && (
+                            <tr><td colSpan={6} className="px-5 py-8 text-center text-sm text-gray-400">Aucun avis pour l'instant</td></tr>
+                          )}
+                          {adminReviews.map(review => (
+                            <tr key={review.id} className="hover:bg-gray-50/50 transition-colors" data-testid={`row-review-${review.id}`}>
+                              <td className="px-5 py-3 text-sm font-semibold">{review.clientName}</td>
+                              <td className="px-5 py-3 text-sm text-gray-600">{review.tailorName}</td>
+                              <td className="px-5 py-3">
+                                <div className="flex gap-0.5">
+                                  {[1,2,3,4,5].map(s => (
+                                    <Star key={s} size={12} className={s <= review.rating ? "text-amber-400 fill-amber-400" : "text-gray-200 fill-gray-200"} />
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="px-5 py-3 text-xs text-gray-500 max-w-[200px] truncate">{review.comment || <span className="italic text-gray-300">Aucun commentaire</span>}</td>
+                              <td className="px-5 py-3 text-xs text-gray-500">{review.createdAt}</td>
+                              <td className="px-5 py-3 text-center">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 text-[11px] text-red-600 border-red-100 hover:bg-red-50"
+                                  disabled={deleteReviewMutation.isPending}
+                                  onClick={() => {
+                                    if (confirm(`Supprimer l'avis de ${review.clientName} ? Cette action est irréversible.`)) {
+                                      deleteReviewMutation.mutate(review.id);
+                                    }
+                                  }}
+                                  data-testid={`button-delete-review-${review.id}`}
+                                >
+                                  <Trash2 size={13} className="mr-1" /> Supprimer
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </Card>
+                </>
+              )}
+
+              {/* ===== SUBSCRIPTIONS ===== */}
+              {activeTab === "subscriptions" && (() => {
+                const starterArtisans = artisans.filter(a => a.subscriptionPlan === "Starter");
+                const proArtisans = artisans.filter(a => a.subscriptionPlan === "Pro");
+                const proRevenue = proArtisans.filter(a => a.paymentStatus === "Payé").length * parseFloat(settingsSubscriptionPrice || "29");
+                const latePayments = artisans.filter(a => a.paymentStatus === "En retard" || a.paymentStatus === "Expiré");
+                return (
+                  <>
+                    <div>
+                      <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900">Abonnements</h1>
+                      <p className="text-gray-500 mt-1 text-sm">Suivi des plans et revenus d'abonnements artisans</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <Card className="border-none shadow-sm">
+                        <CardContent className="p-4 flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center">
+                            <Package size={18} className="text-gray-500" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-gray-900">{starterArtisans.length}</p>
+                            <p className="text-xs text-gray-500">Plan Starter</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card className="border-none shadow-sm">
+                        <CardContent className="p-4 flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
+                            <CreditCard size={18} className="text-purple-600" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-gray-900">{proArtisans.length}</p>
+                            <p className="text-xs text-gray-500">Plan Pro</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card className="border-none shadow-sm">
+                        <CardContent className="p-4 flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
+                            <TrendingUp size={18} className="text-green-600" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-gray-900">{proRevenue.toLocaleString("fr-FR")} €</p>
+                            <p className="text-xs text-gray-500">Revenus / mois</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card className="border-none shadow-sm">
+                        <CardContent className="p-4 flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center">
+                            <ShieldAlert size={18} className="text-red-500" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-red-600">{latePayments.length}</p>
+                            <p className="text-xs text-gray-500">Paiements en retard</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <Card className="border-none shadow-sm overflow-hidden bg-white">
+                      <div className="p-5 border-b border-gray-50 flex items-center justify-between gap-4 flex-wrap">
+                        <CardTitle className="text-base font-serif">Détail par artisan</CardTitle>
+                        <div className="flex gap-2 flex-wrap">
+                          <Badge className="bg-[#722F37]/5 text-[#722F37] border-none px-3 py-1">{artisans.length} artisans</Badge>
+                          <Badge className="bg-purple-50 text-purple-700 border-none px-3 py-1">{proArtisans.length} Pro</Badge>
+                          <Badge className="bg-gray-50 text-gray-600 border-none px-3 py-1">{starterArtisans.length} Starter</Badge>
+                        </div>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                          <thead>
+                            <tr className="text-[11px] uppercase tracking-wider text-gray-400 bg-gray-50/30">
+                              <th className="px-5 py-3 font-bold">Artisan</th>
+                              <th className="px-5 py-3 font-bold">Spécialité</th>
+                              <th className="px-5 py-3 font-bold text-center">Plan</th>
+                              <th className="px-5 py-3 font-bold text-center">Montant</th>
+                              <th className="px-5 py-3 font-bold text-center">Statut paiement</th>
+                              <th className="px-5 py-3 text-center font-bold">Commission</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-50">
+                            {artisans.length === 0 && (
+                              <tr><td colSpan={6} className="px-5 py-8 text-center text-sm text-gray-400">Aucun artisan</td></tr>
+                            )}
+                            {artisans.map(a => {
+                              const isPro = a.subscriptionPlan === "Pro";
+                              const payBadgeColor = a.paymentStatus === "Payé" ? "bg-green-100 text-green-700" : a.paymentStatus === "En retard" ? "bg-red-100 text-red-700" : a.paymentStatus === "Expiré" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-500";
+                              return (
+                                <tr key={a.id} className="hover:bg-gray-50/50 transition-colors" data-testid={`row-subscription-${a.id}`}>
+                                  <td className="px-5 py-3">
+                                    <p className="text-sm font-semibold">{a.name}</p>
+                                    <p className="text-xs text-gray-400">{a.email}</p>
+                                  </td>
+                                  <td className="px-5 py-3 text-sm text-gray-600">{a.specialty || "—"}</td>
+                                  <td className="px-5 py-3 text-center">
+                                    <Badge className={cn("text-[10px] border-none font-bold", isPro ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600")}>{a.subscriptionPlan || "Starter"}</Badge>
+                                  </td>
+                                  <td className="px-5 py-3 text-center text-sm font-bold text-gray-800">{isPro ? `${settingsSubscriptionPrice} €/mois` : "0 €"}</td>
+                                  <td className="px-5 py-3 text-center">
+                                    <Badge className={cn("text-[10px] border-none font-bold", payBadgeColor)}>{a.paymentStatus || "—"}</Badge>
+                                  </td>
+                                  <td className="px-5 py-3 text-center text-sm text-gray-600">{isPro ? "0%" : "15%"}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </Card>
+                  </>
+                );
+              })()}
 
               {/* ===== MAGAZINE ===== */}
               {activeTab === "magazine" && (

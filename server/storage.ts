@@ -109,6 +109,9 @@ export interface IStorage {
   getAllProjectsForAdmin(): Promise<any[]>;
   getAllAppointmentsForAdmin(): Promise<any[]>;
   getMeasurementsByUserId(userId: string): Promise<Measurements | undefined>;
+  getAllMeasurementsForAdmin(): Promise<any[]>;
+  getAllReviewsForAdmin(): Promise<any[]>;
+  deleteReview(id: string): Promise<void>;
 }
 
 function generateUUID(): string {
@@ -1035,6 +1038,78 @@ class DatabaseStorage implements IStorage {
         status: r.status === "confirmed" ? "Confirmé" : r.status === "cancelled" ? "Annulé" : "En attente",
       };
     });
+  }
+
+  async getAllMeasurementsForAdmin(): Promise<any[]> {
+    const [rows] = await pool.query(`
+      SELECT m.id, m.user_id, m.neck, m.bust, m.waist, m.hips, m.shoulders,
+             m.arm_length, m.back_length, m.inseam, m.height, m.weight, m.updated_at,
+             u.first_name, u.last_name, u.email
+      FROM measurements m
+      INNER JOIN users u ON m.user_id = u.id COLLATE utf8mb4_unicode_ci
+      ORDER BY m.updated_at DESC
+    `) as any[];
+    if (!Array.isArray(rows)) return [];
+    return rows.map((r: any) => {
+      const fields = [r.neck, r.bust, r.waist, r.hips, r.shoulders, r.arm_length, r.back_length, r.inseam, r.height, r.weight];
+      const filled = fields.filter((v) => v != null).length;
+      return {
+        id: r.id,
+        userId: r.user_id,
+        clientName: `${r.first_name || ""} ${r.last_name || ""}`.trim() || r.email || "—",
+        email: r.email || "—",
+        neck: r.neck,
+        bust: r.bust,
+        waist: r.waist,
+        hips: r.hips,
+        shoulders: r.shoulders,
+        armLength: r.arm_length,
+        backLength: r.back_length,
+        inseam: r.inseam,
+        height: r.height,
+        weight: r.weight,
+        filledCount: filled,
+        totalFields: fields.length,
+        status: filled === fields.length ? "Complet" : filled > 0 ? "Incomplet" : "Vide",
+        updatedAt: r.updated_at ? new Date(r.updated_at).toLocaleDateString("fr-FR") : "—",
+      };
+    });
+  }
+
+  async getAllReviewsForAdmin(): Promise<any[]> {
+    const [rows] = await pool.query(`
+      SELECT r.id, r.rating, r.comment, r.created_at,
+             u.first_name as client_first, u.last_name as client_last, u.email as client_email,
+             tu.first_name as tailor_first, tu.last_name as tailor_last,
+             t.id as tailor_id
+      FROM reviews r
+      INNER JOIN users u ON r.user_id = u.id COLLATE utf8mb4_unicode_ci
+      INNER JOIN tailors t ON r.tailor_id = t.id COLLATE utf8mb4_unicode_ci
+      INNER JOIN users tu ON t.user_id = tu.id COLLATE utf8mb4_unicode_ci
+      ORDER BY r.created_at DESC
+    `) as any[];
+    if (!Array.isArray(rows)) return [];
+    return rows.map((r: any) => ({
+      id: r.id,
+      rating: r.rating,
+      comment: r.comment || null,
+      tailorId: r.tailor_id,
+      tailorName: `${r.tailor_first || ""} ${r.tailor_last || ""}`.trim() || "—",
+      clientName: `${r.client_first || ""} ${r.client_last || ""}`.trim() || r.client_email || "—",
+      createdAt: r.created_at ? new Date(r.created_at).toLocaleDateString("fr-FR") : "—",
+    }));
+  }
+
+  async deleteReview(id: string): Promise<void> {
+    const [reviewRows] = await pool.query(`SELECT tailor_id FROM reviews WHERE id = ?`, [id]) as any[];
+    const tailorId = Array.isArray(reviewRows) && reviewRows[0] ? reviewRows[0].tailor_id : null;
+    await pool.query(`DELETE FROM reviews WHERE id = ?`, [id]);
+    if (tailorId) {
+      const [ratingRows] = await pool.query(`SELECT AVG(rating) as avg, COUNT(*) as cnt FROM reviews WHERE tailor_id = ?`, [tailorId]) as any[];
+      const avg = Array.isArray(ratingRows) && ratingRows[0] ? (parseFloat(ratingRows[0].avg) || 0) : 0;
+      const cnt = Array.isArray(ratingRows) && ratingRows[0] ? (parseInt(ratingRows[0].cnt) || 0) : 0;
+      await pool.query(`UPDATE tailors SET rating = ?, review_count = ? WHERE id = ?`, [Math.round(avg * 10) / 10, cnt, tailorId]);
+    }
   }
 }
 
