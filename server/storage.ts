@@ -332,6 +332,9 @@ class DatabaseStorage implements IStorage {
   async createReview(review: InsertReview): Promise<Review> {
     const id = generateUUID();
     await db.insert(reviews).values({ ...review, id });
+    const allReviews = await db.select({ rating: reviews.rating }).from(reviews).where(eq(reviews.tailorId, review.tailorId));
+    const avg = allReviews.length ? allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length : 0;
+    await db.update(tailors).set({ rating: Math.round(avg * 10) / 10, reviewCount: allReviews.length }).where(eq(tailors.id, review.tailorId));
     const result = await db.select().from(reviews).where(eq(reviews.id, id));
     return result[0];
   }

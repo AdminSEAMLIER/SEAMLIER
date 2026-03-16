@@ -117,6 +117,23 @@ export default function ProPlanning() {
     },
   });
 
+  const confirmAppointmentMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const res = await apiRequest("PATCH", `/api/appointments/${id}`, { status });
+      return res.json();
+    },
+    onSuccess: (_, { status }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tailor/appointments"] });
+      setIsDetailOpen(false);
+      toast({
+        title: i18n.language === "fr"
+          ? status === "confirmed" ? "Rendez-vous confirmé" : "Rendez-vous refusé"
+          : status === "confirmed" ? "Appointment confirmed" : "Appointment declined"
+      });
+    },
+    onError: () => toast({ title: "Erreur", variant: "destructive" }),
+  });
+
   const getTypeColor = (typeKey: string) => {
     switch (typeKey) {
       case "pro.fitting":
@@ -413,6 +430,35 @@ export default function ProPlanning() {
                     <p className="text-sm text-gray-700 italic">{selectedAppointment.notes}</p>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {selectedAppointment?.status === "scheduled" && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-3">
+              <p className="text-xs font-semibold text-yellow-800 mb-2">
+                {i18n.language === "fr" ? "Demande de rendez-vous — à confirmer" : "Appointment request — confirm or decline"}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  disabled={confirmAppointmentMutation.isPending}
+                  onClick={() => selectedAppointment && confirmAppointmentMutation.mutate({ id: selectedAppointment.id, status: "confirmed" })}
+                  data-testid="button-confirm-appointment"
+                >
+                  {i18n.language === "fr" ? "Confirmer" : "Confirm"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                  disabled={confirmAppointmentMutation.isPending}
+                  onClick={() => selectedAppointment && confirmAppointmentMutation.mutate({ id: selectedAppointment.id, status: "cancelled" })}
+                  data-testid="button-decline-appointment"
+                >
+                  {i18n.language === "fr" ? "Refuser" : "Decline"}
+                </Button>
               </div>
             </div>
           )}

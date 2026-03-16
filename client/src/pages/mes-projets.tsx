@@ -315,7 +315,7 @@ export default function MesProjets() {
                       variant="outline"
                       size="sm"
                       className="flex-1 gap-1.5 text-gray-600"
-                      onClick={() => navigate("/messages")}
+                      onClick={() => navigate(`/messages?tailor=${project.tailorId}`)}
                       data-testid={`button-message-tailor-${project.id}`}
                     >
                       <MessageSquare className="h-4 w-4" />

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, TrendingUp, Star, Settings, FileText, FolderKanban, Loader2, Briefcase } from "lucide-react";
+import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, TrendingUp, Star, Settings, FileText, FolderKanban, Loader2, Briefcase, ImageIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,8 @@ export default function ProProfil() {
   const { user, isLoading: authLoading, logout } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const [bannerUrl, setBannerUrl] = useState<string>("");
   const [profile, setProfile] = useState({
     firstName: "",
     lastName: "",
@@ -46,6 +48,10 @@ export default function ProProfil() {
   });
 
   const isLoading = authLoading || profileLoading;
+
+  useEffect(() => {
+    if (tailorProfile?.coverImageUrl) setBannerUrl(tailorProfile.coverImageUrl);
+  }, [tailorProfile]);
 
   useEffect(() => {
     const source = dbProfile || user;
@@ -125,11 +131,7 @@ export default function ProProfil() {
     const file = event.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: t('profile.imageTooLarge'),
-          description: t('profile.imageTooLargeDesc'),
-          variant: "destructive",
-        });
+        toast({ title: t('profile.imageTooLarge'), description: t('profile.imageTooLargeDesc'), variant: "destructive" });
         return;
       }
       const reader = new FileReader();
@@ -140,6 +142,33 @@ export default function ProProfil() {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const bannerSaveMutation = useMutation({
+    mutationFn: async (base64: string) => {
+      return apiRequest('PATCH', `/api/user/me/tailor`, { coverImageUrl: base64 });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user/me/tailor'] });
+      toast({ title: "Bannière mise à jour" });
+    },
+    onError: () => toast({ title: "Erreur", description: "Impossible de sauvegarder la bannière", variant: "destructive" }),
+  });
+
+  const handleBannerChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      toast({ title: "Image trop lourde", description: "Max 8 Mo", variant: "destructive" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setBannerUrl(base64);
+      bannerSaveMutation.mutate(base64);
+    };
+    reader.readAsDataURL(file);
   };
 
   const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
@@ -173,7 +202,36 @@ export default function ProProfil() {
 
   return (
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
-      <div className="bg-gray-50 border-b border-gray-100">
+      {/* Bannière */}
+      <div className="relative h-44 bg-gray-200 overflow-hidden">
+        {bannerUrl ? (
+          <img src={bannerUrl} alt="Bannière" className="w-full h-full object-cover" />
+        ) : (
+          <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&h=400&fit=crop" alt="Bannière" className="w-full h-full object-cover" />
+        )}
+        <div className="absolute inset-0 bg-black/30" />
+        <input
+          type="file"
+          ref={bannerInputRef}
+          onChange={handleBannerChange}
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          data-testid="input-banner-file"
+        />
+        <button
+          onClick={() => bannerInputRef.current?.click()}
+          className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-white/90 hover:bg-white text-gray-700 rounded-full text-xs font-medium shadow"
+          data-testid="button-change-banner"
+        >
+          {bannerSaveMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
+          Changer la bannière
+        </button>
+        <div className="absolute bottom-3 left-4">
+          <h1 className="font-serif text-2xl text-white drop-shadow">{t('nav.profile')}</h1>
+        </div>
+      </div>
+
+      <div className="bg-gray-50 border-b border-gray-100 hidden">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">

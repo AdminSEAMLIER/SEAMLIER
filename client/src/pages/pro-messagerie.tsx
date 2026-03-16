@@ -152,7 +152,15 @@ export default function ProMessagerie() {
                 <Card 
                   key={conv.id} 
                   className="border border-gray-100 bg-white shadow-sm mb-3 cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => setSelectedConversationId(conv.id)}
+                  onClick={() => {
+                    setSelectedConversationId(conv.id);
+                    apiRequest("PATCH", `/api/messages/${conv.id}/read`, {})
+                      .then(() => {
+                        queryClient.invalidateQueries({ queryKey: ["/api/conversations/unread-count"] });
+                        queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+                      })
+                      .catch(() => {});
+                  }}
                   data-testid={`conversation-${conv.id}`}
                 >
                   <CardContent className="p-4 bg-white">
