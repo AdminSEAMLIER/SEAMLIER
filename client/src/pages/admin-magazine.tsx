@@ -1147,15 +1147,41 @@ export default function AdminDashboard() {
                               <td className="px-5 py-3 text-xs text-gray-500 max-w-[180px] truncate">{p.description}</td>
                               <td className="px-5 py-3 text-xs text-gray-500">{p.date}</td>
                               <td className="px-5 py-3 text-center">
-                                <Badge className={cn("text-[10px] px-3 py-1 border-none font-bold uppercase", p.status === "Bloqué" ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700")} data-testid={`badge-sequestre-${p.id}`}>
-                                  {p.status === "Bloqué" ? <ShieldAlert size={10} className="mr-1 inline" /> : <ShieldCheck size={10} className="mr-1 inline" />}
-                                  {p.status}
-                                </Badge>
+                                {(() => {
+                                  const ps = p.paymentStatus;
+                                  if (ps === "transferred") return (
+                                    <Badge className="text-[10px] px-3 py-1 border-none font-bold uppercase bg-green-100 text-green-700" data-testid={`badge-sequestre-${p.id}`}>
+                                      <ShieldCheck size={10} className="mr-1 inline" />Libéré
+                                    </Badge>
+                                  );
+                                  if (ps === "client_confirmed") return (
+                                    <Badge className="text-[10px] px-3 py-1 border-none font-bold uppercase bg-orange-100 text-orange-700" data-testid={`badge-sequestre-${p.id}`}>
+                                      <ShieldAlert size={10} className="mr-1 inline" />À libérer
+                                    </Badge>
+                                  );
+                                  if (ps === "paid") return (
+                                    <Badge className="text-[10px] px-3 py-1 border-none font-bold uppercase bg-yellow-100 text-yellow-700" data-testid={`badge-sequestre-${p.id}`}>
+                                      <ShieldAlert size={10} className="mr-1 inline" />Payé - En cours
+                                    </Badge>
+                                  );
+                                  return (
+                                    <Badge className="text-[10px] px-3 py-1 border-none font-bold uppercase bg-red-100 text-red-600" data-testid={`badge-sequestre-${p.id}`}>
+                                      <ShieldAlert size={10} className="mr-1 inline" />Non payé
+                                    </Badge>
+                                  );
+                                })()}
                               </td>
                               <td className="px-5 py-3 text-right font-bold text-[#722F37]">{p.amount}</td>
                               <td className="px-5 py-3 text-center">
-                                <Button size="sm" variant={p.status === "Bloqué" ? "default" : "outline"} className={cn("h-8 text-[11px] font-bold", p.status === "Bloqué" && "bg-green-600")} onClick={() => toggleSequestre(p.id)} data-testid={`button-toggle-sequestre-${p.id}`}>
-                                  {p.status === "Bloqué" ? "Libérer" : "Bloquer"}
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  disabled={p.paymentStatus !== "client_confirmed"}
+                                  className={cn("h-8 text-[11px] font-bold", p.paymentStatus === "client_confirmed" ? "bg-green-600 hover:bg-green-700" : "bg-gray-200 text-gray-400 cursor-not-allowed")}
+                                  onClick={() => p.paymentStatus === "client_confirmed" && toggleSequestre(p.id)}
+                                  data-testid={`button-toggle-sequestre-${p.id}`}
+                                >
+                                  Libérer
                                 </Button>
                               </td>
                             </tr>

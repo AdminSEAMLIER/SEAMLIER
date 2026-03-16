@@ -989,6 +989,8 @@ class DatabaseStorage implements IStorage {
         p.description,
         p.status,
         p.amount,
+        p.payment_status,
+        p.client_confirmed,
         p.created_at,
         CONCAT(cu.first_name, ' ', cu.last_name) AS client_name,
         CONCAT(tu.first_name, ' ', tu.last_name) AS tailor_name
@@ -1007,6 +1009,8 @@ class DatabaseStorage implements IStorage {
       date: r.created_at ? new Date(r.created_at).toLocaleDateString("fr-FR") : "—",
       amount: r.amount ? `${r.amount}€` : "—",
       status: (r.status === "completed") ? "Libéré" : "Bloqué",
+      paymentStatus: r.payment_status || null,
+      clientConfirmed: !!r.client_confirmed,
     }));
   }
 
