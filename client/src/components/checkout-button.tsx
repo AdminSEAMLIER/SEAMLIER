@@ -131,11 +131,13 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [montants, setMontants] = useState<FormProps["montants"] | null>(null);
   const [paid, setPaid] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   if (!stripePromise) return null;
 
   const openDialog = async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const data = await apiFetch("/api/stripe/payment/create", {
         method: "POST",
@@ -146,7 +148,14 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
       setMontants(data.montants);
       setOpen(true);
     } catch (err: any) {
-      alert(err.message ?? (isFr ? "Impossible d'initialiser le paiement" : "Payment init failed"));
+      const msg = err?.message ?? String(err) ?? "Erreur inconnue";
+      console.error("[PaymentButton] Erreur /api/stripe/payment/create", {
+        projectId, prixConfection, planArtisan,
+        erreurMessage: msg,
+        erreurObjet: err,
+      });
+      setFetchError(msg);
+      setOpen(true);
     } finally {
       setLoading(false);
     }
@@ -160,6 +169,7 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
     setOpen(false);
     setClientSecret(null);
     setMontants(null);
+    setFetchError(null);
   };
 
   return (
@@ -202,6 +212,20 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
                   : "Funds will be held in escrow until you confirm receipt."}
               </p>
               <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white w-full mt-2" onClick={handleClose} data-testid="button-close-payment-success">
+                {isFr ? "Fermer" : "Close"}
+              </Button>
+            </div>
+          ) : fetchError ? (
+            <div className="py-4 space-y-3">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm font-semibold text-red-700 mb-1">
+                  {isFr ? "Erreur lors de l'initialisation du paiement" : "Payment initialization error"}
+                </p>
+                <p className="text-sm text-red-600 font-mono break-all" data-testid="text-fetch-error">
+                  {fetchError}
+                </p>
+              </div>
+              <Button variant="outline" className="w-full" onClick={handleClose} data-testid="button-close-error">
                 {isFr ? "Fermer" : "Close"}
               </Button>
             </div>
