@@ -143,11 +143,16 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
     setClientSecret(null);
     setMontants(null);
     try {
-      const data = await apiFetch("/api/stripe/payment/create", {
+      const res = await fetch("/public/stripe-payment.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ projectId, prixConfection, planArtisan }),
       });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.error) {
+        throw new Error(data.error ?? `HTTP ${res.status}`);
+      }
       console.log("[PaymentButton] Réponse API:", data);
       if (!data?.clientSecret) {
         throw new Error(
