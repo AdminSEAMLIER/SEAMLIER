@@ -28,8 +28,9 @@ export const users = mysqlTable("users", {
   resetTokenExpires: timestamp("reset_token_expires"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  stripeAccountId: varchar("stripe_account_id", { length: 255 }),
+  stripeOnboarded: boolean("stripe_onboarded").default(false),
 });
-
 export const tailors = mysqlTable("tailors", {
   id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id),
@@ -127,6 +128,12 @@ export const projects = mysqlTable("projects", {
   deadline: timestamp("deadline"),
   modelPhotoUrl: text("model_photo_url"),
   notes: text("notes"),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
+  paymentStatus: varchar("payment_status", { length: 50 }).default("pending"),
+  amountTotal: int("amount_total"),
+  amountArtisan: int("amount_artisan"),
+  clientConfirmed: boolean("client_confirmed").default(false),
+  stripeTransferId: varchar("stripe_transfer_id", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["zip", "stripe-cli"]
+packages = ["zip", "stripe-cli", "percona-server"]
 
 [[ports]]
 localPort = 5000
