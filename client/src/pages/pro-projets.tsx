@@ -1,6 +1,9 @@
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { FolderKanban, Clock, Euro, User, ChevronRight, Ruler, Calendar, MessageSquare, Phone, Mail, Camera, Image, Users, CheckCircle, Circle, Loader2, Check, X } from "lucide-react";
+import { FolderKanban, Clock, Euro, User, ChevronRight, Ruler, Calendar, MessageSquare, Phone, Mail, Camera, Image, Users, CheckCircle, Circle, Loader2, Check, X, Plus } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +33,11 @@ export default function ProProjets() {
   const [selectedProject, setSelectedProject] = useState<ProjectWithClient | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [quoteAmount, setQuoteAmount] = useState("");
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingTime, setBookingTime] = useState("");
+  const [bookingType, setBookingType] = useState("consultation");
+  const [bookingNotes, setBookingNotes] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: projects = [], isLoading } = useQuery<ProjectWithClient[]>({
@@ -85,6 +93,34 @@ export default function ProProjets() {
     },
   });
 
+  const bookingMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedProject || !bookingDate || !bookingTime) throw new Error("Champs requis");
+      const scheduledAt = new Date(`${bookingDate}T${bookingTime}`).toISOString();
+      const tailor = await apiRequest("GET", "/api/user/me/tailor");
+      const tailorData = await tailor.json();
+      const res = await apiRequest("POST", "/api/appointments", {
+        tailorId: tailorData.id,
+        clientId: selectedProject.clientId,
+        scheduledAt,
+        type: bookingType,
+        duration: 60,
+        notes: bookingNotes || null,
+        status: "scheduled",
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tailor/appointments"] });
+      setIsBookingOpen(false);
+      setBookingDate(""); setBookingTime(""); setBookingNotes("");
+      toast({ title: "Rendez-vous créé", description: "Le client a été notifié." });
+    },
+    onError: (err: any) => {
+      toast({ title: "Erreur", description: err?.message || "Impossible de créer le rendez-vous.", variant: "destructive" });
+    },
+  });
+
   const handleOpenProject = (project: ProjectWithClient) => {
     setSelectedProject(project);
     setQuoteAmount("");
@@ -107,13 +143,17 @@ export default function ProProjets() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "in_progress":
-        return <Badge className="bg-blue-100 text-blue-700 border-none">{t('pro.inProgress')}</Badge>;
+        return <Badge className="bg-blue-100 text-blue-700 border-none">En cours</Badge>;
       case "pending_payment":
-        return <Badge className="bg-yellow-100 text-yellow-700 border-none">{t('pro.pendingPayment')}</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-700 border-none">Paiement en attente</Badge>;
       case "completed":
-        return <Badge className="bg-green-100 text-green-700 border-none">{t('pro.completed')}</Badge>;
+        return <Badge className="bg-green-100 text-green-700 border-none">Terminé</Badge>;
       case "pending":
-        return <Badge className="bg-gray-100 text-gray-700 border-none">En attente</Badge>;
+        return <Badge className="bg-gray-100 text-gray-700 border-none">Devis demandé</Badge>;
+      case "quoted":
+        return <Badge className="bg-orange-100 text-orange-700 border-none">Devis envoyé — en attente client</Badge>;
+      case "cancelled":
+        return <Badge className="bg-red-100 text-red-700 border-none">Annulé</Badge>;
       default:
         return null;
     }
@@ -318,11 +358,11 @@ export default function ProProjets() {
                       size="sm"
                       className="flex-1 bg-green-600 hover:bg-green-700 text-white gap-1"
                       disabled={!quoteAmount || validateQuoteMutation.isPending}
-                      onClick={() => validateQuoteMutation.mutate({ projectId: selectedProject.id, amount: parseFloat(quoteAmount), status: "in_progress" })}
+                      onClick={() => validateQuoteMutation.mutate({ projectId: selectedProject.id, amount: parseFloat(quoteAmount), status: "quoted" })}
                       data-testid="button-accept-quote"
                     >
                       <Check className="h-4 w-4" />
-                      Accepter
+                      Envoyer le devis
                     </Button>
                     <Button
                       size="sm"
@@ -449,21 +489,69 @@ export default function ProProjets() {
                     data-testid="button-message-client"
                   >
                     <MessageSquare className="h-4 w-4" />
-                    {t('pro.messageClient')}
+                    Messagerie
                   </Button>
                 </Link>
-                <Link href="/portefeuille" className="flex-1">
-                  <Button 
-                    className="w-full gap-2 bg-[#722F37] hover:bg-[#5a252c] text-white"
-                    data-testid="button-schedule-appointment"
-                  >
-                    <Calendar className="h-4 w-4" />
-                    {t('pro.scheduleAppointment')}
-                  </Button>
-                </Link>
+                <Button 
+                  className="flex-1 gap-2 bg-[#722F37] hover:bg-[#5a252c] text-white"
+                  onClick={() => setIsBookingOpen(true)}
+                  data-testid="button-schedule-appointment"
+                >
+                  <Calendar className="h-4 w-4" />
+                  Prendre RDV avec ce client
+                </Button>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog RDV depuis projet */}
+      <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Planifier un rendez-vous</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <Label className="text-sm mb-1 block">Type de rendez-vous</Label>
+              <Select value={bookingType} onValueChange={setBookingType}>
+                <SelectTrigger data-testid="select-booking-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="consultation">Consultation</SelectItem>
+                  <SelectItem value="measurements">Prise de mesures</SelectItem>
+                  <SelectItem value="fitting">Essayage</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-sm mb-1 block">Date</Label>
+                <Input type="date" value={bookingDate} onChange={e => setBookingDate(e.target.value)} data-testid="input-booking-date" />
+              </div>
+              <div>
+                <Label className="text-sm mb-1 block">Heure</Label>
+                <Input type="time" value={bookingTime} onChange={e => setBookingTime(e.target.value)} data-testid="input-booking-time" />
+              </div>
+            </div>
+            <div>
+              <Label className="text-sm mb-1 block">Notes (optionnel)</Label>
+              <Textarea value={bookingNotes} onChange={e => setBookingNotes(e.target.value)} rows={2} placeholder="Précisions pour le client..." data-testid="input-booking-notes" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setIsBookingOpen(false)}>Annuler</Button>
+            <Button
+              className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+              disabled={!bookingDate || !bookingTime || bookingMutation.isPending}
+              onClick={() => bookingMutation.mutate()}
+              data-testid="button-confirm-booking"
+            >
+              {bookingMutation.isPending ? "Envoi…" : "Confirmer"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

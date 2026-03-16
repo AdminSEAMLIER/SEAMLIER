@@ -1,10 +1,18 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FolderKanban, Clock, Euro, CheckCircle, Circle, Loader2, ArrowLeft, Scissors } from "lucide-react";
+import { FolderKanban, Clock, Euro, CheckCircle, Circle, Loader2, ArrowLeft, Scissors, MessageSquare, Calendar, Star, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Link, useLocation } from "wouter";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { ProjectWithTailor } from "@shared/schema";
 
 const FABRICATION_STEPS = [
@@ -21,21 +29,90 @@ const FABRICATION_STEPS = [
 export default function MesProjets() {
   const { t, i18n } = useTranslation();
   const isFr = i18n.language === "fr";
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
+
+  const [bookingProject, setBookingProject] = useState<ProjectWithTailor | null>(null);
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingTime, setBookingTime] = useState("");
+  const [bookingType, setBookingType] = useState("consultation");
+
+  const [reviewProject, setReviewProject] = useState<ProjectWithTailor | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
 
   const { data: projects = [], isLoading } = useQuery<ProjectWithTailor[]>({
     queryKey: ["/api/client/projects"],
   });
 
+  const acceptQuoteMutation = useMutation({
+    mutationFn: (projectId: string) =>
+      apiRequest("PATCH", `/api/projects/${projectId}`, { status: "in_progress" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/client/projects"] });
+      toast({ title: isFr ? "Devis accepté !" : "Quote accepted!", description: isFr ? "La confection va démarrer." : "Production will start." });
+    },
+    onError: () => toast({ title: "Erreur", variant: "destructive" }),
+  });
+
+  const rejectQuoteMutation = useMutation({
+    mutationFn: (projectId: string) =>
+      apiRequest("PATCH", `/api/projects/${projectId}`, { status: "cancelled" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/client/projects"] });
+      toast({ title: isFr ? "Devis refusé" : "Quote rejected" });
+    },
+    onError: () => toast({ title: "Erreur", variant: "destructive" }),
+  });
+
+  const bookingMutation = useMutation({
+    mutationFn: async () => {
+      if (!bookingProject || !bookingDate || !bookingTime) throw new Error("Champs requis");
+      const scheduledAt = new Date(`${bookingDate}T${bookingTime}`).toISOString();
+      const res = await apiRequest("POST", "/api/appointments", {
+        tailorId: bookingProject.tailorId,
+        scheduledAt,
+        type: bookingType,
+        duration: 60,
+        status: "scheduled",
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      setBookingProject(null);
+      setBookingDate(""); setBookingTime("");
+      toast({ title: isFr ? "Rendez-vous demandé" : "Appointment requested" });
+    },
+    onError: (err: any) => toast({ title: "Erreur", description: err?.message, variant: "destructive" }),
+  });
+
+  const reviewMutation = useMutation({
+    mutationFn: async () => {
+      if (!reviewProject || !reviewComment) throw new Error("Commentaire requis");
+      const res = await apiRequest("POST", "/api/reviews", {
+        tailorId: reviewProject.tailorId,
+        rating: reviewRating,
+        comment: reviewComment,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      setReviewProject(null);
+      setReviewComment(""); setReviewRating(5);
+      toast({ title: isFr ? "Avis envoyé, merci !" : "Review submitted, thanks!" });
+    },
+    onError: (err: any) => toast({ title: "Erreur", description: err?.message, variant: "destructive" }),
+  });
+
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "in_progress":
-        return <Badge className="bg-blue-100 text-blue-700 border-none">{isFr ? "En cours" : "In progress"}</Badge>;
-      case "completed":
-        return <Badge className="bg-green-100 text-green-700 border-none">{isFr ? "Terminé" : "Completed"}</Badge>;
-      case "pending":
-        return <Badge className="bg-gray-100 text-gray-700 border-none">{isFr ? "En attente" : "Pending"}</Badge>;
-      default:
-        return null;
+      case "in_progress": return <Badge className="bg-blue-100 text-blue-700 border-none">{isFr ? "En cours" : "In progress"}</Badge>;
+      case "completed": return <Badge className="bg-green-100 text-green-700 border-none">{isFr ? "Terminé" : "Completed"}</Badge>;
+      case "pending": return <Badge className="bg-gray-100 text-gray-700 border-none">{isFr ? "En attente de devis" : "Awaiting quote"}</Badge>;
+      case "quoted": return <Badge className="bg-orange-100 text-orange-700 border-none">{isFr ? "Devis reçu — à valider" : "Quote received"}</Badge>;
+      case "cancelled": return <Badge className="bg-red-100 text-red-700 border-none">{isFr ? "Annulé" : "Cancelled"}</Badge>;
+      default: return null;
     }
   };
 
@@ -45,9 +122,7 @@ export default function MesProjets() {
     return "bg-[#722F37]";
   };
 
-  const getStepLabel = (step: typeof FABRICATION_STEPS[0]) => {
-    return isFr ? step.label : step.labelEn;
-  };
+  const getStepLabel = (step: typeof FABRICATION_STEPS[0]) => isFr ? step.label : step.labelEn;
 
   const getCurrentStepLabel = (stepKey: string | null) => {
     const step = FABRICATION_STEPS.find(s => s.key === stepKey);
@@ -110,10 +185,12 @@ export default function MesProjets() {
           projects.map((project) => {
             const currentStepIndex = FABRICATION_STEPS.findIndex(s => s.key === (project.currentStep || "prise_mesures"));
             const tailorName = `${project.tailorUser?.firstName || ""} ${project.tailorUser?.lastName || ""}`.trim();
+            const isQuoted = project.status === "quoted";
+            const isCompleted = project.status === "completed";
 
             return (
-              <Card 
-                key={project.id} 
+              <Card
+                key={project.id}
                 className="border border-gray-100 bg-white shadow-sm mb-6"
                 data-testid={`card-client-project-${project.id}`}
               >
@@ -132,51 +209,90 @@ export default function MesProjets() {
                     </div>
                   </div>
 
-                  <div className="mb-4">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600 font-medium">{getCurrentStepLabel(project.currentStep)}</span>
-                      <span className="font-bold text-[#722F37]">{project.progress || 0}%</span>
+                  {/* Devis à valider par le client */}
+                  {isQuoted && (
+                    <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                      <p className="text-sm font-semibold text-orange-800 mb-1">
+                        {isFr ? "Devis proposé par l'artisan" : "Quote from tailor"}
+                      </p>
+                      {project.amount && (
+                        <p className="text-2xl font-bold text-orange-700 mb-2">{project.amount}€</p>
+                      )}
+                      <p className="text-xs text-orange-700 mb-3">
+                        {isFr ? "Validez pour lancer la confection, ou refusez si le prix ne convient pas." : "Accept to start production, or decline if the price doesn't suit you."}
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                          disabled={acceptQuoteMutation.isPending}
+                          onClick={() => acceptQuoteMutation.mutate(project.id)}
+                          data-testid={`button-accept-quote-${project.id}`}
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          {isFr ? "Accepter" : "Accept"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                          disabled={rejectQuoteMutation.isPending}
+                          onClick={() => rejectQuoteMutation.mutate(project.id)}
+                          data-testid={`button-reject-quote-${project.id}`}
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          {isFr ? "Refuser" : "Decline"}
+                        </Button>
+                      </div>
                     </div>
-                    <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full ${getProgressColor(project.progress || 0)} rounded-full transition-all duration-500`}
-                        style={{ width: `${project.progress || 0}%` }}
-                      />
-                    </div>
-                  </div>
+                  )}
 
-                  <div className="space-y-0">
-                    {FABRICATION_STEPS.map((step, index) => {
-                      const isCompleted = index < currentStepIndex;
-                      const isCurrent = index === currentStepIndex;
-
-                      return (
-                        <div key={step.key} className="flex items-center gap-3 py-2">
-                          <div className="flex-shrink-0 relative">
-                            {isCompleted ? (
-                              <CheckCircle className="h-5 w-5 text-green-500" />
-                            ) : isCurrent ? (
-                              <div className="h-5 w-5 rounded-full border-2 border-[#722F37] bg-[#722F37] flex items-center justify-center">
-                                <div className="h-2 w-2 rounded-full bg-white" />
-                              </div>
-                            ) : (
-                              <Circle className="h-5 w-5 text-gray-200" />
-                            )}
-                            {index < FABRICATION_STEPS.length - 1 && (
-                              <div className={`absolute left-[9px] top-[22px] w-[2px] h-4 ${
-                                isCompleted ? "bg-green-300" : "bg-gray-100"
-                              }`} />
-                            )}
-                          </div>
-                          <span className={`text-sm ${
-                            isCurrent ? "font-semibold text-[#722F37]" : isCompleted ? "text-green-700" : "text-gray-300"
-                          }`}>
-                            {getStepLabel(step)}
-                          </span>
+                  {/* Timeline fabrication */}
+                  {project.status !== "pending" && project.status !== "cancelled" && (
+                    <>
+                      <div className="mb-4">
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-gray-600 font-medium">{getCurrentStepLabel(project.currentStep)}</span>
+                          <span className="font-bold text-[#722F37]">{project.progress || 0}%</span>
                         </div>
-                      );
-                    })}
-                  </div>
+                        <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${getProgressColor(project.progress || 0)} rounded-full transition-all duration-500`}
+                            style={{ width: `${project.progress || 0}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-0">
+                        {FABRICATION_STEPS.map((step, index) => {
+                          const isStepCompleted = index < currentStepIndex;
+                          const isStepCurrent = index === currentStepIndex;
+
+                          return (
+                            <div key={step.key} className="flex items-center gap-3 py-2">
+                              <div className="flex-shrink-0 relative">
+                                {isStepCompleted ? (
+                                  <CheckCircle className="h-5 w-5 text-green-500" />
+                                ) : isStepCurrent ? (
+                                  <div className="h-5 w-5 rounded-full border-2 border-[#722F37] bg-[#722F37] flex items-center justify-center">
+                                    <div className="h-2 w-2 rounded-full bg-white" />
+                                  </div>
+                                ) : (
+                                  <Circle className="h-5 w-5 text-gray-200" />
+                                )}
+                                {index < FABRICATION_STEPS.length - 1 && (
+                                  <div className={`absolute left-[9px] top-[22px] w-[2px] h-4 ${isStepCompleted ? "bg-green-300" : "bg-gray-100"}`} />
+                                )}
+                              </div>
+                              <span className={`text-sm ${isStepCurrent ? "font-semibold text-[#722F37]" : isStepCompleted ? "text-green-700" : "text-gray-300"}`}>
+                                {getStepLabel(step)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
 
                   <div className="flex flex-wrap gap-4 text-sm mt-4 pt-3 border-t border-gray-100">
                     {project.amount && (
@@ -192,12 +308,135 @@ export default function MesProjets() {
                       </div>
                     )}
                   </div>
+
+                  {/* Actions client */}
+                  <div className="flex gap-2 mt-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-1.5 text-gray-600"
+                      onClick={() => navigate("/messages")}
+                      data-testid={`button-message-tailor-${project.id}`}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      {isFr ? "Messagerie" : "Message"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-1.5 text-gray-600"
+                      onClick={() => { setBookingProject(project); setBookingDate(""); setBookingTime(""); setBookingType("consultation"); }}
+                      data-testid={`button-book-${project.id}`}
+                    >
+                      <Calendar className="h-4 w-4" />
+                      {isFr ? "Prendre RDV" : "Book"}
+                    </Button>
+                    {isCompleted && (
+                      <Button
+                        size="sm"
+                        className="flex-1 gap-1.5 bg-[#722F37] hover:bg-[#5a252c] text-white"
+                        onClick={() => { setReviewProject(project); setReviewRating(5); setReviewComment(""); }}
+                        data-testid={`button-review-${project.id}`}
+                      >
+                        <Star className="h-4 w-4" />
+                        {isFr ? "Laisser un avis" : "Review"}
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             );
           })
         )}
       </div>
+
+      {/* Dialog RDV */}
+      <Dialog open={!!bookingProject} onOpenChange={(open) => !open && setBookingProject(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{isFr ? "Prendre rendez-vous" : "Book an appointment"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <Label className="text-sm mb-1 block">{isFr ? "Type de rendez-vous" : "Appointment type"}</Label>
+              <Select value={bookingType} onValueChange={setBookingType}>
+                <SelectTrigger data-testid="select-booking-type-client">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="consultation">{isFr ? "Consultation" : "Consultation"}</SelectItem>
+                  <SelectItem value="measurements">{isFr ? "Prise de mesures" : "Measurements"}</SelectItem>
+                  <SelectItem value="fitting">{isFr ? "Essayage" : "Fitting"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-sm mb-1 block">{isFr ? "Date" : "Date"}</Label>
+                <Input type="date" value={bookingDate} onChange={e => setBookingDate(e.target.value)} data-testid="input-client-booking-date" />
+              </div>
+              <div>
+                <Label className="text-sm mb-1 block">{isFr ? "Heure" : "Time"}</Label>
+                <Input type="time" value={bookingTime} onChange={e => setBookingTime(e.target.value)} data-testid="input-client-booking-time" />
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setBookingProject(null)}>{isFr ? "Annuler" : "Cancel"}</Button>
+            <Button
+              className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+              disabled={!bookingDate || !bookingTime || bookingMutation.isPending}
+              onClick={() => bookingMutation.mutate()}
+              data-testid="button-confirm-client-booking"
+            >
+              {bookingMutation.isPending ? (isFr ? "Envoi…" : "Sending…") : (isFr ? "Confirmer" : "Confirm")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Avis */}
+      <Dialog open={!!reviewProject} onOpenChange={(open) => !open && setReviewProject(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{isFr ? "Laisser un avis" : "Leave a review"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-sm mb-2 block">{isFr ? "Note" : "Rating"}</Label>
+              <div className="flex gap-1">
+                {[1,2,3,4,5].map(n => (
+                  <button key={n} onClick={() => setReviewRating(n)} className="p-1" data-testid={`star-${n}`}>
+                    <Star className={`h-7 w-7 ${n <= reviewRating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`} />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="review-comment" className="text-sm mb-1 block">{isFr ? "Commentaire" : "Comment"} *</Label>
+              <Textarea
+                id="review-comment"
+                value={reviewComment}
+                onChange={e => setReviewComment(e.target.value)}
+                rows={3}
+                placeholder={isFr ? "Partagez votre expérience..." : "Share your experience..."}
+                data-testid="input-review-comment"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setReviewProject(null)}>{isFr ? "Annuler" : "Cancel"}</Button>
+            <Button
+              className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+              disabled={!reviewComment || reviewMutation.isPending}
+              onClick={() => reviewMutation.mutate()}
+              data-testid="button-submit-review"
+            >
+              {reviewMutation.isPending ? (isFr ? "Envoi…" : "Sending…") : (isFr ? "Publier l'avis" : "Publish")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -602,17 +602,36 @@ export async function registerRoutes(
       if (!project) {
         return res.status(404).json({ error: "Project not found" });
       }
-      // Auto-message when tailor accepts/validates (status becomes in_progress)
+      // Auto-message quand le pro propose un prix (status → "quoted")
+      if (req.body.status === "quoted" && prevProject?.status !== "quoted") {
+        try {
+          const tailor = await storage.getTailor(project.tailorId);
+          if (tailor?.userId && project.clientId) {
+            const conv = await storage.getOrCreateConversation(tailor.userId, project.clientId);
+            const garmentLabel = (project as any).clothingType || project.title || "votre projet";
+            const price = project.amount ? `${project.amount}€` : "un montant";
+            await storage.createMessage({
+              conversationId: conv.id,
+              senderId: tailor.userId,
+              content: `📋 J'ai établi un devis de ${price} pour ${garmentLabel}. Vous pouvez le valider ou le refuser depuis la rubrique "Mes projets". N'hésitez pas si vous avez des questions !`,
+            });
+          }
+        } catch (msgErr) {
+          console.error("Auto-message error on quote:", msgErr);
+        }
+      }
+
+      // Auto-message quand la confection commence (status → "in_progress")
       if (req.body.status === "in_progress" && prevProject?.status !== "in_progress") {
         try {
           const tailor = await storage.getTailor(project.tailorId);
           if (tailor?.userId && project.clientId) {
             const conv = await storage.getOrCreateConversation(tailor.userId, project.clientId);
-            const garmentLabel = project.clothingType || project.title || "votre commande";
+            const garmentLabel = (project as any).clothingType || project.title || "votre commande";
             await storage.createMessage({
               conversationId: conv.id,
               senderId: tailor.userId,
-              content: `🎉 Bonne nouvelle ! La confection de ${garmentLabel} vient de démarrer. Pensez à prendre votre premier rendez-vous pour qu'on puisse commencer dans les meilleures conditions !`,
+              content: `🎉 Super ! Devis validé — la confection de ${garmentLabel} vient de démarrer. Pensez à prendre votre premier rendez-vous pour qu'on commence dans les meilleures conditions !`,
             });
           }
         } catch (msgErr) {
@@ -1212,6 +1231,22 @@ export async function registerRoutes(
   });
 
   // Tailor reads a specific client's measurements (for project view)
+  app.get("/api/tailor/clients", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(404).json({ error: "Not a tailor" });
+      const projects = await storage.getProjectsByTailor(tailor.id);
+      const seen = new Set<string>();
+      const clients = projects
+        .filter(p => p.client && !seen.has(p.clientId) && seen.add(p.clientId))
+        .map(p => ({ id: p.clientId, firstName: p.client?.firstName, lastName: p.client?.lastName, email: p.client?.email }));
+      res.json(clients);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch clients" });
+    }
+  });
+
   app.get("/api/tailor/client/:clientId/measurements", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;

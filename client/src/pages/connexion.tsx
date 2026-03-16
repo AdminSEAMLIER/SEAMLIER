@@ -174,6 +174,11 @@ export default function Connexion() {
       </main>
 
       <footer className="py-8 text-center space-y-4">
+        <Link href="/mot-de-passe-oublie">
+          <span className="text-[#722F37] text-sm hover:underline cursor-pointer" data-testid="link-forgot-password">
+            Mot de passe oublié ?
+          </span>
+        </Link>
         <p className="text-zinc-500 text-sm">
           {t('auth.noAccount')}{" "}
           <Link href="/inscription">

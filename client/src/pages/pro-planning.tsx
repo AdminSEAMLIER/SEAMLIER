@@ -1,8 +1,12 @@
 import { useTranslation } from "react-i18next";
-import { Calendar, MapPin, User, ChevronLeft, ChevronRight, Clock, Trash2, MessageSquare } from "lucide-react";
+import { Calendar, MapPin, User, ChevronLeft, ChevronRight, Clock, Trash2, MessageSquare, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -50,6 +54,12 @@ export default function ProPlanning() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<DisplayAppointment | null>(null);
+  const [isNewOpen, setIsNewOpen] = useState(false);
+  const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("");
+  const [newType, setNewType] = useState("consultation");
+  const [newNotes, setNewNotes] = useState("");
+  const [newLocation, setNewLocation] = useState("");
 
   const weekDaysFr = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
   const weekDaysEn = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -69,6 +79,41 @@ export default function ProPlanning() {
     },
     onError: () => {
       toast({ title: "Erreur", description: "Impossible de supprimer le rendez-vous.", variant: "destructive" });
+    },
+  });
+
+  const { data: tailorClients = [] } = useQuery<Array<{ id: string; firstName?: string; lastName?: string; email?: string }>>({
+    queryKey: ["/api/tailor/clients"],
+  });
+
+  const [newClientId, setNewClientId] = useState("");
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      if (!newDate || !newTime || !newClientId) throw new Error("Client, date et heure requis");
+      const scheduledAt = new Date(`${newDate}T${newTime}`).toISOString();
+      const profileRes = await apiRequest("GET", "/api/user/me/tailor");
+      const profile = await profileRes.json();
+      const res = await apiRequest("POST", "/api/appointments", {
+        tailorId: profile.id,
+        clientId: newClientId,
+        scheduledAt,
+        type: newType,
+        duration: 60,
+        notes: newNotes || null,
+        location: newLocation || null,
+        status: "scheduled",
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tailor/appointments"] });
+      setIsNewOpen(false);
+      setNewClientId(""); setNewDate(""); setNewTime(""); setNewNotes(""); setNewLocation("");
+      toast({ title: i18n.language === "fr" ? "Rendez-vous ajouté" : "Appointment added" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Erreur", description: err?.message || "Impossible d'ajouter le rendez-vous.", variant: "destructive" });
     },
   });
 
@@ -220,6 +265,15 @@ export default function ProPlanning() {
               </p>
             )}
           </div>
+          <Button
+            size="sm"
+            className="bg-[#722F37] hover:bg-[#5a252c] text-white gap-1"
+            onClick={() => { setIsNewOpen(true); setNewDate(selectedDate.toISOString().split("T")[0]); }}
+            data-testid="button-new-appointment"
+          >
+            <Plus className="h-4 w-4" />
+            {i18n.language === "fr" ? "Nouveau RDV" : "New appointment"}
+          </Button>
         </div>
 
         {isLoading ? (
@@ -385,6 +439,86 @@ export default function ProPlanning() {
               {deleteMutation.isPending
                 ? i18n.language === "fr" ? "Suppression…" : "Deleting…"
                 : t("pro.deleteAppointment")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog nouveau RDV */}
+      <Dialog open={isNewOpen} onOpenChange={setIsNewOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{i18n.language === "fr" ? "Nouveau rendez-vous" : "New appointment"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <Label className="text-sm mb-1 block">{i18n.language === "fr" ? "Type" : "Type"}</Label>
+              <Select value={newType} onValueChange={setNewType}>
+                <SelectTrigger data-testid="select-new-rdv-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="consultation">{i18n.language === "fr" ? "Consultation" : "Consultation"}</SelectItem>
+                  <SelectItem value="measurements">{i18n.language === "fr" ? "Prise de mesures" : "Measurements"}</SelectItem>
+                  <SelectItem value="fitting">{i18n.language === "fr" ? "Essayage" : "Fitting"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-sm mb-1 block">{i18n.language === "fr" ? "Client *" : "Client *"}</Label>
+              <Select value={newClientId} onValueChange={setNewClientId}>
+                <SelectTrigger data-testid="select-new-rdv-client">
+                  <SelectValue placeholder={i18n.language === "fr" ? "Sélectionner un client…" : "Select a client…"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {tailorClients.map(c => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {`${c.firstName || ""} ${c.lastName || ""}`.trim() || c.email || c.id}
+                    </SelectItem>
+                  ))}
+                  {tailorClients.length === 0 && (
+                    <SelectItem value="_empty" disabled>
+                      {i18n.language === "fr" ? "Aucun client dans vos projets" : "No clients in your projects"}
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-sm mb-1 block">{i18n.language === "fr" ? "Date" : "Date"}</Label>
+                <Input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} data-testid="input-new-rdv-date" />
+              </div>
+              <div>
+                <Label className="text-sm mb-1 block">{i18n.language === "fr" ? "Heure" : "Time"}</Label>
+                <Input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} data-testid="input-new-rdv-time" />
+              </div>
+            </div>
+            <div>
+              <Label className="text-sm mb-1 block">{i18n.language === "fr" ? "Lieu" : "Location"} ({i18n.language === "fr" ? "optionnel" : "optional"})</Label>
+              <Input
+                placeholder={i18n.language === "fr" ? "Adresse ou lien visio…" : "Address or video link…"}
+                value={newLocation}
+                onChange={e => setNewLocation(e.target.value)}
+                data-testid="input-new-rdv-location"
+              />
+            </div>
+            <div>
+              <Label className="text-sm mb-1 block">{i18n.language === "fr" ? "Notes" : "Notes"} ({i18n.language === "fr" ? "optionnel" : "optional"})</Label>
+              <Textarea value={newNotes} onChange={e => setNewNotes(e.target.value)} rows={2} data-testid="input-new-rdv-notes" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setIsNewOpen(false)}>
+              {i18n.language === "fr" ? "Annuler" : "Cancel"}
+            </Button>
+            <Button
+              className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+              disabled={!newDate || !newTime || !newClientId || createMutation.isPending}
+              onClick={() => createMutation.mutate()}
+              data-testid="button-confirm-new-rdv"
+            >
+              {createMutation.isPending ? (i18n.language === "fr" ? "Envoi…" : "Saving…") : (i18n.language === "fr" ? "Créer" : "Create")}
             </Button>
           </div>
         </DialogContent>
