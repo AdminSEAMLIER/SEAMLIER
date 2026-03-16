@@ -40,9 +40,10 @@ export default function ProProjets() {
   const [bookingNotes, setBookingNotes] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: projects = [], isLoading } = useQuery<ProjectWithClient[]>({
+  const { data: allProjects = [], isLoading } = useQuery<ProjectWithClient[]>({
     queryKey: ["/api/projects"],
   });
+  const projects = allProjects.filter(p => p.status !== "pending" && p.status !== "quoted");
 
   const clientId = selectedProject?.client?.id;
   const { data: clientMeasurements } = useQuery<any>({
@@ -171,8 +172,8 @@ export default function ProProjets() {
   };
 
   const activeCount = projects.filter(p => p.status === 'in_progress').length;
-  const pendingCount = projects.filter(p => p.status === 'pending').length;
   const completedCount = projects.filter(p => p.status === 'completed').length;
+  const cancelledCount = projects.filter(p => p.status === 'cancelled').length;
 
   return (
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
@@ -201,8 +202,8 @@ export default function ProProjets() {
                 <p className="text-xs text-gray-500">{t('pro.activeProjects')}</p>
               </div>
               <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-xl font-bold text-yellow-600">{pendingCount}</p>
-                <p className="text-xs text-gray-500">En attente</p>
+                <p className="text-xl font-bold text-red-500">{cancelledCount}</p>
+                <p className="text-xs text-gray-500">Annulés</p>
               </div>
               <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="text-xl font-bold text-green-600">{completedCount}</p>
