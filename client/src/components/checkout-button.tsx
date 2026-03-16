@@ -150,18 +150,22 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
       });
       console.log("[PaymentButton] Réponse API:", data);
       if (!data?.clientSecret) {
-        throw new Error(`Réponse inattendue du serveur : ${JSON.stringify(data)}`);
+        throw new Error(
+          `Réponse inattendue du serveur : ${JSON.stringify(data)}\n` +
+          `[Envoyé] projectId="${projectId}" | prixConfection=${prixConfection} | planArtisan="${planArtisan}"`
+        );
       }
       setClientSecret(data.clientSecret);
       setMontants(data.montants);
     } catch (err: any) {
       const msg = err?.message ?? String(err) ?? "Erreur inconnue";
+      const detail = `[Envoyé] projectId="${projectId}" | prixConfection=${prixConfection} | planArtisan="${planArtisan}"`;
       console.error("[PaymentButton] Erreur /api/stripe/payment/create", {
         projectId, prixConfection, planArtisan,
         erreurMessage: msg,
         erreurObjet: err,
       });
-      setFetchError(msg);
+      setFetchError(`${msg}\n${detail}`);
     } finally {
       setLoading(false);
     }

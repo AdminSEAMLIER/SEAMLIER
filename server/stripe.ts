@@ -86,12 +86,13 @@ export function registerStripeRoutes(app: Express) {
 
   // ── Création du PaymentIntent ─────────────────────────────────────────────
   app.post("/api/stripe/payment/create", async (req: any, res: Response) => {
-    if (!stripe) return res.status(500).json({ error: "Stripe non configuré" });
+    if (!stripe) return res.status(500).json({ error: "Stripe non configuré — STRIPE_SECRET_KEY manquante" });
     try {
-      const { projectId, prixConfection, planArtisan } = req.body;
-      if (!projectId || !prixConfection || !planArtisan) {
-        return res.status(400).json({ error: "Données manquantes" });
-      }
+      const { projectId, prixConfection, planArtisan } = req.body ?? {};
+      console.log("[Stripe] /payment/create reçu:", { projectId, prixConfection, planArtisan, body: req.body });
+      if (!projectId) return res.status(400).json({ error: "Champ manquant : projectId" });
+      if (!prixConfection) return res.status(400).json({ error: "Champ manquant : prixConfection" });
+      if (!planArtisan) return res.status(400).json({ error: "Champ manquant : planArtisan" });
 
       const montants = calc(prixConfection, planArtisan);
       const pi = await stripe.paymentIntents.create({
