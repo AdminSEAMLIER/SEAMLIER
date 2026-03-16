@@ -14,6 +14,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { ProjectWithTailor } from "@shared/schema";
+import PaymentButton from "@/components/checkout-button";
 
 const FABRICATION_STEPS = [
   { key: "prise_mesures", label: "Prise de mesures", labelEn: "Measurements", progress: 0 },
@@ -237,6 +238,13 @@ export default function MesProjets() {
                           <CheckCircle className="h-4 w-4 mr-1" />
                           {isFr ? "Accepter" : "Accept"}
                         </Button>
+                        {project.amount && project.amount > 0 && (
+                          <PaymentButton
+                            projectId={project.id}
+                            prixConfection={project.amount}
+                            planArtisan={project.tailor?.subscriptionPlan ?? "starter"}
+                          />
+                        )}
                         <Button
                           size="sm"
                           variant="outline"
