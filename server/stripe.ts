@@ -6,6 +6,11 @@ const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SEC
 const FRAIS = 0.10;
 const COMM = 0.15;
 
+const PRICES = {
+  month: "price_1TBzcSLyrGmm31qYwOfOb6Bz",
+  year:  "price_1TC3PaLyrGmm31qYgtlR1Lwd",
+};
+
 function calc(prix: number, plan: string) {
   const frais = Math.round(prix * FRAIS * 100) / 100;
   const total = prix + frais;
@@ -47,12 +52,30 @@ export function registerStripeRoutes(app: Express) {
         }
       }
 
-      if (event.type === "checkout.session.completed") {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const tailorId = session.metadata?.tailorId;
+      if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated") {
+        const sub = event.data.object as Stripe.Subscription;
+        const tailorId = sub.metadata?.tailorId;
+        if (tailorId && sub.status === "active") {
+          await storage.updateTailor(tailorId, {
+            subscriptionPlan: "Pro",
+            stripeSubscriptionId: sub.id,
+            stripeCustomerId: sub.customer as string,
+            subscriptionCurrentPeriodEnd: (sub as any).current_period_end,
+          } as any);
+          console.log(`[Stripe] Artisan ${tailorId} → Plan Pro activé (sub ${sub.id})`);
+        }
+      }
+
+      if (event.type === "customer.subscription.deleted") {
+        const sub = event.data.object as Stripe.Subscription;
+        const tailorId = sub.metadata?.tailorId;
         if (tailorId) {
-          await storage.updateTailor(tailorId, { subscriptionPlan: "Pro" } as any);
-          console.log(`[Stripe] Artisan ${tailorId} → Plan Pro activé via webhook`);
+          await storage.updateTailor(tailorId, {
+            subscriptionPlan: "Starter",
+            stripeSubscriptionId: null,
+            subscriptionCurrentPeriodEnd: null,
+          } as any);
+          console.log(`[Stripe] Artisan ${tailorId} → Plan Starter (abonnement expiré/annulé)`);
         }
       }
 
@@ -93,7 +116,7 @@ export function registerStripeRoutes(app: Express) {
     } catch (err: any) { res.status(500).json({ error: err.message }); }
   });
 
-  // ── Création du PaymentIntent ─────────────────────────────────────────────
+  // ── Création du PaymentIntent (commandes projets) ─────────────────────────
   app.post("/api/stripe/payment/create", async (req: any, res: Response) => {
     if (!stripe) return res.status(500).json({ error: "Stripe non configuré — STRIPE_SECRET_KEY manquante" });
     try {
@@ -121,7 +144,6 @@ export function registerStripeRoutes(app: Express) {
 
       console.log(`[Stripe] Projet ${projectId} → PI ${pi.id} créé (${montants.centimes.totalClient / 100} €)`);
 
-      // Persiste le PI et les montants (non bloquant : si la DB échoue on continue)
       try {
         await storage.updateProject(projectId, {
           stripePaymentIntentId: pi.id,
@@ -179,32 +201,91 @@ export function registerStripeRoutes(app: Express) {
     } catch (err: any) { res.status(500).json({ error: err.message }); }
   });
 
-  // ── Création session Checkout abonnement Pro ──────────────────────────────
-  const PRO_PRICE_ID = "price_1TBzcSLyrGmm31qYwOfOb6Bz";
-
+  // ── Création abonnement Premium (Stripe Billing + Elements) ───────────────
   app.post("/api/stripe/subscription/create", async (req: any, res: Response) => {
     if (!stripe) return res.status(500).json({ error: "Stripe non configuré" });
     try {
       const user = req.user as any;
       if (!user) return res.status(401).json({ error: "Non authentifié" });
-      const tailor = await storage.getTailorByUserId(user.id);
+
+      const { interval } = req.body as { interval: "month" | "year" };
+      if (!interval || !["month", "year"].includes(interval)) {
+        return res.status(400).json({ error: "interval doit être 'month' ou 'year'" });
+      }
+
+      const tailor = await storage.getTailorByUserId(user.id) as any;
       if (!tailor) return res.status(404).json({ error: "Profil artisan introuvable" });
       if (tailor.subscriptionPlan === "Pro") return res.json({ alreadyPro: true });
 
-      const appUrl = process.env.APP_URL || "https://seamlier.fr";
-      const session = await stripe.checkout.sessions.create({
-        mode: "subscription",
-        line_items: [{ price: PRO_PRICE_ID, quantity: 1 }],
-        success_url: `${appUrl}/dashboard-pro?upgrade=success&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${appUrl}/dashboard-pro`,
-        customer_email: user.email,
+      // Créer ou récupérer le Customer Stripe
+      let customerId: string = tailor.stripeCustomerId;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+          metadata: { tailorId: tailor.id, userId: user.id },
+        });
+        customerId = customer.id;
+        await storage.updateTailor(tailor.id, { stripeCustomerId: customerId } as any);
+      }
+
+      // Créer l'abonnement avec paiement incomplet → clientSecret
+      const subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [{ price: PRICES[interval] }],
+        payment_behavior: "default_incomplete",
+        payment_settings: { save_default_payment_method: "on_subscription" },
+        expand: ["latest_invoice.payment_intent"],
         metadata: { tailorId: tailor.id, userId: user.id },
       });
 
-      console.log(`[Stripe] Checkout session créée : ${session.id} pour artisan ${tailor.id}`);
-      res.json({ url: session.url });
+      const invoice = subscription.latest_invoice as Stripe.Invoice;
+      const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+
+      if (!paymentIntent?.client_secret) {
+        return res.status(500).json({ error: "Impossible d'obtenir le clientSecret" });
+      }
+
+      await storage.updateTailor(tailor.id, { stripeSubscriptionId: subscription.id } as any);
+
+      console.log(`[Stripe] Abonnement ${interval} créé : ${subscription.id} pour artisan ${tailor.id}`);
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        subscriptionId: subscription.id,
+        interval,
+        amount: interval === "month" ? 29 : 290,
+      });
     } catch (err: any) {
-      console.error("[Stripe] Erreur création session:", err.message);
+      console.error("[Stripe] Erreur création abonnement:", err.message);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ── Annulation abonnement (fin de période) ────────────────────────────────
+  app.post("/api/stripe/subscription/cancel", async (req: any, res: Response) => {
+    if (!stripe) return res.status(500).json({ error: "Stripe non configuré" });
+    try {
+      const user = req.user as any;
+      if (!user) return res.status(401).json({ error: "Non authentifié" });
+
+      const tailor = await storage.getTailorByUserId(user.id) as any;
+      if (!tailor) return res.status(404).json({ error: "Profil artisan introuvable" });
+      if (!tailor.stripeSubscriptionId) {
+        return res.status(400).json({ error: "Aucun abonnement actif trouvé" });
+      }
+
+      const sub = await stripe.subscriptions.update(tailor.stripeSubscriptionId, {
+        cancel_at_period_end: true,
+      });
+
+      const periodEnd = (sub as any).current_period_end;
+      const periodEndDate = new Date(periodEnd * 1000).toLocaleDateString("fr-FR", {
+        day: "numeric", month: "long", year: "numeric",
+      });
+
+      console.log(`[Stripe] Abonnement ${tailor.stripeSubscriptionId} → annulation fin période (${periodEndDate})`);
+      res.json({ success: true, periodEnd, periodEndDate });
+    } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
   });

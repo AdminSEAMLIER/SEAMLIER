@@ -1,4 +1,4 @@
-import { mysqlTable, text, varchar, int, boolean, float, timestamp, json } from "drizzle-orm/mysql-core";
+import { mysqlTable, text, varchar, int, boolean, float, timestamp, json, bigint } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -43,6 +43,9 @@ export const tailors = mysqlTable("tailors", {
   reviewCount: int("review_count").default(0),
   portfolioCount: int("portfolio_count").default(0),
   subscriptionPlan: text("subscription_plan").default("Starter"),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+  subscriptionCurrentPeriodEnd: bigint("subscription_current_period_end", { mode: "number" }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

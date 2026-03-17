@@ -828,12 +828,9 @@ export default function AdminDashboard() {
   };
 
   const downgradeToStarter = async (id: string, name: string) => {
-    if (!confirm(`Rétrograder ${name} au plan Starter ? Son abonnement Pro sera annulé.`)) return;
+    if (!confirm(`Rétrograder ${name} au plan Starter ?\n\nSon abonnement Stripe sera annulé immédiatement sans remboursement.`)) return;
     try {
-      await apiFetch(`/api/admin/artisans/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({ subscriptionPlan: "Starter" }),
-      });
+      await apiFetch(`/api/admin/artisans/${id}/downgrade`, { method: "POST" });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/artisans"] });
       toast({ title: "Plan rétrogradé", description: `${name} est maintenant sur le plan Starter.` });
     } catch {

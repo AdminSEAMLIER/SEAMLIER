@@ -47,9 +47,12 @@ export async function registerRoutes(
       if (!tailor) {
         return res.status(404).json({ message: "Profil artisan introuvable" });
       }
+      const t = tailor as any;
       res.json({
         tailorId: tailor.id,
         subscriptionPlan: tailor.subscriptionPlan || "Starter",
+        subscriptionCurrentPeriodEnd: t.subscriptionCurrentPeriodEnd || null,
+        stripeSubscriptionId: t.stripeSubscriptionId || null,
       });
     } catch (error) {
       console.error("Error fetching plan:", error);
@@ -57,26 +60,8 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/professionnel/upgrade", requireAuth, async (req, res) => {
-    try {
-      const userId = (req as any).authUserId;
-      const tailor = await storage.getTailorByUserId(userId);
-      if (!tailor) {
-        return res.status(404).json({ message: "Profil artisan introuvable" });
-      }
-      if (tailor.subscriptionPlan === "Pro") {
-        return res.json({ success: true, message: "Déjà abonné au plan Pro", subscriptionPlan: "Pro" });
-      }
-      const updated = await storage.updateTailor(tailor.id, { subscriptionPlan: "Pro" });
-      res.json({
-        success: true,
-        message: "Abonnement Pro activé avec succès",
-        subscriptionPlan: updated?.subscriptionPlan || "Pro",
-      });
-    } catch (error) {
-      console.error("Error upgrading plan:", error);
-      res.status(500).json({ message: "Erreur lors de la mise à niveau" });
-    }
+  app.post("/api/professionnel/upgrade", requireAuth, (_req, res) => {
+    res.status(403).json({ error: "Paiement requis — utilisez /api/stripe/subscription/create" });
   });
 
   // Public routes - Tailors
@@ -1141,6 +1126,37 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error updating admin artisan:", error);
       res.status(500).json({ error: "Failed to update artisan" });
+    }
+  });
+
+  app.post("/api/admin/artisans/:id/downgrade", requireAdmin, async (req, res) => {
+    try {
+      const raw = req.params.id;
+      const tailorId = raw.startsWith("reg-") ? raw.slice(4) : raw;
+
+      const [tailorRows] = await pool.query("SELECT stripe_subscription_id FROM tailors WHERE id = ? LIMIT 1", [tailorId]) as any[];
+      const tailorRecord = Array.isArray(tailorRows) ? tailorRows[0] : null;
+
+      if (tailorRecord?.stripe_subscription_id && process.env.STRIPE_SECRET_KEY) {
+        const StripeLib = (await import("stripe")).default;
+        const stripeClient = new StripeLib(process.env.STRIPE_SECRET_KEY);
+        try {
+          await stripeClient.subscriptions.cancel(tailorRecord.stripe_subscription_id);
+          console.log(`[Admin] Abonnement ${tailorRecord.stripe_subscription_id} annulé immédiatement`);
+        } catch (stripeErr: any) {
+          console.error("[Admin] Erreur annulation Stripe (non bloquant):", stripeErr.message);
+        }
+      }
+
+      await pool.query(
+        "UPDATE tailors SET subscription_plan = 'Starter', stripe_subscription_id = NULL, subscription_current_period_end = NULL WHERE id = ?",
+        [tailorId]
+      );
+
+      res.json({ success: true, message: "Artisan rétrogradé en Starter" });
+    } catch (error: any) {
+      console.error("Error downgrading artisan:", error);
+      res.status(500).json({ error: "Erreur lors de la rétrogradation", detail: error?.message });
     }
   });
 
