@@ -7,7 +7,7 @@ import { CreditCard, CheckCircle, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api-config";
 import { useTranslation } from "react-i18next";
 
-const _pubKey = "pk_test_51SvLQMLyrGmm31qYQ5lETIK5onU6ZL6Y3NqqmOKcHejTSKZYBuuCjMmnJIrQPCqAKRQC7dmzU0VtZOQUNtJcJHEg00PQl0I0U7";
+const _pubKey = "pk_live_51SvLQMLyrGmm31qYHFC4uhspgIlIkEgouIhv0KH11z20sHamBHBBRmFC89AZX1bvyf93qS8MF5V2uBepZHbO7Ea800ag7PLjQY";
 const stripePromise = loadStripe(_pubKey).catch(() => null);
 
 // ── Formulaire interne (doit être dans <Elements>) ─────────────────────────
