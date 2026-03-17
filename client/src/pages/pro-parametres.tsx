@@ -26,7 +26,8 @@ import { useToast } from "@/hooks/use-toast";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
-const stripePromise = loadStripe("pk_live_51SvLQMLyrGmm31qYHFC4uhspgIlIkEgouIhv0KH11z20sHamBHBBRmFC89AZX1bvyf93qS8MF5V2uBepZHbO7Ea800ag7PLjQY").catch(() => null);
+const _pubKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "";
+const stripePromise = _pubKey ? loadStripe(_pubKey).catch(() => null) : Promise.resolve(null);
 
 // ── Formulaire paiement abonnement ─────────────────────────────────────────
 function SubscribeForm({ interval, onSuccess }: { interval: "month" | "year"; onSuccess: () => void }) {

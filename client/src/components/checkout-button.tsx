@@ -7,8 +7,8 @@ import { CreditCard, CheckCircle, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api-config";
 import { useTranslation } from "react-i18next";
 
-const _pubKey = "pk_live_51SvLQMLyrGmm31qYHFC4uhspgIlIkEgouIhv0KH11z20sHamBHBBRmFC89AZX1bvyf93qS8MF5V2uBepZHbO7Ea800ag7PLjQY";
-const stripePromise = loadStripe(_pubKey).catch(() => null);
+const _pubKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "";
+const stripePromise = _pubKey ? loadStripe(_pubKey).catch(() => null) : Promise.resolve(null);
 
 // ── Formulaire interne (doit être dans <Elements>) ─────────────────────────
 interface FormProps {
