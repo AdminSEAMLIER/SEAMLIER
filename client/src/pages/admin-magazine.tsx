@@ -17,7 +17,7 @@ import {
   ArrowUpRight, X, Upload, MapPin, Pencil,
   User, Building2, Phone, CreditCard, Briefcase, Hash,
   Globe, Bell, Palette, Shield, Database, Key, ToggleLeft,
-  Bold, Italic, Underline, Star, Package
+  Bold, Italic, Underline, Star, Package, ArrowDownCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -148,6 +148,7 @@ type CouturierData = {
   registrationDate: string;
   yearsExperience: number;
   bio: string;
+  subscriptionPlan: string;
 };
 
 type Article = {
@@ -542,6 +543,7 @@ export default function AdminDashboard() {
     registrationDate: a.joinDate || a.createdAt || "",
     yearsExperience: a.yearsExperience || 0,
     bio: a.bio || "",
+    subscriptionPlan: a.subscriptionPlan || "Starter",
   }));
 
   const { data: articles = [] } = useQuery<Article[]>({
@@ -822,6 +824,20 @@ export default function AdminDashboard() {
       toast({ title: "Artisan désactivé", description: "Le statut a été mis à jour." });
     } catch (error) {
       toast({ title: "Erreur", description: "Impossible de désactiver l'artisan", variant: "destructive" });
+    }
+  };
+
+  const downgradeToStarter = async (id: string, name: string) => {
+    if (!confirm(`Rétrograder ${name} au plan Starter ? Son abonnement Pro sera annulé.`)) return;
+    try {
+      await apiFetch(`/api/admin/artisans/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ subscriptionPlan: "Starter" }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/artisans"] });
+      toast({ title: "Plan rétrogradé", description: `${name} est maintenant sur le plan Starter.` });
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de rétrograder le plan.", variant: "destructive" });
     }
   };
 
@@ -1494,6 +1510,11 @@ export default function AdminDashboard() {
                                   {c.status === "Vérifié" && (
                                     <Button size="sm" variant="outline" className="h-7 text-[10px] border-amber-200 text-amber-700 hover:bg-amber-50" onClick={() => deactivateCouturier(c.id)} data-testid={`button-deactivate-couturier-${c.id}`}>
                                       <XCircle size={12} className="mr-1" /> Désactiver
+                                    </Button>
+                                  )}
+                                  {c.subscriptionPlan === "Pro" && (
+                                    <Button size="sm" variant="outline" className="h-7 text-[10px] border-purple-200 text-purple-700 hover:bg-purple-50" onClick={() => downgradeToStarter(c.id, c.name)} data-testid={`button-downgrade-couturier-${c.id}`}>
+                                      <ArrowDownCircle size={12} className="mr-1" /> Starter
                                     </Button>
                                   )}
                                   <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => openCouturierDialog(c.id, "edit")} data-testid={`button-edit-couturier-${c.id}`}>
