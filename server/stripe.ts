@@ -47,6 +47,15 @@ export function registerStripeRoutes(app: Express) {
         }
       }
 
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const tailorId = session.metadata?.tailorId;
+        if (tailorId) {
+          await storage.updateTailor(tailorId, { subscriptionPlan: "Pro" } as any);
+          console.log(`[Stripe] Artisan ${tailorId} → Plan Pro activé via webhook`);
+        }
+      }
+
       res.json({ received: true });
     } catch (err: any) {
       console.error("[Stripe webhook error]", err.message);
@@ -168,6 +177,56 @@ export function registerStripeRoutes(app: Express) {
 
       res.json({ success: true, transferId: transfer.id });
     } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  // ── Création session Checkout abonnement Pro ──────────────────────────────
+  const PRO_PRICE_ID = "price_1TBzcSLyrGmm31qYwOfOb6Bz";
+
+  app.post("/api/stripe/subscription/create", async (req: any, res: Response) => {
+    if (!stripe) return res.status(500).json({ error: "Stripe non configuré" });
+    try {
+      const user = req.user as any;
+      if (!user) return res.status(401).json({ error: "Non authentifié" });
+      const tailor = await storage.getTailorByUserId(user.id);
+      if (!tailor) return res.status(404).json({ error: "Profil artisan introuvable" });
+      if (tailor.subscriptionPlan === "Pro") return res.json({ alreadyPro: true });
+
+      const appUrl = process.env.APP_URL || "https://seamlier.fr";
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        line_items: [{ price: PRO_PRICE_ID, quantity: 1 }],
+        success_url: `${appUrl}/dashboard-pro?upgrade=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${appUrl}/dashboard-pro`,
+        customer_email: user.email,
+        metadata: { tailorId: tailor.id, userId: user.id },
+      });
+
+      console.log(`[Stripe] Checkout session créée : ${session.id} pour artisan ${tailor.id}`);
+      res.json({ url: session.url });
+    } catch (err: any) {
+      console.error("[Stripe] Erreur création session:", err.message);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ── Vérification session après retour Stripe ──────────────────────────────
+  app.get("/api/stripe/subscription/verify", async (req: any, res: Response) => {
+    if (!stripe) return res.status(500).json({ error: "Stripe non configuré" });
+    try {
+      const { session_id } = req.query as { session_id: string };
+      if (!session_id) return res.status(400).json({ error: "session_id manquant" });
+
+      const session = await stripe.checkout.sessions.retrieve(session_id);
+      if (session.status === "complete" && session.metadata?.tailorId) {
+        await storage.updateTailor(session.metadata.tailorId, { subscriptionPlan: "Pro" } as any);
+        console.log(`[Stripe] Artisan ${session.metadata.tailorId} → Plan Pro activé via verify`);
+        res.json({ success: true, subscriptionPlan: "Pro" });
+      } else {
+        res.status(400).json({ error: "Session invalide ou incomplète" });
+      }
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   console.log("[Stripe] Routes enregistrées ✅");

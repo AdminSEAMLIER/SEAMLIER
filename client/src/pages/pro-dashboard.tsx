@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "wouter";
+import { useState, useEffect } from "react";
+import { Link, useSearch } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,24 +58,53 @@ export default function ProDashboard() {
     queryKey: ["/api/professionnel/plan"],
   });
 
+  const searchString = useSearch();
+  const searchParams = new URLSearchParams(searchString);
+
+  useEffect(() => {
+    const upgradeStatus = searchParams.get("upgrade");
+    const sessionId = searchParams.get("session_id");
+    if (upgradeStatus === "success" && sessionId) {
+      fetch(`/api/stripe/subscription/verify?session_id=${sessionId}`, { credentials: "include" })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            queryClient.invalidateQueries({ queryKey: ["/api/professionnel/plan"] });
+            toast({
+              title: "Abonnement Pro activé !",
+              description: "Vous bénéficiez maintenant de 0% de commission et de mesures illimitées.",
+            });
+          }
+        })
+        .catch(() => {});
+      window.history.replaceState({}, "", "/dashboard-pro");
+    }
+  }, []);
+
   const upgradeMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/professionnel/upgrade");
-      return res.json();
+      const res = await apiRequest("POST", "/api/stripe/subscription/create");
+      const data = await res.json();
+      if (data.alreadyPro) {
+        queryClient.invalidateQueries({ queryKey: ["/api/professionnel/plan"] });
+        return data;
+      }
+      if (data.url) {
+        window.location.href = data.url;
+        return data;
+      }
+      throw new Error(data.error || "Réponse inattendue");
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/professionnel/plan"] });
-      setShowUpgradeModal(false);
-      setShowConfirmStep(false);
-      toast({
-        title: "Abonnement Pro activé !",
-        description: "Vous bénéficiez maintenant de 0% de commission et de mesures illimitées.",
-      });
+      if (data?.alreadyPro) {
+        setShowUpgradeModal(false);
+        toast({ title: "Vous êtes déjà Pro !", description: "Votre plan Pro est actif." });
+      }
     },
-    onError: () => {
+    onError: (err: any) => {
       toast({
         title: "Erreur",
-        description: "Impossible d'activer le plan Pro. Veuillez réessayer.",
+        description: err?.message || "Impossible de créer la session de paiement.",
         variant: "destructive",
       });
     },
