@@ -492,6 +492,60 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/tailor/projects/count", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const [rows] = await pool.query(
+        "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND status IN ('in_progress','completed')",
+        [tailor.id]
+      ) as any[];
+      const cnt = Array.isArray(rows) && rows[0] ? parseInt(rows[0].cnt) || 0 : 0;
+      res.json({ count: cnt });
+    } catch (error) {
+      console.error("Error fetching tailor project count:", error);
+      res.status(500).json({ error: "Failed to fetch project count" });
+    }
+  });
+
+  app.post("/api/projects/:id/client-confirm", requireAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { deadlineRespected } = req.body;
+      await pool.query(
+        "UPDATE projects SET client_confirmed = 1 WHERE id = ?",
+        [id]
+      );
+      console.log(`[Project] ${id} → clientConfirmed=true, deadlineRespected=${deadlineRespected}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error confirming project:", error);
+      res.status(500).json({ error: "Failed to confirm project" });
+    }
+  });
+
+  app.get("/api/admin/all-requests", requireAdmin, async (req, res) => {
+    try {
+      const [rows] = await pool.query(`
+        SELECT p.id, p.title, p.status, p.created_at as createdAt, p.amount,
+               u_c.first_name as clientFirstName, u_c.last_name as clientLastName,
+               u_t.first_name as tailorFirstName, u_t.last_name as tailorLastName
+        FROM projects p
+        LEFT JOIN users u_c ON u_c.id COLLATE utf8mb4_unicode_ci = p.client_id COLLATE utf8mb4_unicode_ci
+        LEFT JOIN tailors t ON t.id COLLATE utf8mb4_unicode_ci = p.tailor_id COLLATE utf8mb4_unicode_ci
+        LEFT JOIN users u_t ON u_t.id COLLATE utf8mb4_unicode_ci = t.user_id COLLATE utf8mb4_unicode_ci
+        WHERE p.status IN ('pending','quoted')
+        ORDER BY p.created_at DESC
+        LIMIT 200
+      `) as any[];
+      res.json(Array.isArray(rows) ? rows : []);
+    } catch (error) {
+      console.error("Error fetching admin requests:", error);
+      res.status(500).json({ error: "Failed to fetch requests" });
+    }
+  });
+
   app.patch("/api/projects/:id/status", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;

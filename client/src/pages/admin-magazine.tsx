@@ -307,6 +307,12 @@ export default function AdminDashboard() {
     queryKey: ["/api/admin/all-projects"],
     refetchInterval: 30000,
   });
+
+  const { data: adminRequests = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/all-requests"],
+    enabled: isAuthenticated,
+    refetchInterval: 30000,
+  });
   const projects = rawProjects.map(p => ({
     ...p,
     status: sequestreOverrides[p.id] ?? p.status,
@@ -949,17 +955,18 @@ export default function AdminDashboard() {
     { label: "Dashboard", icon: LayoutDashboard, id: "overview" },
     { label: "Inscrits", icon: User, id: "users" },
     { label: "Artisans", icon: Users, id: "artisans" },
+    { label: "Demandes", icon: Clock, id: "requests" },
     { label: "Projets", icon: ShoppingBag, id: "projects" },
+    { label: "Planning", icon: Calendar, id: "planning" },
     { label: "Abonnements", icon: CreditCard, id: "subscriptions" },
     { label: "Messagerie", icon: MessageSquare, id: "messaging" },
-    { label: "Planning", icon: Calendar, id: "planning" },
     { label: "Mesures", icon: Ruler, id: "measures" },
     { label: "Avis", icon: Star, id: "reviews" },
     { label: "Magazine", icon: FileText, id: "magazine" },
   ];
 
   const stats = [
-    { label: "Demandes en attente", val: String(pendingProjects), icon: Clock, color: "text-[#722F37]", bg: "bg-[#722F37]/5", tab: "projects" },
+    { label: "Demandes en attente", val: String(adminRequests.length), icon: Clock, color: "text-[#722F37]", bg: "bg-[#722F37]/5", tab: "requests" },
     { label: "Projets totaux", val: String(projects.length), icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-50", tab: "projects" },
     { label: "Revenus libérés", val: `${totalRevenue.toLocaleString()} €`, icon: ShoppingBag, color: "text-green-600", bg: "bg-green-50", tab: "projects" },
     { label: "Artisans vérifiés", val: `${verifiedArtisans}/${artisans.length}`, icon: ShieldCheck, color: "text-amber-600", bg: "bg-amber-50", tab: "artisans" },
@@ -1117,6 +1124,59 @@ export default function AdminDashboard() {
                       </CardContent>
                     </Card>
                   </div>
+                </>
+              )}
+
+              {/* ===== REQUESTS / DEMANDES ===== */}
+              {activeTab === "requests" && (
+                <>
+                  <div>
+                    <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900">Demandes en attente</h1>
+                    <p className="text-gray-500 mt-1 text-sm">Toutes les demandes clients en cours de traitement par les artisans</p>
+                  </div>
+                  <Card className="border-none shadow-sm overflow-hidden bg-white">
+                    <div className="p-5 border-b border-gray-50 flex items-center gap-3 flex-wrap">
+                      <Badge className="bg-yellow-50 text-yellow-700 border-none px-3 py-1">{adminRequests.filter((r: any) => r.status === "pending").length} nouvelles</Badge>
+                      <Badge className="bg-blue-50 text-blue-700 border-none px-3 py-1">{adminRequests.filter((r: any) => r.status === "quoted").length} devis envoyés</Badge>
+                    </div>
+                    {adminRequests.length === 0 ? (
+                      <div className="p-12 text-center text-gray-400">
+                        <Clock className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                        <p className="text-sm">Aucune demande en attente</p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                            <tr>
+                              <th className="px-4 py-3 text-left">Projet</th>
+                              <th className="px-4 py-3 text-left">Client</th>
+                              <th className="px-4 py-3 text-left">Artisan</th>
+                              <th className="px-4 py-3 text-left">Statut</th>
+                              <th className="px-4 py-3 text-left">Date</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-50">
+                            {adminRequests.map((r: any) => (
+                              <tr key={r.id} className="hover:bg-gray-50/50 transition-colors">
+                                <td className="px-4 py-3 font-medium text-gray-900 max-w-[180px] truncate">{r.title || "Sans titre"}</td>
+                                <td className="px-4 py-3 text-gray-600">{r.clientFirstName} {r.clientLastName}</td>
+                                <td className="px-4 py-3 text-gray-600">{r.tailorFirstName} {r.tailorLastName}</td>
+                                <td className="px-4 py-3">
+                                  {r.status === "pending"
+                                    ? <Badge className="bg-yellow-100 text-yellow-700 border-none text-xs">Nouvelle</Badge>
+                                    : <Badge className="bg-blue-100 text-blue-700 border-none text-xs">Devis envoyé</Badge>}
+                                </td>
+                                <td className="px-4 py-3 text-gray-400 text-xs">
+                                  {r.createdAt ? new Date(r.createdAt).toLocaleDateString("fr-FR") : "—"}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </Card>
                 </>
               )}
 

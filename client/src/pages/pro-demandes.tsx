@@ -43,10 +43,11 @@ export default function ProDemandes() {
   });
 
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const projects = allProjects.filter((p) => {
-    if (p.status === "pending" || p.status === "quoted" || p.status === "cancelled") return true;
-    if (p.status === "in_progress" && p.createdAt && new Date(p.createdAt) >= startOfMonth) return true;
+    if (p.status === "pending" || p.status === "quoted") return true;
+    const created = p.createdAt ? new Date(p.createdAt) : null;
+    if (created && created >= thirtyDaysAgo) return true;
     return false;
   });
 
@@ -83,6 +84,27 @@ export default function ProDemandes() {
         },
       }
     );
+  };
+
+  const [openingConvId, setOpeningConvId] = useState<string | null>(null);
+
+  const handleOpenConversation = async (project: ProjectWithClient) => {
+    const clientUserId = (project.client as any)?.id;
+    if (!clientUserId) { setLocation("/messagerie"); return; }
+    setOpeningConvId(project.id);
+    try {
+      const res = await apiFetch("/api/conversations", {
+        method: "POST",
+        body: JSON.stringify({ participantId: clientUserId }),
+      });
+      if (!res.ok) throw new Error("conv error");
+      const conv = await res.json();
+      setLocation(`/messagerie?conv=${conv.id}`);
+    } catch {
+      setLocation("/messagerie");
+    } finally {
+      setOpeningConvId(null);
+    }
   };
 
   const handleDecline = (projectId: string) => {
@@ -318,10 +340,13 @@ export default function ProDemandes() {
                             variant="outline"
                             className="border-gray-200"
                             size="icon"
-                            onClick={() => setLocation("/messagerie")}
+                            onClick={() => handleOpenConversation(project)}
+                            disabled={openingConvId === project.id}
                             data-testid={`button-message-${project.id}`}
                           >
-                            <MessageSquare className="h-4 w-4" />
+                            {openingConvId === project.id
+                              ? <Loader2 className="h-4 w-4 animate-spin" />
+                              : <MessageSquare className="h-4 w-4" />}
                           </Button>
                           <Button
                             variant="outline"
@@ -344,9 +369,13 @@ export default function ProDemandes() {
                         variant="ghost"
                         size="sm"
                         className="text-gray-500 gap-1"
-                        onClick={() => setLocation("/messagerie")}
+                        onClick={() => handleOpenConversation(project)}
+                        disabled={openingConvId === project.id}
+                        data-testid={`button-message-conv-${project.id}`}
                       >
-                        <MessageSquare className="h-4 w-4" />
+                        {openingConvId === project.id
+                          ? <Loader2 className="h-4 w-4 animate-spin" />
+                          : <MessageSquare className="h-4 w-4" />}
                         Messagerie
                       </Button>
                     </div>

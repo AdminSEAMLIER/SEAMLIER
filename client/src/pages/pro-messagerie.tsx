@@ -16,6 +16,7 @@ export default function ProMessagerie() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const search = useSearch();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -23,6 +24,13 @@ export default function ProMessagerie() {
   const { data: conversations = [], isLoading } = useQuery<ConversationWithParticipant[]>({
     queryKey: ["/api/conversations"],
   });
+
+  useEffect(() => {
+    if (!search) return;
+    const params = new URLSearchParams(search);
+    const convId = params.get("conv");
+    if (convId) setSelectedConversationId(convId);
+  }, [search]);
 
   const { data: messages = [], isLoading: messagesLoading } = useQuery<MessageWithSender[]>({
     queryKey: ["/api/messages", selectedConversationId],

@@ -42,6 +42,10 @@ export default function MesProjets() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
 
+  const [confirmProject, setConfirmProject] = useState<ProjectWithTailor | null>(null);
+  const [deadlineRespected, setDeadlineRespected] = useState<boolean | null>(null);
+  const [articleReceived, setArticleReceived] = useState<boolean | null>(null);
+
   const { data: projects = [], isLoading } = useQuery<ProjectWithTailor[]>({
     queryKey: ["/api/client/projects"],
   });
@@ -109,6 +113,26 @@ export default function MesProjets() {
       toast({ title: isFr ? "Avis envoyé, merci !" : "Review submitted, thanks!" });
     },
     onError: (err: any) => toast({ title: "Erreur", description: err?.message, variant: "destructive" }),
+  });
+
+  const confirmMutation = useMutation({
+    mutationFn: async () => {
+      if (!confirmProject) throw new Error("Projet manquant");
+      const res = await apiRequest("POST", `/api/projects/${confirmProject.id}/client-confirm`, { deadlineRespected });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/client/projects"] });
+      const project = confirmProject;
+      setConfirmProject(null);
+      setDeadlineRespected(null);
+      setArticleReceived(null);
+      toast({ title: isFr ? "Merci pour votre confirmation !" : "Thanks for confirming!", description: isFr ? "Le paiement va être libéré à l'artisan." : "Payment will be released to the tailor." });
+      if (project) {
+        setTimeout(() => { setReviewProject(project); setReviewRating(5); setReviewComment(""); }, 500);
+      }
+    },
+    onError: () => toast({ title: "Erreur", variant: "destructive" }),
   });
 
   const getStatusBadge = (status: string) => {
@@ -346,7 +370,18 @@ export default function MesProjets() {
                         label={isFr ? "Payer le devis" : "Pay quote"}
                       />
                     )}
-                    {isCompleted && (
+                    {isCompleted && !(project as any).clientConfirmed && (
+                      <Button
+                        size="sm"
+                        className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => { setConfirmProject(project); setDeadlineRespected(null); setArticleReceived(null); }}
+                        data-testid={`button-confirm-receipt-${project.id}`}
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        {isFr ? "Confirmer la réception" : "Confirm receipt"}
+                      </Button>
+                    )}
+                    {isCompleted && (project as any).clientConfirmed && (
                       <Button
                         size="sm"
                         className="flex-1 gap-1.5 bg-[#722F37] hover:bg-[#5a252c] text-white"
@@ -364,6 +399,55 @@ export default function MesProjets() {
           })
         )}
       </div>
+
+      {/* Dialog Confirmation Réception */}
+      <Dialog open={!!confirmProject} onOpenChange={(open) => !open && setConfirmProject(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{isFr ? "Confirmer la réception" : "Confirm receipt"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">{isFr ? "Avez-vous bien récupéré votre article ?" : "Did you receive your item?"}</Label>
+              <div className="flex gap-2">
+                <Button size="sm" variant={articleReceived === true ? "default" : "outline"} onClick={() => setArticleReceived(true)} className={articleReceived === true ? "bg-green-600 text-white flex-1" : "flex-1"} data-testid="button-article-yes">
+                  {isFr ? "Oui ✓" : "Yes ✓"}
+                </Button>
+                <Button size="sm" variant={articleReceived === false ? "default" : "outline"} onClick={() => setArticleReceived(false)} className={articleReceived === false ? "bg-red-500 text-white flex-1" : "flex-1"} data-testid="button-article-no">
+                  {isFr ? "Non" : "No"}
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">{isFr ? "La date de livraison a-t-elle été respectée ?" : "Was the deadline respected?"}</Label>
+              <div className="flex gap-2">
+                <Button size="sm" variant={deadlineRespected === true ? "default" : "outline"} onClick={() => setDeadlineRespected(true)} className={deadlineRespected === true ? "bg-green-600 text-white flex-1" : "flex-1"} data-testid="button-deadline-yes">
+                  {isFr ? "Oui ✓" : "Yes ✓"}
+                </Button>
+                <Button size="sm" variant={deadlineRespected === false ? "default" : "outline"} onClick={() => setDeadlineRespected(false)} className={deadlineRespected === false ? "bg-orange-500 text-white flex-1" : "flex-1"} data-testid="button-deadline-no">
+                  {isFr ? "Non" : "No"}
+                </Button>
+              </div>
+            </div>
+            {articleReceived === false && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+                {isFr ? "⚠️ Si vous n'avez pas reçu votre article, contactez le support avant de confirmer." : "⚠️ If you haven't received your item, contact support before confirming."}
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setConfirmProject(null)}>{isFr ? "Annuler" : "Cancel"}</Button>
+            <Button
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              disabled={articleReceived === null || confirmMutation.isPending}
+              onClick={() => confirmMutation.mutate()}
+              data-testid="button-submit-confirm"
+            >
+              {confirmMutation.isPending ? (isFr ? "Envoi…" : "Sending…") : (isFr ? "Confirmer la réception" : "Confirm")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog RDV */}
       <Dialog open={!!bookingProject} onOpenChange={(open) => !open && setBookingProject(null)}>

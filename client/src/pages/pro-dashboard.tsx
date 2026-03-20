@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useSearch } from "wouter";
+import { Link, useSearch, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +39,7 @@ const STARTER_LIMIT = 10;
 export default function ProDashboard() {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showConfirmStep, setShowConfirmStep] = useState(false);
   
@@ -112,7 +113,12 @@ export default function ProDashboard() {
 
   const subscriptionPrice = settings?.subscriptionPrice || "29";
   const currentPlan = (planData?.subscriptionPlan || "Starter") as "Starter" | "Pro";
-  const measureCount = 0;
+
+  const { data: projectCountData } = useQuery<{ count: number }>({
+    queryKey: ["/api/tailor/projects/count"],
+    enabled: currentPlan === "Starter",
+  });
+  const measureCount = projectCountData?.count ?? 0;
   const limitPercent = Math.min(100, (measureCount / STARTER_LIMIT) * 100);
 
   const { data: unreadData } = useQuery<{ count: number }>({
@@ -382,11 +388,11 @@ export default function ProDashboard() {
                 </Button>
                 <Button
                   className="flex-1 bg-purple-700 hover:bg-purple-800 text-white"
-                  onClick={() => setShowConfirmStep(true)}
+                  onClick={() => { setShowUpgradeModal(false); navigate("/parametres"); }}
                   data-testid="button-choose-pro"
                 >
                   <Sparkles className="h-4 w-4 mr-1" />
-                  Choisir le Pro
+                  Souscrire — Payer
                 </Button>
               </div>
             </>
