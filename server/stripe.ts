@@ -213,8 +213,23 @@ export function registerStripeRoutes(app: Express) {
         return res.status(400).json({ error: "interval doit être 'month' ou 'year'" });
       }
 
-      const tailor = await storage.getTailorByUserId(user.id) as any;
-      if (!tailor) return res.status(404).json({ error: "Profil artisan introuvable" });
+      let tailor = await storage.getTailorByUserId(user.id) as any;
+      if (!tailor) {
+        // Création automatique du profil artisan si manquant (ex: inscriptions anciennes)
+        tailor = await storage.createTailor({
+          userId: user.id,
+          bio: null,
+          specialties: [],
+          experience: 0,
+          coverImageUrl: null,
+          isVerified: false,
+          rating: 0,
+          reviewCount: 0,
+          portfolioCount: 0,
+          subscriptionPlan: "Starter",
+        }) as any;
+        console.log(`[Stripe] Profil artisan auto-créé pour userId=${user.id}`);
+      }
       if (tailor.subscriptionPlan === "Pro") return res.json({ alreadyPro: true });
 
       // Créer ou récupérer le Customer Stripe

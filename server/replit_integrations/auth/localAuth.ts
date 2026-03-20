@@ -190,7 +190,23 @@ export async function setupAuth(app: Express) {
             paymentStatus: "En attente",
           });
         } catch (artisanError) {
-          console.error("Error creating artisan profile:", artisanError);
+          console.error("Error creating admin artisan profile:", artisanError);
+        }
+        try {
+          await storage.createTailor({
+            userId: newUser.id,
+            bio: bio || null,
+            specialties: specialty ? [specialty] : [],
+            experience: parseInt(yearsExperience) || 0,
+            coverImageUrl: null,
+            isVerified: false,
+            rating: 0,
+            reviewCount: 0,
+            portfolioCount: 0,
+            subscriptionPlan: "Starter",
+          });
+        } catch (tailorError) {
+          console.error("Error creating tailor profile:", tailorError);
         }
       }
 

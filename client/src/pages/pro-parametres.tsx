@@ -238,6 +238,7 @@ export default function ProParametres() {
                     className="p-4 rounded-xl border-2 border-gray-200 text-left hover:border-[#722F37] hover:bg-[#722F37]/5 transition-colors relative"
                     data-testid="button-plan-yearly"
                   >
+                    <Badge className="absolute top-2 right-2 bg-green-100 text-green-700 border-none text-[9px] px-1.5">−17%</Badge>
                     <p className="font-bold text-gray-800 text-lg">290€</p>
                     <p className="text-xs text-gray-500">par an</p>
                     <p className="text-xs font-semibold text-gray-700 mt-2">0% de commission</p>
