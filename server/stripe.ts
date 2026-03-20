@@ -254,18 +254,43 @@ export function registerStripeRoutes(app: Express) {
         metadata: { tailorId: tailor.id, userId: user.id },
       });
 
-      const invoice = subscription.latest_invoice as Stripe.Invoice;
-      const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+      console.log(`[Stripe] Subscription created: ${subscription.id}, status: ${subscription.status}`);
+      console.log(`[Stripe] latest_invoice type: ${typeof subscription.latest_invoice}`);
 
-      if (!paymentIntent?.client_secret) {
-        return res.status(500).json({ error: "Impossible d'obtenir le clientSecret" });
+      // Récupérer l'invoice (expansée ou non)
+      let invoice: Stripe.Invoice;
+      if (typeof subscription.latest_invoice === "string") {
+        invoice = await stripe.invoices.retrieve(subscription.latest_invoice, {
+          expand: ["payment_intent"],
+        });
+      } else {
+        invoice = subscription.latest_invoice as Stripe.Invoice;
+      }
+
+      console.log(`[Stripe] Invoice: ${invoice.id}, payment_intent type: ${typeof invoice.payment_intent}`);
+
+      // Récupérer le payment_intent (expansé ou non)
+      let clientSecret: string | null = null;
+      if (invoice.payment_intent) {
+        if (typeof invoice.payment_intent === "string") {
+          const pi = await stripe.paymentIntents.retrieve(invoice.payment_intent);
+          clientSecret = pi.client_secret;
+        } else {
+          clientSecret = (invoice.payment_intent as Stripe.PaymentIntent).client_secret;
+        }
+      }
+
+      console.log(`[Stripe] clientSecret présent: ${!!clientSecret}`);
+
+      if (!clientSecret) {
+        return res.status(500).json({ error: "Impossible d'obtenir le clientSecret — vérifiez la configuration Stripe" });
       }
 
       await storage.updateTailor(tailor.id, { stripeSubscriptionId: subscription.id } as any);
 
       console.log(`[Stripe] Abonnement ${interval} créé : ${subscription.id} pour artisan ${tailor.id}`);
       res.json({
-        clientSecret: paymentIntent.client_secret,
+        clientSecret,
         subscriptionId: subscription.id,
         interval,
         amount: interval === "month" ? 29 : 290,
