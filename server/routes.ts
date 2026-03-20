@@ -1109,6 +1109,31 @@ export async function registerRoutes(
     }
   });
 
+  // Envoie un message automatique à l'artisan validé depuis le compte admin
+  async function sendApprovalMessage(artisanUserId: string) {
+    try {
+      const admin = await storage.getAdminUser();
+      if (!admin || admin.id === artisanUserId) return;
+      const conversation = await storage.getOrCreateConversation(admin.id, artisanUserId);
+      const messageText =
+        "Félicitations ! 🎉 Votre profil artisan a été validé par notre équipe. " +
+        "Vous êtes désormais visible sur la plateforme SEAMLIER et disponible pour recevoir des demandes de confection. " +
+        "Bienvenue dans la communauté !\n\n" +
+        "Congratulations! Your artisan profile has been approved by our team. " +
+        "You are now visible on the SEAMLIER platform and ready to receive tailoring requests. " +
+        "Welcome to the community!";
+      await storage.createMessage({
+        conversationId: conversation.id,
+        senderId: admin.id,
+        content: messageText,
+        isRead: false,
+      });
+      console.log(`[admin] Approval message sent to user ${artisanUserId}`);
+    } catch (err) {
+      console.warn("[admin] Could not send approval message:", err);
+    }
+  }
+
   app.put("/api/admin/artisans/:id", requireAdmin, async (req, res) => {
     try {
       const rawId = req.params.id;
@@ -1119,6 +1144,9 @@ export async function registerRoutes(
 
         if (status === "Vérifié") {
           await db.update(tailors).set({ isVerified: true }).where(eq(tailors.id, tailorId));
+          // Récupérer le userId pour envoyer le message automatique
+          const tailorRow = await db.select({ userId: tailors.userId }).from(tailors).where(eq(tailors.id, tailorId));
+          if (tailorRow[0]) await sendApprovalMessage(tailorRow[0].userId);
         } else if (status === "Rejeté") {
           await db.update(tailors).set({ isVerified: false }).where(eq(tailors.id, tailorId));
         }
@@ -1187,6 +1215,10 @@ export async function registerRoutes(
                 subscriptionPlan: artisan.subscriptionPlan || "Starter",
               });
               console.log(`[admin] Created tailor row id=${newTailor.id} isVerified=${status === "Vérifié"} for ${artisan.email}`);
+            }
+            // Message automatique de bienvenue si validation positive
+            if (status === "Vérifié") {
+              await sendApprovalMessage(matchUser.id);
             }
           }
         } catch (propagateErr) {
