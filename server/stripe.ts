@@ -263,18 +263,18 @@ export function registerStripeRoutes(app: Express) {
       }
 
       // 3. Annuler tout abonnement "incomplete" existant pour repartir propre
-      const existingSubs = await stripe.subscriptions.list({
-        customer: customerId,
-        status: "incomplete",
-        limit: 5,
-      });
-      for (const s of existingSubs.data) {
-        console.log(`[Stripe/sub] Annulation abonnement incomplet existant: ${s.id}`);
-        await stripe.subscriptions.cancel(s.id);
+      try {
+        const existingSubs = await stripe.subscriptions.list({ customer: customerId, status: "incomplete", limit: 5 });
+        for (const s of existingSubs.data) {
+          console.log(`[Stripe/sub] Annulation abonnement incomplet existant: ${s.id}`);
+          await stripe.subscriptions.cancel(s.id);
+        }
+      } catch (cleanErr: any) {
+        console.warn(`[Stripe/sub] Nettoyage incomplets ignoré: ${cleanErr.message}`);
       }
 
-      // 4. Créer l'abonnement → clientSecret depuis payment_intent
-      console.log(`[Stripe/sub] Création subscription avec price=${PRICES[interval]}, customer=${customerId}`);
+      // 4. Créer l'abonnement SANS expand (plus fiable avec SDK v20)
+      console.log(`[Stripe/sub] Création subscription price=${PRICES[interval]} customer=${customerId}`);
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [{ price: PRICES[interval] }],
@@ -283,61 +283,59 @@ export function registerStripeRoutes(app: Express) {
           save_default_payment_method: "on_subscription",
           payment_method_types: ["card"],
         },
-        expand: ["latest_invoice.payment_intent"],
         metadata: { tailorId: tailor.id, userId: user.id },
       });
 
-      console.log(`[Stripe/sub] Subscription: id=${subscription.id}, status=${subscription.status}`);
-      console.log(`[Stripe/sub] latest_invoice type=${typeof subscription.latest_invoice}, value=${typeof subscription.latest_invoice === "string" ? subscription.latest_invoice : (subscription.latest_invoice as any)?.id}`);
+      console.log(`[Stripe/sub] Subscription: id=${subscription.id} status=${subscription.status}`);
+      console.log(`[Stripe/sub] latest_invoice raw: ${JSON.stringify(subscription.latest_invoice)}`);
 
-      // 5. Résoudre l'invoice (expansée ou string)
-      let invoice: Stripe.Invoice;
       if (!subscription.latest_invoice) {
-        console.error(`[Stripe/sub] ✗ latest_invoice est null`);
+        console.error(`[Stripe/sub] ✗ latest_invoice est null/undefined`);
         return res.status(500).json({ error: "Aucune facture générée par Stripe" });
       }
-      if (typeof subscription.latest_invoice === "string") {
-        console.log(`[Stripe/sub] Récupération invoice séparée: ${subscription.latest_invoice}`);
-        invoice = await stripe.invoices.retrieve(subscription.latest_invoice, { expand: ["payment_intent"] });
-      } else {
-        invoice = subscription.latest_invoice as Stripe.Invoice;
-      }
-      console.log(`[Stripe/sub] Invoice: id=${invoice.id}, status=${invoice.status}, payment_intent type=${typeof invoice.payment_intent}, value=${typeof invoice.payment_intent === "string" ? invoice.payment_intent : (invoice.payment_intent as any)?.id}`);
 
-      // 6. Résoudre le payment_intent (expansé ou string)
+      // 5. Récupérer la facture séparément (pas d'expand)
+      const invoiceId = typeof subscription.latest_invoice === "string"
+        ? subscription.latest_invoice
+        : (subscription.latest_invoice as any).id;
+      console.log(`[Stripe/sub] Récupération invoice: ${invoiceId}`);
+      const invoice = await stripe.invoices.retrieve(invoiceId);
+      console.log(`[Stripe/sub] Invoice: id=${invoice.id} status=${invoice.status} payment_intent=${JSON.stringify(invoice.payment_intent)}`);
+
+      // 6. Récupérer le PaymentIntent séparément
       let clientSecret: string | null = null;
-      if (!invoice.payment_intent) {
-        // Cas rare : essai gratuit ou montant = 0 → pending_setup_intent
-        const setupIntentId = (subscription as any).pending_setup_intent;
-        if (setupIntentId) {
-          console.log(`[Stripe/sub] Pas de payment_intent — tentative via pending_setup_intent: ${setupIntentId}`);
-          const si = typeof setupIntentId === "string"
-            ? await stripe.setupIntents.retrieve(setupIntentId)
-            : setupIntentId as Stripe.SetupIntent;
+
+      if (invoice.payment_intent) {
+        const piId = typeof invoice.payment_intent === "string"
+          ? invoice.payment_intent
+          : (invoice.payment_intent as any).id;
+        console.log(`[Stripe/sub] Récupération PaymentIntent: ${piId}`);
+        const pi = await stripe.paymentIntents.retrieve(piId);
+        console.log(`[Stripe/sub] PI: id=${pi.id} status=${pi.status} client_secret_present=${!!pi.client_secret}`);
+        clientSecret = pi.client_secret;
+      } else {
+        // Fallback : pending_setup_intent (abonnement à 0€ ou période d'essai)
+        const siId = typeof (subscription as any).pending_setup_intent === "string"
+          ? (subscription as any).pending_setup_intent
+          : (subscription as any).pending_setup_intent?.id;
+        if (siId) {
+          console.log(`[Stripe/sub] Fallback SetupIntent: ${siId}`);
+          const si = await stripe.setupIntents.retrieve(siId);
           clientSecret = si.client_secret;
         }
-      } else if (typeof invoice.payment_intent === "string") {
-        console.log(`[Stripe/sub] Récupération payment_intent séparé: ${invoice.payment_intent}`);
-        const pi = await stripe.paymentIntents.retrieve(invoice.payment_intent);
-        console.log(`[Stripe/sub] PaymentIntent: id=${pi.id}, status=${pi.status}, client_secret présent=${!!pi.client_secret}`);
-        clientSecret = pi.client_secret;
-      } else {
-        const pi = invoice.payment_intent as Stripe.PaymentIntent;
-        console.log(`[Stripe/sub] PaymentIntent (expansé): id=${pi.id}, status=${pi.status}, client_secret présent=${!!pi.client_secret}`);
-        clientSecret = pi.client_secret;
+        if (!clientSecret) {
+          console.error(`[Stripe/sub] ✗ Ni payment_intent ni setup_intent disponibles`);
+          console.error(`[Stripe/sub] Subscription JSON: ${JSON.stringify({ id: subscription.id, status: subscription.status, pending_setup_intent: (subscription as any).pending_setup_intent })}`);
+          return res.status(500).json({
+            error: "Impossible d'obtenir le clientSecret",
+            detail: `invoice.payment_intent=${invoice.payment_intent}, sub.status=${subscription.status}`,
+          });
+        }
       }
 
-      if (!clientSecret) {
-        console.error(`[Stripe/sub] ✗ clientSecret introuvable — invoice.payment_intent=${JSON.stringify(invoice.payment_intent)}`);
-        return res.status(500).json({
-          error: "Impossible d'obtenir le clientSecret",
-          debug: { subId: subscription.id, invoiceId: invoice.id, invoiceStatus: invoice.status, paymentIntentPresent: !!invoice.payment_intent },
-        });
-      }
-
-      // 7. Sauvegarder l'ID de l'abonnement
+      // 7. Sauvegarder et retourner
       await storage.updateTailor(tailor.id, { stripeSubscriptionId: subscription.id } as any);
-      console.log(`[Stripe/sub] ✓ Succès — sub=${subscription.id}, clientSecret présent`);
+      console.log(`[Stripe/sub] ✓ Succès — sub=${subscription.id} clientSecret présent`);
 
       res.json({
         clientSecret,
