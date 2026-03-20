@@ -388,7 +388,7 @@ export default function ProDashboard() {
                 </Button>
                 <Button
                   className="flex-1 bg-purple-700 hover:bg-purple-800 text-white"
-                  onClick={() => { setShowUpgradeModal(false); navigate("/parametres"); }}
+                  onClick={() => { setShowUpgradeModal(false); navigate("/pro-profil/parametres"); }}
                   data-testid="button-choose-pro"
                 >
                   <Sparkles className="h-4 w-4 mr-1" />
