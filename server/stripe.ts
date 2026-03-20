@@ -2,13 +2,15 @@ import type { Express, Response } from "express";
 import Stripe from "stripe";
 import { storage } from "./storage";
 
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-04-10" as any })
+  : null;
 const FRAIS = 0.10;
 const COMM = 0.15;
 
 const PRICES = {
-  month: "price_1TBzcSLyrGmm31qYwOfOb6Bz",
-  year:  "price_1TC3PaLyrGmm31qYgtlR1Lwd",
+  month: process.env.STRIPE_PRICE_MONTHLY || "price_1TBzcSLyrGmm31qYwOfOb6Bz",
+  year:  process.env.STRIPE_PRICE_YEARLY  || "price_1TC3PaLyrGmm31qYgtlR1Lwd",
 };
 
 function calc(prix: number, plan: string) {
@@ -203,38 +205,51 @@ export function registerStripeRoutes(app: Express) {
 
   // ── Création abonnement Premium (Stripe Billing + Elements) ───────────────
   app.post("/api/stripe/subscription/create", async (req: any, res: Response) => {
-    if (!stripe) return res.status(500).json({ error: "Stripe non configuré" });
+    const SK_PREFIX = process.env.STRIPE_SECRET_KEY?.slice(0, 14) || "absent";
+    console.log(`[Stripe/sub] ▶ Début — clé: ${SK_PREFIX}...`);
+    console.log(`[Stripe/sub] PRICES month=${PRICES.month} year=${PRICES.year}`);
+
+    if (!stripe) {
+      console.error("[Stripe/sub] ✗ Stripe non initialisé (STRIPE_SECRET_KEY manquante)");
+      return res.status(500).json({ error: "Stripe non configuré" });
+    }
+
     try {
       const user = req.user as any;
-      if (!user) return res.status(401).json({ error: "Non authentifié" });
+      if (!user) {
+        console.error("[Stripe/sub] ✗ Utilisateur non authentifié");
+        return res.status(401).json({ error: "Non authentifié" });
+      }
+      console.log(`[Stripe/sub] User: ${user.id} (${user.email})`);
 
       const { interval } = req.body as { interval: "month" | "year" };
       if (!interval || !["month", "year"].includes(interval)) {
         return res.status(400).json({ error: "interval doit être 'month' ou 'year'" });
       }
+      console.log(`[Stripe/sub] Interval: ${interval} → price: ${PRICES[interval]}`);
 
+      // 1. Récupérer (ou créer) le profil artisan
       let tailor = await storage.getTailorByUserId(user.id) as any;
       if (!tailor) {
-        // Création automatique du profil artisan si manquant (ex: inscriptions anciennes)
+        console.log(`[Stripe/sub] Profil artisan absent — création auto pour userId=${user.id}`);
         tailor = await storage.createTailor({
-          userId: user.id,
-          bio: null,
-          specialties: [],
-          experience: 0,
-          coverImageUrl: null,
-          isVerified: false,
-          rating: 0,
-          reviewCount: 0,
-          portfolioCount: 0,
-          subscriptionPlan: "Starter",
+          userId: user.id, bio: null, specialties: [], experience: 0,
+          coverImageUrl: null, isVerified: false, rating: 0,
+          reviewCount: 0, portfolioCount: 0, subscriptionPlan: "Starter",
         }) as any;
-        console.log(`[Stripe] Profil artisan auto-créé pour userId=${user.id}`);
+        console.log(`[Stripe/sub] Profil artisan créé: ${tailor.id}`);
       }
-      if (tailor.subscriptionPlan === "Pro") return res.json({ alreadyPro: true });
+      console.log(`[Stripe/sub] Artisan: ${tailor.id}, plan: ${tailor.subscriptionPlan}, stripeCustomerId: ${tailor.stripeCustomerId || "absent"}`);
 
-      // Créer ou récupérer le Customer Stripe
+      if (tailor.subscriptionPlan === "Pro") {
+        console.log(`[Stripe/sub] Déjà Pro → alreadyPro`);
+        return res.json({ alreadyPro: true });
+      }
+
+      // 2. Créer ou récupérer le Customer Stripe
       let customerId: string = tailor.stripeCustomerId;
       if (!customerId) {
+        console.log(`[Stripe/sub] Création Customer Stripe pour ${user.email}`);
         const customer = await stripe.customers.create({
           email: user.email,
           name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
@@ -242,53 +257,88 @@ export function registerStripeRoutes(app: Express) {
         });
         customerId = customer.id;
         await storage.updateTailor(tailor.id, { stripeCustomerId: customerId } as any);
+        console.log(`[Stripe/sub] Customer créé: ${customerId}`);
+      } else {
+        console.log(`[Stripe/sub] Customer existant: ${customerId}`);
       }
 
-      // Créer l'abonnement avec paiement incomplet → clientSecret
+      // 3. Annuler tout abonnement "incomplete" existant pour repartir propre
+      const existingSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "incomplete",
+        limit: 5,
+      });
+      for (const s of existingSubs.data) {
+        console.log(`[Stripe/sub] Annulation abonnement incomplet existant: ${s.id}`);
+        await stripe.subscriptions.cancel(s.id);
+      }
+
+      // 4. Créer l'abonnement → clientSecret depuis payment_intent
+      console.log(`[Stripe/sub] Création subscription avec price=${PRICES[interval]}, customer=${customerId}`);
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [{ price: PRICES[interval] }],
         payment_behavior: "default_incomplete",
-        payment_settings: { save_default_payment_method: "on_subscription" },
+        payment_settings: {
+          save_default_payment_method: "on_subscription",
+          payment_method_types: ["card"],
+        },
         expand: ["latest_invoice.payment_intent"],
         metadata: { tailorId: tailor.id, userId: user.id },
       });
 
-      console.log(`[Stripe] Subscription created: ${subscription.id}, status: ${subscription.status}`);
-      console.log(`[Stripe] latest_invoice type: ${typeof subscription.latest_invoice}`);
+      console.log(`[Stripe/sub] Subscription: id=${subscription.id}, status=${subscription.status}`);
+      console.log(`[Stripe/sub] latest_invoice type=${typeof subscription.latest_invoice}, value=${typeof subscription.latest_invoice === "string" ? subscription.latest_invoice : (subscription.latest_invoice as any)?.id}`);
 
-      // Récupérer l'invoice (expansée ou non)
+      // 5. Résoudre l'invoice (expansée ou string)
       let invoice: Stripe.Invoice;
+      if (!subscription.latest_invoice) {
+        console.error(`[Stripe/sub] ✗ latest_invoice est null`);
+        return res.status(500).json({ error: "Aucune facture générée par Stripe" });
+      }
       if (typeof subscription.latest_invoice === "string") {
-        invoice = await stripe.invoices.retrieve(subscription.latest_invoice, {
-          expand: ["payment_intent"],
-        });
+        console.log(`[Stripe/sub] Récupération invoice séparée: ${subscription.latest_invoice}`);
+        invoice = await stripe.invoices.retrieve(subscription.latest_invoice, { expand: ["payment_intent"] });
       } else {
         invoice = subscription.latest_invoice as Stripe.Invoice;
       }
+      console.log(`[Stripe/sub] Invoice: id=${invoice.id}, status=${invoice.status}, payment_intent type=${typeof invoice.payment_intent}, value=${typeof invoice.payment_intent === "string" ? invoice.payment_intent : (invoice.payment_intent as any)?.id}`);
 
-      console.log(`[Stripe] Invoice: ${invoice.id}, payment_intent type: ${typeof invoice.payment_intent}`);
-
-      // Récupérer le payment_intent (expansé ou non)
+      // 6. Résoudre le payment_intent (expansé ou string)
       let clientSecret: string | null = null;
-      if (invoice.payment_intent) {
-        if (typeof invoice.payment_intent === "string") {
-          const pi = await stripe.paymentIntents.retrieve(invoice.payment_intent);
-          clientSecret = pi.client_secret;
-        } else {
-          clientSecret = (invoice.payment_intent as Stripe.PaymentIntent).client_secret;
+      if (!invoice.payment_intent) {
+        // Cas rare : essai gratuit ou montant = 0 → pending_setup_intent
+        const setupIntentId = (subscription as any).pending_setup_intent;
+        if (setupIntentId) {
+          console.log(`[Stripe/sub] Pas de payment_intent — tentative via pending_setup_intent: ${setupIntentId}`);
+          const si = typeof setupIntentId === "string"
+            ? await stripe.setupIntents.retrieve(setupIntentId)
+            : setupIntentId as Stripe.SetupIntent;
+          clientSecret = si.client_secret;
         }
+      } else if (typeof invoice.payment_intent === "string") {
+        console.log(`[Stripe/sub] Récupération payment_intent séparé: ${invoice.payment_intent}`);
+        const pi = await stripe.paymentIntents.retrieve(invoice.payment_intent);
+        console.log(`[Stripe/sub] PaymentIntent: id=${pi.id}, status=${pi.status}, client_secret présent=${!!pi.client_secret}`);
+        clientSecret = pi.client_secret;
+      } else {
+        const pi = invoice.payment_intent as Stripe.PaymentIntent;
+        console.log(`[Stripe/sub] PaymentIntent (expansé): id=${pi.id}, status=${pi.status}, client_secret présent=${!!pi.client_secret}`);
+        clientSecret = pi.client_secret;
       }
-
-      console.log(`[Stripe] clientSecret présent: ${!!clientSecret}`);
 
       if (!clientSecret) {
-        return res.status(500).json({ error: "Impossible d'obtenir le clientSecret — vérifiez la configuration Stripe" });
+        console.error(`[Stripe/sub] ✗ clientSecret introuvable — invoice.payment_intent=${JSON.stringify(invoice.payment_intent)}`);
+        return res.status(500).json({
+          error: "Impossible d'obtenir le clientSecret",
+          debug: { subId: subscription.id, invoiceId: invoice.id, invoiceStatus: invoice.status, paymentIntentPresent: !!invoice.payment_intent },
+        });
       }
 
+      // 7. Sauvegarder l'ID de l'abonnement
       await storage.updateTailor(tailor.id, { stripeSubscriptionId: subscription.id } as any);
+      console.log(`[Stripe/sub] ✓ Succès — sub=${subscription.id}, clientSecret présent`);
 
-      console.log(`[Stripe] Abonnement ${interval} créé : ${subscription.id} pour artisan ${tailor.id}`);
       res.json({
         clientSecret,
         subscriptionId: subscription.id,
@@ -296,7 +346,8 @@ export function registerStripeRoutes(app: Express) {
         amount: interval === "month" ? 29 : 290,
       });
     } catch (err: any) {
-      console.error("[Stripe] Erreur création abonnement:", err.message);
+      console.error(`[Stripe/sub] ✗ Exception: ${err?.type || ""} ${err?.code || ""} — ${err.message}`);
+      if (err?.raw) console.error(`[Stripe/sub] Raw Stripe error:`, JSON.stringify(err.raw));
       res.status(500).json({ error: err.message });
     }
   });
