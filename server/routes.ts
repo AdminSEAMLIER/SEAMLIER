@@ -1157,18 +1157,36 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Artisan not found" });
       }
 
-      // Si l'artisan est validé, propager isVerified sur la table tailors (si un compte utilisateur existe)
+      // Propager isVerified sur la table tailors — créer la ligne si elle n'existe pas encore
       const { status } = req.body;
       if ((status === "Vérifié" || status === "Rejeté") && artisan.email) {
         try {
           const matchUser = await storage.getUserByEmail(artisan.email);
           if (matchUser) {
+            // S'assurer que le rôle est bien "tailor"
+            await storage.updateUser(matchUser.id, { role: "tailor" });
             const matchTailor = await storage.getTailorByUserId(matchUser.id);
             if (matchTailor) {
+              // La ligne existe → mise à jour isVerified
               await db.update(tailors)
                 .set({ isVerified: status === "Vérifié" })
                 .where(eq(tailors.id, matchTailor.id));
-              console.log(`[admin] Propagated isVerified=${status === "Vérifié"} to tailor ${matchTailor.id} for email ${artisan.email}`);
+              console.log(`[admin] Updated isVerified=${status === "Vérifié"} for tailor ${matchTailor.id} (${artisan.email})`);
+            } else {
+              // Pas encore de ligne tailors → création automatique avec isVerified correct
+              const newTailor = await storage.createTailor({
+                userId: matchUser.id,
+                bio: artisan.bio || null,
+                specialties: artisan.specialty ? [artisan.specialty] : [],
+                experience: artisan.yearsExperience || 0,
+                coverImageUrl: null,
+                isVerified: status === "Vérifié",
+                rating: 0,
+                reviewCount: 0,
+                portfolioCount: 0,
+                subscriptionPlan: artisan.subscriptionPlan || "Starter",
+              });
+              console.log(`[admin] Created tailor row id=${newTailor.id} isVerified=${status === "Vérifié"} for ${artisan.email}`);
             }
           }
         } catch (propagateErr) {
