@@ -492,6 +492,52 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/tailor/stats", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+
+      const now = new Date();
+      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      // Revenus du mois : somme de amount_artisan pour les projets complétés ce mois
+      const [revenueRows] = await pool.query(
+        `SELECT COALESCE(SUM(amount_artisan), 0) as total
+         FROM projects
+         WHERE tailor_id = ? AND status = 'completed'
+         AND updated_at >= ?`,
+        [tailor.id, firstOfMonth]
+      ) as any[];
+      const monthlyRevenue = Array.isArray(revenueRows) && revenueRows[0]
+        ? parseFloat(revenueRows[0].total) || 0 : 0;
+
+      // Projets en cours (status = in_progress)
+      const [activeRows] = await pool.query(
+        "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND status = 'in_progress'",
+        [tailor.id]
+      ) as any[];
+      const activeProjects = Array.isArray(activeRows) && activeRows[0]
+        ? parseInt(activeRows[0].cnt) || 0 : 0;
+
+      // Nouvelles demandes (status = pending ou new)
+      const [requestRows] = await pool.query(
+        "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND status IN ('pending','new')",
+        [tailor.id]
+      ) as any[];
+      const newRequests = Array.isArray(requestRows) && requestRows[0]
+        ? parseInt(requestRows[0].cnt) || 0 : 0;
+
+      // Note moyenne : champ rating de la table tailors
+      const averageRating = tailor.rating || 0;
+
+      res.json({ monthlyRevenue, activeProjects, newRequests, averageRating });
+    } catch (error) {
+      console.error("Error fetching tailor stats:", error);
+      res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+
   app.get("/api/tailor/projects/count", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;

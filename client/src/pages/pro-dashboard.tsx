@@ -128,11 +128,39 @@ export default function ProDashboard() {
   const unreadCount = unreadData?.count ?? 0;
   const productCount = products?.length ?? 0;
 
+  const { data: tailorStats } = useQuery<{
+    monthlyRevenue: number;
+    activeProjects: number;
+    newRequests: number;
+    averageRating: number;
+  }>({
+    queryKey: ["/api/tailor/stats"],
+    refetchInterval: 30000,
+  });
+
   const stats = [
-    { label: t('pro.thisMonth'), value: "0€", icon: Euro },
-    { label: t('pro.activeProjects'), value: String(productCount), icon: FolderKanban },
-    { label: t('pro.newRequests'), value: String(unreadCount), icon: FileText },
-    { label: t('pro.averageRating'), value: "-", icon: Star },
+    {
+      label: t('pro.thisMonth'),
+      value: tailorStats ? `${tailorStats.monthlyRevenue.toFixed(0)}€` : "0€",
+      icon: Euro,
+    },
+    {
+      label: t('pro.activeProjects'),
+      value: tailorStats ? String(tailorStats.activeProjects) : "0",
+      icon: FolderKanban,
+    },
+    {
+      label: t('pro.newRequests'),
+      value: tailorStats ? String(tailorStats.newRequests) : "0",
+      icon: FileText,
+    },
+    {
+      label: t('pro.averageRating'),
+      value: tailorStats && tailorStats.averageRating > 0
+        ? tailorStats.averageRating.toFixed(1)
+        : "-",
+      icon: Star,
+    },
   ];
 
   const quickLinks = [
@@ -334,7 +362,9 @@ export default function ProDashboard() {
               </div>
               <div className="flex-1">
                 <p className="text-sm text-gray-500">{t('pro.thisMonth')}</p>
-                <p className="text-2xl font-bold text-[#722F37]" data-testid="text-pro-revenue">0€</p>
+                <p className="text-2xl font-bold text-[#722F37]" data-testid="text-pro-revenue">
+                  {tailorStats ? `${tailorStats.monthlyRevenue.toFixed(0)}€` : "0€"}
+                </p>
               </div>
             </div>
           </CardContent>
