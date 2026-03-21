@@ -80,7 +80,7 @@ export default function MesRendezVous() {
       {/* En-tête */}
       <div className="bg-[#722F37] text-white px-4 lg:px-8 pt-6 pb-10">
         <div className="max-w-2xl mx-auto">
-          <Link href="/dashboard">
+          <Link href="/dashboard-client">
             <button className="flex items-center gap-1.5 text-white/70 text-sm mb-4 hover:text-white transition-colors">
               <ChevronLeft className="h-4 w-4" /> Tableau de bord
             </button>
