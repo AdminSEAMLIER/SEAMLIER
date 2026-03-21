@@ -17,7 +17,8 @@ import {
   ArrowUpRight, X, Upload, MapPin, Pencil,
   User, Building2, Phone, CreditCard, Briefcase, Hash,
   Globe, Bell, Palette, Shield, Database, Key, ToggleLeft,
-  Bold, Italic, Underline, Star, Package, ArrowDownCircle
+  Bold, Italic, Underline, Star, Package, ArrowDownCircle,
+  Euro, BarChart3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -325,6 +326,20 @@ export default function AdminDashboard() {
 
   const { data: dbArtisans = [], isLoading: artisansLoading } = useQuery<any[]>({
     queryKey: [API_ENDPOINTS.admin.artisans],
+    enabled: isAuthenticated,
+  });
+
+  const { data: globalStats } = useQuery<{
+    totalRevenue: number;
+    monthRevenue: number;
+    totalProjectsCompleted: number;
+    avgProjectValue: number;
+    starterCount: number;
+    proCount: number;
+    activeClientsCount: number;
+    activeArtisansCount: number;
+  }>({
+    queryKey: ["/api/admin/global-stats"],
     enabled: isAuthenticated,
   });
 
@@ -1053,6 +1068,29 @@ export default function AdminDashboard() {
                     <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Tableau de Bord</h1>
                     <p className="text-gray-500 mt-1 text-sm">Vue globale de la plateforme SEAMLiER</p>
                   </div>
+
+                  {/* Bloc revenus & activité */}
+                  {globalStats && (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      {[
+                        { label: "CA ce mois", value: `${globalStats.monthRevenue?.toFixed(0) ?? 0} €`, icon: TrendingUp, bg: "bg-green-50", color: "text-green-600" },
+                        { label: "CA total", value: `${globalStats.totalRevenue?.toFixed(0) ?? 0} €`, icon: Euro, bg: "bg-[#722F37]/5", color: "text-[#722F37]" },
+                        { label: "Projets terminés", value: globalStats.totalProjectsCompleted ?? 0, icon: CheckCircle, bg: "bg-blue-50", color: "text-blue-600" },
+                        { label: "Panier moyen", value: `${globalStats.avgProjectValue?.toFixed(0) ?? 0} €`, icon: BarChart3, bg: "bg-amber-50", color: "text-amber-600" },
+                      ].map(s => (
+                        <Card key={s.label} className="border-none shadow-sm">
+                          <CardContent className="p-4">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${s.bg}`}>
+                              <s.icon size={16} className={s.color} />
+                            </div>
+                            <p className="text-xs text-gray-500 font-medium">{s.label}</p>
+                            <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                     {stats.map((stat) => (
                       <Card key={stat.label} className="border-none shadow-sm hover-elevate cursor-pointer" onClick={() => setActiveTab(stat.tab)} data-testid={`card-stat-${stat.label.replace(/\s/g, "-").toLowerCase()}`}>

@@ -210,6 +210,15 @@ export const magazineArticles = mysqlTable("magazine_articles", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const tailorClientData = mysqlTable("tailor_client_data", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tailorId: varchar("tailor_id", { length: 36 }).notNull().references(() => tailors.id),
+  clientId: varchar("client_id", { length: 36 }).notNull().references(() => users.id),
+  note: text("note"),
+  clientStatus: varchar("client_status", { length: 20 }).default("nouveau"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const adminSettings = mysqlTable("admin_settings", {
   id: varchar("id", { length: 36 }).primaryKey(),
   key: varchar("key", { length: 255 }).notNull().unique(),
@@ -232,6 +241,7 @@ export const insertAdminArtisanSchema = createInsertSchema(adminArtisans).omit({
 export const insertUserPreferencesSchema = createInsertSchema(userPreferences).omit({ id: true, updatedAt: true });
 export const insertMagazineArticleSchema = createInsertSchema(magazineArticles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertAdminSettingSchema = createInsertSchema(adminSettings).omit({ id: true, updatedAt: true });
+export const insertTailorClientDataSchema = createInsertSchema(tailorClientData).omit({ id: true, updatedAt: true });
 
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -263,6 +273,8 @@ export type InsertMagazineArticle = z.infer<typeof insertMagazineArticleSchema>;
 export type MagazineArticle = typeof magazineArticles.$inferSelect;
 export type InsertAdminSetting = z.infer<typeof insertAdminSettingSchema>;
 export type AdminSetting = typeof adminSettings.$inferSelect;
+export type InsertTailorClientData = z.infer<typeof insertTailorClientDataSchema>;
+export type TailorClientData = typeof tailorClientData.$inferSelect;
 
 // Composite types
 export type TailorWithUser = Tailor & { user: User };

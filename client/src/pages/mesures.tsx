@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Ruler, Camera, Save, HelpCircle, Loader2, X, ImageIcon, AlertTriangle } from "lucide-react";
+import { Ruler, Camera, Save, HelpCircle, Loader2, X, ImageIcon, AlertTriangle, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -177,6 +177,56 @@ export default function Mesures() {
 
   const handleDeletePhoto = () => {
     setPhotoUrl(null);
+  };
+
+  const handleDownloadPDF = () => {
+    const rows = [
+      { label: "Tour de cou", val: values.tour_cou, unit: "cm" },
+      { label: "Largeur épaules", val: values.largeur_epaules, unit: "cm" },
+      { label: "Tour de poitrine", val: values.tour_poitrine, unit: "cm" },
+      { label: "Tour de taille", val: values.tour_taille, unit: "cm" },
+      { label: "Tour de hanches", val: values.tour_hanches, unit: "cm" },
+      { label: "Longueur dos", val: values.longueur_dos, unit: "cm" },
+      { label: "Longueur bras", val: values.longueur_bras, unit: "cm" },
+      { label: "Longueur jambe", val: values.longueur_jambe, unit: "cm" },
+    ].filter(r => r.val);
+
+    const date = savedMeasurements?.updatedAt
+      ? new Date(savedMeasurements.updatedAt).toLocaleDateString("fr-FR")
+      : new Date().toLocaleDateString("fr-FR");
+
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Mes Mensurations — SEAMLIER</title>
+  <style>
+    body { font-family: 'Georgia', serif; max-width: 600px; margin: 40px auto; color: #222; }
+    h1 { color: #722F37; font-size: 28px; margin-bottom: 4px; }
+    .subtitle { color: #888; font-size: 13px; margin-bottom: 32px; }
+    table { width: 100%; border-collapse: collapse; }
+    tr { border-bottom: 1px solid #eee; }
+    tr:last-child { border: none; }
+    td { padding: 10px 4px; font-size: 15px; }
+    td:first-child { color: #555; }
+    td:last-child { text-align: right; font-weight: bold; color: #722F37; }
+    .footer { margin-top: 40px; font-size: 11px; color: #aaa; text-align: center; }
+    @media print { body { margin: 20px; } }
+  </style>
+</head>
+<body>
+  <h1>SEAMLIER</h1>
+  <p class="subtitle">Mes mensurations — mise à jour le ${date}</p>
+  <table>
+    ${rows.map(r => `<tr><td>${r.label}</td><td>${r.val} ${r.unit}</td></tr>`).join("")}
+  </table>
+  <div class="footer">Document généré par SEAMLIER — www.seamlier.fr</div>
+  <script>window.onload = () => { window.print(); }</script>
+</body>
+</html>`;
+
+    const w = window.open("", "_blank");
+    if (w) { w.document.write(html); w.document.close(); }
   };
 
   const measurements = [
@@ -393,6 +443,19 @@ export default function Mesures() {
             <Camera className="h-5 w-5" />
           </Button>
         </div>
+
+        {/* Bouton PDF */}
+        {Object.values(values).some(v => v !== "") && (
+          <Button
+            variant="outline"
+            className="w-full mt-3 border-[#722F37] text-[#722F37] hover:bg-[#722F37] hover:text-white"
+            data-testid="button-download-pdf"
+            onClick={handleDownloadPDF}
+          >
+            <FileDown className="h-4 w-4 mr-2" />
+            Télécharger mes mesures en PDF
+          </Button>
+        )}
 
         <p className="text-center text-muted-foreground text-sm mt-4">
           {t('measures.autoShare')}

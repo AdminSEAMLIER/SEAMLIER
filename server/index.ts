@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { setupAuth } from "./replit_integrations/auth";
+import { ensureTables } from "./db";
 import path from "path";
 import fs from "fs";
 
@@ -76,6 +77,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  await ensureTables();
   await setupAuth(app);
   await registerRoutes(httpServer, app);
 

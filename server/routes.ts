@@ -667,6 +667,46 @@ export async function registerRoutes(
     }
   });
 
+  // ── CRM : Notes et statut client par artisan ──────────────────────────────
+  app.get("/api/tailor/client/:clientId/notes", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const { clientId } = req.params;
+      const [rows] = await pool.query(
+        "SELECT note, client_status as clientStatus FROM tailor_client_data WHERE tailor_id = ? AND client_id = ?",
+        [tailor.id, clientId]
+      ) as any[];
+      const row = Array.isArray(rows) && rows[0] ? rows[0] : { note: "", clientStatus: "nouveau" };
+      res.json(row);
+    } catch (error) {
+      console.error("Error fetching client notes:", error);
+      res.status(500).json({ error: "Failed to fetch notes" });
+    }
+  });
+
+  app.post("/api/tailor/client/:clientId/notes", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const { clientId } = req.params;
+      const { note, clientStatus } = req.body;
+      const { v4: uuidv4 } = await import("uuid");
+      await pool.query(
+        `INSERT INTO tailor_client_data (id, tailor_id, client_id, note, client_status)
+         VALUES (?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE note = VALUES(note), client_status = VALUES(client_status), updated_at = NOW()`,
+        [uuidv4(), tailor.id, clientId, note ?? "", clientStatus ?? "nouveau"]
+      );
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error saving client notes:", error);
+      res.status(500).json({ error: "Failed to save notes" });
+    }
+  });
+
   app.get("/api/admin/all-requests", requireAdmin, async (req, res) => {
     try {
       const [rows] = await pool.query(`
@@ -1147,6 +1187,35 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching admin stats:", error);
       res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+
+  app.get("/api/admin/global-stats", requireAdmin, async (req, res) => {
+    try {
+      const [revenueRows] = await pool.query(
+        "SELECT COALESCE(SUM(amount_artisan), 0) as total FROM projects WHERE status = 'completed'"
+      ) as any[];
+      const totalRevenue = parseFloat(revenueRows?.[0]?.total) || 0;
+
+      const [avgRows] = await pool.query(
+        "SELECT COALESCE(AVG(amount_artisan), 0) as avg_val FROM projects WHERE status = 'completed' AND amount_artisan > 0"
+      ) as any[];
+      const avgOrderValue = parseFloat(avgRows?.[0]?.avg_val) || 0;
+
+      const [artisanRows] = await pool.query(
+        "SELECT COUNT(*) as cnt FROM tailors WHERE is_verified = 1"
+      ) as any[];
+      const activeArtisans = parseInt(artisanRows?.[0]?.cnt) || 0;
+
+      const [clientRows] = await pool.query(
+        "SELECT COUNT(*) as cnt FROM users WHERE role = 'client'"
+      ) as any[];
+      const totalClients = parseInt(clientRows?.[0]?.cnt) || 0;
+
+      res.json({ totalRevenue, avgOrderValue, activeArtisans, totalClients });
+    } catch (error) {
+      console.error("Error fetching global stats:", error);
+      res.status(500).json({ error: "Failed to fetch global stats" });
     }
   });
 

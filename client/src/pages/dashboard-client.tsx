@@ -15,6 +15,11 @@ import {
   Star,
   CalendarCheck,
   AlertTriangle,
+  History,
+  Euro,
+  CheckCircle2,
+  XCircle,
+  Clock,
 } from "lucide-react";
 import type { TailorWithUser, ProjectWithTailor } from "@shared/schema";
 
@@ -192,6 +197,60 @@ export default function DashboardClient() {
             </div>
           )}
         </div>
+
+        {/* Historique des commandes */}
+        {projects.filter(p => ["terminé", "completed", "cancelled"].includes(p.status)).length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-serif text-xl text-[#722F37] flex items-center gap-2">
+                <History className="h-5 w-5" />
+                Historique
+              </h2>
+              <Link href="/mes-projets">
+                <button className="text-[#722F37] text-sm font-medium flex items-center gap-1 hover:underline">
+                  Tout voir <ChevronRight className="h-4 w-4" />
+                </button>
+              </Link>
+            </div>
+            <div className="space-y-2">
+              {projects
+                .filter(p => ["terminé", "completed", "cancelled"].includes(p.status))
+                .slice(0, 5)
+                .map(p => {
+                  const isCompleted = ["terminé", "completed"].includes(p.status);
+                  const isCancelled = p.status === "cancelled";
+                  return (
+                    <Link key={p.id} href={`/suivi-projet/${p.id}`}>
+                      <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3 hover:border-[#722F37]/20 hover:shadow-md transition-all cursor-pointer">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isCompleted ? "bg-green-50" : "bg-red-50"}`}>
+                          {isCompleted ? <CheckCircle2 className="h-4 w-4 text-green-600" /> : <XCircle className="h-4 w-4 text-red-400" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 text-sm truncate">{p.title}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${isCompleted ? "bg-green-100 text-green-700" : "bg-red-100 text-red-500"}`}>
+                              {isCompleted ? "Terminé" : "Annulé"}
+                            </span>
+                            {p.createdAt && (
+                              <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                                <Clock className="h-3 w-3" />
+                                {new Date(p.createdAt).toLocaleDateString("fr-FR", { month: "short", year: "numeric" })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {(p as any).amountArtisan ? (
+                          <span className="text-sm font-bold text-[#722F37] flex items-center gap-0.5 shrink-0">
+                            <Euro className="h-3.5 w-3.5" />{(p as any).amountArtisan}
+                          </span>
+                        ) : null}
+                      </div>
+                    </Link>
+                  );
+                })}
+            </div>
+          </div>
+        )}
 
         {/* Magazine teaser */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center justify-between gap-4">

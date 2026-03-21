@@ -12,3 +12,22 @@ if (!dbUrl) {
 
 export const pool = mysql.createPool(dbUrl);
 export const db = drizzle(pool, { schema, mode: "default" });
+
+export async function ensureTables() {
+  try {
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS tailor_client_data (
+        id VARCHAR(36) PRIMARY KEY,
+        tailor_id VARCHAR(36) NOT NULL,
+        client_id VARCHAR(36) NOT NULL,
+        note TEXT,
+        client_status VARCHAR(20) DEFAULT 'nouveau',
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_tailor_client (tailor_id, client_id)
+      )
+    `);
+    console.log("[DB] tailor_client_data table ensured ✅");
+  } catch (err) {
+    console.error("[DB] ensureTables error:", err);
+  }
+}

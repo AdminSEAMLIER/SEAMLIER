@@ -3,9 +3,11 @@ import {
   MessageSquare, Search, Send, Users, Headset, ArrowLeft,
   User, FolderKanban, Calendar, Ruler, Mail, Phone,
   MapPin, Clock, CheckCircle2, Circle, AlertCircle, AlertTriangle,
+  StickyNote, ChevronDown, Tag,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -95,8 +97,25 @@ function measureRow(label: string, value: number | null, unit = "cm") {
   );
 }
 
+// ── Statut client ────────────────────────────────────────────────────────────
+const CLIENT_STATUSES = [
+  { value: "nouveau",  label: "Nouveau",  color: "bg-blue-100 text-blue-700 border-blue-200" },
+  { value: "fidele",   label: "Fidèle",   color: "bg-green-100 text-green-700 border-green-200" },
+  { value: "vip",      label: "VIP",      color: "bg-amber-100 text-amber-700 border-amber-200" },
+  { value: "inactif",  label: "Inactif",  color: "bg-gray-100 text-gray-600 border-gray-200" },
+];
+
+function clientStatusStyle(status: string) {
+  return CLIENT_STATUSES.find(s => s.value === status) ?? CLIENT_STATUSES[0];
+}
+
 // ── Panneau Fiche Client ─────────────────────────────────────────────────────
 function ClientFichePanel({ clientId, open, onClose }: { clientId: string; open: boolean; onClose: () => void }) {
+  const { toast } = useToast();
+  const [noteText, setNoteText] = useState("");
+  const [clientStatus, setClientStatus] = useState("nouveau");
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
+
   const { data, isLoading } = useQuery<ClientSummary>({
     queryKey: ["/api/tailor/clients", clientId, "summary"],
     queryFn: async () => {
@@ -106,6 +125,54 @@ function ClientFichePanel({ clientId, open, onClose }: { clientId: string; open:
     },
     enabled: open && !!clientId,
   });
+
+  const { data: noteData } = useQuery<{ note: string; clientStatus: string }>({
+    queryKey: ["/api/tailor/client", clientId, "notes"],
+    queryFn: async () => {
+      const res = await fetch(`/api/tailor/client/${clientId}/notes`, { credentials: "include" });
+      if (!res.ok) return { note: "", clientStatus: "nouveau" };
+      return res.json();
+    },
+    enabled: open && !!clientId,
+  });
+
+  useEffect(() => {
+    if (noteData) {
+      setNoteText(noteData.note ?? "");
+      setClientStatus(noteData.clientStatus ?? "nouveau");
+    }
+  }, [noteData]);
+
+  const saveNotesMutation = useMutation({
+    mutationFn: async (payload: { note: string; clientStatus: string }) => {
+      const res = await fetch(`/api/tailor/client/${clientId}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Failed to save");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tailor/client", clientId, "notes"] });
+      toast({ title: "Note enregistrée", description: "La note a été sauvegardée." });
+    },
+    onError: () => toast({ title: "Erreur", description: "Impossible de sauvegarder.", variant: "destructive" }),
+  });
+
+  const saveStatus = (newStatus: string) => {
+    setClientStatus(newStatus);
+    setShowStatusMenu(false);
+    saveNotesMutation.mutate({ note: noteText, clientStatus: newStatus });
+  };
+
+  // Calcul inactivité
+  const lastProjectDate = data?.projects?.length
+    ? new Date(Math.max(...data.projects.map(p => new Date(p.createdAt ?? 0).getTime())))
+    : null;
+  const monthsInactive = lastProjectDate
+    ? Math.floor((Date.now() - lastProjectDate.getTime()) / (1000 * 60 * 60 * 24 * 30))
+    : null;
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
@@ -151,6 +218,32 @@ function ClientFichePanel({ clientId, open, onClose }: { clientId: string; open:
                       Client depuis {new Date(data.client.createdAt).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
                     </p>
                   )}
+                  {/* Statut client avec menu */}
+                  <div className="relative mt-1.5">
+                    <button
+                      onClick={() => setShowStatusMenu(v => !v)}
+                      className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border cursor-pointer ${clientStatusStyle(clientStatus).color}`}
+                    >
+                      <Tag className="h-2.5 w-2.5" />
+                      {clientStatusStyle(clientStatus).label}
+                      <ChevronDown className="h-2.5 w-2.5" />
+                    </button>
+                    {showStatusMenu && (
+                      <div className="absolute left-0 top-7 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[120px] py-1">
+                        {CLIENT_STATUSES.map(s => (
+                          <button
+                            key={s.value}
+                            onClick={() => saveStatus(s.value)}
+                            className={`w-full text-left text-xs px-3 py-1.5 hover:bg-gray-50 font-medium ${s.value === clientStatus ? "opacity-60" : ""}`}
+                          >
+                            <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-full border text-[10px] ${s.color}`}>
+                              {s.label}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               {/* Métriques rapides */}
@@ -171,20 +264,31 @@ function ClientFichePanel({ clientId, open, onClose }: { clientId: string; open:
 
             {/* Onglets */}
             <Tabs defaultValue="projects" className="flex flex-col flex-1 overflow-hidden">
-              <TabsList className="flex w-full rounded-none border-b border-gray-100 bg-white px-4 h-10 flex-shrink-0">
-                <TabsTrigger value="projects" className="flex-1 text-xs data-[state=active]:text-[#722F37] data-[state=active]:border-b-2 data-[state=active]:border-[#722F37] rounded-none">
+              <TabsList className="flex w-full rounded-none border-b border-gray-100 bg-white px-2 h-10 flex-shrink-0">
+                <TabsTrigger value="projects" className="flex-1 text-[11px] data-[state=active]:text-[#722F37] data-[state=active]:border-b-2 data-[state=active]:border-[#722F37] rounded-none">
                   Projets
                 </TabsTrigger>
-                <TabsTrigger value="appointments" className="flex-1 text-xs data-[state=active]:text-[#722F37] data-[state=active]:border-b-2 data-[state=active]:border-[#722F37] rounded-none">
-                  Rendez-vous
+                <TabsTrigger value="appointments" className="flex-1 text-[11px] data-[state=active]:text-[#722F37] data-[state=active]:border-b-2 data-[state=active]:border-[#722F37] rounded-none">
+                  RDV
                 </TabsTrigger>
-                <TabsTrigger value="measurements" className="flex-1 text-xs data-[state=active]:text-[#722F37] data-[state=active]:border-b-2 data-[state=active]:border-[#722F37] rounded-none">
+                <TabsTrigger value="measurements" className="flex-1 text-[11px] data-[state=active]:text-[#722F37] data-[state=active]:border-b-2 data-[state=active]:border-[#722F37] rounded-none">
                   Mesures
+                </TabsTrigger>
+                <TabsTrigger value="notes" className="flex-1 text-[11px] data-[state=active]:text-[#722F37] data-[state=active]:border-b-2 data-[state=active]:border-[#722F37] rounded-none">
+                  Notes
                 </TabsTrigger>
               </TabsList>
 
               {/* Projets */}
               <TabsContent value="projects" className="flex-1 overflow-y-auto p-4 space-y-3 mt-0">
+                {monthsInactive !== null && monthsInactive >= 3 && (
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-orange-500 shrink-0" />
+                    <p className="text-xs text-orange-700 font-medium">
+                      Inactif depuis {monthsInactive} mois — pensez à recontacter ce client
+                    </p>
+                  </div>
+                )}
                 {data.projects.length === 0 ? (
                   <div className="text-center py-10">
                     <FolderKanban className="h-10 w-10 text-gray-200 mx-auto mb-3" />
@@ -303,6 +407,30 @@ function ClientFichePanel({ clientId, open, onClose }: { clientId: string; open:
                     )}
                   </div>
                 )}
+              </TabsContent>
+
+              {/* Notes privées */}
+              <TabsContent value="notes" className="flex-1 overflow-y-auto p-4 mt-0">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <StickyNote className="h-4 w-4 text-[#722F37]" />
+                    <p className="text-sm font-semibold text-gray-900">Notes privées</p>
+                    <span className="text-[10px] text-gray-400 ml-1">(visibles uniquement par vous)</span>
+                  </div>
+                  <Textarea
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    placeholder="Vos notes sur ce client (préférences, historique, remarques…)"
+                    className="min-h-[180px] text-sm resize-none border-gray-200 focus:border-[#722F37]"
+                  />
+                  <Button
+                    className="w-full bg-[#722F37] hover:bg-[#5e2530] text-white"
+                    onClick={() => saveNotesMutation.mutate({ note: noteText, clientStatus })}
+                    disabled={saveNotesMutation.isPending}
+                  >
+                    {saveNotesMutation.isPending ? "Enregistrement…" : "Enregistrer la note"}
+                  </Button>
+                </div>
               </TabsContent>
             </Tabs>
           </>
