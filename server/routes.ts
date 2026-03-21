@@ -538,6 +538,102 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/tailor/stats-full", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+
+      const now = new Date();
+      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      // CA du mois en cours
+      const [revenueRows] = await pool.query(
+        `SELECT COALESCE(SUM(amount_artisan), 0) as total FROM projects
+         WHERE tailor_id = ? AND status = 'completed' AND updated_at >= ?`,
+        [tailor.id, firstOfMonth]
+      ) as any[];
+      const monthlyRevenue = parseFloat(revenueRows?.[0]?.total) || 0;
+
+      // Panier moyen (tous projets complétés)
+      const [avgRows] = await pool.query(
+        `SELECT COALESCE(AVG(amount_artisan), 0) as avg_val FROM projects
+         WHERE tailor_id = ? AND status = 'completed' AND amount_artisan > 0`,
+        [tailor.id]
+      ) as any[];
+      const averageOrderValue = parseFloat(avgRows?.[0]?.avg_val) || 0;
+
+      // Nombre total de clients distincts
+      const [clientRows] = await pool.query(
+        `SELECT COUNT(DISTINCT client_id) as cnt FROM projects WHERE tailor_id = ?`,
+        [tailor.id]
+      ) as any[];
+      const totalClients = parseInt(clientRows?.[0]?.cnt) || 0;
+
+      // Clients récurrents (plus d'un projet)
+      const [recurRows] = await pool.query(
+        `SELECT COUNT(*) as cnt FROM (
+           SELECT client_id FROM projects WHERE tailor_id = ?
+           GROUP BY client_id HAVING COUNT(*) > 1
+         ) sub`,
+        [tailor.id]
+      ) as any[];
+      const recurringClients = parseInt(recurRows?.[0]?.cnt) || 0;
+      const recurringClientRate = totalClients > 0
+        ? Math.round((recurringClients / totalClients) * 100) : 0;
+
+      // CA des 6 derniers mois
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      const [monthlyRows] = await pool.query(
+        `SELECT DATE_FORMAT(updated_at, '%Y-%m') as month,
+                COALESCE(SUM(amount_artisan), 0) as total
+         FROM projects
+         WHERE tailor_id = ? AND status = 'completed' AND updated_at >= ?
+         GROUP BY month ORDER BY month ASC`,
+        [tailor.id, sixMonthsAgo]
+      ) as any[];
+
+      // Construire tableau complet des 6 derniers mois (même si CA = 0)
+      const monthLabels = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+      const revenueByMonth: { month: string; total: number }[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const found = Array.isArray(monthlyRows)
+          ? monthlyRows.find((r: any) => r.month === key)
+          : null;
+        revenueByMonth.push({
+          month: `${monthLabels[d.getMonth()]} ${d.getFullYear().toString().slice(2)}`,
+          total: found ? parseFloat(found.total) : 0,
+        });
+      }
+
+      // Répartition par type de vêtement
+      const [typeRows] = await pool.query(
+        `SELECT COALESCE(clothing_type, 'Autre') as type, COUNT(*) as count
+         FROM projects WHERE tailor_id = ? AND clothing_type IS NOT NULL
+         GROUP BY type ORDER BY count DESC`,
+        [tailor.id]
+      ) as any[];
+      const clothingTypes = Array.isArray(typeRows)
+        ? typeRows.map((r: any) => ({ name: r.type, value: parseInt(r.count) }))
+        : [];
+
+      res.json({
+        monthlyRevenue,
+        averageOrderValue,
+        totalClients,
+        recurringClientRate,
+        revenueByMonth,
+        clothingTypes,
+      });
+    } catch (error) {
+      console.error("Error fetching tailor full stats:", error);
+      res.status(500).json({ error: "Failed to fetch full stats" });
+    }
+  });
+
   app.get("/api/tailor/projects/count", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;

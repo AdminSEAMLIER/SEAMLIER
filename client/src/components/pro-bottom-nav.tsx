@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { Home, FileText, FolderKanban, MessageSquare, Calendar, User } from "lucide-react";
+import { Home, FileText, FolderKanban, MessageSquare, BarChart2, User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
@@ -22,6 +22,7 @@ export function ProBottomNav() {
     { icon: FileText, labelKey: "nav.requests", href: "/gestion-demandes" },
     { icon: FolderKanban, labelKey: "nav.projects", href: "/atelier" },
     { icon: MessageSquare, labelKey: "nav.messaging", href: "/messagerie", isMessages: true },
+    { icon: BarChart2, labelKey: "nav.stats", href: "/pro-statistiques" },
     { icon: User, labelKey: "nav.profile", href: "/pro-profil" },
   ];
 
@@ -39,7 +40,7 @@ export function ProBottomNav() {
             <Link key={item.href} href={item.href}>
               <button
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 w-16 h-full transition-colors",
+                  "flex flex-col items-center justify-center gap-1 w-12 h-full transition-colors",
                   isActive
                     ? "text-[#722F37]"
                     : "text-gray-700 hover:text-gray-900"
