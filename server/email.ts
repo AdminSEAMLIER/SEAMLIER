@@ -165,6 +165,188 @@ export async function sendVerificationEmail(
   }
 }
 
+// ── Shared email template wrapper ────────────────────────────────────────────
+function emailWrapper(title: string, bodyHtml: string): string {
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title></head>
+<body style="margin:0;padding:0;background-color:#f5f3f0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f5f3f0">
+    <tr><td align="center" style="padding:40px 16px">
+      <table role="presentation" width="580" cellspacing="0" cellpadding="0" border="0"
+        style="max-width:580px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.06)">
+        <tr><td style="background-color:#722F37;padding:28px 40px;text-align:center">
+          <h1 style="margin:0;color:#ffffff;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:400;letter-spacing:3px">SEAMLIER</h1>
+        </td></tr>
+        <tr><td style="padding:36px 40px">${bodyHtml}</td></tr>
+        <tr><td style="background-color:#faf9f7;padding:20px 40px;text-align:center;border-top:1px solid #f0eeeb">
+          <p style="margin:0;color:#9ca3af;font-size:11px">© 2026 SEAMLIER — <a href="https://www.seamlier.fr" style="color:#722F37;text-decoration:none">www.seamlier.fr</a></p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+}
+
+async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+  const mailer = getTransporter();
+  if (!mailer) { console.log(`[EMAIL DISABLED] ${subject} → ${to}`); return false; }
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@seamlier.fr";
+  try {
+    await mailer.sendMail({ from: `"SEAMLIER" <${from}>`, to, subject, html });
+    console.log(`[EMAIL] ${subject} → ${to}`);
+    return true;
+  } catch (err) {
+    console.error(`[EMAIL] Failed to send "${subject}" to ${to}:`, err);
+    return false;
+  }
+}
+
+export async function sendNewMessageEmail(
+  recipientEmail: string, recipientName: string, senderName: string, preview: string
+): Promise<boolean> {
+  const name = recipientName || "vous";
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const html = emailWrapper("Nouveau message — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Nouveau message</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${name},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      <strong style="color:#1f2937">${senderName}</strong> vous a envoyé un message sur SEAMLIER :
+    </p>
+    <div style="background:#f5f3f0;border-left:3px solid #722F37;padding:16px 20px;margin:0 0 28px;border-radius:0 8px 8px 0">
+      <p style="margin:0;color:#4b5563;font-size:14px;font-style:italic">"${preview}"</p>
+    </div>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/messages" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Voir le message</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(recipientEmail, `Nouveau message de ${senderName} — SEAMLIER`, html);
+}
+
+export async function sendDeliveryEmail(
+  clientEmail: string, clientName: string, tailorName: string, projectTitle: string
+): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const name = clientName || "vous";
+  const html = emailWrapper("Votre commande est prête — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Votre commande est prête !</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${name},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      Bonne nouvelle ! <strong>${tailorName}</strong> a terminé votre commande <strong>"${projectTitle}"</strong>.
+      Vous pouvez maintenant confirmer la réception et laisser un avis.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:24px">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/mes-projets" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Confirmer la réception</a>
+      </td></tr>
+    </table>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Vous avez 48h pour signaler tout problème à notre support.</p>
+  `);
+  return sendEmail(clientEmail, `Votre commande "${projectTitle}" est prête — SEAMLIER`, html);
+}
+
+export async function sendReviewRequestEmail(
+  clientEmail: string, clientName: string, tailorName: string, projectId: string
+): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const html = emailWrapper("Donnez votre avis — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Votre avis compte !</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${clientName || ""},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      Votre commande avec <strong>${tailorName}</strong> est terminée. Prenez 30 secondes pour laisser un avis — cela aide les autres clients et valorise le travail des artisans.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/mes-projets" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Laisser un avis</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(clientEmail, `Laissez votre avis sur votre commande SEAMLIER`, html);
+}
+
+export async function sendPaymentConfirmationEmail(
+  clientEmail: string, clientName: string, tailorName: string, projectTitle: string, amount: number
+): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const html = emailWrapper("Paiement confirmé — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Paiement confirmé</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${clientName || ""},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      Votre paiement de <strong>${amount}€</strong> pour la commande <strong>"${projectTitle}"</strong>
+      avec <strong>${tailorName}</strong> a été validé. La confection peut maintenant commencer !
+    </p>
+    <div style="background:#f5f3f0;border-radius:8px;padding:16px 20px;margin:0 0 24px">
+      <table style="width:100%">
+        <tr><td style="color:#6b7280;font-size:13px">Artisan</td><td style="text-align:right;font-weight:600;font-size:13px;color:#1f2937">${tailorName}</td></tr>
+        <tr><td style="color:#6b7280;font-size:13px;padding-top:8px">Commande</td><td style="text-align:right;font-weight:600;font-size:13px;color:#1f2937;padding-top:8px">${projectTitle}</td></tr>
+        <tr><td style="color:#6b7280;font-size:13px;padding-top:8px">Montant</td><td style="text-align:right;font-weight:700;font-size:15px;color:#722F37;padding-top:8px">${amount}€</td></tr>
+      </table>
+    </div>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/mes-projets" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Suivre ma commande</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(clientEmail, `Paiement confirmé — ${projectTitle}`, html);
+}
+
+export async function sendAppointmentConfirmationEmail(
+  toEmail: string, toName: string, scheduledAt: Date | string, appointmentType: string, otherPartyName: string
+): Promise<boolean> {
+  const dt = new Date(scheduledAt);
+  const dateStr = dt.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const timeStr = dt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const html = emailWrapper("Rendez-vous confirmé — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Rendez-vous confirmé</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${toName || ""},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      Votre rendez-vous <strong>${appointmentType}</strong> avec <strong>${otherPartyName}</strong> est confirmé :
+    </p>
+    <div style="background:#f5f3f0;border-radius:8px;padding:16px 20px;margin:0 0 24px;text-align:center">
+      <p style="margin:0 0 4px;color:#722F37;font-size:18px;font-weight:700">${dateStr}</p>
+      <p style="margin:0;color:#4b5563;font-size:15px">à ${timeStr}</p>
+    </div>
+    <p style="margin:0 0 20px;color:#9ca3af;font-size:12px">Un rappel vous sera envoyé 24h avant le rendez-vous.</p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/mes-rendez-vous" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Voir mes rendez-vous</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(toEmail, `RDV confirmé — ${dateStr} à ${timeStr}`, html);
+}
+
+export async function sendAppointmentReminderEmail(
+  toEmail: string, toName: string, scheduledAt: Date | string, appointmentType: string, otherPartyName: string
+): Promise<boolean> {
+  const dt = new Date(scheduledAt);
+  const timeStr = dt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const html = emailWrapper("Rappel rendez-vous — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Rappel : rendez-vous demain</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${toName || ""},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      Rappel : vous avez un rendez-vous <strong>${appointmentType}</strong> avec <strong>${otherPartyName}</strong> demain à <strong>${timeStr}</strong>.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/mes-rendez-vous" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Voir mes rendez-vous</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(toEmail, `Rappel : votre RDV avec ${otherPartyName} demain à ${timeStr}`, html);
+}
+
 export async function sendPasswordResetEmail(email: string, token: string, firstName?: string | null): Promise<boolean> {
   const mailer = getTransporter();
   if (!mailer) {

@@ -29,6 +29,7 @@ const inscriptionSchema = z.object({
   phone: z.string().optional(),
   password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
   confirmPassword: z.string(),
+  cgvAccepted: z.boolean().refine(v => v === true, { message: "Vous devez accepter les CGV et CGU pour continuer." }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"],
@@ -51,6 +52,7 @@ export default function InscriptionParticulier() {
       phone: "",
       password: "",
       confirmPassword: "",
+      cgvAccepted: false,
     },
   });
 
@@ -64,6 +66,7 @@ export default function InscriptionParticulier() {
           phone: data.phone,
           password: data.password,
           role: "client",
+          cgvAccepted: data.cgvAccepted,
         }),
       });
       const result = await response.json();
@@ -294,6 +297,33 @@ export default function InscriptionParticulier() {
                       )}
                     />
 
+                    <FormField
+                      control={form.control}
+                      name="cgvAccepted"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              id="cgv-particulier"
+                              checked={field.value}
+                              onChange={field.onChange}
+                              className="mt-1 h-4 w-4 accent-[#722F37] cursor-pointer shrink-0"
+                              data-testid="checkbox-cgv"
+                            />
+                            <label htmlFor="cgv-particulier" className="text-sm text-gray-600 leading-snug cursor-pointer">
+                              J'accepte les{" "}
+                              <Link href="/cgv" className="text-[#722F37] hover:underline font-medium" target="_blank">Conditions Générales de Vente</Link>
+                              {" "}et les{" "}
+                              <Link href="/cgu" className="text-[#722F37] hover:underline font-medium" target="_blank">Conditions Générales d'Utilisation</Link>
+                              {" "}de SEAMLIER.
+                            </label>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     <div className="pt-2">
                       <Button 
                         type="submit" 
@@ -304,13 +334,6 @@ export default function InscriptionParticulier() {
                         {registerMutation.isPending ? t('auth.creating') : t('auth.signup')}
                       </Button>
                     </div>
-
-                    <p className="text-center text-sm text-gray-500">
-                      {t('auth.termsAccept')}{" "}
-                      <a href="#" className="text-[#722F37] hover:underline">{t('auth.termsOfUse')}</a>
-                      {" "}{t('auth.and')}{" "}
-                      <a href="#" className="text-[#722F37] hover:underline">{t('auth.privacyPolicy')}</a>.
-                    </p>
                   </form>
                 </Form>
 

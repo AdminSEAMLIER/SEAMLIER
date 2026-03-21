@@ -42,10 +42,16 @@ Preferred communication style: Simple, everyday language.
 ### Key Features
 - Artisan subscription plans (Starter/Pro) with different commission structures and feature limits.
 - Admin dashboard for managing artisans, projects, appointments, and magazine articles.
-- In-app messaging with support contact functionality.
-- Real-time project tracking and status updates.
+- In-app messaging with support contact functionality (email notification when recipient is away > 5min).
+- Real-time project tracking: dedicated /suivi-projet/:id page with 8-step fabrication timeline.
 - Profile management for clients and tailors, including measurement profiles.
 - Article management and display for a magazine section.
+- Review system with admin approval (is_approved flag, pending-reviews admin endpoint).
+- Onboarding wizard for new artisans (4 steps: profile, portfolio, availability, ready).
+- CGV/CGU acceptance checkbox on both registration forms (saved to users.cgv_accepted).
+- Transactional emails: message notification, delivery confirmation, review request, appointment confirmation.
+- Legal pages: /cgu (CGU), /politique-remboursement (refund policy 48h).
+- Footer links to all legal pages (CGV, CGU, Confidentialité, Remboursement).
 
 ## External Dependencies
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FolderKanban, Clock, Euro, CheckCircle, Circle, Loader2, ArrowLeft, Scissors, MessageSquare, Calendar, Star, X } from "lucide-react";
+import { FolderKanban, Clock, Euro, CheckCircle, Circle, Loader2, ArrowLeft, Scissors, MessageSquare, Calendar, Star, X, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -345,12 +345,22 @@ export default function MesProjets() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="flex-1 gap-1.5 text-[#722F37] border-[#722F37]/30 hover:bg-[#722F37] hover:text-white"
+                      onClick={() => navigate(`/suivi-projet/${project.id}`)}
+                      data-testid={`button-suivi-${project.id}`}
+                    >
+                      <Eye className="h-4 w-4" />
+                      {isFr ? "Suivre" : "Track"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="flex-1 gap-1.5 text-gray-600"
                       onClick={() => navigate(`/messages?tailor=${project.tailorId}`)}
                       data-testid={`button-message-tailor-${project.id}`}
                     >
                       <MessageSquare className="h-4 w-4" />
-                      {isFr ? "Messagerie" : "Message"}
+                      {isFr ? "Message" : "Message"}
                     </Button>
                     <Button
                       variant="outline"
@@ -360,7 +370,7 @@ export default function MesProjets() {
                       data-testid={`button-book-${project.id}`}
                     >
                       <Calendar className="h-4 w-4" />
-                      {isFr ? "Prendre RDV" : "Book"}
+                      {isFr ? "RDV" : "Book"}
                     </Button>
                     {isInProgress && project.amount && project.amount > 0 && (
                       <PaymentButton

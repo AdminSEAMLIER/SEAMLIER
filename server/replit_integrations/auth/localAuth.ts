@@ -7,6 +7,7 @@ import type { Express, RequestHandler } from "express";
 import mysqlSession from "express-mysql-session";
 import { authStorage } from "./storage";
 import { storage } from "../../storage";
+import { pool } from "../../db";
 import crypto from "crypto";
 import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail, sendPasswordResetEmail } from "../../email";
 
@@ -208,6 +209,14 @@ export async function setupAuth(app: Express) {
         } catch (tailorError) {
           console.error("Error creating tailor profile:", tailorError);
         }
+      }
+
+      // Save CGV acceptance if provided
+      if (req.body.cgvAccepted) {
+        pool.query(
+          `UPDATE users SET cgv_accepted = 1, cgv_accepted_at = NOW() WHERE id = ?`,
+          [newUser.id]
+        ).catch((e: any) => console.error("[CGV] Failed to save cgvAccepted:", e?.message));
       }
 
       sendVerificationEmail(email, verificationToken, resolvedFirstName).catch(err => {

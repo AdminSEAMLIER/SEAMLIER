@@ -45,6 +45,7 @@ const proSchema = z.object({
   bio: z.string().min(10, "Merci de rédiger une courte présentation"),
   siret: z.string().min(14, "Le SIRET doit comporter 14 chiffres").max(14, "SIRET invalide"),
   companyName: z.string().min(2, "Le nom de l'entreprise est requis"),
+  cgvAccepted: z.boolean().refine(v => v === true, { message: "Vous devez accepter les CGV et CGU pour continuer." }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"],
@@ -87,6 +88,7 @@ export default function InscriptionProfessionnel() {
       bio: "",
       siret: "",
       companyName: "",
+      cgvAccepted: false,
     },
   });
 
@@ -106,6 +108,7 @@ export default function InscriptionProfessionnel() {
           bio: data.bio || "",
           siret: data.siret,
           companyName: data.companyName,
+          cgvAccepted: data.cgvAccepted,
         }),
       });
       const result = await response.json();
@@ -319,6 +322,29 @@ export default function InscriptionProfessionnel() {
                       <FormMessage />
                     </FormItem>
                   )} />
+                  <div className="pt-2">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="cgv-professionnel"
+                        checked={form.watch("cgvAccepted")}
+                        onChange={e => form.setValue("cgvAccepted", e.target.checked, { shouldValidate: true })}
+                        className="mt-1 h-4 w-4 accent-[#722F37] cursor-pointer shrink-0"
+                        data-testid="checkbox-cgv"
+                      />
+                      <label htmlFor="cgv-professionnel" className="text-sm text-gray-600 leading-snug cursor-pointer">
+                        J'accepte les{" "}
+                        <Link href="/cgv" className="text-[#722F37] hover:underline font-medium" target="_blank">CGV</Link>
+                        {" "}et les{" "}
+                        <Link href="/cgu" className="text-[#722F37] hover:underline font-medium" target="_blank">CGU</Link>
+                        {" "}de SEAMLIER, ainsi que la{" "}
+                        <Link href="/politique-remboursement" className="text-[#722F37] hover:underline font-medium" target="_blank">politique de remboursement</Link>.
+                      </label>
+                    </div>
+                    {form.formState.errors.cgvAccepted && (
+                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.cgvAccepted.message}</p>
+                    )}
+                  </div>
                   <Button
                     type="submit"
                     className="w-full bg-[#722F37] hover:bg-[#5a1f25] text-white py-6"

@@ -41,6 +41,9 @@ import ConnexionProfessionnel from "@/pages/connexion-professionnel";
 import MentionsLegales from "@/pages/mentions-legales";
 import Confidentialite from "@/pages/confidentialite";
 import CGV from "@/pages/cgv";
+import CGU from "@/pages/cgu";
+import PolitiqueRemboursement from "@/pages/politique-remboursement";
+import SuiviProjet from "@/pages/suivi-projet";
 import ModifierMotDePasse from "@/pages/modifier-mot-de-passe";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
@@ -164,6 +167,8 @@ function Router() {
       <Route path="/mentions-legales" component={MentionsLegales} />
       <Route path="/confidentialite" component={Confidentialite} />
       <Route path="/cgv" component={CGV} />
+      <Route path="/cgu" component={CGU} />
+      <Route path="/politique-remboursement" component={PolitiqueRemboursement} />
 
       {/* Legacy redirects */}
       <Route path="/particulier">
@@ -245,7 +250,7 @@ function Router() {
 
       <Route path="/suivi-projet/:id">
         <ProtectedRoute>
-          <ClientLayout><MesProjets /></ClientLayout>
+          <SuiviProjet />
         </ProtectedRoute>
       </Route>
 

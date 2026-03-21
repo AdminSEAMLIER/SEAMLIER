@@ -111,6 +111,26 @@ export default function ProDashboard() {
     },
   });
 
+  const { data: onboarding } = useQuery<{
+    steps: { profile: boolean; portfolio: boolean; availability: boolean; complete: boolean };
+    completedCount: number;
+    onboardingStep: number;
+  }>({
+    queryKey: ["/api/professionnel/onboarding"],
+  });
+
+  const completeOnboardingMutation = useMutation({
+    mutationFn: (step: number) => apiRequest("POST", "/api/professionnel/onboarding/complete", { step }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/professionnel/onboarding"] }),
+  });
+
+  const onboardingDone = !onboarding || (
+    onboarding.steps.profile &&
+    onboarding.steps.portfolio &&
+    onboarding.steps.availability &&
+    onboarding.steps.complete
+  );
+
   const subscriptionPrice = settings?.subscriptionPrice || "29";
   const currentPlan = (planData?.subscriptionPlan || "Starter") as "Starter" | "Pro";
 
@@ -198,6 +218,98 @@ export default function ProDashboard() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 lg:px-6 py-6 space-y-6">
+
+        {/* Onboarding wizard — displayed until all steps are complete */}
+        {!onboardingDone && onboarding && (
+          <Card className="border border-[#722F37]/20 bg-white shadow-sm overflow-hidden" data-testid="card-onboarding">
+            <div className="h-1 bg-gray-100">
+              <div
+                className="h-1 bg-[#722F37] transition-all duration-500"
+                style={{ width: `${(onboarding.completedCount / 4) * 100}%` }}
+              />
+            </div>
+            <CardContent className="p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="h-5 w-5 text-[#722F37]" />
+                <div>
+                  <p className="font-semibold text-gray-900">Configurez votre profil</p>
+                  <p className="text-xs text-gray-500">{onboarding.completedCount} / 4 étapes complétées</p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                {[
+                  {
+                    key: "profile",
+                    done: onboarding.steps.profile,
+                    label: "Complétez votre biographie et vos spécialités",
+                    href: "/pro-profil",
+                    cta: "Modifier le profil",
+                    step: 1,
+                  },
+                  {
+                    key: "portfolio",
+                    done: onboarding.steps.portfolio,
+                    label: "Ajoutez au moins une photo à votre portfolio",
+                    href: "/vitrine-pro",
+                    cta: "Ajouter des photos",
+                    step: 2,
+                  },
+                  {
+                    key: "availability",
+                    done: onboarding.steps.availability,
+                    label: "Planifiez votre premier rendez-vous ou créez un projet",
+                    href: "/portefeuille",
+                    cta: "Voir le planning",
+                    step: 3,
+                  },
+                  {
+                    key: "complete",
+                    done: onboarding.steps.complete,
+                    label: "Marquez votre profil comme prêt à recevoir des clients",
+                    href: undefined,
+                    cta: "Marquer comme prêt",
+                    step: 4,
+                  },
+                ].map(item => (
+                  <div
+                    key={item.key}
+                    className={`flex items-center gap-3 p-3 rounded-xl border transition-colors
+                      ${item.done ? "bg-green-50 border-green-200" : "bg-gray-50 border-gray-100"}`}
+                  >
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0
+                      ${item.done ? "bg-green-500" : "bg-gray-200"}`}>
+                      {item.done
+                        ? <CheckCircle className="h-4 w-4 text-white" />
+                        : <span className="text-gray-400 text-xs font-bold">{item.step}</span>
+                      }
+                    </div>
+                    <p className={`text-sm flex-1 ${item.done ? "text-green-700 line-through" : "text-gray-700"}`}>
+                      {item.label}
+                    </p>
+                    {!item.done && (
+                      item.href
+                        ? <Link href={item.href}>
+                            <Button size="sm" variant="outline" className="text-xs text-[#722F37] border-[#722F37]/30 shrink-0">
+                              {item.cta}
+                            </Button>
+                          </Link>
+                        : <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs text-[#722F37] border-[#722F37]/30 shrink-0"
+                            onClick={() => completeOnboardingMutation.mutate(4)}
+                            disabled={completeOnboardingMutation.isPending}
+                            data-testid="button-onboarding-complete"
+                          >
+                            {item.cta}
+                          </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {currentPlan === "Starter" && (
           <Card className="border border-gray-100 bg-white shadow-sm" data-testid="card-starter-limit">

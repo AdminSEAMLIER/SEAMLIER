@@ -6,6 +6,13 @@ import { storage } from "./storage";
 import { db, pool } from "./db";
 import { eq } from "drizzle-orm";
 import { tailors, users } from "../shared/schema";
+import {
+  sendNewMessageEmail,
+  sendDeliveryEmail,
+  sendReviewRequestEmail,
+  sendPaymentConfirmationEmail,
+  sendAppointmentConfirmationEmail,
+} from "./email";
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
@@ -432,6 +439,41 @@ export async function registerRoutes(
         senderId: userId,
       });
       res.status(201).json(message);
+
+      // Trigger email notification in background (non-blocking)
+      try {
+        const conversationId = req.body.conversationId;
+        if (conversationId) {
+          const [convRows] = await pool.query(
+            `SELECT c.*, 
+               su.id as sender_uid, su.first_name as sender_first, su.last_name as sender_last,
+               ru.id as recip_uid, ru.email as recip_email, ru.first_name as recip_first, ru.last_name as recip_last,
+               ru.last_active_at as recip_active
+             FROM conversations c
+             JOIN users su ON su.id = ?
+             JOIN users ru ON ru.id = CASE WHEN c.client_id = ? THEN c.tailor_user_id ELSE c.client_id END
+             WHERE c.id = ?`,
+            [userId, userId, conversationId]
+          ) as any[];
+          if ((convRows as any[]).length > 0) {
+            const row = (convRows as any[])[0];
+            const senderName = `${row.sender_first || ""} ${row.sender_last || ""}`.trim() || "Un utilisateur";
+            const recipEmail = row.recip_email;
+            const recipName = `${row.recip_first || ""} ${row.recip_last || ""}`.trim();
+            const lastActive = row.recip_active ? new Date(row.recip_active) : null;
+            const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
+            const isAway = !lastActive || lastActive < fiveMinsAgo;
+            if (recipEmail && isAway) {
+              const preview = (req.body.content || "").slice(0, 100);
+              sendNewMessageEmail(recipEmail, recipName, senderName, preview).catch(() => {});
+            }
+            // Update sender's last_active_at
+            await pool.query(`UPDATE users SET last_active_at = NOW() WHERE id = ?`, [userId]).catch(() => {});
+          }
+        }
+      } catch (emailErr) {
+        console.error("[MSG EMAIL]", emailErr);
+      }
     } catch (error) {
       console.error("Failed to send message:", error);
       res.status(500).json({ error: "Failed to send message" });
@@ -761,6 +803,32 @@ export async function registerRoutes(
       const { currentStep, progress, status } = req.body;
       const updated = await storage.updateProject(req.params.id, { currentStep, progress, status });
       res.json(updated);
+
+      // Send delivery email when artisan marks livraison step
+      if (currentStep === "livraison" || status === "completed") {
+        try {
+          const [clientRows] = await pool.query(
+            `SELECT u.email, u.first_name, u.last_name FROM users u WHERE u.id = ?`,
+            [project.clientId]
+          ) as any[];
+          const [tailorRows] = await pool.query(
+            `SELECT u.first_name, u.last_name FROM users u WHERE u.id = ?`,
+            [tailor.userId]
+          ) as any[];
+          if ((clientRows as any[]).length > 0) {
+            const cl = (clientRows as any[])[0];
+            const ta = (tailorRows as any[])[0];
+            const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim();
+            const tailorName = `${ta?.first_name || ""} ${ta?.last_name || ""}`.trim();
+            sendDeliveryEmail(cl.email, clientName, tailorName, project.title || "votre commande").catch(() => {});
+            setTimeout(() => {
+              sendReviewRequestEmail(cl.email, clientName, tailorName, project.id).catch(() => {});
+            }, 24 * 60 * 60 * 1000);
+          }
+        } catch (emailErr) {
+          console.error("[DELIVERY EMAIL]", emailErr);
+        }
+      }
     } catch (error) {
       console.error("Error updating project step:", error);
       res.status(500).json({ error: "Failed to update project step" });
@@ -990,7 +1058,28 @@ export async function registerRoutes(
         ]
       );
       const [rows] = await pool.query(`SELECT * FROM appointments WHERE id = ?`, [newId]) as any[];
-      res.status(201).json(rows[0] || { id: newId });
+      const created = (rows as any[])[0] || { id: newId };
+      res.status(201).json(created);
+
+      // Send confirmation emails in background
+      try {
+        const [clientRows] = await pool.query(
+          `SELECT email, first_name, last_name FROM users WHERE id = ?`, [clientId]
+        ) as any[];
+        const [tailorRows] = await pool.query(
+          `SELECT u.email, u.first_name, u.last_name FROM users u JOIN tailors t ON t.user_id = u.id WHERE t.id = ?`, [tailorId]
+        ) as any[];
+        const cl = (clientRows as any[])[0];
+        const ta = (tailorRows as any[])[0];
+        if (cl && ta) {
+          const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim();
+          const tailorName = `${ta.first_name || ""} ${ta.last_name || ""}`.trim();
+          sendAppointmentConfirmationEmail(cl.email, clientName, scheduledAt, type || "consultation", tailorName).catch(() => {});
+          sendAppointmentConfirmationEmail(ta.email, tailorName, scheduledAt, type || "consultation", clientName).catch(() => {});
+        }
+      } catch (emailErr) {
+        console.error("[APPT EMAIL]", emailErr);
+      }
     } catch (error: any) {
       console.error("Failed to create appointment:", error);
       res.status(500).json({ error: error?.message || "Failed to create appointment" });
@@ -1156,14 +1245,115 @@ export async function registerRoutes(
   app.post("/api/reviews", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
-      const review = await storage.createReview({
-        ...req.body,
-        userId,
-      });
-      res.status(201).json(review);
+      const { tailorId, projectId, rating, comment } = req.body;
+      const newId = require("crypto").randomUUID();
+      await pool.query(
+        `INSERT INTO reviews (id, tailor_id, user_id, project_id, rating, comment, is_approved)
+         VALUES (?, ?, ?, ?, ?, ?, 0)`,
+        [newId, tailorId, userId, projectId || null, rating, comment]
+      );
+      const [rows] = await pool.query(`SELECT * FROM reviews WHERE id = ?`, [newId]) as any[];
+      res.status(201).json((rows as any[])[0] || { id: newId });
     } catch (error) {
       console.error("Failed to create review:", error);
       res.status(500).json({ error: "Failed to create review" });
+    }
+  });
+
+  // Check if current user already reviewed a specific project
+  app.get("/api/reviews/my/:projectId", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const [rows] = await pool.query(
+        `SELECT id FROM reviews WHERE user_id = ? AND project_id = ? LIMIT 1`,
+        [userId, req.params.projectId]
+      ) as any[];
+      res.json({ exists: (rows as any[]).length > 0 });
+    } catch (error) {
+      res.status(500).json({ exists: false });
+    }
+  });
+
+  // Admin: list pending reviews awaiting approval
+  app.get("/api/admin/pending-reviews", requireAdmin, async (req, res) => {
+    try {
+      const [rows] = await pool.query(
+        `SELECT r.*, u.first_name, u.last_name, u.email,
+           CONCAT(tu.first_name, ' ', tu.last_name) as tailor_name
+         FROM reviews r
+         JOIN users u ON u.id = r.user_id
+         JOIN tailors t ON t.id = r.tailor_id
+         JOIN users tu ON tu.id = t.user_id
+         WHERE r.is_approved = 0
+         ORDER BY r.created_at DESC`
+      ) as any[];
+      res.json(rows);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch pending reviews" });
+    }
+  });
+
+  // Admin: approve or reject a review
+  app.patch("/api/admin/reviews/:id/approve", requireAdmin, async (req, res) => {
+    try {
+      const { approved } = req.body; // true or false
+      await pool.query(
+        `UPDATE reviews SET is_approved = ? WHERE id = ?`,
+        [approved ? 1 : -1, req.params.id]
+      );
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update review" });
+    }
+  });
+
+  // Professionnel onboarding status
+  app.get("/api/professionnel/onboarding", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+
+      const [portfolioRows] = await pool.query(
+        `SELECT COUNT(*) as cnt FROM portfolio_items WHERE tailor_id = ?`, [tailor.id]
+      ) as any[];
+      const portfolioCount = parseInt((portfolioRows as any[])[0]?.cnt) || 0;
+
+      const [apptRows] = await pool.query(
+        `SELECT COUNT(*) as cnt FROM appointments WHERE tailor_id = ?`, [tailor.id]
+      ) as any[];
+      const hasAppointment = parseInt((apptRows as any[])[0]?.cnt) > 0;
+
+      const [userRows] = await pool.query(
+        `SELECT onboarding_step FROM user_preferences WHERE user_id = ?`, [userId]
+      ) as any[];
+      const onboardingStep = parseInt((userRows as any[])[0]?.onboarding_step) || 0;
+
+      const steps = {
+        profile: !!(tailor.bio && (tailor.specialties?.length ?? 0) > 0),
+        portfolio: portfolioCount > 0,
+        availability: hasAppointment || onboardingStep >= 3,
+        complete: onboardingStep >= 4,
+      };
+      const completedCount = Object.values(steps).filter(Boolean).length;
+      res.json({ steps, completedCount, onboardingStep, portfolioCount });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch onboarding status" });
+    }
+  });
+
+  app.post("/api/professionnel/onboarding/complete", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const { step } = req.body;
+      await pool.query(
+        `INSERT INTO user_preferences (id, user_id, onboarding_step) VALUES (UUID(), ?, ?)
+         ON DUPLICATE KEY UPDATE onboarding_step = GREATEST(onboarding_step, ?)`,
+        [userId, step, step]
+      );
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update onboarding" });
     }
   });
 
