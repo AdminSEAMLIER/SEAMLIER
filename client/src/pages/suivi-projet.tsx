@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { ProjectWithTailor } from "@shared/schema";
+import PaymentButton from "@/components/checkout-button";
 
 const FABRICATION_STEPS = [
   { key: "prise_mesures", label: "Prise de mesures", icon: "📏" },
@@ -89,6 +90,9 @@ export default function SuiviProjet() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/reviews/my", id] });
+      if (project?.tailorId) {
+        queryClient.invalidateQueries({ queryKey: ["/api/tailors", project.tailorId] });
+      }
       setShowReviewModal(false);
       setReviewComment("");
       toast({ title: "Avis envoyé, merci !", description: "Il sera publié après modération." });
@@ -239,27 +243,49 @@ export default function SuiviProjet() {
 
         {/* Actions */}
         <div className="space-y-3">
-          {isLivraison && (
-            <Button
-              className="w-full bg-green-600 hover:bg-green-700 text-white h-12"
-              data-testid="button-confirm-reception"
-              onClick={() => setShowConfirmModal(true)}
-            >
-              <CheckCircle2 className="h-5 w-5 mr-2" />
-              Confirmer la réception
-            </Button>
-          )}
-          {canReview && (
-            <Button
-              variant="outline"
-              className="w-full border-[#722F37] text-[#722F37] hover:bg-[#722F37] hover:text-white h-12"
-              data-testid="button-leave-review"
-              onClick={() => setShowReviewModal(true)}
-            >
-              <Star className="h-5 w-5 mr-2" />
-              Laisser un avis
-            </Button>
-          )}
+          {(() => {
+            const isPaid = ["paid", "client_confirmed", "transferred"].includes((project as any).paymentStatus ?? "");
+            if ((isLivraison || canReview) && !isPaid) return (
+              <div className="space-y-2">
+                <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-center">
+                  Veuillez régler le devis avant de confirmer la réception
+                </p>
+                {project.amount && project.amount > 0 && (
+                  <PaymentButton
+                    projectId={project.id}
+                    prixConfection={project.amount}
+                    planArtisan={(project as any).tailor?.subscriptionPlan ?? "starter"}
+                    label="Payer le devis"
+                  />
+                )}
+              </div>
+            );
+            return (
+              <>
+                {isLivraison && (
+                  <Button
+                    className="w-full bg-green-600 hover:bg-green-700 text-white h-12"
+                    data-testid="button-confirm-reception"
+                    onClick={() => setShowConfirmModal(true)}
+                  >
+                    <CheckCircle2 className="h-5 w-5 mr-2" />
+                    Confirmer la réception
+                  </Button>
+                )}
+                {canReview && (
+                  <Button
+                    variant="outline"
+                    className="w-full border-[#722F37] text-[#722F37] hover:bg-[#722F37] hover:text-white h-12"
+                    data-testid="button-leave-review"
+                    onClick={() => setShowReviewModal(true)}
+                  >
+                    <Star className="h-5 w-5 mr-2" />
+                    Laisser un avis
+                  </Button>
+                )}
+              </>
+            );
+          })()}
           <Link href="/messages">
             <Button variant="outline" className="w-full h-11">
               <MessageSquare className="h-4 w-4 mr-2" />

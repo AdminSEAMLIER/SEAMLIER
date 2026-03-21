@@ -1,0 +1,33 @@
+Dans mes-projets.tsx et suivi-projet/:id, le bouton 'Confirmer la réception' et le bouton 'Laisser un avis' ne doivent s'afficher que si project.paymentStatus === 'paid' ou project.paymentStatus === 'client_confirmed' ou project.paymentStatus === 'transferred'. Si le projet n'est pas payé, afficher à la place un message : 'Veuillez régler le devis avant de confirmer la réception' avec le bouton 'Payer le devis' qui redirige vers le paiement. Dans mesures.tsx, le bouton 'Télécharger mes mesures en PDF' ouvre la fenêtre d'impression du navigateur au lieu de télécharger un vrai fichier PDF.Il faut qu'il y ait le nom du client aussi. Remplace cette fonctionnalité par une génération PDF côté serveur ou côté client avec la librairie jsPDF :
+
+
+
+
+
+Installe jspdf : npm install jspdf
+
+
+
+Quand le client clique sur le bouton, générer un PDF propre avec le logo SEAMLiER, le nom du client, la date, et toutes ses mensurations formatées en tableau
+
+
+
+Le fichier doit se télécharger automatiquement avec le nom mesures-seamlier-[prénom]-[date].pdf Quand un client soumet un avis avec une note en étoiles sur un projet, mettre à jour automatiquement la note moyenne de l'artisan en temps réel :
+
+
+
+
+
+Dans la route POST /api/reviews, après création de l'avis, recalculer la moyenne de toutes les notes approuvées de cet artisan et mettre à jour tailors.rating et tailors.review_count en BDD
+
+
+
+Quand l'admin approuve un avis (/api/admin/reviews/:id/approve), recalculer aussi la moyenne à ce moment-là
+
+
+
+La note mise à jour doit apparaître immédiatement sur le profil public de l'artisan sans avoir besoin de rafraîchir la page (invalider le cache React Query pour la clé /api/tailors/:id)   Dans server/routes.ts, quand un projet passe au statut in_progress (devis accepté), le message automatique envoyé au client doit contenir un lien direct pour prendre rendez-vous avec l'artisan. Remplace le message actuel par :
+
+'🎉 Super ! Devis validé — la confection de [vêtement] vient de démarrer. Prenez votre premier rendez-vous dès maintenant pour qu'on commence dans les meilleures conditions : [lien direct vers la prise de RDV]'
+
+Le lien doit pointer vers https://seamlier.fr/prendre-rdv?tailor=[tailorId] ou la route existante de prise de rendez-vous avec cet artisan pré-sélectionné. Génère un nouveau zip quand c'est prêt."

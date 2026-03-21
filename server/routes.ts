@@ -918,10 +918,11 @@ export async function registerRoutes(
           if (tailor?.userId && project.clientId) {
             const conv = await storage.getOrCreateConversation(tailor.userId, project.clientId);
             const garmentLabel = (project as any).clothingType || project.title || "votre commande";
+            const rdvLink = `https://seamlier.fr/prendre-rdv?tailor=${tailor.userId}`;
             await storage.createMessage({
               conversationId: conv.id,
               senderId: tailor.userId,
-              content: `🎉 Super ! Devis validé — la confection de ${garmentLabel} vient de démarrer. Pensez à prendre votre premier rendez-vous pour qu'on commence dans les meilleures conditions !`,
+              content: `🎉 Super ! Devis validé — la confection de ${garmentLabel} vient de démarrer. Prenez votre premier rendez-vous dès maintenant pour qu'on commence dans les meilleures conditions : ${rdvLink}`,
             });
           }
         } catch (msgErr) {
@@ -1242,6 +1243,19 @@ export async function registerRoutes(
   });
 
   // Reviews
+  async function recalculateTailorRating(tailorId: string) {
+    const [rows] = await pool.query(
+      `SELECT AVG(rating) as avg_rating, COUNT(*) as cnt FROM reviews WHERE tailor_id = ? AND is_approved = 1`,
+      [tailorId]
+    ) as any[];
+    const avg = parseFloat((rows as any[])[0]?.avg_rating) || 0;
+    const cnt = parseInt((rows as any[])[0]?.cnt) || 0;
+    await pool.query(
+      `UPDATE tailors SET rating = ?, review_count = ? WHERE id = ?`,
+      [Math.round(avg * 10) / 10, cnt, tailorId]
+    );
+  }
+
   app.post("/api/reviews", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
@@ -1252,6 +1266,7 @@ export async function registerRoutes(
          VALUES (?, ?, ?, ?, ?, ?, 0)`,
         [newId, tailorId, userId, projectId || null, rating, comment]
       );
+      try { await recalculateTailorRating(tailorId); } catch (e) { console.error("Rating recalc error:", e); }
       const [rows] = await pool.query(`SELECT * FROM reviews WHERE id = ?`, [newId]) as any[];
       res.status(201).json((rows as any[])[0] || { id: newId });
     } catch (error) {
@@ -1301,6 +1316,11 @@ export async function registerRoutes(
         `UPDATE reviews SET is_approved = ? WHERE id = ?`,
         [approved ? 1 : -1, req.params.id]
       );
+      const [revRows] = await pool.query(`SELECT tailor_id FROM reviews WHERE id = ?`, [req.params.id]) as any[];
+      const tailorId = (revRows as any[])[0]?.tailor_id;
+      if (tailorId) {
+        try { await recalculateTailorRating(tailorId); } catch (e) { console.error("Rating recalc error:", e); }
+      }
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to update review" });

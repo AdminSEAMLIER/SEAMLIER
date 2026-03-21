@@ -380,28 +380,46 @@ export default function MesProjets() {
                         label={isFr ? "Payer le devis" : "Pay quote"}
                       />
                     )}
-                    {isCompleted && !(project as any).clientConfirmed && (
-                      <Button
-                        size="sm"
-                        className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => { setConfirmProject(project); setDeadlineRespected(null); setArticleReceived(null); }}
-                        data-testid={`button-confirm-receipt-${project.id}`}
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                        {isFr ? "Confirmer la réception" : "Confirm receipt"}
-                      </Button>
-                    )}
-                    {isCompleted && (project as any).clientConfirmed && (
-                      <Button
-                        size="sm"
-                        className="flex-1 gap-1.5 bg-[#722F37] hover:bg-[#5a252c] text-white"
-                        onClick={() => { setReviewProject(project); setReviewRating(5); setReviewComment(""); }}
-                        data-testid={`button-review-${project.id}`}
-                      >
-                        <Star className="h-4 w-4" />
-                        {isFr ? "Laisser un avis" : "Review"}
-                      </Button>
-                    )}
+                    {isCompleted && (() => {
+                      const isPaid = ["paid", "client_confirmed", "transferred"].includes((project as any).paymentStatus ?? "");
+                      if (!isPaid) return (
+                        <div className="flex-1 space-y-1.5">
+                          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 text-center">
+                            {isFr ? "Veuillez régler le devis avant de confirmer la réception" : "Please pay the quote before confirming receipt"}
+                          </p>
+                          {project.amount && project.amount > 0 && (
+                            <PaymentButton
+                              projectId={project.id}
+                              prixConfection={project.amount}
+                              planArtisan={(project as any).tailor?.subscriptionPlan ?? "starter"}
+                              label={isFr ? "Payer le devis" : "Pay quote"}
+                            />
+                          )}
+                        </div>
+                      );
+                      if (!(project as any).clientConfirmed) return (
+                        <Button
+                          size="sm"
+                          className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => { setConfirmProject(project); setDeadlineRespected(null); setArticleReceived(null); }}
+                          data-testid={`button-confirm-receipt-${project.id}`}
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          {isFr ? "Confirmer la réception" : "Confirm receipt"}
+                        </Button>
+                      );
+                      return (
+                        <Button
+                          size="sm"
+                          className="flex-1 gap-1.5 bg-[#722F37] hover:bg-[#5a252c] text-white"
+                          onClick={() => { setReviewProject(project); setReviewRating(5); setReviewComment(""); }}
+                          data-testid={`button-review-${project.id}`}
+                        >
+                          <Star className="h-4 w-4" />
+                          {isFr ? "Laisser un avis" : "Review"}
+                        </Button>
+                      );
+                    })()}
                   </div>
                 </CardContent>
               </Card>

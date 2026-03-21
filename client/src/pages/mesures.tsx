@@ -179,54 +179,81 @@ export default function Mesures() {
     setPhotoUrl(null);
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
     const rows = [
-      { label: "Tour de cou", val: values.tour_cou, unit: "cm" },
-      { label: "Largeur épaules", val: values.largeur_epaules, unit: "cm" },
-      { label: "Tour de poitrine", val: values.tour_poitrine, unit: "cm" },
-      { label: "Tour de taille", val: values.tour_taille, unit: "cm" },
-      { label: "Tour de hanches", val: values.tour_hanches, unit: "cm" },
-      { label: "Longueur dos", val: values.longueur_dos, unit: "cm" },
-      { label: "Longueur bras", val: values.longueur_bras, unit: "cm" },
-      { label: "Longueur jambe", val: values.longueur_jambe, unit: "cm" },
+      { label: "Tour de cou", val: values.tour_cou },
+      { label: "Largeur épaules", val: values.largeur_epaules },
+      { label: "Tour de poitrine", val: values.tour_poitrine },
+      { label: "Tour de taille", val: values.tour_taille },
+      { label: "Tour de hanches", val: values.tour_hanches },
+      { label: "Longueur dos", val: values.longueur_dos },
+      { label: "Longueur bras", val: values.longueur_bras },
+      { label: "Longueur jambe", val: values.longueur_jambe },
     ].filter(r => r.val);
 
-    const date = savedMeasurements?.updatedAt
+    const dateStr = savedMeasurements?.updatedAt
       ? new Date(savedMeasurements.updatedAt).toLocaleDateString("fr-FR")
       : new Date().toLocaleDateString("fr-FR");
+    const prenom = user?.firstName || user?.email?.split("@")[0] || "client";
+    const prenomClean = prenom.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-");
+    const dateFile = new Date().toISOString().slice(0, 10);
 
-    const html = `<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Mes Mensurations — SEAMLIER</title>
-  <style>
-    body { font-family: 'Georgia', serif; max-width: 600px; margin: 40px auto; color: #222; }
-    h1 { color: #722F37; font-size: 28px; margin-bottom: 4px; }
-    .subtitle { color: #888; font-size: 13px; margin-bottom: 32px; }
-    table { width: 100%; border-collapse: collapse; }
-    tr { border-bottom: 1px solid #eee; }
-    tr:last-child { border: none; }
-    td { padding: 10px 4px; font-size: 15px; }
-    td:first-child { color: #555; }
-    td:last-child { text-align: right; font-weight: bold; color: #722F37; }
-    .footer { margin-top: 40px; font-size: 11px; color: #aaa; text-align: center; }
-    @media print { body { margin: 20px; } }
-  </style>
-</head>
-<body>
-  <h1>SEAMLIER</h1>
-  <p class="subtitle">Mes mensurations — mise à jour le ${date}</p>
-  <table>
-    ${rows.map(r => `<tr><td>${r.label}</td><td>${r.val} ${r.unit}</td></tr>`).join("")}
-  </table>
-  <div class="footer">Document généré par SEAMLIER — www.seamlier.fr</div>
-  <script>window.onload = () => { window.print(); }</script>
-</body>
-</html>`;
+    const burgundy: [number, number, number] = [114, 47, 55];
+    const gray: [number, number, number] = [100, 100, 100];
+    const lightGray: [number, number, number] = [240, 240, 240];
 
-    const w = window.open("", "_blank");
-    if (w) { w.document.write(html); w.document.close(); }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(28);
+    doc.setTextColor(...burgundy);
+    doc.text("SEAMLiER", 20, 28);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(...gray);
+    doc.text(`Mensurations de ${prenom}`, 20, 38);
+    doc.text(`Mise à jour le ${dateStr}`, 190, 38, { align: "right" });
+
+    doc.setDrawColor(...burgundy);
+    doc.setLineWidth(0.6);
+    doc.line(20, 43, 190, 43);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(50, 50, 50);
+    doc.setFillColor(...lightGray);
+    doc.rect(20, 48, 170, 8, "F");
+    doc.text("Mensuration", 24, 54);
+    doc.text("Valeur", 180, 54, { align: "right" });
+
+    let y = 62;
+    rows.forEach((row, i) => {
+      if (i % 2 === 0) {
+        doc.setFillColor(250, 248, 248);
+        doc.rect(20, y - 5, 170, 9, "F");
+      }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(60, 60, 60);
+      doc.text(row.label, 24, y);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...burgundy);
+      doc.text(`${row.val} cm`, 180, y, { align: "right" });
+      y += 9;
+    });
+
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.3);
+    doc.line(20, y + 4, 190, y + 4);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(170, 170, 170);
+    doc.text("Document généré par SEAMLiER — www.seamlier.fr", 105, 285, { align: "center" });
+
+    doc.save(`mesures-seamlier-${prenomClean}-${dateFile}.pdf`);
   };
 
   const measurements = [
