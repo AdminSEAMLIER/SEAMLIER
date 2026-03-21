@@ -747,6 +747,51 @@ export async function registerRoutes(
     }
   });
 
+  // ── CRM : fiche client unifiée ───────────────────────────────────────────
+  app.get("/api/tailor/clients/:clientId/summary", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+
+      const { clientId } = req.params;
+
+      // Infos client
+      const clientUser = await storage.getUser(clientId);
+      if (!clientUser) return res.status(404).json({ error: "Client not found" });
+
+      // Projets en commun (tailor + client)
+      const allProjects = await storage.getProjectsByTailor(tailor.id);
+      const clientProjects = allProjects.filter((p: any) => p.clientId === clientId);
+
+      // RDV en commun
+      const allAppointments = await storage.getAppointmentsByTailor(tailor.id);
+      const clientAppointments = allAppointments.filter((a: any) => a.clientId === clientId);
+
+      // Mesures du client
+      const measurements = await storage.getMeasurements(clientId);
+
+      res.json({
+        client: {
+          id: clientUser.id,
+          firstName: clientUser.firstName,
+          lastName: clientUser.lastName,
+          email: clientUser.email,
+          phone: clientUser.phone,
+          location: clientUser.location,
+          profileImageUrl: clientUser.profileImageUrl,
+          createdAt: clientUser.createdAt,
+        },
+        projects: clientProjects,
+        appointments: clientAppointments,
+        measurements: measurements || null,
+      });
+    } catch (error) {
+      console.error("Error fetching client summary:", error);
+      res.status(500).json({ error: "Failed to fetch client summary" });
+    }
+  });
+
   app.get("/api/tailor/appointments", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
