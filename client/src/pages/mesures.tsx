@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Ruler, Camera, Save, HelpCircle, Loader2, X, ImageIcon } from "lucide-react";
+import { Ruler, Camera, Save, HelpCircle, Loader2, X, ImageIcon, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -85,6 +85,13 @@ export default function Mesures() {
     queryKey: ['/api/measurements'],
     enabled: !!userId
   });
+
+  const measurementsOutdated = (() => {
+    if (!savedMeasurements?.updatedAt) return false;
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    return new Date(savedMeasurements.updatedAt) < sixMonthsAgo;
+  })();
 
   useEffect(() => {
     if (savedMeasurements) {
@@ -200,6 +207,17 @@ export default function Mesures() {
           </p>
         </div>
       </div>
+
+      {measurementsOutdated && (
+        <div className="bg-orange-50 border-b border-orange-200 px-4 py-3">
+          <div className="max-w-4xl mx-auto flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-orange-500 shrink-0 mt-0.5" />
+            <p className="text-sm text-orange-800 font-medium">
+              Vos mesures datent de plus de 6 mois — pensez à les mettre à jour pour garantir un résultat parfait.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-4xl mx-auto px-4 lg:px-6 py-6">
         <Card className="mb-6">

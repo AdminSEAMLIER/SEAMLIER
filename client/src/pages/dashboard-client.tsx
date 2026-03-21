@@ -14,6 +14,7 @@ import {
   Scissors,
   Star,
   CalendarCheck,
+  AlertTriangle,
 } from "lucide-react";
 import type { TailorWithUser, ProjectWithTailor } from "@shared/schema";
 
@@ -42,6 +43,17 @@ export default function DashboardClient() {
       return res.json();
     },
   });
+
+  const { data: measurements } = useQuery<any>({
+    queryKey: ["/api/measurements"],
+  });
+
+  const measurementsOutdated = (() => {
+    if (!measurements?.updatedAt) return false;
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    return new Date(measurements.updatedAt) < sixMonthsAgo;
+  })();
 
   const featuredTailors = tailors?.slice(0, 3) || [];
   const activeProjects = projects.filter((p) => p.status !== "terminé").length;
@@ -130,6 +142,24 @@ export default function DashboardClient() {
             );
           })}
         </div>
+
+        {/* Alerte mesures obsolètes */}
+        {measurementsOutdated && (
+          <Link href="/mesures">
+            <div className="mb-6 bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3 cursor-pointer hover:bg-orange-100 transition-colors">
+              <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center shrink-0">
+                <AlertTriangle className="h-4 w-4 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-orange-800 text-sm">Mesures à mettre à jour</p>
+                <p className="text-orange-700 text-xs mt-0.5">
+                  Vos mesures datent de plus de 6 mois — mettez-les à jour pour un résultat parfait.
+                </p>
+              </div>
+              <Ruler className="h-4 w-4 text-orange-400 shrink-0 mt-0.5" />
+            </div>
+          </Link>
+        )}
 
         {/* Featured tailors */}
         <div className="mb-8">

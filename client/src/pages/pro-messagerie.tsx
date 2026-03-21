@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import {
   MessageSquare, Search, Send, Users, Headset, ArrowLeft,
   User, FolderKanban, Calendar, Ruler, Mail, Phone,
-  MapPin, Clock, CheckCircle2, Circle, AlertCircle,
+  MapPin, Clock, CheckCircle2, Circle, AlertCircle, AlertTriangle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -265,11 +265,25 @@ function ClientFichePanel({ clientId, open, onClose }: { clientId: string; open:
                   </div>
                 ) : (
                   <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
-                    {data.measurements.updatedAt && (
-                      <p className="text-xs text-gray-400 mb-3">
-                        Mis à jour le {new Date(data.measurements.updatedAt).toLocaleDateString("fr-FR")}
-                      </p>
-                    )}
+                    {data.measurements.updatedAt && (() => {
+                      const sixMonthsAgo = new Date();
+                      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+                      const isOutdated = new Date(data.measurements!.updatedAt!) < sixMonthsAgo;
+                      return (
+                        <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+                          <p className="text-xs text-gray-400">
+                            Mis à jour le {new Date(data.measurements!.updatedAt!).toLocaleDateString("fr-FR")}
+                          </p>
+                          {isOutdated && (
+                            <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-orange-200">
+                              <AlertTriangle className="h-3 w-3" />
+                              Mesures à mettre à jour
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
+                    {!data.measurements.updatedAt && null}
                     <div className="space-y-0">
                       {measureRow("Tour de cou", data.measurements.neck)}
                       {measureRow("Tour de poitrine", data.measurements.bust)}
