@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Scissors,
   Star,
+  CalendarCheck,
 } from "lucide-react";
 import type { TailorWithUser, ProjectWithTailor } from "@shared/schema";
 
@@ -33,9 +34,24 @@ export default function DashboardClient() {
     queryKey: ["/api/conversations"],
   });
 
+  const { data: clientAppointments = [] } = useQuery<any[]>({
+    queryKey: ["/api/client/appointments-with-tailor"],
+    queryFn: async () => {
+      const res = await fetch("/api/client/appointments-with-tailor", { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
   const featuredTailors = tailors?.slice(0, 3) || [];
   const activeProjects = projects.filter((p) => p.status !== "terminé").length;
   const unreadCount = conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
+  const upcomingRdv = clientAppointments.filter(
+    (a: any) => new Date(a.scheduled_at) >= new Date() && a.status !== "cancelled"
+  ).length;
+  const pendingRdv = clientAppointments.filter(
+    (a: any) => new Date(a.scheduled_at) >= new Date() && a.status === "scheduled"
+  ).length;
 
   const quickActions = [
     {
@@ -46,11 +62,12 @@ export default function DashboardClient() {
       color: "bg-[#722F37]",
     },
     {
-      icon: Ruler,
-      label: "Mes mesures",
-      sublabel: "Gérer mon profil morpho",
-      href: "/mesures",
-      color: "bg-stone-700",
+      icon: CalendarCheck,
+      label: "Mes rendez-vous",
+      sublabel: upcomingRdv > 0 ? `${upcomingRdv} à venir` : "Aucun rendez-vous",
+      href: "/mes-rendez-vous",
+      color: "bg-emerald-700",
+      badge: pendingRdv,
     },
     {
       icon: ClipboardList,

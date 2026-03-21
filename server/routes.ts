@@ -863,27 +863,56 @@ export async function registerRoutes(
 
   app.patch("/api/appointments/:id", requireAuth, async (req: any, res) => {
     try {
+      const callerId = req.authUserId;
       const appointment = await storage.updateAppointment(req.params.id, req.body);
       if (!appointment) {
         return res.status(404).json({ error: "Appointment not found" });
       }
 
+      const tailor = await storage.getTailor(appointment.tailorId);
+      const dt = new Date(appointment.scheduledAt);
+      const dateStr = dt.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+      const timeStr = dt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+
       if (req.body.status === "confirmed") {
         try {
-          const tailor = await storage.getTailor(appointment.tailorId);
           if (tailor?.userId && appointment.clientId) {
             const conv = await storage.getOrCreateConversation(tailor.userId, appointment.clientId);
-            const dt = new Date(appointment.scheduledAt);
-            const dateStr = dt.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-            const timeStr = dt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-            await storage.createMessage({
-              conversationId: conv.id,
-              senderId: tailor.userId,
-              content: `✅ Votre rendez-vous du ${dateStr} à ${timeStr} a été confirmé. À bientôt !`,
-            });
+            const isClientConfirming = callerId === appointment.clientId;
+            if (isClientConfirming) {
+              // Client confirme → notifier l'artisan (message envoyé par le client)
+              await storage.createMessage({
+                conversationId: conv.id,
+                senderId: appointment.clientId,
+                content: `✅ J'ai confirmé notre rendez-vous du ${dateStr} à ${timeStr}. À bientôt !`,
+              });
+            } else {
+              // Artisan confirme → notifier le client (message envoyé par l'artisan)
+              await storage.createMessage({
+                conversationId: conv.id,
+                senderId: tailor.userId,
+                content: `✅ Votre rendez-vous du ${dateStr} à ${timeStr} a été confirmé. À bientôt !`,
+              });
+            }
           }
         } catch (msgErr) {
           console.error("Auto-message error on appointment confirm:", msgErr);
+        }
+      }
+
+      if (req.body.status === "cancelled") {
+        try {
+          if (tailor?.userId && appointment.clientId) {
+            const conv = await storage.getOrCreateConversation(tailor.userId, appointment.clientId);
+            const isClientCancelling = callerId === appointment.clientId;
+            await storage.createMessage({
+              conversationId: conv.id,
+              senderId: isClientCancelling ? appointment.clientId : tailor.userId,
+              content: `❌ Le rendez-vous du ${dateStr} à ${timeStr} a été annulé.`,
+            });
+          }
+        } catch (msgErr) {
+          console.error("Auto-message error on appointment cancel:", msgErr);
         }
       }
 
@@ -891,6 +920,28 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to update appointment:", error);
       res.status(500).json({ error: "Failed to update appointment" });
+    }
+  });
+
+  // RDV client avec infos artisan
+  app.get("/api/client/appointments-with-tailor", requireAuth, async (req: any, res) => {
+    try {
+      const clientId = req.authUserId;
+      const [rows] = await pool.query(
+        `SELECT a.*, u.first_name as tailor_first_name, u.last_name as tailor_last_name,
+                u.profile_image_url as tailor_image, u.id as tailor_user_id,
+                t.id as tailor_profile_id
+         FROM appointments a
+         JOIN tailors t ON a.tailor_id = t.id
+         JOIN users u ON t.user_id = u.id
+         WHERE a.client_id = ?
+         ORDER BY a.scheduled_at ASC`,
+        [clientId]
+      ) as any[];
+      res.json(Array.isArray(rows) ? rows : []);
+    } catch (error) {
+      console.error("Failed to fetch client appointments with tailor:", error);
+      res.status(500).json({ error: "Failed to fetch appointments" });
     }
   });
 

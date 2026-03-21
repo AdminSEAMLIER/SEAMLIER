@@ -50,6 +50,7 @@ import ProModifierMotDePasse from "@/pages/pro-modifier-mot-de-passe";
 import ProNotifications from "@/pages/pro-notifications";
 import ProSetup from "@/pages/pro-setup";
 import MesProjets from "@/pages/mes-projets";
+import MesRendezVous from "@/pages/mes-rendez-vous";
 import DashboardClient from "@/pages/dashboard-client";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -250,6 +251,12 @@ function Router() {
       <Route path="/mes-projets">
         <ProtectedRoute>
           <ClientLayout><MesProjets /></ClientLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/mes-rendez-vous">
+        <ProtectedRoute>
+          <ClientLayout><MesRendezVous /></ClientLayout>
         </ProtectedRoute>
       </Route>
 
