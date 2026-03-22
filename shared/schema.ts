@@ -1,4 +1,4 @@
-import { mysqlTable, text, varchar, int, boolean, float, timestamp, json, bigint } from "drizzle-orm/mysql-core";
+import { mysqlTable, text, varchar, int, boolean, float, timestamp, json, bigint, date } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -137,6 +137,11 @@ export const projects = mysqlTable("projects", {
   amountArtisan: int("amount_artisan"),
   clientConfirmed: boolean("client_confirmed").default(false),
   stripeTransferId: varchar("stripe_transfer_id", { length: 255 }),
+  clientDeadline: date("client_deadline"),
+  artisanDeadline: date("artisan_deadline"),
+  isUrgent: boolean("is_urgent").default(false),
+  fabricDepositDate: date("fabric_deposit_date"),
+  fabricDepositReminderSent: boolean("fabric_deposit_reminder_sent").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -219,6 +224,25 @@ export const tailorClientData = mysqlTable("tailor_client_data", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const events = mysqlTable("events", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  eventDate: date("event_date").notNull(),
+  tailorId: varchar("tailor_id", { length: 36 }).notNull().references(() => tailors.id),
+  organizerId: varchar("organizer_id", { length: 36 }).notNull().references(() => users.id),
+  inviteCode: varchar("invite_code", { length: 10 }).notNull().unique(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const eventParticipants = mysqlTable("event_participants", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  eventId: varchar("event_id", { length: 36 }).notNull().references(() => events.id),
+  userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id),
+  projectId: varchar("project_id", { length: 36 }).references(() => projects.id),
+  joinedAt: timestamp("joined_at").defaultNow(),
+});
+
 export const adminSettings = mysqlTable("admin_settings", {
   id: varchar("id", { length: 36 }).primaryKey(),
   key: varchar("key", { length: 255 }).notNull().unique(),
@@ -242,6 +266,8 @@ export const insertUserPreferencesSchema = createInsertSchema(userPreferences).o
 export const insertMagazineArticleSchema = createInsertSchema(magazineArticles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertAdminSettingSchema = createInsertSchema(adminSettings).omit({ id: true, updatedAt: true });
 export const insertTailorClientDataSchema = createInsertSchema(tailorClientData).omit({ id: true, updatedAt: true });
+export const insertEventSchema = createInsertSchema(events).omit({ id: true, createdAt: true });
+export const insertEventParticipantSchema = createInsertSchema(eventParticipants).omit({ id: true, joinedAt: true });
 
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -275,6 +301,11 @@ export type InsertAdminSetting = z.infer<typeof insertAdminSettingSchema>;
 export type AdminSetting = typeof adminSettings.$inferSelect;
 export type InsertTailorClientData = z.infer<typeof insertTailorClientDataSchema>;
 export type TailorClientData = typeof tailorClientData.$inferSelect;
+export type InsertEvent = z.infer<typeof insertEventSchema>;
+export type Event = typeof events.$inferSelect;
+export type InsertEventParticipant = z.infer<typeof insertEventParticipantSchema>;
+export type EventParticipant = typeof eventParticipants.$inferSelect;
+export type EventWithDetails = Event & { tailor: { id: string; user: { firstName: string | null; lastName: string | null } }; organizer: { firstName: string | null; lastName: string | null }; participantCount: number; userHasJoined?: boolean };
 
 // Composite types
 export type TailorWithUser = Tailor & { user: User };

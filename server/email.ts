@@ -402,3 +402,45 @@ export async function sendPasswordResetEmail(email: string, token: string, first
     return false;
   }
 }
+
+export async function sendFabricDepositReminderEmail(
+  clientEmail: string,
+  clientName: string,
+  artisanName: string,
+  depositDate: string
+): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const html = emailWrapper("Rappel dépôt de tissu — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">🧵 Rappel — Dépôt de tissu</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${clientName || ""},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      Vous devez déposer votre tissu chez <strong style="color:#1f2937">${artisanName}</strong> avant le <strong style="color:#722F37">${depositDate}</strong>.
+      N'oubliez pas cette étape pour que votre confection démarre dans les meilleures conditions !
+    </p>
+    <p style="margin:0;color:#6b7280;font-size:13px">En cas de question, contactez votre artisan directement via la messagerie SEAMLIER.</p>
+  `);
+  return sendEmail(clientEmail, `Rappel : déposez votre tissu avant le ${depositDate} - SEAMLIER`, html);
+}
+
+export async function sendDeadlineWarningEmail(
+  recipientEmail: string,
+  recipientName: string,
+  projectTitle: string,
+  deadline: string,
+  role: "artisan" | "admin"
+): Promise<boolean> {
+  const subject = role === "admin"
+    ? `⚠️ Deadline proche : ${projectTitle} - SEAMLIER`
+    : `⚠️ Commande urgente à livrer : ${projectTitle} - SEAMLIER`;
+  const intro = role === "admin"
+    ? `Le projet <strong style="color:#1f2937">${projectTitle}</strong> a une deadline client au <strong style="color:#dc2626">${deadline}</strong> — moins de 5 jours restants.`
+    : `Votre commande <strong style="color:#1f2937">${projectTitle}</strong> doit être prête pour le <strong style="color:#dc2626">${deadline}</strong>. Pensez à organiser votre planning en conséquence.`;
+  const html = emailWrapper("Deadline qui approche — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#dc2626;font-family:Georgia,serif;font-size:20px;font-weight:400">⚠️ Deadline qui approche</h2>
+    <div style="width:28px;height:2px;background-color:#dc2626;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${recipientName || ""},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">${intro}</p>
+  `);
+  return sendEmail(recipientEmail, subject, html);
+}

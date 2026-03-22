@@ -60,6 +60,7 @@ export default function TailorProfile() {
   const [devisGarment, setDevisGarment] = useState("");
   const [devisPhoto, setDevisPhoto] = useState<string | null>(null);
   const [devisRequestedPrice, setDevisRequestedPrice] = useState("");
+  const [devisClientDeadline, setDevisClientDeadline] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const handleDevisPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,6 +76,7 @@ export default function TailorProfile() {
     setDevisGarment("");
     setDevisPhoto(null);
     setDevisRequestedPrice("");
+    setDevisClientDeadline("");
     if (photoInputRef.current) photoInputRef.current.value = "";
   };
 
@@ -113,6 +115,7 @@ export default function TailorProfile() {
         clothingType: devisGarment || null,
         requestedPrice: devisRequestedPrice ? parseFloat(devisRequestedPrice) : null,
         modelPhotoUrl: devisPhoto || null,
+        clientDeadline: devisClientDeadline || null,
         status: "pending",
       });
     },
@@ -469,6 +472,25 @@ export default function TailorProfile() {
                 rows={3}
                 data-testid="input-devis-description"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="devis-deadline">Date limite souhaitée (optionnel)</Label>
+              <Input
+                id="devis-deadline"
+                type="date"
+                min={new Date().toISOString().slice(0, 10)}
+                value={devisClientDeadline}
+                onChange={(e) => setDevisClientDeadline(e.target.value)}
+                data-testid="input-devis-deadline"
+              />
+              {devisClientDeadline && (() => {
+                const days = Math.ceil((new Date(devisClientDeadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                return days <= 7 ? (
+                  <p className="text-xs text-red-600 flex items-center gap-1">
+                    ⚡ Délai urgent — une majoration de 20% sera appliquée
+                  </p>
+                ) : null;
+              })()}
             </div>
             <div className="space-y-2">
               <Label>Photo d'inspiration (optionnel)</Label>

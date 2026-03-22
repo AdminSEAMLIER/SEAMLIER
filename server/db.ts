@@ -58,4 +58,47 @@ export async function ensureTables() {
 
   // appointments: reminder sent flag
   await addColumnIfMissing("appointments", "reminder_sent", "TINYINT(1) NOT NULL DEFAULT 0");
+
+  // projects: deadlines + urgency + fabric deposit
+  await addColumnIfMissing("projects", "client_deadline", "DATE NULL");
+  await addColumnIfMissing("projects", "artisan_deadline", "DATE NULL");
+  await addColumnIfMissing("projects", "is_urgent", "TINYINT(1) NOT NULL DEFAULT 0");
+  await addColumnIfMissing("projects", "fabric_deposit_date", "DATE NULL");
+  await addColumnIfMissing("projects", "fabric_deposit_reminder_sent", "TINYINT(1) NOT NULL DEFAULT 0");
+
+  // events table
+  try {
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS events (
+        id VARCHAR(36) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        event_date DATE NOT NULL,
+        tailor_id VARCHAR(36) NOT NULL,
+        organizer_id VARCHAR(36) NOT NULL,
+        invite_code VARCHAR(10) NOT NULL UNIQUE,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log("[DB] events table ensured ✅");
+  } catch (err) {
+    console.warn("[DB] events table:", (err as any)?.message);
+  }
+
+  // event_participants table
+  try {
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS event_participants (
+        id VARCHAR(36) PRIMARY KEY,
+        event_id VARCHAR(36) NOT NULL,
+        user_id VARCHAR(36) NOT NULL,
+        project_id VARCHAR(36) NULL,
+        joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_event_user (event_id, user_id)
+      )
+    `);
+    console.log("[DB] event_participants table ensured ✅");
+  } catch (err) {
+    console.warn("[DB] event_participants table:", (err as any)?.message);
+  }
 }

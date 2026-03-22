@@ -154,9 +154,31 @@ export default function SuiviProjet() {
           </div>
         )}
 
+        {/* Urgent badge */}
+        {(project as any).isUrgent && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2">
+            <span className="text-lg">⚡</span>
+            <div>
+              <p className="text-sm font-semibold text-red-700">Commande urgente</p>
+              <p className="text-xs text-red-500">Cette commande a été marquée urgente (+20% appliqué)</p>
+            </div>
+          </div>
+        )}
+
         {/* Infos rapides */}
         <div className="grid grid-cols-2 gap-3">
-          {project.deadline && (
+          {(project as any).clientDeadline && (
+            <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-1">
+                <Calendar className="h-4 w-4 text-[#722F37]" />
+                <span className="text-xs text-gray-500 font-medium">Votre deadline</span>
+              </div>
+              <p className="text-sm font-semibold text-gray-900">
+                {new Date((project as any).clientDeadline).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
+              </p>
+            </div>
+          )}
+          {!(project as any).clientDeadline && project.deadline && (
             <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-1">
                 <Calendar className="h-4 w-4 text-[#722F37]" />
@@ -164,6 +186,17 @@ export default function SuiviProjet() {
               </div>
               <p className="text-sm font-semibold text-gray-900">
                 {new Date(project.deadline).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
+              </p>
+            </div>
+          )}
+          {(project as any).fabricDepositDate && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm">🧵</span>
+                <span className="text-xs text-amber-700 font-medium">Dépôt tissu avant</span>
+              </div>
+              <p className="text-sm font-semibold text-amber-900">
+                {new Date((project as any).fabricDepositDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
               </p>
             </div>
           )}

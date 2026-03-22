@@ -1,0 +1,165 @@
+Je veux ajouter deux grandes fonctionnalités sans toucher à ce qui existe déjà :
+
+FONCTIONNALITÉ 1 — Commandes groupées (événements)
+
+Créer une table events :
+
+
+
+
+
+id, name (ex: 'Mariage Sarah'), event_date, tailor_id, organizer_id, invite_code (code unique 8 caractères), created_at
+
+Créer une table event_participants :
+
+
+
+
+
+id, event_id, user_id, project_id, joined_at
+
+Routes backend :
+
+
+
+
+
+POST /api/events — créer un événement (organisatrice choisit l'artisan et la date)
+
+
+
+GET /api/events/:inviteCode/join — page d'invitation publique
+
+
+
+POST /api/events/:inviteCode/join — rejoindre l'événement (crée automatiquement un projet lié)
+
+
+
+GET /api/events/:id — détails de l'événement avec tous les participants et leur statut
+
+
+
+GET /api/tailor/events — liste des événements côté artisan
+
+Frontend :
+
+
+
+
+
+Nouvelle page /evenement/creer — formulaire de création avec nom, date, choix de l'artisan
+
+
+
+Nouvelle page /evenement/rejoindre/:inviteCode — page publique d'invitation avec infos de l'événement et bouton 'Rejoindre'
+
+
+
+Dans dashboard-client.tsx — section 'Mes événements' avec les événements rejoints et leur avancement
+
+
+
+Dans pro-projets.tsx — vue groupée des commandes par événement avec badge 'Événement collectif'
+
+
+
+Lien de partage copiable : https://seamlier.fr/evenement/rejoindre/[inviteCode]
+
+FONCTIONNALITÉ 2 — Date limite + commandes urgentes
+
+Modifications BDD :
+
+
+
+
+
+Ajouter client_deadline DATE sur la table projects (date souhaitée par le client)
+
+
+
+Ajouter artisan_deadline DATE (calculée automatiquement = client_deadline - 3 jours)
+
+
+
+Ajouter is_urgent BOOLEAN DEFAULT FALSE
+
+Logique urgence :
+
+
+
+
+
+Si client_deadline est dans moins de 7 jours → is_urgent = true automatiquement
+
+
+
+Le montant est majoré de 20% automatiquement si urgent (recalcul dans calculerMontants)
+
+
+
+Badge 'URGENT 🔴' visible sur la commande côté artisan et admin
+
+Côté client :
+
+
+
+
+
+Dans le formulaire de création de projet, ajouter un champ obligatoire 'Date souhaitée'
+
+
+
+Si la date est dans moins de 7 jours, afficher un message : 'Commande urgente — majoration de 20% appliquée'
+
+Côté artisan :
+
+
+
+
+
+Afficher artisan_deadline (pas client_deadline) avec un badge rouge si < 3 jours
+
+
+
+Trier les projets par deadline croissante
+
+Côté admin :
+
+
+
+
+
+Dans le dashboard, section 'Deadlines qui approchent' — projets dont client_deadline < 7 jours
+
+
+
+Email automatique à l'admin et à l'artisan si client_deadline < 5 jours (vérification quotidienne via un cron job) Ajouter également dans la fonctionnalité date limite :
+
+
+
+
+
+Colonne fabric_deposit_date DATE sur la table projects — date à laquelle le client doit déposer son tissu chez l'artisan
+
+
+
+Cette date est définie par l'artisan lors de l'acceptation du devis
+
+
+
+Côté client : affichée clairement dans suivi-projet/:id avec un rappel : 'Vous devez déposer votre tissu avant le [date]'
+
+
+
+Email automatique au client 48h avant la date de dépôt du tissu : 'Rappel — pensez à déposer votre tissu chez [artisan] avant le [date]'
+
+
+
+Côté artisan : visible dans la fiche projet avec badge orange si la date approche à moins de 2 jours
+
+
+
+Côté admin : visible dans la liste des projets
+
+Génère un nouveau zip quand tout est prêt.

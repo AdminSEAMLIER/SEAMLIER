@@ -247,6 +247,9 @@ export default function ProProjets() {
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <h3 className="font-semibold text-[#722F37]">{project.title}</h3>
                       {getStatusBadge(project.status)}
+                      {(project as any).isUrgent && (
+                        <Badge className="bg-red-100 text-red-700 border-none text-[10px] font-bold px-1.5 py-0.5">⚡ URGENT</Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-1 text-sm text-gray-500">
                       <User className="h-3 w-3" />

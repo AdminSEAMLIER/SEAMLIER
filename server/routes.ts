@@ -12,6 +12,8 @@ import {
   sendReviewRequestEmail,
   sendPaymentConfirmationEmail,
   sendAppointmentConfirmationEmail,
+  sendFabricDepositReminderEmail,
+  sendDeadlineWarningEmail,
 } from "./email";
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -871,12 +873,34 @@ export async function registerRoutes(
       if (!req.body.tailorId) {
         return res.status(400).json({ error: "tailorId is required for client projects" });
       }
+      // Deadline & urgency logic
+      let { clientDeadline, amount, requestedPrice } = req.body;
+      let isUrgent = false;
+      let artisanDeadline: string | null = null;
+      if (clientDeadline) {
+        const deadlineDate = new Date(clientDeadline);
+        const today = new Date();
+        const daysUntilDeadline = Math.ceil((deadlineDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysUntilDeadline <= 7) {
+          isUrgent = true;
+          if (requestedPrice) requestedPrice = Math.round(parseFloat(requestedPrice) * 1.2 * 100) / 100;
+          if (amount) amount = Math.round(parseFloat(amount) * 1.2 * 100) / 100;
+        }
+        const artisanDate = new Date(deadlineDate);
+        artisanDate.setDate(artisanDate.getDate() - 3);
+        artisanDeadline = artisanDate.toISOString().slice(0, 10);
+      }
       const project = await storage.createProject({
         ...req.body,
         clientId: userId,
         status: "pending",
         progress: 0,
         currentStep: "prise_mesures",
+        clientDeadline: clientDeadline || null,
+        artisanDeadline,
+        isUrgent,
+        ...(requestedPrice !== undefined ? { requestedPrice } : {}),
+        ...(amount !== undefined ? { amount } : {}),
       });
       res.status(201).json(project);
     } catch (error) {
@@ -2043,6 +2067,261 @@ export async function registerRoutes(
       return res.status(500).send(renderVerificationPage(false, "Erreur serveur."));
     }
   });
+
+  // ── Fabric deposit date (artisan sets) ───────────────────────────────────
+  app.patch("/api/projects/:id/fabric-deposit", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const { fabricDepositDate } = req.body;
+      await pool.query(
+        `UPDATE projects SET fabric_deposit_date = ? WHERE id = ? AND tailor_id = ?`,
+        [fabricDepositDate || null, req.params.id, tailor.id]
+      );
+      // Auto-message to client
+      const [rows] = await pool.query(`SELECT * FROM projects WHERE id = ?`, [req.params.id]) as any[];
+      const project = (rows as any[])[0];
+      if (project && fabricDepositDate) {
+        const conv = await storage.getOrCreateConversation(userId, project.client_id);
+        const dateFormatted = new Date(fabricDepositDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+        await storage.createMessage({
+          conversationId: conv.id,
+          senderId: userId,
+          content: `🧵 Merci de déposer votre tissu avant le ${dateFormatted}. Cela permettra de démarrer la confection dans les meilleures conditions !`,
+        });
+      }
+      res.json({ success: true, fabricDepositDate });
+    } catch (error) {
+      console.error("Failed to set fabric deposit date:", error);
+      res.status(500).json({ error: "Failed to set fabric deposit date" });
+    }
+  });
+
+  // ── Events (Commandes groupées) ───────────────────────────────────────────
+
+  function generateInviteCode(): string {
+    return require("crypto").randomBytes(4).toString("hex").toUpperCase();
+  }
+
+  // Create an event (organizer)
+  app.post("/api/events", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const { name, eventDate, tailorId, description } = req.body;
+      if (!name || !eventDate || !tailorId) {
+        return res.status(400).json({ error: "name, eventDate et tailorId sont requis" });
+      }
+      let inviteCode = generateInviteCode();
+      // Ensure uniqueness
+      const [existing] = await pool.query(`SELECT id FROM events WHERE invite_code = ?`, [inviteCode]) as any[];
+      if ((existing as any[]).length > 0) inviteCode = generateInviteCode() + "X";
+      const eventId = require("crypto").randomUUID();
+      await pool.query(
+        `INSERT INTO events (id, name, event_date, tailor_id, organizer_id, invite_code, description) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [eventId, name, eventDate, tailorId, userId, inviteCode, description || null]
+      );
+      // Organizer joins automatically
+      const participantId = require("crypto").randomUUID();
+      await pool.query(
+        `INSERT IGNORE INTO event_participants (id, event_id, user_id) VALUES (?, ?, ?)`,
+        [participantId, eventId, userId]
+      );
+      const [rows] = await pool.query(`SELECT * FROM events WHERE id = ?`, [eventId]) as any[];
+      res.status(201).json((rows as any[])[0]);
+    } catch (error) {
+      console.error("Failed to create event:", error);
+      res.status(500).json({ error: "Failed to create event" });
+    }
+  });
+
+  // Get event by invite code (public)
+  app.get("/api/events/join/:inviteCode", async (req: any, res) => {
+    try {
+      const [rows] = await pool.query(`
+        SELECT e.*, 
+          t.id as tailor_id,
+          tu.first_name as tailor_first_name, tu.last_name as tailor_last_name,
+          tu.profile_image_url as tailor_avatar,
+          ou.first_name as organizer_first_name, ou.last_name as organizer_last_name,
+          (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participant_count
+        FROM events e
+        JOIN tailors t ON t.id = e.tailor_id
+        JOIN users tu ON tu.id = t.user_id
+        JOIN users ou ON ou.id = e.organizer_id
+        WHERE e.invite_code = ?
+      `, [req.params.inviteCode.toUpperCase()]) as any[];
+      if (!(rows as any[]).length) return res.status(404).json({ error: "Événement introuvable" });
+      res.json((rows as any[])[0]);
+    } catch (error) {
+      console.error("Failed to get event:", error);
+      res.status(500).json({ error: "Failed to get event" });
+    }
+  });
+
+  // Join an event
+  app.post("/api/events/join/:inviteCode", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const [evRows] = await pool.query(`SELECT * FROM events WHERE invite_code = ?`, [req.params.inviteCode.toUpperCase()]) as any[];
+      if (!(evRows as any[]).length) return res.status(404).json({ error: "Événement introuvable" });
+      const event = (evRows as any[])[0];
+      // Check if already joined
+      const [existing] = await pool.query(
+        `SELECT id FROM event_participants WHERE event_id = ? AND user_id = ?`, [event.id, userId]
+      ) as any[];
+      if ((existing as any[]).length > 0) return res.json({ alreadyJoined: true, eventId: event.id });
+      // Create a project linked to the event
+      const projectId = require("crypto").randomUUID();
+      await pool.query(
+        `INSERT INTO projects (id, tailor_id, client_id, title, status, progress, current_step, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'pending', 0, 'prise_mesures', NOW(), NOW())`,
+        [projectId, event.tailor_id, userId, `[Événement] ${event.name}`]
+      );
+      // Add participant
+      const participantId = require("crypto").randomUUID();
+      await pool.query(
+        `INSERT IGNORE INTO event_participants (id, event_id, user_id, project_id) VALUES (?, ?, ?, ?)`,
+        [participantId, event.id, userId, projectId]
+      );
+      res.status(201).json({ success: true, eventId: event.id, projectId });
+    } catch (error) {
+      console.error("Failed to join event:", error);
+      res.status(500).json({ error: "Failed to join event" });
+    }
+  });
+
+  // Get event details with participants
+  app.get("/api/events/:id", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const [evRows] = await pool.query(`
+        SELECT e.*, 
+          tu.first_name as tailor_first_name, tu.last_name as tailor_last_name,
+          tu.profile_image_url as tailor_avatar,
+          ou.first_name as organizer_first_name, ou.last_name as organizer_last_name
+        FROM events e
+        JOIN tailors t ON t.id = e.tailor_id
+        JOIN users tu ON tu.id = t.user_id
+        JOIN users ou ON ou.id = e.organizer_id
+        WHERE e.id = ?
+      `, [req.params.id]) as any[];
+      if (!(evRows as any[]).length) return res.status(404).json({ error: "Événement introuvable" });
+      const event = (evRows as any[])[0];
+      const [partRows] = await pool.query(`
+        SELECT ep.*, u.first_name, u.last_name, u.profile_image_url,
+          p.status as project_status, p.current_step, p.id as project_id
+        FROM event_participants ep
+        JOIN users u ON u.id = ep.user_id
+        LEFT JOIN projects p ON p.id = ep.project_id
+        WHERE ep.event_id = ?
+        ORDER BY ep.joined_at ASC
+      `, [req.params.id]) as any[];
+      event.participants = partRows;
+      event.userHasJoined = (partRows as any[]).some((p: any) => p.user_id === userId);
+      event.participantCount = (partRows as any[]).length;
+      res.json(event);
+    } catch (error) {
+      console.error("Failed to get event details:", error);
+      res.status(500).json({ error: "Failed to get event" });
+    }
+  });
+
+  // Tailor: list events
+  app.get("/api/tailor/events", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const [rows] = await pool.query(`
+        SELECT e.*,
+          ou.first_name as organizer_first_name, ou.last_name as organizer_last_name,
+          (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participant_count
+        FROM events e
+        JOIN users ou ON ou.id = e.organizer_id
+        WHERE e.tailor_id = ?
+        ORDER BY e.event_date ASC
+      `, [tailor.id]) as any[];
+      res.json(rows);
+    } catch (error) {
+      console.error("Failed to get tailor events:", error);
+      res.status(500).json({ error: "Failed to get events" });
+    }
+  });
+
+  // Client: list joined events
+  app.get("/api/client/events", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const [rows] = await pool.query(`
+        SELECT e.*,
+          tu.first_name as tailor_first_name, tu.last_name as tailor_last_name,
+          tu.profile_image_url as tailor_avatar,
+          ou.first_name as organizer_first_name, ou.last_name as organizer_last_name,
+          ep.project_id, ep.joined_at,
+          (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participant_count
+        FROM event_participants ep
+        JOIN events e ON e.id = ep.event_id
+        JOIN tailors t ON t.id = e.tailor_id
+        JOIN users tu ON tu.id = t.user_id
+        JOIN users ou ON ou.id = e.organizer_id
+        WHERE ep.user_id = ?
+        ORDER BY e.event_date ASC
+      `, [userId]) as any[];
+      res.json(rows);
+    } catch (error) {
+      console.error("Failed to get client events:", error);
+      res.status(500).json({ error: "Failed to get events" });
+    }
+  });
+
+  // ── Cron: daily deadline + fabric deposit checks ──────────────────────────
+  async function runDailyChecks() {
+    try {
+      const today = new Date();
+      // Fabric deposit: 48h before
+      const in48h = new Date(today); in48h.setDate(in48h.getDate() + 2);
+      const in48hStr = in48h.toISOString().slice(0, 10);
+      const [fabRows] = await pool.query(`
+        SELECT p.*, u.email as client_email, u.first_name as client_name,
+          tu.first_name as tailor_first_name, tu.last_name as tailor_last_name
+        FROM projects p
+        JOIN users u ON u.id = p.client_id
+        JOIN tailors t ON t.id = p.tailor_id
+        JOIN users tu ON tu.id = t.user_id
+        WHERE p.fabric_deposit_date = ? AND p.fabric_deposit_reminder_sent = 0
+      `, [in48hStr]) as any[];
+      for (const row of (fabRows as any[])) {
+        const artisanName = `${row.tailor_first_name || ""} ${row.tailor_last_name || ""}`.trim();
+        const dateFormatted = new Date(row.fabric_deposit_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+        await sendFabricDepositReminderEmail(row.client_email, row.client_name, artisanName, dateFormatted);
+        await pool.query(`UPDATE projects SET fabric_deposit_reminder_sent = 1 WHERE id = ?`, [row.id]);
+      }
+      // Deadline < 5 days: warn artisan + admin
+      const in5days = new Date(today); in5days.setDate(in5days.getDate() + 5);
+      const in5daysStr = in5days.toISOString().slice(0, 10);
+      const todayStr = today.toISOString().slice(0, 10);
+      const [dlRows] = await pool.query(`
+        SELECT p.*, tu.email as tailor_email, tu.first_name as tailor_first_name, tu.last_name as tailor_last_name
+        FROM projects p
+        JOIN tailors t ON t.id = p.tailor_id
+        JOIN users tu ON tu.id = t.user_id
+        WHERE p.client_deadline BETWEEN ? AND ? AND p.status NOT IN ('completed','cancelled')
+      `, [todayStr, in5daysStr]) as any[];
+      const adminEmail = process.env.ADMIN_EMAIL || "admin@seamlier.fr";
+      for (const row of (dlRows as any[])) {
+        const deadlineFormatted = new Date(row.client_deadline).toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+        const tailorName = `${row.tailor_first_name || ""} ${row.tailor_last_name || ""}`.trim();
+        await sendDeadlineWarningEmail(row.tailor_email, tailorName, row.title, deadlineFormatted, "artisan");
+        await sendDeadlineWarningEmail(adminEmail, "Admin", row.title, deadlineFormatted, "admin");
+      }
+      console.log(`[CRON] Daily checks done — fabric: ${(fabRows as any[]).length}, deadlines: ${(dlRows as any[]).length}`);
+    } catch (err) {
+      console.error("[CRON] Daily check error:", err);
+    }
+  }
+  // Run once at startup (delayed) and then every 24h
+  setTimeout(() => { runDailyChecks(); setInterval(runDailyChecks, 24 * 60 * 60 * 1000); }, 30000);
 
   app.get("/download/seamlier-deploy.zip", (req, res) => {
     const filePath = path.resolve("seamlier-deploy.zip");

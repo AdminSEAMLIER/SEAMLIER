@@ -20,6 +20,9 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  PartyPopper,
+  Calendar,
+  Users,
 } from "lucide-react";
 import type { TailorWithUser, ProjectWithTailor } from "@shared/schema";
 
@@ -51,6 +54,10 @@ export default function DashboardClient() {
 
   const { data: measurements } = useQuery<any>({
     queryKey: ["/api/measurements"],
+  });
+
+  const { data: clientEvents = [] } = useQuery<any[]>({
+    queryKey: ["/api/client/events"],
   });
 
   const measurementsOutdated = (() => {
@@ -249,6 +256,65 @@ export default function DashboardClient() {
                   );
                 })}
             </div>
+          </div>
+        )}
+
+        {/* Événements collectifs */}
+        {clientEvents.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-serif text-xl text-[#722F37] flex items-center gap-2">
+                <PartyPopper className="h-5 w-5" />
+                Mes événements
+              </h2>
+              <Link href="/evenement/creer">
+                <button className="text-[#722F37] text-sm font-medium flex items-center gap-1 hover:underline">
+                  + Créer <ChevronRight className="h-4 w-4" />
+                </button>
+              </Link>
+            </div>
+            <div className="space-y-2">
+              {clientEvents.slice(0, 3).map((ev: any) => (
+                <div
+                  key={ev.id}
+                  className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-[#722F37]/10 flex items-center justify-center shrink-0">
+                    <PartyPopper className="h-4 w-4 text-[#722F37]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 text-sm truncate">{ev.name}</p>
+                    <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+                      <Calendar className="h-3 w-3" />
+                      <span>{new Date(ev.event_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}</span>
+                      <Users className="h-3 w-3 ml-1" />
+                      <span>{ev.participant_count} participant{ev.participant_count > 1 ? "s" : ""}</span>
+                    </div>
+                  </div>
+                  <span className="text-xs text-[#722F37] font-medium shrink-0">
+                    {ev.tailor_first_name} {ev.tailor_last_name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Créer un événement CTA (si aucun) */}
+        {clientEvents.length === 0 && (
+          <div className="mb-8">
+            <Link href="/evenement/creer">
+              <div className="bg-gradient-to-r from-[#722F37]/5 to-[#722F37]/10 border border-[#722F37]/20 rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:from-[#722F37]/10 hover:to-[#722F37]/15 transition-colors">
+                <div className="w-10 h-10 rounded-lg bg-[#722F37] flex items-center justify-center shrink-0">
+                  <PartyPopper className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-[#722F37] text-sm">Organiser un événement collectif</p>
+                  <p className="text-gray-500 text-xs mt-0.5">Mariage, EVJF, groupe d'amies — invitez vos proches !</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-[#722F37] shrink-0" />
+              </div>
+            </Link>
           </div>
         )}
 

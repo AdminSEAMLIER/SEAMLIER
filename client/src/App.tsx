@@ -56,6 +56,8 @@ import ProStatistiques from "@/pages/pro-statistiques";
 import MesProjets from "@/pages/mes-projets";
 import MesRendezVous from "@/pages/mes-rendez-vous";
 import DashboardClient from "@/pages/dashboard-client";
+import EvenementCreer from "@/pages/evenement-creer";
+import EvenementRejoindre from "@/pages/evenement-rejoindre";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -264,6 +266,16 @@ function Router() {
         <ProtectedRoute>
           <ClientLayout><MesRendezVous /></ClientLayout>
         </ProtectedRoute>
+      </Route>
+
+      <Route path="/evenement/creer">
+        <ProtectedRoute>
+          <ClientLayout><EvenementCreer /></ClientLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/evenement/rejoindre/:inviteCode">
+        <EvenementRejoindre />
       </Route>
 
       {/* Pro routes */}
