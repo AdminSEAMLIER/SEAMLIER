@@ -97,6 +97,34 @@ export async function registerRoutes(
     }
   });
 
+  // Get tailor profile by user ID (public, used for /prendre-rdv page)
+  app.get("/api/tailor-by-user/:userId", async (req, res) => {
+    try {
+      const [rows] = await pool.query(`
+        SELECT t.*, u.first_name, u.last_name, u.profile_image_url, u.email, u.location
+        FROM tailors t
+        JOIN users u ON u.id = t.user_id
+        WHERE t.user_id = ?
+        LIMIT 1
+      `, [req.params.userId]) as any[];
+      if (!(rows as any[]).length) return res.status(404).json({ error: "Tailor not found" });
+      const row = (rows as any[])[0];
+      res.json({
+        ...row,
+        user: {
+          firstName: row.first_name,
+          lastName: row.last_name,
+          profileImageUrl: row.profile_image_url,
+          email: row.email,
+          location: row.location,
+        },
+      });
+    } catch (error) {
+      console.error("Failed to fetch tailor by userId:", error);
+      res.status(500).json({ error: "Failed to fetch tailor" });
+    }
+  });
+
   app.get("/api/tailors/:id/portfolio", async (req, res) => {
     try {
       const portfolio = await storage.getPortfolioItemsByTailor(req.params.id);
@@ -545,18 +573,16 @@ export async function registerRoutes(
       const now = new Date();
       const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // Revenus du mois : somme de amount_artisan pour les projets complétés ce mois
-      // amount_artisan est stocké en centimes → diviser par 100
+      // Revenus du mois : somme de amount (en euros, prix de confection) pour les projets complétés ce mois
       const [revenueRows] = await pool.query(
-        `SELECT COALESCE(SUM(amount_artisan), 0) as total
+        `SELECT COALESCE(SUM(amount), 0) as total
          FROM projects
          WHERE tailor_id = ? AND status = 'completed'
          AND updated_at >= ?`,
         [tailor.id, firstOfMonth]
       ) as any[];
-      const rawRevenue = Array.isArray(revenueRows) && revenueRows[0]
+      const monthlyRevenue = Array.isArray(revenueRows) && revenueRows[0]
         ? parseFloat(revenueRows[0].total) || 0 : 0;
-      const monthlyRevenue = rawRevenue > 1000 ? Math.round(rawRevenue / 100) : rawRevenue;
 
       // Projets en cours (status = in_progress)
       const [activeRows] = await pool.query(
@@ -593,23 +619,21 @@ export async function registerRoutes(
       const now = new Date();
       const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // CA du mois en cours (amount_artisan en centimes → /100)
+      // CA du mois en cours — amount en euros (prix de confection exact)
       const [revenueRows] = await pool.query(
-        `SELECT COALESCE(SUM(amount_artisan), 0) as total FROM projects
+        `SELECT COALESCE(SUM(amount), 0) as total FROM projects
          WHERE tailor_id = ? AND status = 'completed' AND updated_at >= ?`,
         [tailor.id, firstOfMonth]
       ) as any[];
-      const rawMonthly = parseFloat(revenueRows?.[0]?.total) || 0;
-      const monthlyRevenue = rawMonthly > 1000 ? Math.round(rawMonthly / 100) : rawMonthly;
+      const monthlyRevenue = parseFloat(revenueRows?.[0]?.total) || 0;
 
-      // Panier moyen (amount_artisan en centimes → /100)
+      // Panier moyen — amount en euros
       const [avgRows] = await pool.query(
-        `SELECT COALESCE(AVG(amount_artisan), 0) as avg_val FROM projects
-         WHERE tailor_id = ? AND status = 'completed' AND amount_artisan > 0`,
+        `SELECT COALESCE(AVG(amount), 0) as avg_val FROM projects
+         WHERE tailor_id = ? AND status = 'completed' AND amount > 0`,
         [tailor.id]
       ) as any[];
-      const rawAvg = parseFloat(avgRows?.[0]?.avg_val) || 0;
-      const averageOrderValue = rawAvg > 1000 ? Math.round(rawAvg / 100) : rawAvg;
+      const averageOrderValue = parseFloat(avgRows?.[0]?.avg_val) || 0;
 
       // Nombre total de clients distincts
       const [clientRows] = await pool.query(
@@ -635,7 +659,7 @@ export async function registerRoutes(
       sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
       const [monthlyRows] = await pool.query(
         `SELECT DATE_FORMAT(updated_at, '%Y-%m') as month,
-                COALESCE(SUM(amount_artisan), 0) as total
+                COALESCE(SUM(amount), 0) as total
          FROM projects
          WHERE tailor_id = ? AND status = 'completed' AND updated_at >= ?
          GROUP BY month ORDER BY month ASC`,
@@ -1430,12 +1454,12 @@ export async function registerRoutes(
   app.get("/api/admin/global-stats", requireAdmin, async (req, res) => {
     try {
       const [revenueRows] = await pool.query(
-        "SELECT COALESCE(SUM(amount_artisan), 0) as total FROM projects WHERE status = 'completed'"
+        "SELECT COALESCE(SUM(amount), 0) as total FROM projects WHERE status = 'completed'"
       ) as any[];
       const totalRevenue = parseFloat(revenueRows?.[0]?.total) || 0;
 
       const [avgRows] = await pool.query(
-        "SELECT COALESCE(AVG(amount_artisan), 0) as avg_val FROM projects WHERE status = 'completed' AND amount_artisan > 0"
+        "SELECT COALESCE(AVG(amount), 0) as avg_val FROM projects WHERE status = 'completed' AND amount > 0"
       ) as any[];
       const avgOrderValue = parseFloat(avgRows?.[0]?.avg_val) || 0;
 
