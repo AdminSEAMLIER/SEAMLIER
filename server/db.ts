@@ -48,6 +48,10 @@ export async function ensureTables() {
   await addColumnIfMissing("reviews", "is_approved", "TINYINT(1) NOT NULL DEFAULT 1");
   await addColumnIfMissing("reviews", "project_id", "VARCHAR(36) NULL");
 
+  // tailors: rating + review_count (may be missing in older installations)
+  await addColumnIfMissing("tailors", "rating", "FLOAT NOT NULL DEFAULT 0");
+  await addColumnIfMissing("tailors", "review_count", "INT NOT NULL DEFAULT 0");
+
   // users: CGV acceptance + last activity
   await addColumnIfMissing("users", "cgv_accepted", "TINYINT(1) NOT NULL DEFAULT 0");
   await addColumnIfMissing("users", "cgv_accepted_at", "TIMESTAMP NULL");
@@ -78,6 +82,11 @@ export async function ensureTables() {
         invite_code VARCHAR(10) NOT NULL UNIQUE,
         description TEXT,
         registration_deadline DATE NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'pending_tailor_approval',
+        max_participants INT NULL,
+        price_per_person DECIMAL(10,2) NULL,
+        price_group DECIMAL(10,2) NULL,
+        delivery_date DATE NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -86,17 +95,13 @@ export async function ensureTables() {
     console.warn("[DB] events table:", (err as any)?.message);
   }
 
-  // Add registration_deadline column if missing (migration)
-  try {
-    await pool.execute(`ALTER TABLE events ADD COLUMN IF NOT EXISTS registration_deadline DATE NULL`);
-  } catch (err) {
-    // MySQL doesn't support IF NOT EXISTS for ALTER TABLE columns in older versions
-    // Ignore duplicate column errors
-    const msg = (err as any)?.message || "";
-    if (!msg.includes("Duplicate column")) {
-      console.warn("[DB] events.registration_deadline migration:", msg);
-    }
-  }
+  // events: add new columns if table already existed
+  await addColumnIfMissing("events", "registration_deadline", "DATE NULL");
+  await addColumnIfMissing("events", "status", "VARCHAR(30) NOT NULL DEFAULT 'pending_tailor_approval'");
+  await addColumnIfMissing("events", "max_participants", "INT NULL");
+  await addColumnIfMissing("events", "price_per_person", "DECIMAL(10,2) NULL");
+  await addColumnIfMissing("events", "price_group", "DECIMAL(10,2) NULL");
+  await addColumnIfMissing("events", "delivery_date", "DATE NULL");
 
   // event_participants table
   try {
@@ -113,5 +118,23 @@ export async function ensureTables() {
     console.log("[DB] event_participants table ensured ✅");
   } catch (err) {
     console.warn("[DB] event_participants table:", (err as any)?.message);
+  }
+
+  // tailor_working_hours table
+  try {
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS tailor_working_hours (
+        id VARCHAR(36) PRIMARY KEY,
+        tailor_id VARCHAR(36) NOT NULL,
+        day_of_week INT NOT NULL COMMENT '0=Sunday, 1=Monday, ..., 6=Saturday',
+        start_time VARCHAR(5) NULL COMMENT 'HH:MM format',
+        end_time VARCHAR(5) NULL COMMENT 'HH:MM format',
+        is_closed TINYINT(1) NOT NULL DEFAULT 0,
+        UNIQUE KEY uq_tailor_day (tailor_id, day_of_week)
+      )
+    `);
+    console.log("[DB] tailor_working_hours table ensured ✅");
+  } catch (err) {
+    console.warn("[DB] tailor_working_hours table:", (err as any)?.message);
   }
 }

@@ -520,6 +520,11 @@ export default function AdminDashboard() {
     enabled: isAuthenticated,
   });
 
+  const { data: adminEvents = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/events"],
+    enabled: isAuthenticated,
+  });
+
   const { data: adminReviews = [], isLoading: reviewsLoading } = useQuery<AdminReview[]>({
     queryKey: ["/api/admin/reviews"],
     enabled: isAuthenticated,
@@ -977,6 +982,7 @@ export default function AdminDashboard() {
     { label: "Messagerie", icon: MessageSquare, id: "messaging" },
     { label: "Mesures", icon: Ruler, id: "measures" },
     { label: "Avis", icon: Star, id: "reviews" },
+    { label: "Commandes groupées", icon: Users, id: "events" },
     { label: "Magazine", icon: FileText, id: "magazine" },
   ];
 
@@ -2953,6 +2959,64 @@ export default function AdminDashboard() {
                   </>
                 );
               })()}
+
+              {/* ===== COMMANDES GROUPÉES ===== */}
+              {activeTab === "events" && (
+                <>
+                  <div className="flex justify-between items-end gap-4 flex-wrap">
+                    <div>
+                      <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900">Commandes Groupées</h1>
+                      <p className="text-gray-500 mt-1 text-sm">{adminEvents.length} commande(s) groupée(s)</p>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      <Badge className="bg-amber-50 text-amber-700 border-none">{adminEvents.filter((e: any) => e.status === 'pending_tailor_approval').length} en attente</Badge>
+                      <Badge className="bg-green-50 text-green-700 border-none">{adminEvents.filter((e: any) => e.status === 'active').length} actives</Badge>
+                      <Badge className="bg-red-50 text-red-700 border-none">{adminEvents.filter((e: any) => e.status === 'rejected').length} refusées</Badge>
+                    </div>
+                  </div>
+                  <Card className="border-none shadow-sm">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-100">
+                            <th className="text-left py-3 px-4 text-gray-500 font-medium">Événement</th>
+                            <th className="text-left py-3 px-4 text-gray-500 font-medium">Artisan</th>
+                            <th className="text-left py-3 px-4 text-gray-500 font-medium">Organisateur</th>
+                            <th className="text-left py-3 px-4 text-gray-500 font-medium">Date</th>
+                            <th className="text-left py-3 px-4 text-gray-500 font-medium">Participants</th>
+                            <th className="text-left py-3 px-4 text-gray-500 font-medium">Statut</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {adminEvents.length === 0 ? (
+                            <tr><td colSpan={6} className="text-center py-8 text-gray-400">Aucune commande groupée</td></tr>
+                          ) : adminEvents.map((ev: any) => (
+                            <tr key={ev.id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                              <td className="py-3 px-4 font-medium text-gray-900">{ev.name}</td>
+                              <td className="py-3 px-4 text-gray-600">{ev.tailor_first_name} {ev.tailor_last_name}</td>
+                              <td className="py-3 px-4 text-gray-600">
+                                <div>{ev.organizer_first_name} {ev.organizer_last_name}</div>
+                                <div className="text-xs text-gray-400">{ev.organizer_email}</div>
+                              </td>
+                              <td className="py-3 px-4 text-gray-600">{ev.event_date ? new Date(ev.event_date).toLocaleDateString("fr-FR") : "—"}</td>
+                              <td className="py-3 px-4 text-gray-600">{ev.participant_count ?? 0}</td>
+                              <td className="py-3 px-4">
+                                {ev.status === 'active' ? (
+                                  <Badge className="bg-green-50 text-green-700 border-none text-xs">Active</Badge>
+                                ) : ev.status === 'rejected' ? (
+                                  <Badge className="bg-red-50 text-red-700 border-none text-xs">Refusée</Badge>
+                                ) : (
+                                  <Badge className="bg-amber-50 text-amber-700 border-none text-xs">En attente</Badge>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </Card>
+                </>
+              )}
 
               {/* ===== MAGAZINE ===== */}
               {activeTab === "magazine" && (

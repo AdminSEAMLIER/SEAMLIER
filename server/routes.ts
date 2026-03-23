@@ -1480,6 +1480,27 @@ export async function registerRoutes(
     }
   });
 
+  // Admin: all group orders (events)
+  app.get("/api/admin/events", requireAdmin, async (req, res) => {
+    try {
+      const [rows] = await pool.query(`
+        SELECT e.*,
+          ou.first_name as organizer_first_name, ou.last_name as organizer_last_name, ou.email as organizer_email,
+          tu.first_name as tailor_first_name, tu.last_name as tailor_last_name,
+          (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participant_count
+        FROM events e
+        JOIN users ou ON ou.id = e.organizer_id
+        JOIN tailors t ON t.id = e.tailor_id
+        JOIN users tu ON tu.id = t.user_id
+        ORDER BY e.created_at DESC
+      `) as any[];
+      res.json(rows);
+    } catch (error) {
+      console.error("Error fetching admin events:", error);
+      res.status(500).json({ error: "Failed to fetch events" });
+    }
+  });
+
   // Admin routes - Users listing
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
     try {
@@ -2135,25 +2156,43 @@ export async function registerRoutes(
   app.post("/api/events", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
-      const { name, eventDate, tailorId, description, registrationDeadline } = req.body;
+      const { name, eventDate, tailorId, description, registrationDeadline, maxParticipants, pricePerPerson, priceGroup, deliveryDate } = req.body;
       if (!name || !eventDate || !tailorId) {
         return res.status(400).json({ error: "name, eventDate et tailorId sont requis" });
       }
       let inviteCode = generateInviteCode();
-      // Ensure uniqueness
       const [existing] = await pool.query(`SELECT id FROM events WHERE invite_code = ?`, [inviteCode]) as any[];
       if ((existing as any[]).length > 0) inviteCode = generateInviteCode() + "X";
       const eventId = require("crypto").randomUUID();
       await pool.query(
-        `INSERT INTO events (id, name, event_date, tailor_id, organizer_id, invite_code, description, registration_deadline) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [eventId, name, eventDate, tailorId, userId, inviteCode, description || null, registrationDeadline || null]
+        `INSERT INTO events (id, name, event_date, tailor_id, organizer_id, invite_code, description, registration_deadline, status, max_participants, price_per_person, price_group, delivery_date)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending_tailor_approval', ?, ?, ?, ?)`,
+        [eventId, name, eventDate, tailorId, userId, inviteCode, description || null, registrationDeadline || null,
+         maxParticipants || null, pricePerPerson || null, priceGroup || null, deliveryDate || null]
       );
-      // Organizer joins automatically
-      const participantId = require("crypto").randomUUID();
-      await pool.query(
-        `INSERT IGNORE INTO event_participants (id, event_id, user_id) VALUES (?, ?, ?)`,
-        [participantId, eventId, userId]
-      );
+      // Notify the tailor via in-app message
+      try {
+        const [orgRows] = await pool.query(`SELECT first_name, last_name FROM users WHERE id = ?`, [userId]) as any[];
+        const org = (orgRows as any[])[0];
+        const orgName = `${org?.first_name || ""} ${org?.last_name || ""}`.trim() || "Un client";
+        const [tailorRows] = await pool.query(`SELECT user_id FROM tailors WHERE id = ?`, [tailorId]) as any[];
+        const tailorUserId = (tailorRows as any[])[0]?.user_id;
+        if (tailorUserId) {
+          const conv = await storage.getOrCreateConversation(userId, tailorUserId);
+          const details = [
+            `📦 **Nouvelle demande de commande groupée**`,
+            `Nom : ${name}`,
+            `Date de l'événement : ${new Date(eventDate).toLocaleDateString("fr-FR")}`,
+            maxParticipants ? `Nombre de personnes : ${maxParticipants}` : null,
+            pricePerPerson ? `Prix par personne : ${pricePerPerson} €` : null,
+            priceGroup ? `Prix du groupe : ${priceGroup} €` : null,
+            deliveryDate ? `Date de livraison souhaitée : ${new Date(deliveryDate).toLocaleDateString("fr-FR")}` : null,
+            description ? `Description : ${description}` : null,
+            `[RDV:/evenement/${eventId}]`,
+          ].filter(Boolean).join("\n");
+          await storage.createMessage({ conversationId: conv.id, senderId: userId, content: details });
+        }
+      } catch (e) { console.error("Event notification error:", e); }
       const [rows] = await pool.query(`SELECT * FROM events WHERE id = ?`, [eventId]) as any[];
       res.status(201).json((rows as any[])[0]);
     } catch (error) {
@@ -2193,6 +2232,9 @@ export async function registerRoutes(
       const [evRows] = await pool.query(`SELECT * FROM events WHERE invite_code = ?`, [req.params.inviteCode.toUpperCase()]) as any[];
       if (!(evRows as any[]).length) return res.status(404).json({ error: "Événement introuvable" });
       const event = (evRows as any[])[0];
+      if (event.status && event.status !== 'active') {
+        return res.status(403).json({ error: "Cet événement n'est pas encore ouvert aux inscriptions." });
+      }
       // Check if already joined
       const [existing] = await pool.query(
         `SELECT id FROM event_participants WHERE event_id = ? AND user_id = ?`, [event.id, userId]
@@ -2358,6 +2400,145 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to broadcast:", error);
       res.status(500).json({ error: "Failed to broadcast" });
+    }
+  });
+
+  // ── Event: approve / reject (tailor only) ─────────────────────────────────
+  app.patch("/api/events/:id/approve", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const [evRows] = await pool.query(`SELECT * FROM events WHERE id = ?`, [req.params.id]) as any[];
+      const event = (evRows as any[])[0];
+      if (!event) return res.status(404).json({ error: "Événement introuvable" });
+      if (event.tailor_id !== tailor.id) return res.status(403).json({ error: "Unauthorized" });
+      await pool.query(`UPDATE events SET status = 'active' WHERE id = ?`, [req.params.id]);
+      // Notify organizer with invite link
+      try {
+        const conv = await storage.getOrCreateConversation(userId, event.organizer_id);
+        const inviteUrl = `https://seamlier.fr/evenement/rejoindre/${event.invite_code}`;
+        const msg = `✅ Votre commande groupée **${event.name}** a été acceptée !\n\nPartagez ce lien à votre groupe pour qu'ils puissent rejoindre :\n${inviteUrl}\n\nCode d'invitation : **${event.invite_code}**`;
+        await storage.createMessage({ conversationId: conv.id, senderId: userId, content: msg });
+      } catch (e) { console.error("Event approval notification error:", e); }
+      const [updated] = await pool.query(`SELECT * FROM events WHERE id = ?`, [req.params.id]) as any[];
+      res.json((updated as any[])[0]);
+    } catch (error) {
+      console.error("Failed to approve event:", error);
+      res.status(500).json({ error: "Failed to approve event" });
+    }
+  });
+
+  app.patch("/api/events/:id/reject", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const [evRows] = await pool.query(`SELECT * FROM events WHERE id = ?`, [req.params.id]) as any[];
+      const event = (evRows as any[])[0];
+      if (!event) return res.status(404).json({ error: "Événement introuvable" });
+      if (event.tailor_id !== tailor.id) return res.status(403).json({ error: "Unauthorized" });
+      const { reason } = req.body;
+      await pool.query(`UPDATE events SET status = 'rejected' WHERE id = ?`, [req.params.id]);
+      try {
+        const conv = await storage.getOrCreateConversation(userId, event.organizer_id);
+        const msg = reason
+          ? `❌ Votre demande de commande groupée **${event.name}** n'a pas pu être acceptée.\n\nMotif : ${reason}`
+          : `❌ Votre demande de commande groupée **${event.name}** n'a pas pu être acceptée.`;
+        await storage.createMessage({ conversationId: conv.id, senderId: userId, content: msg });
+      } catch (e) { console.error("Event rejection notification error:", e); }
+      const [updated] = await pool.query(`SELECT * FROM events WHERE id = ?`, [req.params.id]) as any[];
+      res.json((updated as any[])[0]);
+    } catch (error) {
+      console.error("Failed to reject event:", error);
+      res.status(500).json({ error: "Failed to reject event" });
+    }
+  });
+
+  // ── Working hours ──────────────────────────────────────────────────────────
+  // Public: get a tailor's working hours by tailor ID
+  app.get("/api/tailors/:id/working-hours", async (req: any, res) => {
+    try {
+      const [rows] = await pool.query(
+        `SELECT * FROM tailor_working_hours WHERE tailor_id = ? ORDER BY day_of_week`,
+        [req.params.id]
+      ) as any[];
+      res.json(rows);
+    } catch (error) {
+      console.error("Failed to get working hours:", error);
+      res.status(500).json({ error: "Failed to get working hours" });
+    }
+  });
+
+  // Pro: save own working hours (array of { dayOfWeek, startTime, endTime, isClosed })
+  app.put("/api/pro/working-hours", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const { hours } = req.body;
+      if (!Array.isArray(hours)) return res.status(400).json({ error: "hours doit être un tableau" });
+      for (const h of hours) {
+        const id = require("crypto").randomUUID();
+        await pool.query(`
+          INSERT INTO tailor_working_hours (id, tailor_id, day_of_week, start_time, end_time, is_closed)
+          VALUES (?, ?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE start_time = VALUES(start_time), end_time = VALUES(end_time), is_closed = VALUES(is_closed)
+        `, [id, tailor.id, h.dayOfWeek, h.isClosed ? null : (h.startTime || "09:00"), h.isClosed ? null : (h.endTime || "18:00"), h.isClosed ? 1 : 0]);
+      }
+      const [rows] = await pool.query(
+        `SELECT * FROM tailor_working_hours WHERE tailor_id = ? ORDER BY day_of_week`,
+        [tailor.id]
+      ) as any[];
+      res.json(rows);
+    } catch (error) {
+      console.error("Failed to save working hours:", error);
+      res.status(500).json({ error: "Failed to save working hours" });
+    }
+  });
+
+  // Public: get available time slots for a tailor on a given date
+  app.get("/api/tailors/:id/available-slots", async (req: any, res) => {
+    try {
+      const tailorId = req.params.id;
+      const { date } = req.query as { date?: string };
+      if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ error: "date (YYYY-MM-DD) est requise" });
+      }
+      const dayOfWeek = new Date(date + "T12:00:00").getDay(); // 0=Sun
+      // Get working hours for that day
+      const [whRows] = await pool.query(
+        `SELECT * FROM tailor_working_hours WHERE tailor_id = ? AND day_of_week = ?`,
+        [tailorId, dayOfWeek]
+      ) as any[];
+      const wh = (whRows as any[])[0];
+      if (wh?.is_closed) return res.json({ available: false, slots: [] });
+      const startH = wh?.start_time ? parseInt(wh.start_time.split(":")[0]) : 9;
+      const endH = wh?.end_time ? parseInt(wh.end_time.split(":")[0]) : 18;
+      // Get confirmed appointments for that tailor on that date
+      const [apptRows] = await pool.query(`
+        SELECT DATE_FORMAT(scheduled_at, '%H:%i') as time_slot, duration
+        FROM appointments
+        WHERE tailor_id = ? AND DATE(scheduled_at) = ? AND status IN ('scheduled','confirmed')
+      `, [tailorId, date]) as any[];
+      const busySlots = new Set<string>();
+      for (const appt of (apptRows as any[])) {
+        const [hh, mm] = appt.time_slot.split(":").map(Number);
+        const dur = Math.ceil((appt.duration || 60) / 60);
+        for (let i = 0; i < dur; i++) {
+          const h = hh + i;
+          busySlots.add(`${String(h).padStart(2, "0")}:${String(mm).padStart(2, "0")}`);
+        }
+      }
+      const slots: { time: string; available: boolean }[] = [];
+      for (let h = startH; h < endH; h++) {
+        const time = `${String(h).padStart(2, "0")}:00`;
+        slots.push({ time, available: !busySlots.has(time) });
+      }
+      res.json({ available: true, startTime: wh?.start_time || "09:00", endTime: wh?.end_time || "18:00", slots });
+    } catch (error) {
+      console.error("Failed to get available slots:", error);
+      res.status(500).json({ error: "Failed to get available slots" });
     }
   });
 

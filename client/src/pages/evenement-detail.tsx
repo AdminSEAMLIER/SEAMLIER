@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   ArrowLeft, Calendar, Users, Copy, Check, Clock, Megaphone,
-  Loader2, Edit2, Save, X, MessageSquare, Share2
+  Loader2, Edit2, Save, X, MessageSquare, Share2, CheckCircle, XCircle, AlertCircle, Euro
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -74,6 +74,36 @@ export default function EvenementDetail() {
     onError: () => {
       toast({ title: "Erreur lors de l'envoi", variant: "destructive" });
     },
+  });
+
+  const [rejectReason, setRejectReason] = useState("");
+  const [showRejectForm, setShowRejectForm] = useState(false);
+
+  const approveMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("PATCH", `/api/events/${id}/approve`, {});
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tailor/events"] });
+      toast({ title: isFr ? "Commande acceptée !" : "Order accepted!", description: isFr ? "Le client a été notifié avec le lien d'invitation." : "The client was notified with the invite link." });
+    },
+    onError: () => toast({ title: "Erreur", variant: "destructive" }),
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("PATCH", `/api/events/${id}/reject`, { reason: rejectReason || undefined });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events", id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tailor/events"] });
+      setShowRejectForm(false);
+      toast({ title: isFr ? "Commande refusée" : "Order rejected" });
+    },
+    onError: () => toast({ title: "Erreur", variant: "destructive" }),
   });
 
   const handleCopyLink = async () => {
@@ -141,6 +171,124 @@ export default function EvenementDetail() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* Status banner */}
+        {event.status === "pending_tailor_approval" && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              <span className="font-semibold text-amber-800 text-sm">
+                {isTailorUser
+                  ? (isFr ? "Demande en attente de votre validation" : "Request pending your approval")
+                  : (isFr ? "En attente de validation par l'artisan" : "Pending tailor approval")}
+              </span>
+            </div>
+            <p className="text-xs text-amber-700">
+              {isTailorUser
+                ? (isFr ? "Un client a soumis cette commande groupée. Consultez les détails et acceptez ou refusez." : "A client submitted this group order. Review the details and accept or decline.")
+                : (isFr ? "L'artisan est en train de valider votre demande. Le lien d'invitation sera partagé dès acceptation." : "The artisan is reviewing your request. The invite link will be shared once accepted.")}
+            </p>
+          </div>
+        )}
+        {event.status === "rejected" && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-2">
+            <XCircle className="h-4 w-4 text-red-500" />
+            <span className="text-sm text-red-700 font-medium">
+              {isFr ? "Cette commande groupée a été refusée par l'artisan." : "This group order was declined by the artisan."}
+            </span>
+          </div>
+        )}
+        {event.status === "active" && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <span className="text-sm text-green-800 font-medium">
+              {isFr ? "Commande acceptée — les inscriptions sont ouvertes." : "Order accepted — registrations are open."}
+            </span>
+          </div>
+        )}
+
+        {/* Tailor approval card */}
+        {isTailorUser && event.status === "pending_tailor_approval" && (
+          <div className="bg-white rounded-2xl border border-[#722F37]/20 p-5 shadow-sm space-y-4">
+            <h3 className="font-semibold text-gray-900 text-sm">
+              {isFr ? "Détails de la commande groupée" : "Group order details"}
+            </h3>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              {event.max_participants && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Users className="h-4 w-4 text-[#722F37]" />
+                  <span>{event.max_participants} {isFr ? "personnes" : "people"}</span>
+                </div>
+              )}
+              {event.price_per_person && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Euro className="h-4 w-4 text-[#722F37]" />
+                  <span>{event.price_per_person} € / {isFr ? "personne" : "person"}</span>
+                </div>
+              )}
+              {event.price_group && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Euro className="h-4 w-4 text-[#722F37]" />
+                  <span>{event.price_group} € {isFr ? "total groupe" : "group total"}</span>
+                </div>
+              )}
+              {event.delivery_date && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Calendar className="h-4 w-4 text-[#722F37]" />
+                  <span>{isFr ? "Livraison : " : "Delivery: "}{new Date(event.delivery_date).toLocaleDateString("fr-FR")}</span>
+                </div>
+              )}
+            </div>
+
+            {!showRejectForm ? (
+              <div className="flex gap-3">
+                <Button
+                  className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+                  onClick={() => approveMutation.mutate()}
+                  disabled={approveMutation.isPending}
+                  data-testid="button-approve-event"
+                >
+                  {approveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                  {isFr ? "Accepter" : "Accept"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                  onClick={() => setShowRejectForm(true)}
+                  data-testid="button-show-reject"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  {isFr ? "Refuser" : "Decline"}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <Textarea
+                  placeholder={isFr ? "Motif du refus (optionnel)…" : "Reason for declining (optional)…"}
+                  value={rejectReason}
+                  onChange={e => setRejectReason(e.target.value)}
+                  rows={2}
+                  data-testid="input-reject-reason"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => rejectMutation.mutate()}
+                    disabled={rejectMutation.isPending}
+                    data-testid="button-confirm-reject"
+                  >
+                    {rejectMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (isFr ? "Confirmer le refus" : "Confirm decline")}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setShowRejectForm(false)} data-testid="button-cancel-reject">
+                    {isFr ? "Annuler" : "Cancel"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Date + info */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
           <div className="flex items-start gap-4">
@@ -231,8 +379,8 @@ export default function EvenementDetail() {
           )}
         </div>
 
-        {/* Lien d'invitation */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+        {/* Lien d'invitation — visible seulement si approuvé */}
+        {(!event.status || event.status === "active") && <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
             <Share2 className="h-4 w-4 text-[#722F37]" />
             <span className="font-semibold text-gray-900 text-sm">
@@ -268,7 +416,7 @@ export default function EvenementDetail() {
               </div>
             </div>
           </div>
-        </div>
+        </div>}
 
         {/* Participants */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
