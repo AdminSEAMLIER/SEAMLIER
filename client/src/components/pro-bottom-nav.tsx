@@ -42,7 +42,7 @@ export function ProBottomNav() {
                 className={cn(
                   "flex flex-col items-center justify-center gap-1 w-12 h-full transition-colors",
                   isActive
-                    ? "text-[#722F37]"
+                    ? "text-[#601B28]"
                     : "text-gray-700 hover:text-gray-900"
                 )}
                 data-testid={`nav-pro-${item.labelKey.split('.')[1]}`}

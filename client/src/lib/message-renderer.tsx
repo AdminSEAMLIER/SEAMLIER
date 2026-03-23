@@ -28,7 +28,7 @@ export function renderMessageContent(content: string, isSent: boolean) {
           rel="noopener noreferrer"
           className={isSent
             ? "underline text-white/90 hover:text-white"
-            : "underline text-[#722F37] hover:text-[#5a252c]"
+            : "underline text-[#601B28] hover:text-[#4E1522]"
           }
         >
           {url}
@@ -63,7 +63,7 @@ export function renderMessageContent(content: string, isSent: boolean) {
         className={`inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
           isSent
             ? "bg-white/20 hover:bg-white/30 text-white border border-white/30"
-            : "bg-[#722F37]/10 hover:bg-[#722F37]/20 text-[#722F37] border border-[#722F37]/30"
+            : "bg-[#601B28]/10 hover:bg-[#601B28]/20 text-[#601B28] border border-[#601B28]/30"
         }`}
       >
         {label}

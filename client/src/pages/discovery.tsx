@@ -108,10 +108,10 @@ export default function Discovery() {
       <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-              <Search className="h-5 w-5 text-[#722F37]" />
+            <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+              <Search className="h-5 w-5 text-[#601B28]" />
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]">
               {t('discovery.title')}
             </h1>
           </div>
@@ -127,13 +127,13 @@ export default function Discovery() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
-                className="pl-12 h-12 bg-white border-gray-200 focus:border-[#722F37] focus:ring-[#722F37]"
+                className="pl-12 h-12 bg-white border-gray-200 focus:border-[#601B28] focus:ring-[#601B28]"
                 data-testid="input-search-discovery"
               />
             </div>
             <Button
               onClick={handleSearch}
-              className="h-12 px-5 bg-[#722F37] hover:bg-[#5a252c] text-white shrink-0"
+              className="h-12 px-5 bg-[#601B28] hover:bg-[#4E1522] text-white shrink-0"
               data-testid="button-search-discovery"
             >
               <Search className="h-5 w-5 mr-2" />
@@ -147,7 +147,7 @@ export default function Discovery() {
         <div className="flex flex-col gap-6">
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-[#722F37]" />
+              <MapPin className="h-4 w-4 text-[#601B28]" />
               <Select value={selectedCity} onValueChange={setSelectedCity}>
                 <SelectTrigger className="w-[160px] bg-white border-gray-200" data-testid="select-city">
                   <SelectValue placeholder={t('discovery.filterByCity')} />
@@ -163,7 +163,7 @@ export default function Discovery() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 text-[#722F37]" />
+              <Star className="h-4 w-4 text-[#601B28]" />
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-[180px] bg-white border-gray-200" data-testid="select-sort">
                   <SelectValue placeholder={t('discovery.sortBy')} />
@@ -179,7 +179,7 @@ export default function Discovery() {
 
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Scissors className="h-4 w-4 text-[#722F37]" />
+              <Scissors className="h-4 w-4 text-[#601B28]" />
               <span className="text-sm font-medium text-gray-700">{t('discovery.specialties')}:</span>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -189,7 +189,7 @@ export default function Discovery() {
                   label={specialty.key === "all" ? t('discovery.allSpecialties') : t(`specialties.${specialty.key}`)}
                   isActive={selectedFilter === specialty.key}
                   onClick={() => setSelectedFilter(specialty.key)}
-                  className={selectedFilter === specialty.key ? "bg-[#722F37] text-white border-[#722F37]" : "bg-white text-gray-600 border-gray-200 hover:border-[#722F37] hover:text-[#722F37]"}
+                  className={selectedFilter === specialty.key ? "bg-[#601B28] text-white border-[#601B28]" : "bg-white text-gray-600 border-gray-200 hover:border-[#601B28] hover:text-[#601B28]"}
                 />
               ))}
             </div>
@@ -197,7 +197,7 @@ export default function Discovery() {
         </div>
 
         <div className="mt-12">
-          <h2 className="font-serif text-2xl text-[#722F37] mb-6">
+          <h2 className="font-serif text-2xl text-[#601B28] mb-6">
             Nos Artisans
           </h2>
 
@@ -215,8 +215,8 @@ export default function Discovery() {
             </div>
           ) : (
             <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-200">
-              <Scissors className="h-12 w-12 mx-auto mb-4 text-[#722F37]/30" />
-              <p className="text-lg font-medium text-[#722F37]">{t('discovery.noResults')}</p>
+              <Scissors className="h-12 w-12 mx-auto mb-4 text-[#601B28]/30" />
+              <p className="text-lg font-medium text-[#601B28]">{t('discovery.noResults')}</p>
               <p className="text-sm text-gray-500 mt-1">{t('discovery.adjustFilters')}</p>
             </div>
           )}
@@ -224,7 +224,7 @@ export default function Discovery() {
 
         {portfolio && portfolio.length > 0 && (
           <div className="mt-20 border-t border-gray-100 pt-12">
-            <h2 className="font-serif text-2xl text-[#722F37] mb-6">
+            <h2 className="font-serif text-2xl text-[#601B28] mb-6">
               {t('tailor.portfolio')}
             </h2>
 

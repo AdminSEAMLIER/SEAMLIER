@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
-import { FileText, Clock, MapPin, Euro, CheckCircle, XCircle, MessageSquare, Users, Loader2, Send, Shirt, Image } from "lucide-react";
+import { FileText, Clock, MapPin, Euro, XCircle, MessageSquare, Users, Loader2, Send, Shirt, Image, CalendarDays, CheckCircle2, Ban } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +40,38 @@ export default function ProDemandes() {
 
   const { data: allProjects = [], isLoading } = useQuery<ProjectWithClient[]>({
     queryKey: ["/api/tailor/projects"],
+  });
+
+  const { data: tailorEvents = [] } = useQuery<any[]>({
+    queryKey: ["/api/tailor/events"],
+  });
+
+  const pendingEvents = tailorEvents.filter((e: any) => e.status === "pending_tailor_approval");
+
+  const approveMutation = useMutation({
+    mutationFn: async (eventId: string) => {
+      const res = await apiFetch(`/api/events/${eventId}/approve`, { method: "PATCH" });
+      if (!res.ok) throw new Error("Erreur");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tailor/events"] });
+      toast({ title: "Commande acceptée", description: "Le client a été notifié." });
+    },
+    onError: () => toast({ title: "Erreur", description: "Impossible d'accepter.", variant: "destructive" }),
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async (eventId: string) => {
+      const res = await apiFetch(`/api/events/${eventId}/reject`, { method: "PATCH" });
+      if (!res.ok) throw new Error("Erreur");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tailor/events"] });
+      toast({ title: "Commande refusée", description: "L'organisateur a été informé." });
+    },
+    onError: () => toast({ title: "Erreur", description: "Impossible de refuser.", variant: "destructive" }),
   });
 
   const now = new Date();
@@ -144,14 +176,14 @@ export default function ProDemandes() {
       <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-              <FileText className="h-5 w-5 text-[#722F37]" />
+            <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+              <FileText className="h-5 w-5 text-[#601B28]" />
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]">
               {t("nav.requests")}
             </h1>
-            {countPending > 0 && (
-              <Badge className="bg-[#722F37] text-white border-none ml-1">{countPending}</Badge>
+            {(countPending + pendingEvents.length) > 0 && (
+              <Badge className="bg-[#601B28] text-white border-none ml-1">{countPending + pendingEvents.length}</Badge>
             )}
           </div>
           <p className="text-gray-600 mt-2">Gérez les demandes clients et envoyez vos devis.</p>
@@ -159,6 +191,85 @@ export default function ProDemandes() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 lg:px-6 py-6">
+
+        {pendingEvents.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <CalendarDays className="h-4 w-4 text-[#601B28]" />
+              <h2 className="font-semibold text-[#601B28] text-sm uppercase tracking-wide">Commandes groupées en attente</h2>
+              <Badge className="bg-amber-100 text-amber-700 border-none text-xs">{pendingEvents.length}</Badge>
+            </div>
+            {pendingEvents.map((ev: any) => (
+              <Card key={ev.id} className="border border-amber-100 bg-amber-50/40 shadow-sm mb-3" data-testid={`card-event-${ev.id}`}>
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between gap-4 mb-2">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{ev.name}</h3>
+                      <p className="text-sm text-gray-500">Organisateur : {ev.organizer_first_name} {ev.organizer_last_name}</p>
+                    </div>
+                    <Badge className="bg-amber-100 text-amber-700 border-none flex-shrink-0 text-xs">En attente</Badge>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 text-sm text-gray-600 mb-3">
+                    {ev.event_date && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" />
+                        {format(new Date(ev.event_date), "d MMM yyyy", { locale: fr })}
+                      </span>
+                    )}
+                    {ev.max_participants && (
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3.5 w-3.5" />
+                        {ev.max_participants} personnes max
+                      </span>
+                    )}
+                    {ev.price_per_person && (
+                      <span className="flex items-center gap-1">
+                        <Euro className="h-3.5 w-3.5" />
+                        {ev.price_per_person}€/pers.
+                      </span>
+                    )}
+                    {ev.price_group && (
+                      <span className="flex items-center gap-1">
+                        <Euro className="h-3.5 w-3.5" />
+                        {ev.price_group}€ groupe
+                      </span>
+                    )}
+                  </div>
+
+                  {ev.description && (
+                    <p className="text-sm text-gray-600 bg-white rounded-lg p-3 mb-3 border border-amber-100">{ev.description}</p>
+                  )}
+
+                  <div className="flex gap-2 pt-3 border-t border-amber-100">
+                    <Button
+                      className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white gap-1"
+                      size="sm"
+                      onClick={() => approveMutation.mutate(ev.id)}
+                      disabled={approveMutation.isPending}
+                      data-testid={`button-approve-event-${ev.id}`}
+                    >
+                      {approveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                      Accepter
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-gray-200 text-gray-600 gap-1"
+                      size="sm"
+                      onClick={() => rejectMutation.mutate(ev.id)}
+                      disabled={rejectMutation.isPending}
+                      data-testid={`button-reject-event-${ev.id}`}
+                    >
+                      {rejectMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+                      Refuser
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
         <Card className="border border-gray-100 bg-white shadow-sm mb-6">
           <CardContent className="p-4 bg-white">
             <div className="flex gap-2 overflow-x-auto pb-1">
@@ -175,8 +286,8 @@ export default function ProDemandes() {
                   variant="default"
                   className={
                     activeFilter === f.key
-                      ? "bg-[#722F37] text-white hover:bg-[#5a252c] flex-shrink-0"
-                      : "bg-white border-2 border-gray-200 text-gray-600 hover:border-[#722F37] hover:text-[#722F37] flex-shrink-0"
+                      ? "bg-[#601B28] text-white hover:bg-[#4E1522] flex-shrink-0"
+                      : "bg-white border-2 border-gray-200 text-gray-600 hover:border-[#601B28] hover:text-[#601B28] flex-shrink-0"
                   }
                   size="sm"
                   onClick={() => setActiveFilter(f.key)}
@@ -192,7 +303,7 @@ export default function ProDemandes() {
         {isLoading ? (
           <Card className="border border-gray-100 bg-white shadow-sm">
             <CardContent className="p-8 bg-white text-center">
-              <Loader2 className="h-6 w-6 animate-spin text-[#722F37] mx-auto mb-2" />
+              <Loader2 className="h-6 w-6 animate-spin text-[#601B28] mx-auto mb-2" />
               <p className="text-gray-500">{t("common.loading")}</p>
             </CardContent>
           </Card>
@@ -202,7 +313,7 @@ export default function ProDemandes() {
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="h-8 w-8 text-gray-400" />
               </div>
-              <h3 className="font-serif text-xl text-[#722F37] mb-2">
+              <h3 className="font-serif text-xl text-[#601B28] mb-2">
                 Aucune demande
               </h3>
               <p className="text-gray-500 mb-2">Vous n'avez pas encore de demandes clients.</p>
@@ -224,7 +335,7 @@ export default function ProDemandes() {
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <h3 className="font-semibold text-[#722F37] truncate">{project.title || "Projet sans titre"}</h3>
+                        <h3 className="font-semibold text-[#601B28] truncate">{project.title || "Projet sans titre"}</h3>
                         {statusBadge(project.status)}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
@@ -247,7 +358,7 @@ export default function ProDemandes() {
 
                   {(project as any).clothingType && (
                     <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-2">
-                      <Shirt className="h-4 w-4 text-[#722F37]" />
+                      <Shirt className="h-4 w-4 text-[#601B28]" />
                       <span className="font-medium">{(project as any).clothingType}</span>
                     </div>
                   )}
@@ -259,7 +370,7 @@ export default function ProDemandes() {
                   <div className="flex flex-wrap gap-4 text-sm mb-3">
                     {(project as any).requestedPrice != null && (
                       <div className="flex items-center gap-1 text-gray-600">
-                        <Euro className="h-4 w-4 text-[#722F37]" />
+                        <Euro className="h-4 w-4 text-[#601B28]" />
                         <span>Budget client : <strong>{(project as any).requestedPrice}€</strong></span>
                       </div>
                     )}
@@ -271,7 +382,7 @@ export default function ProDemandes() {
                     )}
                     {project.deadline && (
                       <div className="flex items-center gap-1 text-gray-600">
-                        <Clock className="h-4 w-4 text-[#722F37]" />
+                        <Clock className="h-4 w-4 text-[#601B28]" />
                         <span>{formatDate(project.deadline)}</span>
                       </div>
                     )}
@@ -279,7 +390,7 @@ export default function ProDemandes() {
 
                   {(project as any).modelPhotoUrl && (
                     <div className="mb-3">
-                      <a href={(project as any).modelPhotoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-[#722F37] hover:underline">
+                      <a href={(project as any).modelPhotoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-[#601B28] hover:underline">
                         <Image className="h-4 w-4" />
                         Voir la photo modèle
                       </a>
@@ -308,7 +419,7 @@ export default function ProDemandes() {
                               data-testid={`input-quote-amount-${project.id}`}
                             />
                             <Button
-                              className="bg-[#722F37] hover:bg-[#5a252c] text-white gap-1"
+                              className="bg-[#601B28] hover:bg-[#4E1522] text-white gap-1"
                               onClick={() => handleSendQuote(project)}
                               disabled={isMutating}
                               data-testid={`button-send-quote-${project.id}`}
@@ -328,7 +439,7 @@ export default function ProDemandes() {
                       ) : (
                         <div className="flex gap-2 pt-4 border-t border-gray-100">
                           <Button
-                            className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white gap-1"
+                            className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white gap-1"
                             onClick={() => setOpenQuoteId(project.id)}
                             disabled={isMutating}
                             data-testid={`button-open-quote-${project.id}`}

@@ -16,12 +16,12 @@ export default function Confidentialite() {
               <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </Button>
           </Link>
-          <Logo className="text-[#722F37]" textClassName="text-lg text-[#722F37]" />
+          <Logo className="text-[#601B28]" textClassName="text-lg text-[#601B28]" />
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8 lg:py-12">
-        <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-8">
+        <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28] mb-8">
           {t('privacy.title')}
         </h1>
 
@@ -31,7 +31,7 @@ export default function Confidentialite() {
           </p>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('privacy.controller')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('privacy.controller')}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               {t('privacy.controllerText')}
             </p>
@@ -41,7 +41,7 @@ export default function Confidentialite() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('privacy.dataCollected')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('privacy.dataCollected')}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               {t('privacy.dataCollectedIntro')}
             </p>
@@ -68,7 +68,7 @@ export default function Confidentialite() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('privacy.purposes')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('privacy.purposes')}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               {t('privacy.purposesIntro')}
             </p>
@@ -81,14 +81,14 @@ export default function Confidentialite() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('privacy.legalBasis')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('privacy.legalBasis')}</h2>
             <p className="text-muted-foreground leading-relaxed">
               {t('privacy.legalBasisText')}
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('privacy.recipients')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('privacy.recipients')}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               {t('privacy.recipientsIntro')}
             </p>
@@ -99,21 +99,21 @@ export default function Confidentialite() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('privacy.retention')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('privacy.retention')}</h2>
             <p className="text-muted-foreground leading-relaxed">
               {t('privacy.retentionText')}
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('privacy.rights')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('privacy.rights')}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               {t('privacy.rightsText')} <strong>contact@seamlier.fr</strong>.
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('privacy.security')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('privacy.security')}</h2>
             <p className="text-muted-foreground leading-relaxed">
               {t('privacy.securityText')}
             </p>

@@ -59,10 +59,10 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
       <div className="flex items-center justify-between w-full max-w-7xl mx-auto px-6">
         <div className="flex items-center gap-4">
           <Link href="/">
-            <Logo className="text-[#722F37] cursor-pointer" textClassName="text-base text-[#722F37]" />
+            <Logo className="text-[#601B28] cursor-pointer" textClassName="text-base text-[#601B28]" />
           </Link>
           {mode === "professionnel" && (
-            <Badge variant="secondary" className="bg-[#722F37]/10 text-[#722F37] border-none">Pro</Badge>
+            <Badge variant="secondary" className="bg-[#601B28]/10 text-[#601B28] border-none">Pro</Badge>
           )}
         </div>
 
@@ -78,7 +78,7 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
                   variant="ghost"
                   className={cn(
                     "gap-2 text-foreground relative",
-                    isActive && "bg-muted text-[#722F37]"
+                    isActive && "bg-muted text-[#601B28]"
                   )}
                   data-testid={`nav-desktop-${item.labelKey.split('.')[1]}`}
                 >
@@ -106,7 +106,7 @@ export function DesktopHeader({ mode = "particulier" }: DesktopHeaderProps) {
                 <Button variant="ghost" size="icon" className="rounded-full" data-testid="button-user-menu">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName || ''} />
-                    <AvatarFallback className="bg-[#722F37] text-white text-xs">{userInitials}</AvatarFallback>
+                    <AvatarFallback className="bg-[#601B28] text-white text-xs">{userInitials}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>

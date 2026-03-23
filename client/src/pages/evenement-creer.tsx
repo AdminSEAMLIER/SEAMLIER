@@ -65,7 +65,7 @@ export default function EvenementCreer() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <h1 className="font-serif text-[#722F37] text-lg">Demande envoyée !</h1>
+            <h1 className="font-serif text-[#601B28] text-lg">Demande envoyée !</h1>
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export default function EvenementCreer() {
 
           <div className="space-y-2">
             <Button
-              className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white"
+              className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white"
               onClick={() => setLocation(`/evenement/${created.id}`)}
               data-testid="button-view-event"
             >
@@ -122,17 +122,17 @@ export default function EvenementCreer() {
             </Button>
           </Link>
           <div>
-            <h1 className="font-serif text-[#722F37] text-lg">Commande groupée</h1>
+            <h1 className="font-serif text-[#601B28] text-lg">Commande groupée</h1>
             <p className="text-xs text-gray-400">Mariage, EVJF, groupe d'amies…</p>
           </div>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
-        <div className="bg-[#722F37]/5 border border-[#722F37]/20 rounded-xl p-4 flex gap-3">
-          <Info className="h-4 w-4 text-[#722F37] shrink-0 mt-0.5" />
+        <div className="bg-[#601B28]/5 border border-[#601B28]/20 rounded-xl p-4 flex gap-3">
+          <Info className="h-4 w-4 text-[#601B28] shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm text-[#722F37] font-medium">Comment ça fonctionne ?</p>
+            <p className="text-sm text-[#601B28] font-medium">Comment ça fonctionne ?</p>
             <p className="text-xs text-gray-600 mt-1">
               1. Remplissez les détails de votre commande groupée.<br />
               2. L'artisan reçoit votre demande et valide sa disponibilité.<br />
@@ -144,7 +144,7 @@ export default function EvenementCreer() {
         {/* Section : Infos de base */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
           <h2 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
-            <PartyPopper className="h-4 w-4 text-[#722F37]" />
+            <PartyPopper className="h-4 w-4 text-[#601B28]" />
             Informations générales
           </h2>
 
@@ -214,7 +214,7 @@ export default function EvenementCreer() {
         {/* Section : Participants & prix */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
           <h2 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
-            <Users className="h-4 w-4 text-[#722F37]" />
+            <Users className="h-4 w-4 text-[#601B28]" />
             Participants & tarification
           </h2>
 
@@ -303,7 +303,7 @@ export default function EvenementCreer() {
         </div>
 
         <Button
-          className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white h-12 text-base font-semibold"
+          className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white h-12 text-base font-semibold"
           onClick={() => createMutation.mutate()}
           disabled={createMutation.isPending || !name || !eventDate || !tailorId}
           data-testid="button-create-event"

@@ -87,13 +87,13 @@ export default function ConnexionProfessionnel() {
       <header className="bg-white border-b border-zinc-100 px-4 py-4">
         <div className="max-w-md mx-auto flex items-center justify-between">
           <Link href="/connexion">
-            <Button variant="ghost" size="icon" className="hover:text-[#722F37]" data-testid="button-back">
+            <Button variant="ghost" size="icon" className="hover:text-[#601B28]" data-testid="button-back">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
           <div className="flex items-center gap-2">
-            <Logo textClassName="text-xl text-[#722F37]" />
-            <Badge variant="secondary" className="bg-[#722F37] text-white border-none text-[10px]">Pro</Badge>
+            <Logo textClassName="text-xl text-[#601B28]" />
+            <Badge variant="secondary" className="bg-[#601B28] text-white border-none text-[10px]">Pro</Badge>
           </div>
           <LanguageToggle />
         </div>
@@ -102,10 +102,10 @@ export default function ConnexionProfessionnel() {
       <main className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Scissors className="h-8 w-8 text-[#722F37]" />
+            <div className="w-16 h-16 bg-[#601B28]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Scissors className="h-8 w-8 text-[#601B28]" />
             </div>
-            <h1 className="font-serif text-2xl text-[#722F37] mb-2" data-testid="text-title">
+            <h1 className="font-serif text-2xl text-[#601B28] mb-2" data-testid="text-title">
               {t('auth.loginAsPro')}
             </h1>
             <p className="text-zinc-500 text-sm" data-testid="text-subtitle">
@@ -128,7 +128,7 @@ export default function ConnexionProfessionnel() {
                       placeholder={t('auth.emailPlaceholder')}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 h-11 border-zinc-200 focus:border-[#722F37] focus:ring-[#722F37]"
+                      className="pl-10 h-11 border-zinc-200 focus:border-[#601B28] focus:ring-[#601B28]"
                       data-testid="input-email"
                     />
                   </div>
@@ -146,7 +146,7 @@ export default function ConnexionProfessionnel() {
                       placeholder={t('auth.passwordPlaceholder')}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 pr-10 h-11 border-zinc-200 focus:border-[#722F37] focus:ring-[#722F37]"
+                      className="pl-10 pr-10 h-11 border-zinc-200 focus:border-[#601B28] focus:ring-[#601B28]"
                       data-testid="input-password"
                     />
                     <button
@@ -161,7 +161,7 @@ export default function ConnexionProfessionnel() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-[#722F37] hover:bg-[#5a1f25] text-white h-12 text-base font-medium transition-all shadow-md"
+                  className="w-full bg-[#601B28] hover:bg-[#5a1f25] text-white h-12 text-base font-medium transition-all shadow-md"
                   disabled={isLoading}
                   data-testid="button-submit"
                 >
@@ -182,20 +182,20 @@ export default function ConnexionProfessionnel() {
 
       <footer className="py-8 text-center space-y-4">
         <Link href="/mot-de-passe-oublie">
-          <span className="text-[#722F37] text-sm hover:underline cursor-pointer" data-testid="link-forgot-password">
+          <span className="text-[#601B28] text-sm hover:underline cursor-pointer" data-testid="link-forgot-password">
             Mot de passe oublié ?
           </span>
         </Link>
         <p className="text-zinc-500 text-sm">
           {t('auth.noAccount')}{" "}
           <Link href="/inscription/professionnel">
-            <span className="text-[#722F37] font-semibold hover:underline cursor-pointer" data-testid="link-signup">
+            <span className="text-[#601B28] font-semibold hover:underline cursor-pointer" data-testid="link-signup">
               {t('auth.createProAccount')}
             </span>
           </Link>
         </p>
         <Link href="/connexion">
-          <span className="text-xs text-zinc-400 hover:text-[#722F37] uppercase tracking-widest cursor-pointer transition-colors" data-testid="link-back">
+          <span className="text-xs text-zinc-400 hover:text-[#601B28] uppercase tracking-widest cursor-pointer transition-colors" data-testid="link-back">
             {t('common.backToHome')}
           </span>
         </Link>

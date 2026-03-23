@@ -103,11 +103,11 @@ export default function ProductDetail() {
                 {product.category}
               </Badge>
             )}
-            <h1 className="font-serif text-2xl lg:text-3xl text-[#722F37]">
+            <h1 className="font-serif text-2xl lg:text-3xl text-[#601B28]">
               {product.title}
             </h1>
           </div>
-          <p className="font-bold text-2xl text-[#722F37] flex-shrink-0">
+          <p className="font-bold text-2xl text-[#601B28] flex-shrink-0">
             {product.price.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
           </p>
         </div>
@@ -123,7 +123,7 @@ export default function ProductDetail() {
             <div className="flex items-center gap-3 cursor-pointer">
               <Avatar className="h-12 w-12">
                 <AvatarImage src={product.tailor.user.profileImageUrl || undefined} />
-                <AvatarFallback className="bg-[#722F37] text-white">
+                <AvatarFallback className="bg-[#601B28] text-white">
                   {product.tailor.user.firstName?.charAt(0) || '?'}
                 </AvatarFallback>
               </Avatar>
@@ -132,7 +132,7 @@ export default function ProductDetail() {
                 <div className="flex items-center gap-2">
                   <h3 className="font-medium text-foreground">{[product.tailor.user.firstName, product.tailor.user.lastName].filter(Boolean).join(' ')}</h3>
                   {product.tailor.isVerified && (
-                    <BadgeCheck className="h-4 w-4 text-[#722F37]" fill="currentColor" />
+                    <BadgeCheck className="h-4 w-4 text-[#601B28]" fill="currentColor" />
                   )}
                 </div>
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -153,11 +153,11 @@ export default function ProductDetail() {
         </Card>
 
         <div className="flex gap-3">
-          <Button className="flex-1 h-12 bg-[#722F37] hover:bg-[#5a252c]" data-testid="button-add-cart">
+          <Button className="flex-1 h-12 bg-[#601B28] hover:bg-[#4E1522]" data-testid="button-add-cart">
             <ShoppingCart className="h-5 w-5 mr-2" />
             Ajouter au panier
           </Button>
-          <Button variant="outline" className="flex-1 h-12 bg-white border-[#722F37] text-[#722F37] hover:bg-muted/50" data-testid="button-contact-seller">
+          <Button variant="outline" className="flex-1 h-12 bg-white border-[#601B28] text-[#601B28] hover:bg-muted/50" data-testid="button-contact-seller">
             <MessageCircle className="h-5 w-5 mr-2" />
             Contacter
           </Button>

@@ -15,47 +15,47 @@ function BodyDiagram({ activeMeasurement }: { activeMeasurement: string | null }
   return (
     <div className="relative w-full max-w-[120px] mx-auto">
       <svg viewBox="0 0 100 220" className="w-full h-auto">
-        <circle cx="50" cy="18" r="14" fill="#f5f5f4" stroke="#722F37" strokeWidth="1" />
+        <circle cx="50" cy="18" r="14" fill="#f5f5f4" stroke="#601B28" strokeWidth="1" />
         
-        <rect x="42" y="32" width="16" height="10" rx="3" fill="#f5f5f4" stroke="#722F37" strokeWidth="1" />
+        <rect x="42" y="32" width="16" height="10" rx="3" fill="#f5f5f4" stroke="#601B28" strokeWidth="1" />
         
-        <path d="M30 42 L42 42 L42 90 L30 90 L26 75 L26 57 Z" fill="#f5f5f4" stroke="#722F37" strokeWidth="1" />
-        <path d="M70 42 L58 42 L58 90 L70 90 L74 75 L74 57 Z" fill="#f5f5f4" stroke="#722F37" strokeWidth="1" />
+        <path d="M30 42 L42 42 L42 90 L30 90 L26 75 L26 57 Z" fill="#f5f5f4" stroke="#601B28" strokeWidth="1" />
+        <path d="M70 42 L58 42 L58 90 L70 90 L74 75 L74 57 Z" fill="#f5f5f4" stroke="#601B28" strokeWidth="1" />
         
-        <rect x="38" y="42" width="24" height="50" rx="2" fill="#f5f5f4" stroke="#722F37" strokeWidth="1" />
+        <rect x="38" y="42" width="24" height="50" rx="2" fill="#f5f5f4" stroke="#601B28" strokeWidth="1" />
         
-        <path d="M38 92 L38 130 L34 130 L34 105 L38 92" fill="#f5f5f4" stroke="#722F37" strokeWidth="1" />
-        <path d="M62 92 L62 130 L66 130 L66 105 L62 92" fill="#f5f5f4" stroke="#722F37" strokeWidth="1" />
+        <path d="M38 92 L38 130 L34 130 L34 105 L38 92" fill="#f5f5f4" stroke="#601B28" strokeWidth="1" />
+        <path d="M62 92 L62 130 L66 130 L66 105 L62 92" fill="#f5f5f4" stroke="#601B28" strokeWidth="1" />
         
-        <rect x="36" y="130" width="12" height="70" rx="2" fill="#f5f5f4" stroke="#722F37" strokeWidth="1" />
-        <rect x="52" y="130" width="12" height="70" rx="2" fill="#f5f5f4" stroke="#722F37" strokeWidth="1" />
+        <rect x="36" y="130" width="12" height="70" rx="2" fill="#f5f5f4" stroke="#601B28" strokeWidth="1" />
+        <rect x="52" y="130" width="12" height="70" rx="2" fill="#f5f5f4" stroke="#601B28" strokeWidth="1" />
         
-        <rect x="34" y="200" width="14" height="8" rx="2" fill="#f5f5f4" stroke="#722F37" strokeWidth="1" />
-        <rect x="52" y="200" width="14" height="8" rx="2" fill="#f5f5f4" stroke="#722F37" strokeWidth="1" />
+        <rect x="34" y="200" width="14" height="8" rx="2" fill="#f5f5f4" stroke="#601B28" strokeWidth="1" />
+        <rect x="52" y="200" width="14" height="8" rx="2" fill="#f5f5f4" stroke="#601B28" strokeWidth="1" />
 
         {activeMeasurement === "tour_cou" && (
-          <ellipse cx="50" cy="37" rx="12" ry="6" fill="none" stroke="#722F37" strokeWidth="2.5" />
+          <ellipse cx="50" cy="37" rx="12" ry="6" fill="none" stroke="#601B28" strokeWidth="2.5" />
         )}
         {activeMeasurement === "largeur_epaules" && (
-          <line x1="26" y1="48" x2="74" y2="48" stroke="#722F37" strokeWidth="2.5" markerEnd="url(#arrow)" markerStart="url(#arrow)" />
+          <line x1="26" y1="48" x2="74" y2="48" stroke="#601B28" strokeWidth="2.5" markerEnd="url(#arrow)" markerStart="url(#arrow)" />
         )}
         {activeMeasurement === "tour_poitrine" && (
-          <ellipse cx="50" cy="55" rx="22" ry="10" fill="none" stroke="#722F37" strokeWidth="2.5" />
+          <ellipse cx="50" cy="55" rx="22" ry="10" fill="none" stroke="#601B28" strokeWidth="2.5" />
         )}
         {activeMeasurement === "tour_taille" && (
-          <ellipse cx="50" cy="80" rx="18" ry="8" fill="none" stroke="#722F37" strokeWidth="2.5" />
+          <ellipse cx="50" cy="80" rx="18" ry="8" fill="none" stroke="#601B28" strokeWidth="2.5" />
         )}
         {activeMeasurement === "tour_hanches" && (
-          <ellipse cx="50" cy="100" rx="20" ry="9" fill="none" stroke="#722F37" strokeWidth="2.5" />
+          <ellipse cx="50" cy="100" rx="20" ry="9" fill="none" stroke="#601B28" strokeWidth="2.5" />
         )}
         {activeMeasurement === "longueur_dos" && (
-          <line x1="50" y1="32" x2="50" y2="80" stroke="#722F37" strokeWidth="2.5" />
+          <line x1="50" y1="32" x2="50" y2="80" stroke="#601B28" strokeWidth="2.5" />
         )}
         {activeMeasurement === "longueur_bras" && (
-          <line x1="74" y1="48" x2="66" y2="130" stroke="#722F37" strokeWidth="2.5" />
+          <line x1="74" y1="48" x2="66" y2="130" stroke="#601B28" strokeWidth="2.5" />
         )}
         {activeMeasurement === "longueur_jambe" && (
-          <line x1="58" y1="130" x2="58" y2="200" stroke="#722F37" strokeWidth="2.5" />
+          <line x1="58" y1="130" x2="58" y2="200" stroke="#601B28" strokeWidth="2.5" />
         )}
       </svg>
     </div>
@@ -272,10 +272,10 @@ export default function Mesures() {
       <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-              <Ruler className="h-5 w-5 text-[#722F37]" />
+            <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+              <Ruler className="h-5 w-5 text-[#601B28]" />
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]">
               {t('measures.title')}
             </h1>
           </div>
@@ -384,7 +384,7 @@ export default function Mesures() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full border-2 border-dashed border-gray-200 rounded-lg p-8 flex flex-col items-center gap-3 hover:border-[#722F37]/40 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="w-full border-2 border-dashed border-gray-200 rounded-lg p-8 flex flex-col items-center gap-3 hover:border-[#601B28]/40 hover:bg-gray-50 transition-colors cursor-pointer"
                     data-testid="button-add-photo"
                   >
                     <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
@@ -449,7 +449,7 @@ export default function Mesures() {
 
         <div className="flex gap-3 mt-6">
           <Button 
-            className="flex-1 bg-[#722F37] border-[#722F37] text-white" 
+            className="flex-1 bg-[#601B28] border-[#601B28] text-white" 
             data-testid="button-save-measures"
             onClick={handleSave}
             disabled={saveMutation.isPending}
@@ -475,7 +475,7 @@ export default function Mesures() {
         {Object.values(values).some(v => v !== "") && (
           <Button
             variant="outline"
-            className="w-full mt-3 border-[#722F37] text-[#722F37] hover:bg-[#722F37] hover:text-white"
+            className="w-full mt-3 border-[#601B28] text-[#601B28] hover:bg-[#601B28] hover:text-white"
             data-testid="button-download-pdf"
             onClick={handleDownloadPDF}
           >

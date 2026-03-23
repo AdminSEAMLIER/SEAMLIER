@@ -12,7 +12,7 @@ export function FilterChip({ label, isActive, onClick }: FilterChipProps) {
       className={cn(
         "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
         isActive
-          ? "bg-[#722F37] text-white"
+          ? "bg-[#601B28] text-white"
           : "bg-muted text-foreground hover-elevate"
       )}
       onClick={onClick}

@@ -189,7 +189,7 @@ function ClientFichePanel({ clientId, open, onClose }: { clientId: string; open:
               <div className="flex items-center gap-4">
                 <Avatar className="h-14 w-14 border-2 border-white shadow-sm">
                   <AvatarImage src={data.client.profileImageUrl || undefined} />
-                  <AvatarFallback className="bg-[#722F37]/10 text-[#722F37] text-lg font-semibold">
+                  <AvatarFallback className="bg-[#601B28]/10 text-[#601B28] text-lg font-semibold">
                     {(data.client.firstName || "?").charAt(0)}
                   </AvatarFallback>
                 </Avatar>
@@ -255,7 +255,7 @@ function ClientFichePanel({ clientId, open, onClose }: { clientId: string; open:
                   { label: "Mesures", value: data.measurements ? "✓" : "–", icon: Ruler },
                 ].map(({ label, value, icon: Icon }) => (
                   <div key={label} className="bg-white rounded-lg px-3 py-2 text-center border border-gray-100">
-                    <Icon className="h-4 w-4 text-[#722F37] mx-auto mb-1" />
+                    <Icon className="h-4 w-4 text-[#601B28] mx-auto mb-1" />
                     <p className="text-lg font-bold text-gray-900 leading-none">{value}</p>
                     <p className="text-xs text-gray-400 mt-0.5">{label}</p>
                   </div>
@@ -266,16 +266,16 @@ function ClientFichePanel({ clientId, open, onClose }: { clientId: string; open:
             {/* Onglets */}
             <Tabs defaultValue="projects" className="flex flex-col flex-1 overflow-hidden">
               <TabsList className="flex w-full rounded-none border-b border-gray-100 bg-white px-2 h-10 flex-shrink-0">
-                <TabsTrigger value="projects" className="flex-1 text-[11px] data-[state=active]:text-[#722F37] data-[state=active]:border-b-2 data-[state=active]:border-[#722F37] rounded-none">
+                <TabsTrigger value="projects" className="flex-1 text-[11px] data-[state=active]:text-[#601B28] data-[state=active]:border-b-2 data-[state=active]:border-[#601B28] rounded-none">
                   Projets
                 </TabsTrigger>
-                <TabsTrigger value="appointments" className="flex-1 text-[11px] data-[state=active]:text-[#722F37] data-[state=active]:border-b-2 data-[state=active]:border-[#722F37] rounded-none">
+                <TabsTrigger value="appointments" className="flex-1 text-[11px] data-[state=active]:text-[#601B28] data-[state=active]:border-b-2 data-[state=active]:border-[#601B28] rounded-none">
                   RDV
                 </TabsTrigger>
-                <TabsTrigger value="measurements" className="flex-1 text-[11px] data-[state=active]:text-[#722F37] data-[state=active]:border-b-2 data-[state=active]:border-[#722F37] rounded-none">
+                <TabsTrigger value="measurements" className="flex-1 text-[11px] data-[state=active]:text-[#601B28] data-[state=active]:border-b-2 data-[state=active]:border-[#601B28] rounded-none">
                   Mesures
                 </TabsTrigger>
-                <TabsTrigger value="notes" className="flex-1 text-[11px] data-[state=active]:text-[#722F37] data-[state=active]:border-b-2 data-[state=active]:border-[#722F37] rounded-none">
+                <TabsTrigger value="notes" className="flex-1 text-[11px] data-[state=active]:text-[#601B28] data-[state=active]:border-b-2 data-[state=active]:border-[#601B28] rounded-none">
                   Notes
                 </TabsTrigger>
               </TabsList>
@@ -304,7 +304,7 @@ function ClientFichePanel({ clientId, open, onClose }: { clientId: string; open:
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
                       {p.clothingType && <span>{p.clothingType}</span>}
                       {p.amountArtisan != null && (
-                        <span className="font-medium text-[#722F37]">{p.amountArtisan}€ perçus</span>
+                        <span className="font-medium text-[#601B28]">{p.amountArtisan}€ perçus</span>
                       )}
                       {p.amount != null && p.amountArtisan == null && (
                         <span>{p.amount}€</span>
@@ -414,7 +414,7 @@ function ClientFichePanel({ clientId, open, onClose }: { clientId: string; open:
               <TabsContent value="notes" className="flex-1 overflow-y-auto p-4 mt-0">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <StickyNote className="h-4 w-4 text-[#722F37]" />
+                    <StickyNote className="h-4 w-4 text-[#601B28]" />
                     <p className="text-sm font-semibold text-gray-900">Notes privées</p>
                     <span className="text-[10px] text-gray-400 ml-1">(visibles uniquement par vous)</span>
                   </div>
@@ -422,10 +422,10 @@ function ClientFichePanel({ clientId, open, onClose }: { clientId: string; open:
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
                     placeholder="Vos notes sur ce client (préférences, historique, remarques…)"
-                    className="min-h-[180px] text-sm resize-none border-gray-200 focus:border-[#722F37]"
+                    className="min-h-[180px] text-sm resize-none border-gray-200 focus:border-[#601B28]"
                   />
                   <Button
-                    className="w-full bg-[#722F37] hover:bg-[#5e2530] text-white"
+                    className="w-full bg-[#601B28] hover:bg-[#5e2530] text-white"
                     onClick={() => saveNotesMutation.mutate({ note: noteText, clientStatus })}
                     disabled={saveNotesMutation.isPending}
                   >
@@ -549,17 +549,17 @@ export default function ProMessagerie() {
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center justify-between gap-3 mb-2">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-                <MessageSquare className="h-5 w-5 text-[#722F37]" />
+              <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+                <MessageSquare className="h-5 w-5 text-[#601B28]" />
               </div>
-              <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+              <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]">
                 {t('nav.messaging')}
               </h1>
             </div>
             <Button
               variant="outline"
               size="sm"
-              className="text-xs gap-1.5 border-[#722F37]/30 text-[#722F37] hover:bg-[#722F37]/5"
+              className="text-xs gap-1.5 border-[#601B28]/30 text-[#601B28] hover:bg-[#601B28]/5"
               onClick={() => contactSupportMutation.mutate()}
               disabled={contactSupportMutation.isPending}
               data-testid="button-contact-support"
@@ -589,7 +589,7 @@ export default function ProMessagerie() {
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Users className="h-8 w-8 text-gray-400" />
                   </div>
-                  <h3 className="font-serif text-xl text-[#722F37] mb-2">
+                  <h3 className="font-serif text-xl text-[#601B28] mb-2">
                     {t('pro.noMessagesTitle')}
                   </h3>
                   <p className="text-gray-500 mb-2">{t('pro.noMessagesDesc')}</p>
@@ -608,7 +608,7 @@ export default function ProMessagerie() {
                     <div className="flex gap-3">
                       <Avatar className="h-12 w-12 border border-gray-100 flex-shrink-0">
                         <AvatarImage src={conv.otherParticipant.profileImageUrl || undefined} />
-                        <AvatarFallback className="bg-[#722F37]/10 text-[#722F37]">
+                        <AvatarFallback className="bg-[#601B28]/10 text-[#601B28]">
                           {(conv.otherParticipant.firstName || "?").charAt(0)}
                         </AvatarFallback>
                       </Avatar>
@@ -626,7 +626,7 @@ export default function ProMessagerie() {
                         <p className="text-sm text-gray-500 truncate">{conv.lastMessagePreview || "Aucun message"}</p>
                       </div>
                       {conv.unreadCount > 0 && (
-                        <span className="w-5 h-5 rounded-full bg-[#722F37] text-white text-xs flex items-center justify-center flex-shrink-0">
+                        <span className="w-5 h-5 rounded-full bg-[#601B28] text-white text-xs flex items-center justify-center flex-shrink-0">
                           {conv.unreadCount}
                         </span>
                       )}
@@ -661,7 +661,7 @@ export default function ProMessagerie() {
                   </Button>
                   <Avatar className="h-10 w-10 border border-gray-100">
                     <AvatarImage src={selectedConversation.otherParticipant.profileImageUrl || undefined} />
-                    <AvatarFallback className="bg-[#722F37]/10 text-[#722F37]">
+                    <AvatarFallback className="bg-[#601B28]/10 text-[#601B28]">
                       {(selectedConversation.otherParticipant.firstName || "?").charAt(0)}
                     </AvatarFallback>
                   </Avatar>
@@ -677,7 +677,7 @@ export default function ProMessagerie() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1.5 text-xs border-[#722F37]/30 text-[#722F37] hover:bg-[#722F37]/5 flex-shrink-0"
+                    className="gap-1.5 text-xs border-[#601B28]/30 text-[#601B28] hover:bg-[#601B28]/5 flex-shrink-0"
                     onClick={() => setShowClientFiche(true)}
                     data-testid="button-open-client-fiche"
                   >
@@ -701,7 +701,7 @@ export default function ProMessagerie() {
                             <div
                               className={`max-w-[80%] rounded-2xl px-4 py-2 ${
                                 isSent
-                                  ? 'bg-[#722F37] text-white rounded-br-sm'
+                                  ? 'bg-[#601B28] text-white rounded-br-sm'
                                   : 'bg-white border border-gray-200 text-gray-900 rounded-bl-sm'
                               }`}
                               data-testid={`message-${msg.id}`}
@@ -734,7 +734,7 @@ export default function ProMessagerie() {
                       data-testid="input-message"
                     />
                     <Button
-                      className="bg-[#722F37] hover:bg-[#5a252c]"
+                      className="bg-[#601B28] hover:bg-[#4E1522]"
                       size="icon"
                       onClick={handleSendMessage}
                       disabled={!newMessage.trim() || sendMessageMutation.isPending}

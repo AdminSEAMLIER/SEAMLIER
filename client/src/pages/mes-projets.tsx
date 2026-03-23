@@ -149,7 +149,7 @@ export default function MesProjets() {
   const getProgressColor = (progress: number) => {
     if (progress >= 100) return "bg-green-500";
     if (progress >= 75) return "bg-blue-500";
-    return "bg-[#722F37]";
+    return "bg-[#601B28]";
   };
 
   const getStepLabel = (step: typeof FABRICATION_STEPS[0]) => isFr ? step.label : step.labelEn;
@@ -171,10 +171,10 @@ export default function MesProjets() {
             </Button>
           </Link>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-              <FolderKanban className="h-5 w-5 text-[#722F37]" />
+            <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+              <FolderKanban className="h-5 w-5 text-[#601B28]" />
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]">
               {isFr ? "Mes projets" : "My projects"}
             </h1>
           </div>
@@ -188,7 +188,7 @@ export default function MesProjets() {
         {isLoading ? (
           <Card className="border border-gray-100 bg-white shadow-sm">
             <CardContent className="p-8 bg-white text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-[#722F37] mx-auto mb-2" />
+              <Loader2 className="h-8 w-8 animate-spin text-[#601B28] mx-auto mb-2" />
               <p className="text-gray-500">{t('common.loading')}</p>
             </CardContent>
           </Card>
@@ -198,14 +198,14 @@ export default function MesProjets() {
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Scissors className="h-8 w-8 text-gray-400" />
               </div>
-              <h3 className="font-serif text-xl text-[#722F37] mb-2">
+              <h3 className="font-serif text-xl text-[#601B28] mb-2">
                 {isFr ? "Aucun projet en cours" : "No projects yet"}
               </h3>
               <p className="text-gray-500 mb-4">
                 {isFr ? "Vos projets avec des artisans apparaîtront ici" : "Your projects with tailors will appear here"}
               </p>
               <Link href="/recherche">
-                <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white" data-testid="button-find-tailor">
+                <Button className="bg-[#601B28] hover:bg-[#4E1522] text-white" data-testid="button-find-tailor">
                   {isFr ? "Trouver un artisan" : "Find a tailor"}
                 </Button>
               </Link>
@@ -229,7 +229,7 @@ export default function MesProjets() {
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <h3 className="font-semibold text-[#722F37]">{project.title}</h3>
+                        <h3 className="font-semibold text-[#601B28]">{project.title}</h3>
                         {getStatusBadge(project.status)}
                       </div>
                       {tailorName && (
@@ -284,7 +284,7 @@ export default function MesProjets() {
                       <div className="mb-4">
                         <div className="flex justify-between text-sm mb-1">
                           <span className="text-gray-600 font-medium">{getCurrentStepLabel(project.currentStep)}</span>
-                          <span className="font-bold text-[#722F37]">{project.progress || 0}%</span>
+                          <span className="font-bold text-[#601B28]">{project.progress || 0}%</span>
                         </div>
                         <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
                           <div
@@ -305,7 +305,7 @@ export default function MesProjets() {
                                 {isStepCompleted ? (
                                   <CheckCircle className="h-5 w-5 text-green-500" />
                                 ) : isStepCurrent ? (
-                                  <div className="h-5 w-5 rounded-full border-2 border-[#722F37] bg-[#722F37] flex items-center justify-center">
+                                  <div className="h-5 w-5 rounded-full border-2 border-[#601B28] bg-[#601B28] flex items-center justify-center">
                                     <div className="h-2 w-2 rounded-full bg-white" />
                                   </div>
                                 ) : (
@@ -315,7 +315,7 @@ export default function MesProjets() {
                                   <div className={`absolute left-[9px] top-[22px] w-[2px] h-4 ${isStepCompleted ? "bg-green-300" : "bg-gray-100"}`} />
                                 )}
                               </div>
-                              <span className={`text-sm ${isStepCurrent ? "font-semibold text-[#722F37]" : isStepCompleted ? "text-green-700" : "text-gray-300"}`}>
+                              <span className={`text-sm ${isStepCurrent ? "font-semibold text-[#601B28]" : isStepCompleted ? "text-green-700" : "text-gray-300"}`}>
                                 {getStepLabel(step)}
                               </span>
                             </div>
@@ -328,13 +328,13 @@ export default function MesProjets() {
                   <div className="flex flex-wrap gap-4 text-sm mt-4 pt-3 border-t border-gray-100">
                     {project.amount && (
                       <div className="flex items-center gap-1 text-gray-600">
-                        <Euro className="h-4 w-4 text-[#722F37]" />
+                        <Euro className="h-4 w-4 text-[#601B28]" />
                         <span>{project.amount}€</span>
                       </div>
                     )}
                     {project.deadline && (
                       <div className="flex items-center gap-1 text-gray-600">
-                        <Clock className="h-4 w-4 text-[#722F37]" />
+                        <Clock className="h-4 w-4 text-[#601B28]" />
                         <span>{new Date(project.deadline).toLocaleDateString(isFr ? 'fr-FR' : 'en-US')}</span>
                       </div>
                     )}
@@ -345,7 +345,7 @@ export default function MesProjets() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 gap-1.5 text-[#722F37] border-[#722F37]/30 hover:bg-[#722F37] hover:text-white"
+                      className="flex-1 gap-1.5 text-[#601B28] border-[#601B28]/30 hover:bg-[#601B28] hover:text-white"
                       onClick={() => navigate(`/suivi-projet/${project.id}`)}
                       data-testid={`button-suivi-${project.id}`}
                     >
@@ -411,7 +411,7 @@ export default function MesProjets() {
                       return (
                         <Button
                           size="sm"
-                          className="flex-1 gap-1.5 bg-[#722F37] hover:bg-[#5a252c] text-white"
+                          className="flex-1 gap-1.5 bg-[#601B28] hover:bg-[#4E1522] text-white"
                           onClick={() => { setReviewProject(project); setReviewRating(5); setReviewComment(""); }}
                           data-testid={`button-review-${project.id}`}
                         >
@@ -511,7 +511,7 @@ export default function MesProjets() {
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setBookingProject(null)}>{isFr ? "Annuler" : "Cancel"}</Button>
             <Button
-              className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+              className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
               disabled={!bookingDate || !bookingTime || bookingMutation.isPending}
               onClick={() => bookingMutation.mutate()}
               data-testid="button-confirm-client-booking"
@@ -554,7 +554,7 @@ export default function MesProjets() {
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setReviewProject(null)}>{isFr ? "Annuler" : "Cancel"}</Button>
             <Button
-              className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+              className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
               disabled={!reviewComment || reviewMutation.isPending}
               onClick={() => reviewMutation.mutate()}
               data-testid="button-submit-review"

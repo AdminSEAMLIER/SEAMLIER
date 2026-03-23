@@ -116,11 +116,11 @@ export default function Messages() {
           )}
         >
           <div className="p-4 border-b border-border bg-white flex items-center justify-between gap-3">
-            <h1 className="font-serif text-2xl text-[#722F37]">Messages</h1>
+            <h1 className="font-serif text-2xl text-[#601B28]">Messages</h1>
             <Button
               variant="outline"
               size="sm"
-              className="text-xs gap-1.5 border-[#722F37]/30 text-[#722F37] hover:bg-[#722F37]/5"
+              className="text-xs gap-1.5 border-[#601B28]/30 text-[#601B28] hover:bg-[#601B28]/5"
               onClick={() => contactSupportMutation.mutate()}
               disabled={contactSupportMutation.isPending}
               data-testid="button-contact-support"
@@ -157,7 +157,7 @@ export default function Messages() {
                   >
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={conversation.otherParticipant.profileImageUrl || undefined} />
-                      <AvatarFallback className="bg-[#722F37] text-white">
+                      <AvatarFallback className="bg-[#601B28] text-white">
                         {(conversation.otherParticipant.firstName || "?").charAt(0)}
                       </AvatarFallback>
                     </Avatar>
@@ -181,7 +181,7 @@ export default function Messages() {
                           {conversation.lastMessagePreview || "Aucun message"}
                         </p>
                         {conversation.unreadCount > 0 && (
-                          <span className="bg-[#722F37] text-white text-xs px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
+                          <span className="bg-[#601B28] text-white text-xs px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
                             {conversation.unreadCount}
                           </span>
                         )}
@@ -222,14 +222,14 @@ export default function Messages() {
                 </Button>
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={selectedConversation.otherParticipant.profileImageUrl || undefined} />
-                  <AvatarFallback className="bg-[#722F37] text-white">
+                  <AvatarFallback className="bg-[#601B28] text-white">
                     {(selectedConversation.otherParticipant.firstName || "?").charAt(0)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   {selectedConversation.otherParticipantTailorId ? (
                     <Link href={`/profil-pro/${selectedConversation.otherParticipantTailorId}`}>
-                      <h2 className="font-medium text-foreground hover:text-[#722F37] hover:underline cursor-pointer transition-colors">
+                      <h2 className="font-medium text-foreground hover:text-[#601B28] hover:underline cursor-pointer transition-colors">
                         {[selectedConversation.otherParticipant.firstName, selectedConversation.otherParticipant.lastName].filter(Boolean).join(" ")}
                       </h2>
                     </Link>
@@ -264,7 +264,7 @@ export default function Messages() {
                           className={cn(
                             "max-w-[75%] px-4 py-2 rounded-2xl",
                             isSent 
-                              ? "bg-[#722F37] text-white rounded-br-sm" 
+                              ? "bg-[#601B28] text-white rounded-br-sm" 
                               : "bg-white border border-border rounded-bl-sm"
                           )}
                           data-testid={`message-${message.id}`}
@@ -309,7 +309,7 @@ export default function Messages() {
                   />
                   <Button 
                     size="icon" 
-                    className="bg-[#722F37] hover:bg-[#5a252c]"
+                    className="bg-[#601B28] hover:bg-[#4E1522]"
                     onClick={handleSendMessage}
                     disabled={!messageInput.trim() || sendMessageMutation.isPending}
                     data-testid="button-send-message"
@@ -322,7 +322,7 @@ export default function Messages() {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
               <MessageCircle className="h-16 w-16 text-muted-foreground/50 mb-4" />
-              <h2 className="font-serif text-xl text-[#722F37] mb-2">Vos messages</h2>
+              <h2 className="font-serif text-xl text-[#601B28] mb-2">Vos messages</h2>
               <p className="text-muted-foreground">
                 Sélectionnez une conversation pour voir les messages
               </p>

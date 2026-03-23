@@ -17,10 +17,10 @@ export default function Magazine() {
       <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-              <BookOpen className="h-5 w-5 text-[#722F37]" />
+            <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+              <BookOpen className="h-5 w-5 text-[#601B28]" />
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]" data-testid="text-magazine-title">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]" data-testid="text-magazine-title">
               {t('magazine.title')}
             </h1>
           </div>
@@ -54,7 +54,7 @@ export default function Magazine() {
                   )}
                   <div className="p-5">
                     {article.category && (
-                      <Badge variant="outline" className="text-[10px] text-[#722F37] border-[#722F37]/30 mb-3">
+                      <Badge variant="outline" className="text-[10px] text-[#601B28] border-[#601B28]/30 mb-3">
                         {article.category}
                       </Badge>
                     )}

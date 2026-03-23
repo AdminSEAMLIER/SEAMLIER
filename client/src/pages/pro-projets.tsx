@@ -163,7 +163,7 @@ export default function ProProjets() {
   const getProgressColor = (progress: number) => {
     if (progress >= 100) return "bg-green-500";
     if (progress >= 75) return "bg-blue-500";
-    return "bg-[#722F37]";
+    return "bg-[#601B28]";
   };
 
   const getCurrentStepLabel = (stepKey: string | null) => {
@@ -184,10 +184,10 @@ export default function ProProjets() {
       <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-              <FolderKanban className="h-5 w-5 text-[#722F37]" />
+            <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+              <FolderKanban className="h-5 w-5 text-[#601B28]" />
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]">
               {t('nav.projects')}
             </h1>
           </div>
@@ -201,8 +201,8 @@ export default function ProProjets() {
         <Card className="border border-gray-100 bg-white shadow-sm mb-6">
           <CardContent className="p-4 bg-white">
             <div className="grid grid-cols-2 gap-4 text-center">
-              <div className="p-4 bg-[#722F37]/5 rounded-xl">
-                <p className="text-3xl font-bold text-[#722F37]">{activeCount}</p>
+              <div className="p-4 bg-[#601B28]/5 rounded-xl">
+                <p className="text-3xl font-bold text-[#601B28]">{activeCount}</p>
                 <p className="text-sm text-gray-600 mt-1">En cours</p>
               </div>
               <div className="p-4 bg-green-50 rounded-xl">
@@ -216,7 +216,7 @@ export default function ProProjets() {
         {isLoading ? (
           <Card className="border border-gray-100 bg-white shadow-sm">
             <CardContent className="p-8 bg-white text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-[#722F37] mx-auto mb-2" />
+              <Loader2 className="h-8 w-8 animate-spin text-[#601B28] mx-auto mb-2" />
               <p className="text-gray-500">{t('common.loading')}</p>
             </CardContent>
           </Card>
@@ -226,7 +226,7 @@ export default function ProProjets() {
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="h-8 w-8 text-gray-400" />
               </div>
-              <h3 className="font-serif text-xl text-[#722F37] mb-2">
+              <h3 className="font-serif text-xl text-[#601B28] mb-2">
                 {t('pro.noProjectsTitle')}
               </h3>
               <p className="text-gray-500 mb-2">{t('pro.noProjectsDesc')}</p>
@@ -237,7 +237,7 @@ export default function ProProjets() {
           projects.map((project) => (
             <Card 
               key={project.id} 
-              className="border border-gray-100 bg-white shadow-sm mb-4 cursor-pointer hover:border-[#722F37]/30 transition-colors"
+              className="border border-gray-100 bg-white shadow-sm mb-4 cursor-pointer hover:border-[#601B28]/30 transition-colors"
               onClick={() => handleOpenProject(project)}
               data-testid={`card-project-${project.id}`}
             >
@@ -245,7 +245,7 @@ export default function ProProjets() {
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h3 className="font-semibold text-[#722F37]">{project.title}</h3>
+                      <h3 className="font-semibold text-[#601B28]">{project.title}</h3>
                       {getStatusBadge(project.status)}
                       {(project as any).isUrgent && (
                         <Badge className="bg-red-100 text-red-700 border-none text-[10px] font-bold px-1.5 py-0.5">⚡ URGENT</Badge>
@@ -275,13 +275,13 @@ export default function ProProjets() {
                 <div className="flex flex-wrap gap-4 text-sm">
                   {project.amount && (
                     <div className="flex items-center gap-1 text-gray-600">
-                      <Euro className="h-4 w-4 text-[#722F37]" />
+                      <Euro className="h-4 w-4 text-[#601B28]" />
                       <span>{project.amount}€</span>
                     </div>
                   )}
                   {project.deadline && (
                     <div className="flex items-center gap-1 text-gray-600">
-                      <Clock className="h-4 w-4 text-[#722F37]" />
+                      <Clock className="h-4 w-4 text-[#601B28]" />
                       <span>{new Date(project.deadline).toLocaleDateString('fr-FR')}</span>
                     </div>
                   )}
@@ -295,7 +295,7 @@ export default function ProProjets() {
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DialogContent className="sm:max-w-lg bg-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-[#722F37]">
+            <DialogTitle className="text-[#601B28]">
               {selectedProject?.title}
             </DialogTitle>
             <DialogDescription>
@@ -313,7 +313,7 @@ export default function ProProjets() {
                   </div>
                 </div>
                 <div className="text-right">
-                  {selectedProject.amount && <p className="text-lg font-bold text-[#722F37]">{selectedProject.amount}€</p>}
+                  {selectedProject.amount && <p className="text-lg font-bold text-[#601B28]">{selectedProject.amount}€</p>}
                   {selectedProject.deadline && <p className="text-sm text-gray-500">{new Date(selectedProject.deadline).toLocaleDateString('fr-FR')}</p>}
                 </div>
               </div>
@@ -400,7 +400,7 @@ export default function ProProjets() {
                         disabled={stepMutation.isPending}
                         className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all ${
                           isCurrent
-                            ? "bg-[#722F37]/10 border border-[#722F37]/30"
+                            ? "bg-[#601B28]/10 border border-[#601B28]/30"
                             : isCompleted
                             ? "bg-green-50 border border-green-200"
                             : "bg-gray-50 border border-transparent hover:border-gray-200"
@@ -411,7 +411,7 @@ export default function ProProjets() {
                           {isCompleted ? (
                             <CheckCircle className="h-5 w-5 text-green-500" />
                           ) : isCurrent ? (
-                            <div className="h-5 w-5 rounded-full border-2 border-[#722F37] bg-[#722F37] flex items-center justify-center">
+                            <div className="h-5 w-5 rounded-full border-2 border-[#601B28] bg-[#601B28] flex items-center justify-center">
                               <div className="h-2 w-2 rounded-full bg-white" />
                             </div>
                           ) : (
@@ -420,13 +420,13 @@ export default function ProProjets() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className={`text-sm font-medium ${
-                            isCurrent ? "text-[#722F37]" : isCompleted ? "text-green-700" : "text-gray-400"
+                            isCurrent ? "text-[#601B28]" : isCompleted ? "text-green-700" : "text-gray-400"
                           }`}>
                             {step.label}
                           </p>
                         </div>
                         <span className={`text-xs ${
-                          isCurrent ? "text-[#722F37] font-bold" : isCompleted ? "text-green-600" : "text-gray-300"
+                          isCurrent ? "text-[#601B28] font-bold" : isCompleted ? "text-green-600" : "text-gray-300"
                         }`}>
                           {step.progress}%
                         </span>
@@ -444,7 +444,7 @@ export default function ProProjets() {
 
               <div className="p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-2 mb-3">
-                  <Ruler className="h-4 w-4 text-[#722F37]" />
+                  <Ruler className="h-4 w-4 text-[#601B28]" />
                   <p className="text-sm font-semibold text-gray-700">Mesures du client</p>
                 </div>
                 {!clientMeasurements ? (
@@ -497,7 +497,7 @@ export default function ProProjets() {
                   </Button>
                 </Link>
                 <Button 
-                  className="flex-1 gap-2 bg-[#722F37] hover:bg-[#5a252c] text-white"
+                  className="flex-1 gap-2 bg-[#601B28] hover:bg-[#4E1522] text-white"
                   onClick={() => setIsBookingOpen(true)}
                   data-testid="button-schedule-appointment"
                 >
@@ -548,7 +548,7 @@ export default function ProProjets() {
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setIsBookingOpen(false)}>Annuler</Button>
             <Button
-              className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+              className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
               disabled={!bookingDate || !bookingTime || bookingMutation.isPending}
               onClick={() => bookingMutation.mutate()}
               data-testid="button-confirm-booking"

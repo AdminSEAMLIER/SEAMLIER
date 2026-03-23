@@ -68,7 +68,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-        <div className="w-10 h-10 border-4 border-[#722F37] border-t-transparent rounded-full animate-spin mb-4" />
+        <div className="w-10 h-10 border-4 border-[#601B28] border-t-transparent rounded-full animate-spin mb-4" />
         <p className="text-zinc-600 font-medium">Chargement...</p>
       </div>
     );
@@ -86,7 +86,7 @@ function MobileHeader() {
     <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="w-10" />
       <Link href="/dashboard-client">
-        <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
+        <Logo className="text-[#601B28]" textClassName="text-[#601B28]" />
       </Link>
       <LanguageToggle />
     </div>
@@ -98,10 +98,10 @@ function ProMobileHeader() {
     <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-50">
       <Link href="/dashboard-pro">
         <div className="flex items-center gap-2">
-          <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
+          <Logo className="text-[#601B28]" textClassName="text-[#601B28]" />
           <Badge
             variant="secondary"
-            className="bg-[#722F37] text-white border-none text-[10px]"
+            className="bg-[#601B28] text-white border-none text-[10px]"
           >
             Pro
           </Badge>

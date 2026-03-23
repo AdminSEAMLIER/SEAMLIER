@@ -96,7 +96,7 @@ export default function ProHoraires() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-[#722F37]" />
+        <Loader2 className="h-6 w-6 animate-spin text-[#601B28]" />
       </div>
     );
   }
@@ -165,7 +165,7 @@ export default function ProHoraires() {
       </div>
 
       <Button
-        className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white h-11"
+        className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white h-11"
         onClick={() => saveMutation.mutate()}
         disabled={saveMutation.isPending}
         data-testid="button-save-hours"

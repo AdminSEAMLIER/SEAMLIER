@@ -139,7 +139,7 @@ export default function EvenementDetail() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#722F37]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#601B28]" />
       </div>
     );
   }
@@ -208,32 +208,32 @@ export default function EvenementDetail() {
 
         {/* Tailor approval card */}
         {isTailorUser && event.status === "pending_tailor_approval" && (
-          <div className="bg-white rounded-2xl border border-[#722F37]/20 p-5 shadow-sm space-y-4">
+          <div className="bg-white rounded-2xl border border-[#601B28]/20 p-5 shadow-sm space-y-4">
             <h3 className="font-semibold text-gray-900 text-sm">
               {isFr ? "Détails de la commande groupée" : "Group order details"}
             </h3>
             <div className="grid grid-cols-2 gap-3 text-sm">
               {event.max_participants && (
                 <div className="flex items-center gap-2 text-gray-600">
-                  <Users className="h-4 w-4 text-[#722F37]" />
+                  <Users className="h-4 w-4 text-[#601B28]" />
                   <span>{event.max_participants} {isFr ? "personnes" : "people"}</span>
                 </div>
               )}
               {event.price_per_person && (
                 <div className="flex items-center gap-2 text-gray-600">
-                  <Euro className="h-4 w-4 text-[#722F37]" />
+                  <Euro className="h-4 w-4 text-[#601B28]" />
                   <span>{event.price_per_person} € / {isFr ? "personne" : "person"}</span>
                 </div>
               )}
               {event.price_group && (
                 <div className="flex items-center gap-2 text-gray-600">
-                  <Euro className="h-4 w-4 text-[#722F37]" />
+                  <Euro className="h-4 w-4 text-[#601B28]" />
                   <span>{event.price_group} € {isFr ? "total groupe" : "group total"}</span>
                 </div>
               )}
               {event.delivery_date && (
                 <div className="flex items-center gap-2 text-gray-600">
-                  <Calendar className="h-4 w-4 text-[#722F37]" />
+                  <Calendar className="h-4 w-4 text-[#601B28]" />
                   <span>{isFr ? "Livraison : " : "Delivery: "}{new Date(event.delivery_date).toLocaleDateString("fr-FR")}</span>
                 </div>
               )}
@@ -242,7 +242,7 @@ export default function EvenementDetail() {
             {!showRejectForm ? (
               <div className="flex gap-3">
                 <Button
-                  className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+                  className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
                   onClick={() => approveMutation.mutate()}
                   disabled={approveMutation.isPending}
                   data-testid="button-approve-event"
@@ -292,8 +292,8 @@ export default function EvenementDetail() {
         {/* Date + info */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
           <div className="flex items-start gap-4">
-            <div className="bg-[#722F37]/10 rounded-xl p-3 shrink-0">
-              <Calendar className="h-6 w-6 text-[#722F37]" />
+            <div className="bg-[#601B28]/10 rounded-xl p-3 shrink-0">
+              <Calendar className="h-6 w-6 text-[#601B28]" />
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="font-bold text-gray-900 text-lg capitalize">{eventDateStr}</h2>
@@ -319,7 +319,7 @@ export default function EvenementDetail() {
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-[#722F37]" />
+              <Clock className="h-4 w-4 text-[#601B28]" />
               <span className="font-semibold text-gray-900 text-sm">
                 {isFr ? "Date limite d'inscription" : "Registration deadline"}
               </span>
@@ -327,7 +327,7 @@ export default function EvenementDetail() {
             {canEdit && !editingDeadline && (
               <button
                 onClick={() => setEditingDeadline(true)}
-                className="text-gray-400 hover:text-[#722F37] transition-colors"
+                className="text-gray-400 hover:text-[#601B28] transition-colors"
                 data-testid="button-edit-deadline"
               >
                 <Edit2 className="h-4 w-4" />
@@ -348,7 +348,7 @@ export default function EvenementDetail() {
               <div className="flex gap-2">
                 <Button
                   size="sm"
-                  className="bg-[#722F37] hover:bg-[#5a252c] text-white"
+                  className="bg-[#601B28] hover:bg-[#4E1522] text-white"
                   onClick={() => updateMutation.mutate({ registrationDeadline: deadlineValue || null })}
                   disabled={updateMutation.isPending}
                   data-testid="button-save-deadline"
@@ -369,7 +369,7 @@ export default function EvenementDetail() {
               {canEdit && (
                 <button
                   onClick={() => setEditingDeadline(true)}
-                  className="ml-2 text-[#722F37] underline text-xs"
+                  className="ml-2 text-[#601B28] underline text-xs"
                   data-testid="button-add-deadline"
                 >
                   {isFr ? "Ajouter" : "Add"}
@@ -382,7 +382,7 @@ export default function EvenementDetail() {
         {/* Lien d'invitation — visible seulement si approuvé */}
         {(!event.status || event.status === "active") && <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <Share2 className="h-4 w-4 text-[#722F37]" />
+            <Share2 className="h-4 w-4 text-[#601B28]" />
             <span className="font-semibold text-gray-900 text-sm">
               {isFr ? "Lien & code d'invitation" : "Invite link & code"}
             </span>
@@ -405,10 +405,10 @@ export default function EvenementDetail() {
             <div className="flex items-center gap-3">
               <span className="text-xs text-gray-500">{isFr ? "Code seul :" : "Code only:"}</span>
               <div className="flex items-center gap-2">
-                <span className="font-mono font-bold text-[#722F37] tracking-widest text-lg">{event.invite_code}</span>
+                <span className="font-mono font-bold text-[#601B28] tracking-widest text-lg">{event.invite_code}</span>
                 <button
                   onClick={handleCopyCode}
-                  className="text-gray-400 hover:text-[#722F37] transition-colors"
+                  className="text-gray-400 hover:text-[#601B28] transition-colors"
                   data-testid="button-copy-code"
                 >
                   {copiedCode ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
@@ -421,7 +421,7 @@ export default function EvenementDetail() {
         {/* Participants */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
-            <Users className="h-4 w-4 text-[#722F37]" />
+            <Users className="h-4 w-4 text-[#601B28]" />
             <span className="font-semibold text-gray-900 text-sm">
               {isFr ? "Participants" : "Participants"} ({event.participants?.length ?? 0})
             </span>
@@ -431,7 +431,7 @@ export default function EvenementDetail() {
               {event.participants.map((p: any) => (
                 <div key={p.user_id} className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-[#722F37]/10 text-[#722F37] text-xs font-semibold">
+                    <AvatarFallback className="bg-[#601B28]/10 text-[#601B28] text-xs font-semibold">
                       {(p.first_name?.[0] || "?").toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -439,7 +439,7 @@ export default function EvenementDetail() {
                     <p className="text-sm font-medium text-gray-900">
                       {p.first_name} {p.last_name}
                       {p.user_id === event.organizer_id && (
-                        <span className="ml-2 text-xs text-[#722F37] font-normal">(organisateur)</span>
+                        <span className="ml-2 text-xs text-[#601B28] font-normal">(organisateur)</span>
                       )}
                     </p>
                     {p.joined_at && (
@@ -451,7 +451,7 @@ export default function EvenementDetail() {
                   {p.project_id && (
                     <Link
                       href={`/suivi-projet/${p.project_id}`}
-                      className="ml-auto text-xs text-[#722F37] hover:underline flex items-center gap-1"
+                      className="ml-auto text-xs text-[#601B28] hover:underline flex items-center gap-1"
                       data-testid={`link-project-${p.user_id}`}
                     >
                       <MessageSquare className="h-3 w-3" />
@@ -471,14 +471,14 @@ export default function EvenementDetail() {
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Megaphone className="h-4 w-4 text-[#722F37]" />
+                <Megaphone className="h-4 w-4 text-[#601B28]" />
                 <span className="font-semibold text-gray-900 text-sm">
                   {isFr ? "Message groupé" : "Broadcast message"}
                 </span>
               </div>
               <button
                 onClick={() => setShowBroadcast(!showBroadcast)}
-                className="text-xs text-[#722F37] hover:underline"
+                className="text-xs text-[#601B28] hover:underline"
                 data-testid="button-toggle-broadcast"
               >
                 {showBroadcast ? (isFr ? "Annuler" : "Cancel") : (isFr ? "Rédiger" : "Compose")}
@@ -499,7 +499,7 @@ export default function EvenementDetail() {
                   data-testid="input-broadcast-message"
                 />
                 <Button
-                  className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white"
+                  className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white"
                   onClick={() => broadcastMutation.mutate(broadcastMsg)}
                   disabled={!broadcastMsg.trim() || broadcastMutation.isPending}
                   data-testid="button-send-broadcast"
@@ -538,7 +538,7 @@ export default function EvenementDetail() {
               className="flex-1"
               data-testid="link-my-project"
             >
-              <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white">
+              <Button className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white">
                 <MessageSquare className="h-4 w-4 mr-2" />
                 {isFr ? "Mon projet" : "My project"}
               </Button>

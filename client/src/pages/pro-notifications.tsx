@@ -43,10 +43,10 @@ export default function ProNotifications() {
             </Button>
           </Link>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-              <Bell className="h-5 w-5 text-[#722F37]" />
+            <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+              <Bell className="h-5 w-5 text-[#601B28]" />
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]">
               Notifications
             </h1>
           </div>
@@ -59,7 +59,7 @@ export default function ProNotifications() {
       <div className="max-w-2xl mx-auto px-4 lg:px-6 py-6 space-y-6">
         <Card className="border border-gray-100 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg text-[#722F37] flex items-center gap-2">
+            <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
               <Mail className="h-5 w-5" />
               Notifications par email
             </CardTitle>
@@ -118,7 +118,7 @@ export default function ProNotifications() {
 
         <Card className="border border-gray-100 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg text-[#722F37] flex items-center gap-2">
+            <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
               <Bell className="h-5 w-5" />
               Notifications push
             </CardTitle>
@@ -176,7 +176,7 @@ export default function ProNotifications() {
         </Card>
 
         <Button 
-          className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white"
+          className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white"
           onClick={handleSave}
           data-testid="button-save-notifications"
         >

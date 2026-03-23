@@ -98,7 +98,7 @@ export default function ProSetup() {
   if (userLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#722F37]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#601B28]" />
       </div>
     );
   }
@@ -107,17 +107,17 @@ export default function ProSetup() {
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-100 bg-white">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Logo className="text-[#722F37]" textClassName="text-[#722F37]" />
+          <Logo className="text-[#601B28]" textClassName="text-[#601B28]" />
           <LanguageToggle />
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-12">
         <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-[#722F37]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Scissors className="h-8 w-8 text-[#722F37]" />
+          <div className="w-16 h-16 bg-[#601B28]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Scissors className="h-8 w-8 text-[#601B28]" />
           </div>
-          <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-3">
+          <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28] mb-3">
             {t('proSetup.title')}
           </h1>
           <p className="text-gray-600 text-lg">
@@ -135,7 +135,7 @@ export default function ProSetup() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-[#722F37]" />
+                        <MapPin className="h-4 w-4 text-[#601B28]" />
                         {t('proSetup.city')}
                       </FormLabel>
                       <FormControl>
@@ -156,7 +156,7 @@ export default function ProSetup() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
-                        <Scissors className="h-4 w-4 text-[#722F37]" />
+                        <Scissors className="h-4 w-4 text-[#601B28]" />
                         {t('proSetup.specialties')}
                       </FormLabel>
                       <FormControl>
@@ -178,7 +178,7 @@ export default function ProSetup() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
-                        <Briefcase className="h-4 w-4 text-[#722F37]" />
+                        <Briefcase className="h-4 w-4 text-[#601B28]" />
                         {t('proSetup.experience')}
                       </FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -206,7 +206,7 @@ export default function ProSetup() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-[#722F37]" />
+                        <FileText className="h-4 w-4 text-[#601B28]" />
                         {t('proSetup.bio')}
                       </FormLabel>
                       <FormControl>
@@ -224,7 +224,7 @@ export default function ProSetup() {
 
                 <Button 
                   type="submit" 
-                  className="w-full bg-[#722F37] hover:bg-[#5a252c]"
+                  className="w-full bg-[#601B28] hover:bg-[#4E1522]"
                   disabled={setupMutation.isPending}
                   data-testid="button-submit-setup"
                 >

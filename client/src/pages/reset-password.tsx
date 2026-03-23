@@ -60,7 +60,7 @@ export default function ResetPassword() {
             <h2 className="text-lg font-semibold text-gray-800">Lien invalide</h2>
             <p className="text-gray-500 text-sm">Ce lien de réinitialisation est invalide ou a expiré.</p>
             <Link href="/mot-de-passe-oublie">
-              <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white">Faire une nouvelle demande</Button>
+              <Button className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white">Faire une nouvelle demande</Button>
             </Link>
           </CardContent>
         </Card>
@@ -72,15 +72,15 @@ export default function ResetPassword() {
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="font-serif text-3xl text-[#722F37] mb-2">SEAMLIER</h1>
+          <h1 className="font-serif text-3xl text-[#601B28] mb-2">SEAMLIER</h1>
           <p className="text-gray-500 text-sm">Créer un nouveau mot de passe</p>
         </div>
 
         <Card className="border-none shadow-lg">
           <CardHeader className="pb-4">
             <div className="flex justify-center mb-4">
-              <div className="w-12 h-12 rounded-full bg-[#722F37]/10 flex items-center justify-center">
-                {success ? <CheckCircle className="h-6 w-6 text-green-600" /> : <Lock className="h-6 w-6 text-[#722F37]" />}
+              <div className="w-12 h-12 rounded-full bg-[#601B28]/10 flex items-center justify-center">
+                {success ? <CheckCircle className="h-6 w-6 text-green-600" /> : <Lock className="h-6 w-6 text-[#601B28]" />}
               </div>
             </div>
             <CardTitle className="text-center text-lg text-gray-800">
@@ -92,7 +92,7 @@ export default function ResetPassword() {
               <div className="text-center space-y-4">
                 <p className="text-gray-600 text-sm">Votre mot de passe a été modifié avec succès. Vous allez être redirigé vers la page de connexion…</p>
                 <Link href="/connexion">
-                  <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white" data-testid="button-go-to-login">
+                  <Button className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white" data-testid="button-go-to-login">
                     Se connecter maintenant
                   </Button>
                 </Link>
@@ -135,7 +135,7 @@ export default function ResetPassword() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white h-11"
+                  className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white h-11"
                   disabled={resetMutation.isPending}
                   data-testid="button-submit"
                 >

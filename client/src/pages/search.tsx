@@ -69,7 +69,7 @@ export default function SearchPage() {
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
       <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
-          <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-2">
+          <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28] mb-2">
             Recherche avancée
           </h1>
           <p className="text-muted-foreground mb-6">
@@ -95,7 +95,7 @@ export default function SearchPage() {
             <div className="sticky top-24 space-y-6 bg-muted/50 p-4 rounded-lg">
               <div>
                 <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
-                  <Star className="h-4 w-4 text-[#722F37]" />
+                  <Star className="h-4 w-4 text-[#601B28]" />
                   Spécialités
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -112,7 +112,7 @@ export default function SearchPage() {
 
               <div>
                 <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-[#722F37]" />
+                  <MapPin className="h-4 w-4 text-[#601B28]" />
                   Localisation
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -129,7 +129,7 @@ export default function SearchPage() {
 
               <div>
                 <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
-                  <Star className="h-4 w-4 text-[#722F37]" />
+                  <Star className="h-4 w-4 text-[#601B28]" />
                   Note minimum
                 </h3>
                 <div className="flex gap-2">
@@ -138,7 +138,7 @@ export default function SearchPage() {
                       key={rating}
                       variant={minRating === rating ? "default" : "outline"}
                       size="sm"
-                      className={minRating === rating ? "bg-[#722F37] hover:bg-[#5a252c]" : ""}
+                      className={minRating === rating ? "bg-[#601B28] hover:bg-[#4E1522]" : ""}
                       onClick={() => setMinRating(rating)}
                       data-testid={`filter-rating-${rating}`}
                     >
@@ -150,7 +150,7 @@ export default function SearchPage() {
 
               <div>
                 <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-[#722F37]" />
+                  <Clock className="h-4 w-4 text-[#601B28]" />
                   Tarif horaire
                 </h3>
                 <div className="px-2">
@@ -181,7 +181,7 @@ export default function SearchPage() {
                       Filtres
                     </span>
                     {activeFiltersCount > 0 && (
-                      <span className="bg-[#722F37] text-white text-xs px-2 py-0.5 rounded-full">
+                      <span className="bg-[#601B28] text-white text-xs px-2 py-0.5 rounded-full">
                         {activeFiltersCount}
                       </span>
                     )}
@@ -189,7 +189,7 @@ export default function SearchPage() {
                 </SheetTrigger>
                 <SheetContent side="bottom" className="h-[80vh]">
                   <SheetHeader>
-                    <SheetTitle className="text-[#722F37]">Filtres</SheetTitle>
+                    <SheetTitle className="text-[#601B28]">Filtres</SheetTitle>
                   </SheetHeader>
                   <div className="py-6 space-y-6 overflow-y-auto">
                     <div>
@@ -224,7 +224,7 @@ export default function SearchPage() {
             </div>
 
             <div className="flex items-center justify-between mb-6">
-              <h2 className="font-serif text-2xl text-[#722F37]">
+              <h2 className="font-serif text-2xl text-[#601B28]">
                 Résultats
               </h2>
               <p className="text-sm text-muted-foreground">

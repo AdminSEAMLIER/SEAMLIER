@@ -162,7 +162,7 @@ export default function InscriptionProfessionnel() {
                 <ArrowLeft className="h-5 w-5 text-gray-600" />
               </Button>
             </Link>
-            <Logo className="text-2xl text-[#722F37]" />
+            <Logo className="text-2xl text-[#601B28]" />
           </div>
           <LanguageToggle />
         </div>
@@ -172,10 +172,10 @@ export default function InscriptionProfessionnel() {
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           <div className="hidden lg:block">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-                <Briefcase className="h-5 w-5 text-[#722F37]" />
+              <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+                <Briefcase className="h-5 w-5 text-[#601B28]" />
               </div>
-              <h1 className="font-serif text-2xl text-[#722F37]">
+              <h1 className="font-serif text-2xl text-[#601B28]">
                 Espace Professionnel
               </h1>
             </div>
@@ -186,8 +186,8 @@ export default function InscriptionProfessionnel() {
             <div className="space-y-4">
               {["Visibilité accrue", "Gestion de projet", "Paiements sécurisés"].map((benefit, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-                    <Check className="h-4 w-4 text-[#722F37]" />
+                  <div className="w-8 h-8 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+                    <Check className="h-4 w-4 text-[#601B28]" />
                   </div>
                   <span className="text-gray-700">{benefit}</span>
                 </div>
@@ -329,16 +329,16 @@ export default function InscriptionProfessionnel() {
                         id="cgv-professionnel"
                         checked={form.watch("cgvAccepted")}
                         onChange={e => form.setValue("cgvAccepted", e.target.checked, { shouldValidate: true })}
-                        className="mt-1 h-4 w-4 accent-[#722F37] cursor-pointer shrink-0"
+                        className="mt-1 h-4 w-4 accent-[#601B28] cursor-pointer shrink-0"
                         data-testid="checkbox-cgv"
                       />
                       <label htmlFor="cgv-professionnel" className="text-sm text-gray-600 leading-snug cursor-pointer">
                         J'accepte les{" "}
-                        <Link href="/cgv" className="text-[#722F37] hover:underline font-medium" target="_blank">CGV</Link>
+                        <Link href="/cgv" className="text-[#601B28] hover:underline font-medium" target="_blank">CGV</Link>
                         {" "}et les{" "}
-                        <Link href="/cgu" className="text-[#722F37] hover:underline font-medium" target="_blank">CGU</Link>
+                        <Link href="/cgu" className="text-[#601B28] hover:underline font-medium" target="_blank">CGU</Link>
                         {" "}de SEAMLIER, ainsi que la{" "}
-                        <Link href="/politique-remboursement" className="text-[#722F37] hover:underline font-medium" target="_blank">politique de remboursement</Link>.
+                        <Link href="/politique-remboursement" className="text-[#601B28] hover:underline font-medium" target="_blank">politique de remboursement</Link>.
                       </label>
                     </div>
                     {form.formState.errors.cgvAccepted && (
@@ -347,7 +347,7 @@ export default function InscriptionProfessionnel() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-[#722F37] hover:bg-[#5a1f25] text-white py-6"
+                    className="w-full bg-[#601B28] hover:bg-[#5a1f25] text-white py-6"
                     disabled={registerMutation.isPending}
                   >
                     {registerMutation.isPending ? (

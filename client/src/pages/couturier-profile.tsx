@@ -95,7 +95,7 @@ export default function CouturierProfile() {
               </Button>
             </Link>
             <Link href="/inscription">
-              <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9">
+              <Button size="sm" className="bg-[#601B28] hover:bg-[#4E1522] text-white px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9">
                 {t('landing.signup')}
               </Button>
             </Link>
@@ -116,7 +116,7 @@ export default function CouturierProfile() {
         <div className="flex items-end gap-4">
           <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
             <AvatarImage src={tailor.user.profileImageUrl || undefined} alt={`${tailor.user.firstName || ''} ${tailor.user.lastName || ''}`.trim()} />
-            <AvatarFallback className="bg-[#722F37] text-white text-2xl">
+            <AvatarFallback className="bg-[#601B28] text-white text-2xl">
               {`${tailor.user.firstName?.[0] || ''}${tailor.user.lastName?.[0] || ''}`.toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -162,7 +162,7 @@ export default function CouturierProfile() {
                 <Badge 
                   key={specialty} 
                   variant="secondary"
-                  className="bg-[#f8f5f5] text-[#722F37] border border-[#722F37]/20"
+                  className="bg-[#f8f5f5] text-[#601B28] border border-[#601B28]/20"
                 >
                   {specialty}
                 </Badge>
@@ -179,7 +179,7 @@ export default function CouturierProfile() {
           <div className="bg-muted border border-border rounded-lg p-4">
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
               <Link href={`/messages?tailor=${tailorId}`}>
-                <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white w-full sm:w-auto" data-testid="button-contact-tailor">
+                <Button className="bg-[#601B28] hover:bg-[#4E1522] text-white w-full sm:w-auto" data-testid="button-contact-tailor">
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Envoyer un message
                 </Button>

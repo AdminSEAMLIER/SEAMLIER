@@ -61,8 +61,8 @@ function WeekCalendar({ selectedDate, onSelectDate }: { selectedDate: Date | nul
               onClick={() => !isPast && onSelectDate(day)}
               disabled={isPast}
               className={`flex flex-col items-center py-2 rounded-xl text-xs transition-all
-                ${isPast ? "opacity-30 cursor-not-allowed" : "hover:bg-[#722F37]/5 cursor-pointer"}
-                ${isSelected ? "bg-[#722F37] text-white hover:bg-[#722F37]" : "text-gray-700"}`}
+                ${isPast ? "opacity-30 cursor-not-allowed" : "hover:bg-[#601B28]/5 cursor-pointer"}
+                ${isSelected ? "bg-[#601B28] text-white hover:bg-[#601B28]" : "text-gray-700"}`}
               data-testid={`button-day-${format(day, "yyyy-MM-dd")}`}
             >
               <span className={`font-medium text-xs ${isSelected ? "text-white/80" : "text-gray-400"}`}>
@@ -98,7 +98,7 @@ function TimeSlots({ tailorId, date, selectedTime, onSelectTime }: {
   if (isLoading) {
     return (
       <div className="flex justify-center py-6">
-        <Loader2 className="h-5 w-5 animate-spin text-[#722F37]" />
+        <Loader2 className="h-5 w-5 animate-spin text-[#601B28]" />
       </div>
     );
   }
@@ -130,8 +130,8 @@ function TimeSlots({ tailorId, date, selectedTime, onSelectTime }: {
             ${!slot.available
               ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
               : selectedTime === slot.time
-                ? "bg-[#722F37] text-white border-[#722F37]"
-                : "bg-white text-gray-700 border-gray-200 hover:border-[#722F37] hover:text-[#722F37]"
+                ? "bg-[#601B28] text-white border-[#601B28]"
+                : "bg-white text-gray-700 border-gray-200 hover:border-[#601B28] hover:text-[#601B28]"
             }`}
           data-testid={`button-slot-${slot.time}`}
         >
@@ -223,7 +223,7 @@ export default function PrendreRdv() {
         </div>
         <div className="flex flex-col gap-2 w-full max-w-xs">
           <Button
-            className="bg-[#722F37] hover:bg-[#5a252c] text-white"
+            className="bg-[#601B28] hover:bg-[#4E1522] text-white"
             onClick={() => setLocation("/mes-rendez-vous")}
             data-testid="button-go-to-appointments"
           >
@@ -244,7 +244,7 @@ export default function PrendreRdv() {
           <button onClick={() => window.history.back()} className="text-gray-500 hover:text-gray-800" data-testid="button-back">
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="font-serif text-[#722F37] text-lg">
+          <h1 className="font-serif text-[#601B28] text-lg">
             {isFr ? "Prendre un rendez-vous" : "Book an appointment"}
           </h1>
         </div>
@@ -266,7 +266,7 @@ export default function PrendreRdv() {
               {tailor.user?.profileImageUrl && (
                 <AvatarImage src={tailor.user.profileImageUrl} alt={tailor.user?.firstName} />
               )}
-              <AvatarFallback className="bg-[#722F37]/10 text-[#722F37] text-xl font-bold">
+              <AvatarFallback className="bg-[#601B28]/10 text-[#601B28] text-xl font-bold">
                 {(tailor.user?.firstName?.[0] || "A").toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -298,7 +298,7 @@ export default function PrendreRdv() {
               {isFr ? "Connectez-vous pour prendre un rendez-vous." : "Log in to book an appointment."}
             </p>
             <Link href={`/auth?redirect=/prendre-rdv?tailor=${tailorUserId}`}>
-              <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white" data-testid="button-login">
+              <Button className="bg-[#601B28] hover:bg-[#4E1522] text-white" data-testid="button-login">
                 {isFr ? "Se connecter" : "Log in"}
               </Button>
             </Link>
@@ -308,7 +308,7 @@ export default function PrendreRdv() {
             {/* Type */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-3">
               <h2 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
-                <Scissors className="h-4 w-4 text-[#722F37]" />
+                <Scissors className="h-4 w-4 text-[#601B28]" />
                 {isFr ? "Type de rendez-vous" : "Appointment type"}
               </h2>
               <Select value={type} onValueChange={setType}>
@@ -328,7 +328,7 @@ export default function PrendreRdv() {
             {/* Calendar */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-4">
               <h2 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-[#722F37]" />
+                <Calendar className="h-4 w-4 text-[#601B28]" />
                 {isFr ? "Choisissez une date" : "Choose a date"}
               </h2>
               <WeekCalendar
@@ -341,7 +341,7 @@ export default function PrendreRdv() {
             {selectedDate && (
               <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-4">
                 <h2 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-[#722F37]" />
+                  <Clock className="h-4 w-4 text-[#601B28]" />
                   {isFr
                     ? `Créneaux disponibles — ${format(selectedDate, "EEEE d MMMM", { locale: fr })}`
                     : `Available slots — ${format(selectedDate, "MMMM d, yyyy")}`}
@@ -377,7 +377,7 @@ export default function PrendreRdv() {
 
             {/* Submit */}
             <Button
-              className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white h-12 text-base font-semibold"
+              className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white h-12 text-base font-semibold"
               onClick={() => bookMutation.mutate()}
               disabled={!selectedDate || !selectedTime || bookMutation.isPending}
               data-testid="button-submit-rdv"

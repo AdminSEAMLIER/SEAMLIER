@@ -924,11 +924,11 @@ export default function AdminDashboard() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#722F37] px-4">
+      <div className="min-h-screen flex items-center justify-center bg-[#601B28] px-4">
         <Card className="w-full max-w-md shadow-2xl border-none">
           <div className="p-8 text-center space-y-1">
-            <Lock className="mx-auto text-[#722F37] h-12 w-12 mb-4" />
-            <h2 className="font-serif text-2xl uppercase tracking-widest text-[#722F37]">SEAMLiER</h2>
+            <Lock className="mx-auto text-[#601B28] h-12 w-12 mb-4" />
+            <h2 className="font-serif text-2xl uppercase tracking-widest text-[#601B28]">SEAMLiER</h2>
             <p className="text-sm text-gray-500 italic font-medium">Console d'Administration</p>
           </div>
           <div className="px-8 pb-8">
@@ -961,7 +961,7 @@ export default function AdminDashboard() {
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full bg-[#722F37] h-12" disabled={loginLoading} data-testid="button-admin-login">
+              <Button type="submit" className="w-full bg-[#601B28] h-12" disabled={loginLoading} data-testid="button-admin-login">
                 {loginLoading ? "Connexion en cours..." : "Connexion"}
               </Button>
             </form>
@@ -987,7 +987,7 @@ export default function AdminDashboard() {
   ];
 
   const stats = [
-    { label: "Demandes en attente", val: String(adminRequests.length), icon: Clock, color: "text-[#722F37]", bg: "bg-[#722F37]/5", tab: "requests" },
+    { label: "Demandes en attente", val: String(adminRequests.length), icon: Clock, color: "text-[#601B28]", bg: "bg-[#601B28]/5", tab: "requests" },
     { label: "Projets totaux", val: String(projects.length), icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-50", tab: "projects" },
     { label: "Revenus libérés", val: `${totalRevenue.toLocaleString()} €`, icon: ShoppingBag, color: "text-green-600", bg: "bg-green-50", tab: "projects" },
     { label: "Artisans vérifiés", val: `${verifiedArtisans}/${artisans.length}`, icon: ShieldCheck, color: "text-amber-600", bg: "bg-amber-50", tab: "artisans" },
@@ -1003,7 +1003,7 @@ export default function AdminDashboard() {
       <div className="flex h-screen w-full bg-gray-50">
         <Sidebar collapsible="none" className="border-r border-gray-100">
           <SidebarHeader className="p-6 border-b border-gray-50">
-            <h2 className="text-2xl font-serif font-black text-[#722F37] tracking-tighter" data-testid="text-admin-logo">SEAMLiER</h2>
+            <h2 className="text-2xl font-serif font-black text-[#601B28] tracking-tighter" data-testid="text-admin-logo">SEAMLiER</h2>
             <p className="text-[10px] uppercase tracking-widest text-gray-400 mt-1 font-bold">Console d'Administration</p>
           </SidebarHeader>
           <SidebarContent>
@@ -1017,7 +1017,7 @@ export default function AdminDashboard() {
                         isActive={activeTab === item.id}
                         onClick={() => setActiveTab(item.id)}
                         data-testid={`nav-admin-${item.id}`}
-                        className={cn(activeTab === item.id && "bg-[#722F37] text-white")}
+                        className={cn(activeTab === item.id && "bg-[#601B28] text-white")}
                       >
                         <item.icon size={18} />
                         <span>{item.label}</span>
@@ -1034,7 +1034,7 @@ export default function AdminDashboard() {
           <SidebarFooter className="p-4 space-y-1">
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => setActiveTab("settings")} data-testid="button-admin-settings" className={cn(activeTab === "settings" && "bg-[#722F37] text-white")}>
+                <SidebarMenuButton onClick={() => setActiveTab("settings")} data-testid="button-admin-settings" className={cn(activeTab === "settings" && "bg-[#601B28] text-white")}>
                   <Settings size={18} />
                   <span>Paramètres</span>
                 </SidebarMenuButton>
@@ -1054,7 +1054,7 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-3">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
               <span className="text-sm font-medium text-gray-700 hidden md:inline" data-testid="text-admin-console-title">Console d'Administration SEAMLiER</span>
-              <Badge variant="outline" className="text-[#722F37] border-[#722F37]/20 bg-[#722F37]/5 px-3 py-1 md:hidden" data-testid="badge-admin-mode">Admin</Badge>
+              <Badge variant="outline" className="text-[#601B28] border-[#601B28]/20 bg-[#601B28]/5 px-3 py-1 md:hidden" data-testid="badge-admin-mode">Admin</Badge>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-xs text-gray-400 hidden sm:inline" data-testid="text-admin-email">admin@seamlier.fr</span>
@@ -1080,7 +1080,7 @@ export default function AdminDashboard() {
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                       {[
                         { label: "CA ce mois", value: `${globalStats.monthRevenue?.toFixed(0) ?? 0} €`, icon: TrendingUp, bg: "bg-green-50", color: "text-green-600" },
-                        { label: "CA total", value: `${globalStats.totalRevenue?.toFixed(0) ?? 0} €`, icon: Euro, bg: "bg-[#722F37]/5", color: "text-[#722F37]" },
+                        { label: "CA total", value: `${globalStats.totalRevenue?.toFixed(0) ?? 0} €`, icon: Euro, bg: "bg-[#601B28]/5", color: "text-[#601B28]" },
                         { label: "Projets terminés", value: globalStats.totalProjectsCompleted ?? 0, icon: CheckCircle, bg: "bg-blue-50", color: "text-blue-600" },
                         { label: "Panier moyen", value: `${globalStats.avgProjectValue?.toFixed(0) ?? 0} €`, icon: BarChart3, bg: "bg-amber-50", color: "text-amber-600" },
                       ].map(s => (
@@ -1117,7 +1117,7 @@ export default function AdminDashboard() {
                       <CardContent className="p-5">
                         <div className="flex justify-between items-center mb-4 gap-2">
                           <CardTitle className="text-base font-serif">Derniers projets</CardTitle>
-                          <Button variant="ghost" size="sm" className="text-[#722F37] text-xs" onClick={() => setActiveTab("projects")} data-testid="button-view-all-projects">
+                          <Button variant="ghost" size="sm" className="text-[#601B28] text-xs" onClick={() => setActiveTab("projects")} data-testid="button-view-all-projects">
                             Tout voir <ChevronRight size={14} className="ml-1" />
                           </Button>
                         </div>
@@ -1130,7 +1130,7 @@ export default function AdminDashboard() {
                               </div>
                               <div className="flex items-center gap-3 flex-shrink-0">
                                 <Badge className={cn("text-[10px] border-none", p.status === "Bloqué" ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700")}>{p.status}</Badge>
-                                <span className="text-sm font-bold text-[#722F37]">{p.amount}</span>
+                                <span className="text-sm font-bold text-[#601B28]">{p.amount}</span>
                               </div>
                             </div>
                           ))}
@@ -1141,7 +1141,7 @@ export default function AdminDashboard() {
                       <CardContent className="p-5">
                         <div className="flex justify-between items-center mb-4 gap-2">
                           <CardTitle className="text-base font-serif">Artisans en attente</CardTitle>
-                          <Button variant="ghost" size="sm" className="text-[#722F37] text-xs" onClick={() => setActiveTab("artisans")} data-testid="button-view-all-artisans">
+                          <Button variant="ghost" size="sm" className="text-[#601B28] text-xs" onClick={() => setActiveTab("artisans")} data-testid="button-view-all-artisans">
                             Tout voir <ChevronRight size={14} className="ml-1" />
                           </Button>
                         </div>
@@ -1149,14 +1149,14 @@ export default function AdminDashboard() {
                           {artisans.filter(a => a.status === "En attente").map(a => (
                             <div key={a.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 gap-3 flex-wrap">
                               <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-8 h-8 rounded-full bg-[#722F37]/5 flex items-center justify-center text-[#722F37] font-bold text-xs flex-shrink-0">{a.name[0]}</div>
+                                <div className="w-8 h-8 rounded-full bg-[#601B28]/5 flex items-center justify-center text-[#601B28] font-bold text-xs flex-shrink-0">{a.name[0]}</div>
                                 <div className="min-w-0">
                                   <p className="text-sm font-semibold truncate">{a.name}</p>
                                   <p className="text-xs text-gray-500 truncate">{a.specialty} - {a.city}</p>
                                 </div>
                               </div>
                               <div className="flex gap-2 flex-shrink-0">
-                                <Button size="sm" className="bg-[#722F37] h-7 text-[10px]" onClick={() => approveArtisan(a.id)} data-testid={`button-quick-approve-${a.id}`}>Approuver</Button>
+                                <Button size="sm" className="bg-[#601B28] h-7 text-[10px]" onClick={() => approveArtisan(a.id)} data-testid={`button-quick-approve-${a.id}`}>Approuver</Button>
                                 <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => rejectArtisan(a.id)} data-testid={`button-quick-reject-${a.id}`}>Rejeter</Button>
                               </div>
                             </div>
@@ -1234,7 +1234,7 @@ export default function AdminDashboard() {
                   <Card className="border-none shadow-sm overflow-hidden bg-white">
                     <div className="p-5 border-b border-gray-50 flex items-center justify-between gap-4 flex-wrap">
                       <div className="flex gap-2 flex-wrap">
-                        <Badge className="bg-[#722F37]/5 text-[#722F37] border-none px-3 py-1" data-testid="badge-total-projects">{projects.length} projets</Badge>
+                        <Badge className="bg-[#601B28]/5 text-[#601B28] border-none px-3 py-1" data-testid="badge-total-projects">{projects.length} projets</Badge>
                         <Badge className="bg-amber-50 text-amber-700 border-none px-3 py-1" data-testid="badge-blocked-projects">{pendingProjects} bloqués</Badge>
                         <Badge className="bg-green-50 text-green-700 border-none px-3 py-1" data-testid="badge-released-projects">{projects.length - pendingProjects} libérés</Badge>
                       </div>
@@ -1288,7 +1288,7 @@ export default function AdminDashboard() {
                                   );
                                 })()}
                               </td>
-                              <td className="px-5 py-3 text-right font-bold text-[#722F37]">{p.amount}</td>
+                              <td className="px-5 py-3 text-right font-bold text-[#601B28]">{p.amount}</td>
                               <td className="px-5 py-3 text-center">
                                 <Button
                                   size="sm"
@@ -1347,7 +1347,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="overflow-y-auto flex-1">
                         {adminConversations.map((c: any) => (
-                          <button key={c.id} onClick={() => { setSelectedConversationId(c.id); setSelectedMessage(c.id); }} className={cn("w-full text-left p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors", selectedConversationId === c.id && "bg-[#722F37]/5 border-l-2 border-l-[#722F37]")} data-testid={`conv-item-${c.id}`}>
+                          <button key={c.id} onClick={() => { setSelectedConversationId(c.id); setSelectedMessage(c.id); }} className={cn("w-full text-left p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors", selectedConversationId === c.id && "bg-[#601B28]/5 border-l-2 border-l-[#601B28]")} data-testid={`conv-item-${c.id}`}>
                             <div className="flex justify-between items-start mb-1 gap-2">
                               <span className="text-sm font-semibold text-gray-900 truncate">
                                 {c.otherParticipant?.firstName || ""} {c.otherParticipant?.lastName || "Utilisateur"}
@@ -1375,12 +1375,12 @@ export default function AdminDashboard() {
                           </div>
                           <div className="flex-1 p-5 overflow-y-auto space-y-3" data-testid="message-thread">
                             {adminMessages.map((msg: any) => (
-                              <div key={msg.id} className={cn("rounded-lg p-4", msg.senderId === adminUser?.id ? "bg-[#722F37]/5 ml-6" : "bg-gray-50 mr-6")} data-testid={`msg-${msg.id}`}>
+                              <div key={msg.id} className={cn("rounded-lg p-4", msg.senderId === adminUser?.id ? "bg-[#601B28]/5 ml-6" : "bg-gray-50 mr-6")} data-testid={`msg-${msg.id}`}>
                                 <div className="flex items-center gap-2 mb-2">
-                                  <div className={cn("w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0", msg.senderId === adminUser?.id ? "bg-[#722F37]/20" : "bg-gray-200")}>
-                                    {msg.senderId === adminUser?.id ? <ShieldCheck size={12} className="text-[#722F37]" /> : <User size={12} className="text-gray-500" />}
+                                  <div className={cn("w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0", msg.senderId === adminUser?.id ? "bg-[#601B28]/20" : "bg-gray-200")}>
+                                    {msg.senderId === adminUser?.id ? <ShieldCheck size={12} className="text-[#601B28]" /> : <User size={12} className="text-gray-500" />}
                                   </div>
-                                  <span className={cn("text-xs font-semibold", msg.senderId === adminUser?.id ? "text-[#722F37]" : "text-gray-600")}>
+                                  <span className={cn("text-xs font-semibold", msg.senderId === adminUser?.id ? "text-[#601B28]" : "text-gray-600")}>
                                     {msg.senderId === adminUser?.id ? "Admin" : (msg.sender?.firstName || "Utilisateur")}
                                   </span>
                                   <span className="text-[10px] text-gray-400">{msg.sentAt ? new Date(msg.sentAt).toLocaleString("fr-FR") : ""}</span>
@@ -1395,7 +1395,7 @@ export default function AdminDashboard() {
                           <div className="p-4 border-t border-gray-50">
                             <Textarea placeholder="Répondre..." value={adminReplyText} onChange={e => setAdminReplyText(e.target.value)} className="min-h-[80px] text-sm" data-testid="input-admin-reply" />
                             <div className="flex justify-end mt-3">
-                              <Button className="bg-[#722F37]" onClick={sendReply} disabled={sendAdminReplyMutation.isPending} data-testid="button-send-reply">
+                              <Button className="bg-[#601B28]" onClick={sendReply} disabled={sendAdminReplyMutation.isPending} data-testid="button-send-reply">
                                 <Send size={16} className="mr-2" /> Envoyer
                               </Button>
                             </div>
@@ -1493,7 +1493,7 @@ export default function AdminDashboard() {
                           <div className="flex justify-between text-sm"><span className="text-gray-500">Profils complets</span><span className="font-bold text-green-600" data-testid="text-complete-profiles">{measureProfiles.filter(m => m.status === "Complet").length}</span></div>
                           <div className="flex justify-between text-sm"><span className="text-gray-500">Incomplets</span><span className="font-bold text-amber-600" data-testid="text-incomplete-profiles">{measureProfiles.filter(m => m.status === "Incomplet").length}</span></div>
                           <div className="flex justify-between text-sm"><span className="text-gray-500">Vides</span><span className="font-bold text-gray-400" data-testid="text-waiting-profiles">{measureProfiles.filter(m => m.status === "Vide").length}</span></div>
-                          <div className="flex justify-between text-sm pt-2 border-t border-gray-50"><span className="text-gray-500">Total profils</span><span className="font-bold text-[#722F37]" data-testid="text-total-measures">{measureProfiles.length}</span></div>
+                          <div className="flex justify-between text-sm pt-2 border-t border-gray-50"><span className="text-gray-500">Total profils</span><span className="font-bold text-[#601B28]" data-testid="text-total-measures">{measureProfiles.length}</span></div>
                           <div className="pt-2 border-t border-gray-50 space-y-1">
                             <div className="flex justify-between text-sm">
                               <span className="text-gray-500">Artisans Starter</span>
@@ -1556,7 +1556,7 @@ export default function AdminDashboard() {
                         <CardTitle className="text-base font-serif">Base Couturiers</CardTitle>
                         <p className="text-xs text-gray-400 mt-1">Données couturiers pour l'import</p>
                       </div>
-                      <Button className="bg-[#722F37] font-bold" data-testid="button-import-data" onClick={() => toast({ title: "Import", description: "Fonctionnalité d'import en préparation." })}>
+                      <Button className="bg-[#601B28] font-bold" data-testid="button-import-data" onClick={() => toast({ title: "Import", description: "Fonctionnalité d'import en préparation." })}>
                         <Upload size={16} className="mr-2" /> Importer Data
                       </Button>
                     </div>
@@ -1581,13 +1581,13 @@ export default function AdminDashboard() {
                             </tr>
                           )}
                           {couturiers.map(c => (
-                            <tr key={c.id} className={cn("transition-colors", selectedCouturier === c.id ? "bg-[#722F37]/5" : "hover:bg-gray-50/50")} data-testid={`row-couturier-${c.id}`}>
+                            <tr key={c.id} className={cn("transition-colors", selectedCouturier === c.id ? "bg-[#601B28]/5" : "hover:bg-gray-50/50")} data-testid={`row-couturier-${c.id}`}>
                               <td className="px-5 py-3">
-                                <input type="checkbox" checked={selectedCouturier === c.id} onChange={() => toggleCouturierSelect(c.id)} className="rounded border-gray-300 text-[#722F37] focus:ring-[#722F37]" data-testid={`checkbox-couturier-${c.id}`} />
+                                <input type="checkbox" checked={selectedCouturier === c.id} onChange={() => toggleCouturierSelect(c.id)} className="rounded border-gray-300 text-[#601B28] focus:ring-[#601B28]" data-testid={`checkbox-couturier-${c.id}`} />
                               </td>
                               <td className="px-5 py-3">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-[#722F37]/5 flex items-center justify-center text-[#722F37] font-bold text-xs flex-shrink-0">{c.name[0]}</div>
+                                  <div className="w-8 h-8 rounded-full bg-[#601B28]/5 flex items-center justify-center text-[#601B28] font-bold text-xs flex-shrink-0">{c.name[0]}</div>
                                   <span className="text-sm font-semibold">{c.name}</span>
                                 </div>
                               </td>
@@ -1640,7 +1640,7 @@ export default function AdminDashboard() {
                     <DialogContent className="max-w-lg" data-testid="dialog-measure-detail">
                       <DialogHeader>
                         <DialogTitle className="font-serif text-lg flex items-center gap-3" data-testid="text-measure-client">
-                          <Ruler size={20} className="text-[#722F37]" />
+                          <Ruler size={20} className="text-[#601B28]" />
                           {selectedMeasure?.clientName}
                         </DialogTitle>
                       </DialogHeader>
@@ -1734,7 +1734,7 @@ export default function AdminDashboard() {
                         <>
                           <DialogHeader>
                             <DialogTitle className="font-serif text-lg flex items-center gap-3" data-testid="text-couturier-dialog-name">
-                              <div className="w-10 h-10 rounded-full bg-[#722F37]/10 flex items-center justify-center text-[#722F37] font-bold flex-shrink-0">{dialogCouturier.firstName[0]}{dialogCouturier.lastName[0]}</div>
+                              <div className="w-10 h-10 rounded-full bg-[#601B28]/10 flex items-center justify-center text-[#601B28] font-bold flex-shrink-0">{dialogCouturier.firstName[0]}{dialogCouturier.lastName[0]}</div>
                               {dialogCouturier.firstName} {dialogCouturier.lastName}
                             </DialogTitle>
                           </DialogHeader>
@@ -1745,7 +1745,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="bg-gray-50 rounded-lg p-4 space-y-1">
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3 flex items-center gap-2">
                                 <User size={14} /> Carte d'identité
                               </p>
                               <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-couturier-identity">
@@ -1777,7 +1777,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="bg-gray-50 rounded-lg p-4 space-y-1">
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3 flex items-center gap-2">
                                 <Building2 size={14} /> Informations Entreprise
                               </p>
                               <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-couturier-business">
@@ -1813,7 +1813,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="bg-gray-50 rounded-lg p-4 space-y-1">
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3 flex items-center gap-2">
                                 <Phone size={14} /> Contact & Profil
                               </p>
                               <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-couturier-contact">
@@ -1854,13 +1854,13 @@ export default function AdminDashboard() {
                         <>
                           <DialogHeader>
                             <DialogTitle className="font-serif text-lg flex items-center gap-3" data-testid="text-couturier-edit-title">
-                              <Pencil size={20} className="text-[#722F37]" />
+                              <Pencil size={20} className="text-[#601B28]" />
                               Éditer - {dialogCouturier.firstName} {dialogCouturier.lastName}
                             </DialogTitle>
                           </DialogHeader>
                           <div className="space-y-5 pt-2">
                             <div>
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3 flex items-center gap-2">
                                 <User size={14} /> Identité
                               </p>
                               <div className="grid grid-cols-2 gap-3">
@@ -1892,7 +1892,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div>
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3 flex items-center gap-2">
                                 <Building2 size={14} /> Entreprise
                               </p>
                               <div className="grid grid-cols-2 gap-3">
@@ -1924,7 +1924,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div>
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3 flex items-center gap-2">
                                 <Phone size={14} /> Contact & Profil
                               </p>
                               <div className="grid grid-cols-2 gap-3">
@@ -1953,7 +1953,7 @@ export default function AdminDashboard() {
 
                             <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
                               <Button variant="outline" size="sm" onClick={closeCouturierDialog} data-testid="button-cancel-edit">Annuler</Button>
-                              <Button size="sm" className="bg-[#722F37] font-bold" onClick={saveCouturierEdit} data-testid="button-save-couturier">
+                              <Button size="sm" className="bg-[#601B28] font-bold" onClick={saveCouturierEdit} data-testid="button-save-couturier">
                                 <CheckCircle size={14} className="mr-1" /> Enregistrer
                               </Button>
                             </div>
@@ -2065,7 +2065,7 @@ export default function AdminDashboard() {
                             className={cn(
                               "px-3 py-1.5 text-xs font-medium transition-colors",
                               usersRoleFilter === opt.value
-                                ? "bg-[#722F37] text-white"
+                                ? "bg-[#601B28] text-white"
                                 : "bg-white text-gray-600 hover:bg-gray-50"
                             )}
                             data-testid={`filter-role-${opt.value}`}
@@ -2089,7 +2089,7 @@ export default function AdminDashboard() {
                             className={cn(
                               "px-3 py-1.5 text-xs font-medium transition-colors",
                               usersStatusFilter === opt.value
-                                ? "bg-[#722F37] text-white"
+                                ? "bg-[#601B28] text-white"
                                 : "bg-white text-gray-600 hover:bg-gray-50"
                             )}
                             data-testid={`filter-status-${opt.value}`}
@@ -2104,7 +2104,7 @@ export default function AdminDashboard() {
 
                   {usersLoading ? (
                     <div className="flex items-center justify-center py-12">
-                      <div className="w-8 h-8 border-4 border-[#722F37] border-t-transparent rounded-full animate-spin" />
+                      <div className="w-8 h-8 border-4 border-[#601B28] border-t-transparent rounded-full animate-spin" />
                     </div>
                   ) : filteredUsers.length === 0 ? (
                     <Card>
@@ -2213,7 +2213,7 @@ export default function AdminDashboard() {
                   <Dialog open={showAddArtisan} onOpenChange={setShowAddArtisan}>
                     <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" data-testid="dialog-add-artisan">
                       <DialogHeader>
-                        <DialogTitle className="text-lg font-bold text-[#722F37]">Ajouter un artisan</DialogTitle>
+                        <DialogTitle className="text-lg font-bold text-[#601B28]">Ajouter un artisan</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4 py-2">
                         <div className="grid grid-cols-2 gap-3">
@@ -2316,13 +2316,13 @@ export default function AdminDashboard() {
                           <p className="font-bold text-gray-700">Détails du plan {newArtisan.subscriptionPlan} :</p>
                           {newArtisan.subscriptionPlan === "Starter" ? (
                             <>
-                              <p>Commission artisan : <span className="font-bold text-[#722F37]">15%</span></p>
+                              <p>Commission artisan : <span className="font-bold text-[#601B28]">15%</span></p>
                               <p>Frais de service client : <span className="font-bold">10%</span></p>
                               <p>Outil Mesures : <span className="font-bold">10 fiches max</span></p>
                             </>
                           ) : (
                             <>
-                              <p>Abonnement : <span className="font-bold text-[#722F37]">{settingsSubscriptionPrice}€/mois</span></p>
+                              <p>Abonnement : <span className="font-bold text-[#601B28]">{settingsSubscriptionPrice}€/mois</span></p>
                               <p>Commission artisan : <span className="font-bold text-green-600">0%</span></p>
                               <p>Frais de service client : <span className="font-bold">10%</span></p>
                               <p>Outil Mesures : <span className="font-bold text-green-600">Illimité</span></p>
@@ -2337,7 +2337,7 @@ export default function AdminDashboard() {
                       <DialogFooter className="gap-2">
                         <Button variant="outline" onClick={() => setShowAddArtisan(false)} data-testid="button-cancel-add-artisan">Annuler</Button>
                         <Button
-                          className="bg-[#722F37] hover:bg-[#5a252c] text-white font-bold"
+                          className="bg-[#601B28] hover:bg-[#4E1522] text-white font-bold"
                           disabled={!newArtisan.firstName || !newArtisan.lastName || !newArtisan.specialty || !newArtisan.city || createArtisanMutation.isPending}
                           onClick={() => {
                             createArtisanMutation.mutate({
@@ -2363,7 +2363,7 @@ export default function AdminDashboard() {
                         <Badge className="bg-blue-50 text-blue-700 border-none px-3 py-1" data-testid="badge-starter-artisans">{artisans.filter(a => a.subscriptionPlan === "Starter").length} Starter</Badge>
                       </div>
                       <div className="flex gap-2 items-center flex-wrap">
-                        <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white font-bold text-xs" onClick={() => setShowAddArtisan(true)} data-testid="button-add-artisan">
+                        <Button size="sm" className="bg-[#601B28] hover:bg-[#4E1522] text-white font-bold text-xs" onClick={() => setShowAddArtisan(true)} data-testid="button-add-artisan">
                           <PlusCircle size={14} className="mr-1" /> Ajouter un artisan
                         </Button>
                         <div className="relative">
@@ -2391,7 +2391,7 @@ export default function AdminDashboard() {
                             <tr key={a.id} className="hover:bg-gray-50/50 transition-colors" data-testid={`row-artisan-${a.id}`}>
                               <td className="px-5 py-3">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-[#722F37]/5 flex items-center justify-center text-[#722F37] font-bold text-xs flex-shrink-0">{a.name[0]}</div>
+                                  <div className="w-8 h-8 rounded-full bg-[#601B28]/5 flex items-center justify-center text-[#601B28] font-bold text-xs flex-shrink-0">{a.name[0]}</div>
                                   <span className="text-sm font-semibold">{a.name}</span>
                                 </div>
                               </td>
@@ -2417,7 +2417,7 @@ export default function AdminDashboard() {
                                     <Eye size={14} className="mr-1" /> Dossier
                                   </Button>
                                   {a.status !== "Vérifié" && (
-                                    <Button size="sm" className="bg-[#722F37] h-8 text-[11px] font-bold" onClick={() => approveArtisan(a.id)} data-testid={`button-approve-${a.id}`}>
+                                    <Button size="sm" className="bg-[#601B28] h-8 text-[11px] font-bold" onClick={() => approveArtisan(a.id)} data-testid={`button-approve-${a.id}`}>
                                       <CheckCircle size={14} className="mr-1" /> Approuver
                                     </Button>
                                   )}
@@ -2449,7 +2449,7 @@ export default function AdminDashboard() {
                         <>
                           <DialogHeader>
                             <DialogTitle className="font-serif text-lg flex items-center gap-3" data-testid="text-artisan-dossier-name">
-                              <div className="w-10 h-10 rounded-full bg-[#722F37]/10 flex items-center justify-center text-[#722F37] font-bold flex-shrink-0">{dossierArtisan.firstName[0]}{dossierArtisan.lastName[0]}</div>
+                              <div className="w-10 h-10 rounded-full bg-[#601B28]/10 flex items-center justify-center text-[#601B28] font-bold flex-shrink-0">{dossierArtisan.firstName[0]}{dossierArtisan.lastName[0]}</div>
                               {dossierArtisan.firstName} {dossierArtisan.lastName}
                             </DialogTitle>
                           </DialogHeader>
@@ -2463,7 +2463,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="bg-gray-50 rounded-lg p-4 space-y-1">
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3 flex items-center gap-2">
                                 <User size={14} /> Carte d'identité
                               </p>
                               <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-artisan-identity">
@@ -2495,7 +2495,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="bg-gray-50 rounded-lg p-4 space-y-1">
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3 flex items-center gap-2">
                                 <Building2 size={14} /> Informations Entreprise
                               </p>
                               <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-artisan-business">
@@ -2531,7 +2531,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="bg-gray-50 rounded-lg p-4 space-y-1">
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3 flex items-center gap-2">
                                 <Phone size={14} /> Contact & Profil
                               </p>
                               <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-artisan-contact">
@@ -2559,7 +2559,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="bg-gray-50 rounded-lg p-4 space-y-1">
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3 flex items-center gap-2">
                                 <CreditCard size={14} /> Abonnement
                               </p>
                               <div className="grid grid-cols-2 gap-x-6 gap-y-2" data-testid="grid-artisan-subscription">
@@ -2573,7 +2573,7 @@ export default function AdminDashboard() {
                                 </div>
                                 <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
                                   <span className="text-xs text-gray-500">Commission artisan</span>
-                                  <span className={cn("text-sm font-semibold", dossierArtisan.subscriptionPlan === "Pro" ? "text-green-600" : "text-[#722F37]")}>{dossierArtisan.subscriptionPlan === "Pro" ? "0%" : "15%"}</span>
+                                  <span className={cn("text-sm font-semibold", dossierArtisan.subscriptionPlan === "Pro" ? "text-green-600" : "text-[#601B28]")}>{dossierArtisan.subscriptionPlan === "Pro" ? "0%" : "15%"}</span>
                                 </div>
                                 <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
                                   <span className="text-xs text-gray-500">Frais service client</span>
@@ -2606,13 +2606,13 @@ export default function AdminDashboard() {
                         <>
                           <DialogHeader>
                             <DialogTitle className="font-serif text-lg flex items-center gap-3" data-testid="text-artisan-edit-title">
-                              <Pencil size={20} className="text-[#722F37]" />
+                              <Pencil size={20} className="text-[#601B28]" />
                               Éditer - {dossierArtisan.firstName} {dossierArtisan.lastName}
                             </DialogTitle>
                           </DialogHeader>
                           <div className="space-y-5 pt-2">
                             <div>
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3 flex items-center gap-2">
                                 <User size={14} /> Identité
                               </p>
                               <div className="grid grid-cols-2 gap-3">
@@ -2644,7 +2644,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div>
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3 flex items-center gap-2">
                                 <Building2 size={14} /> Entreprise
                               </p>
                               <div className="grid grid-cols-2 gap-3">
@@ -2676,7 +2676,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div>
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3 flex items-center gap-2">
                                 <Phone size={14} /> Contact & Profil
                               </p>
                               <div className="grid grid-cols-2 gap-3">
@@ -2704,7 +2704,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div>
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#722F37] mb-3 flex items-center gap-2">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3 flex items-center gap-2">
                                 <CreditCard size={14} /> Abonnement
                               </p>
                               <div className="grid grid-cols-2 gap-3">
@@ -2731,12 +2731,12 @@ export default function AdminDashboard() {
                                 <p className="font-bold text-gray-700">Détails du plan {artisanEditForm.subscriptionPlan || "Starter"} :</p>
                                 {(artisanEditForm.subscriptionPlan || "Starter") === "Starter" ? (
                                   <>
-                                    <p>Commission artisan : <span className="font-bold text-[#722F37]">15%</span> | Frais client : <span className="font-bold">10%</span></p>
+                                    <p>Commission artisan : <span className="font-bold text-[#601B28]">15%</span> | Frais client : <span className="font-bold">10%</span></p>
                                     <p>Mesures : <span className="font-bold">10 fiches max</span></p>
                                   </>
                                 ) : (
                                   <>
-                                    <p>Abonnement : <span className="font-bold text-[#722F37]">{settingsSubscriptionPrice}€/mois</span></p>
+                                    <p>Abonnement : <span className="font-bold text-[#601B28]">{settingsSubscriptionPrice}€/mois</span></p>
                                     <p>Commission artisan : <span className="font-bold text-green-600">0%</span> | Frais client : <span className="font-bold">10%</span></p>
                                     <p>Mesures : <span className="font-bold text-green-600">Illimité</span></p>
                                   </>
@@ -2746,7 +2746,7 @@ export default function AdminDashboard() {
 
                             <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
                               <Button variant="outline" size="sm" onClick={closeArtisanDossier} data-testid="button-artisan-cancel-edit">Annuler</Button>
-                              <Button size="sm" className="bg-[#722F37] font-bold" onClick={saveArtisanEdit} data-testid="button-save-artisan-dossier">
+                              <Button size="sm" className="bg-[#601B28] font-bold" onClick={saveArtisanEdit} data-testid="button-save-artisan-dossier">
                                 <CheckCircle size={14} className="mr-1" /> Enregistrer
                               </Button>
                             </div>
@@ -2767,7 +2767,7 @@ export default function AdminDashboard() {
                       <p className="text-gray-500 mt-1 text-sm">Modération des évaluations laissées sur les artisans</p>
                     </div>
                     <div className="flex gap-3 flex-wrap">
-                      <Badge className="bg-[#722F37]/5 text-[#722F37] border-none px-3 py-1">{adminReviews.length} avis</Badge>
+                      <Badge className="bg-[#601B28]/5 text-[#601B28] border-none px-3 py-1">{adminReviews.length} avis</Badge>
                       <Badge className="bg-amber-50 text-amber-700 border-none px-3 py-1">{adminReviews.filter(r => r.rating <= 2).length} négatifs</Badge>
                     </div>
                   </div>
@@ -2910,7 +2910,7 @@ export default function AdminDashboard() {
                       <div className="p-5 border-b border-gray-50 flex items-center justify-between gap-4 flex-wrap">
                         <CardTitle className="text-base font-serif">Détail par artisan</CardTitle>
                         <div className="flex gap-2 flex-wrap">
-                          <Badge className="bg-[#722F37]/5 text-[#722F37] border-none px-3 py-1">{artisans.length} artisans</Badge>
+                          <Badge className="bg-[#601B28]/5 text-[#601B28] border-none px-3 py-1">{artisans.length} artisans</Badge>
                           <Badge className="bg-purple-50 text-purple-700 border-none px-3 py-1">{proArtisans.length} Pro</Badge>
                           <Badge className="bg-gray-50 text-gray-600 border-none px-3 py-1">{starterArtisans.length} Starter</Badge>
                         </div>
@@ -3026,7 +3026,7 @@ export default function AdminDashboard() {
                       <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Gestion du Magazine</h1>
                       <p className="text-gray-500 mt-1 text-sm">Contenu éditorial SEAMLiER</p>
                     </div>
-                    <Button className="bg-[#722F37] font-bold" onClick={() => setShowNewArticle(true)} data-testid="button-new-article">
+                    <Button className="bg-[#601B28] font-bold" onClick={() => setShowNewArticle(true)} data-testid="button-new-article">
                       <PlusCircle size={18} className="mr-2" /> Nouvel Article
                     </Button>
                   </div>
@@ -3043,7 +3043,7 @@ export default function AdminDashboard() {
                         <div>
                           <label className="block text-xs text-gray-500 mb-1.5">Image de couverture</label>
                           <div className="flex items-center gap-3">
-                            <label className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#722F37] hover:bg-[#722F37]/5 transition-colors" data-testid="button-upload-article-image">
+                            <label className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#601B28] hover:bg-[#601B28]/5 transition-colors" data-testid="button-upload-article-image">
                               <Upload className="h-4 w-4 text-gray-400" />
                               <span className="text-sm text-gray-500">Choisir une image</span>
                               <input type="file" accept="image/*" className="hidden" onChange={handleArticleImageChange} />
@@ -3068,7 +3068,7 @@ export default function AdminDashboard() {
                         <Textarea placeholder="Extrait / résumé (affiché sur la liste des articles)" value={newArticleExcerpt} onChange={e => setNewArticleExcerpt(e.target.value)} className="min-h-[60px] text-sm" data-testid="input-article-excerpt" />
                         <div className="flex justify-end gap-3">
                           <Button variant="outline" onClick={() => setShowNewArticle(false)} data-testid="button-cancel-article">Annuler</Button>
-                          <Button className="bg-[#722F37] font-bold" onClick={createArticle} data-testid="button-save-article">Enregistrer</Button>
+                          <Button className="bg-[#601B28] font-bold" onClick={createArticle} data-testid="button-save-article">Enregistrer</Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -3077,7 +3077,7 @@ export default function AdminDashboard() {
                   <Card className="border-none shadow-sm overflow-hidden bg-white">
                     <div className="p-5 border-b border-gray-50 flex items-center justify-between gap-3 flex-wrap">
                       <div className="flex gap-2 flex-wrap">
-                        <Badge className="bg-[#722F37]/5 text-[#722F37] border-none px-3 py-1" data-testid="badge-total-articles">{articles.length} articles</Badge>
+                        <Badge className="bg-[#601B28]/5 text-[#601B28] border-none px-3 py-1" data-testid="badge-total-articles">{articles.length} articles</Badge>
                         <Badge className="bg-green-50 text-green-700 border-none px-3 py-1" data-testid="badge-published-articles">{articles.filter(a => a.status === "Publié").length} publiés</Badge>
                         <Badge className="bg-gray-100 text-gray-600 border-none px-3 py-1" data-testid="badge-draft-articles">{articles.filter(a => a.status === "Brouillon").length} brouillons</Badge>
                       </div>
@@ -3130,7 +3130,7 @@ export default function AdminDashboard() {
                   <Dialog open={!!editingArticleId} onOpenChange={(open) => { if (!open) setEditingArticleId(null); }}>
                     <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" data-testid="dialog-edit-article">
                       <DialogHeader>
-                        <DialogTitle className="text-lg font-bold text-[#722F37]">Modifier l'article</DialogTitle>
+                        <DialogTitle className="text-lg font-bold text-[#601B28]">Modifier l'article</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4 py-2">
                         <Input placeholder="Titre de l'article" value={editArticleTitle} onChange={e => setEditArticleTitle(e.target.value)} className="h-11 font-semibold" data-testid="input-edit-article-title" />
@@ -3138,7 +3138,7 @@ export default function AdminDashboard() {
                         <div>
                           <label className="block text-xs text-gray-500 mb-1.5">Image de couverture</label>
                           <div className="flex items-center gap-3">
-                            <label className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#722F37] hover:bg-[#722F37]/5 transition-colors">
+                            <label className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#601B28] hover:bg-[#601B28]/5 transition-colors">
                               <Upload className="h-4 w-4 text-gray-400" />
                               <span className="text-sm text-gray-500">Changer l'image</span>
                               <input type="file" accept="image/*" className="hidden" onChange={handleEditArticleImageChange} />
@@ -3164,7 +3164,7 @@ export default function AdminDashboard() {
                       </div>
                       <DialogFooter className="gap-2">
                         <Button variant="outline" onClick={() => setEditingArticleId(null)} data-testid="button-cancel-edit-article">Annuler</Button>
-                        <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white font-bold" onClick={saveEditArticle} disabled={!editArticleTitle.trim()} data-testid="button-save-edit-article">Enregistrer</Button>
+                        <Button className="bg-[#601B28] hover:bg-[#4E1522] text-white font-bold" onClick={saveEditArticle} disabled={!editArticleTitle.trim()} data-testid="button-save-edit-article">Enregistrer</Button>
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
@@ -3184,8 +3184,8 @@ export default function AdminDashboard() {
                     <Card className="border-none shadow-sm" data-testid="card-settings-platform">
                       <CardContent className="p-5">
                         <div className="flex items-center gap-2 mb-4">
-                          <div className="w-8 h-8 rounded-md bg-[#722F37]/10 flex items-center justify-center">
-                            <Globe size={16} className="text-[#722F37]" />
+                          <div className="w-8 h-8 rounded-md bg-[#601B28]/10 flex items-center justify-center">
+                            <Globe size={16} className="text-[#601B28]" />
                           </div>
                           <h3 className="font-bold text-sm text-gray-800">Plateforme</h3>
                         </div>
@@ -3267,7 +3267,7 @@ export default function AdminDashboard() {
                               </div>
                               <p className="text-lg font-bold text-gray-900">0€<span className="text-xs font-normal text-gray-500">/mois</span></p>
                               <div className="mt-2 space-y-1 text-xs text-gray-600">
-                                <p>Commission artisan : <span className="font-bold text-[#722F37]">15%</span></p>
+                                <p>Commission artisan : <span className="font-bold text-[#601B28]">15%</span></p>
                                 <p>Frais service client : <span className="font-bold">10%</span></p>
                                 <p>Mesures : <span className="font-bold">10 fiches max</span></p>
                               </div>
@@ -3315,7 +3315,7 @@ export default function AdminDashboard() {
                               <span className="text-sm text-gray-700">{n.label}</span>
                               <button
                                 onClick={() => n.set(!n.val)}
-                                className={cn("w-10 h-5 rounded-full transition-colors relative", n.val ? "bg-[#722F37]" : "bg-gray-300")}
+                                className={cn("w-10 h-5 rounded-full transition-colors relative", n.val ? "bg-[#601B28]" : "bg-gray-300")}
                                 data-testid={n.tid}
                               >
                                 <span className={cn("block w-4 h-4 bg-white rounded-full shadow-sm absolute top-0.5 transition-transform", n.val ? "translate-x-5" : "translate-x-0.5")} />
@@ -3345,7 +3345,7 @@ export default function AdminDashboard() {
                               <span className="text-sm text-gray-700">{s.label}</span>
                               <button
                                 onClick={() => s.set(!s.val)}
-                                className={cn("w-10 h-5 rounded-full transition-colors relative", s.val ? "bg-[#722F37]" : "bg-gray-300")}
+                                className={cn("w-10 h-5 rounded-full transition-colors relative", s.val ? "bg-[#601B28]" : "bg-gray-300")}
                                 data-testid={s.tid}
                               >
                                 <span className={cn("block w-4 h-4 bg-white rounded-full shadow-sm absolute top-0.5 transition-transform", s.val ? "translate-x-5" : "translate-x-0.5")} />
@@ -3363,7 +3363,7 @@ export default function AdminDashboard() {
 
                   <div className="mt-5 flex justify-end">
                     <Button
-                      className="bg-[#722F37] hover:bg-[#5a252c] text-white font-bold text-sm"
+                      className="bg-[#601B28] hover:bg-[#4E1522] text-white font-bold text-sm"
                       disabled={saveSettingsMutation.isPending}
                       onClick={() => {
                         saveSettingsMutation.mutate({

@@ -33,16 +33,16 @@ export function TailorCard({ tailor, linkPrefix = "/tailor" }: TailorCardProps) 
           <div className="flex items-start gap-3">
             <Avatar className="h-12 w-12 border-2 border-white shadow-sm -mt-8 relative z-10">
               <AvatarImage src={tailor.user.profileImageUrl || undefined} alt={fullName} />
-              <AvatarFallback className="bg-[#722F37] text-white text-sm">
+              <AvatarFallback className="bg-[#601B28] text-white text-sm">
                 {initials}
               </AvatarFallback>
             </Avatar>
             
             <div className="flex-1 min-w-0 pt-1">
               <div className="flex items-center gap-1.5">
-                <h3 className="font-semibold text-[#722F37] truncate">{fullName}</h3>
+                <h3 className="font-semibold text-[#601B28] truncate">{fullName}</h3>
                 {tailor.isVerified && (
-                  <BadgeCheck className="h-4 w-4 text-[#722F37] flex-shrink-0" fill="currentColor" />
+                  <BadgeCheck className="h-4 w-4 text-[#601B28] flex-shrink-0" fill="currentColor" />
                 )}
               </div>
               
@@ -78,7 +78,7 @@ export function TailorCard({ tailor, linkPrefix = "/tailor" }: TailorCardProps) 
               )}
             </div>
             
-            <span className="text-[#722F37] text-sm font-medium">Voir le profil</span>
+            <span className="text-[#601B28] text-sm font-medium">Voir le profil</span>
           </div>
         </CardContent>
       </Card>

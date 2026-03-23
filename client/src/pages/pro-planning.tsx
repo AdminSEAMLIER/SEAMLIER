@@ -216,10 +216,10 @@ export default function ProPlanning() {
       <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-              <Calendar className="h-5 w-5 text-[#722F37]" />
+            <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+              <Calendar className="h-5 w-5 text-[#601B28]" />
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]">
               {t("nav.planning")}
             </h1>
           </div>
@@ -242,7 +242,7 @@ export default function ProPlanning() {
               <Button variant="ghost" size="icon" className="text-gray-600" onClick={goToPrevMonth} data-testid="button-prev-month">
                 <ChevronLeft className="h-5 w-5" />
               </Button>
-              <h3 className="font-medium text-[#722F37] capitalize text-sm">{monthLabel}</h3>
+              <h3 className="font-medium text-[#601B28] capitalize text-sm">{monthLabel}</h3>
               <Button variant="ghost" size="icon" className="text-gray-600" onClick={goToNextMonth} data-testid="button-next-month">
                 <ChevronRight className="h-5 w-5" />
               </Button>
@@ -275,9 +275,9 @@ export default function ProPlanning() {
                     onClick={() => setSelectedDate(dateStr)}
                     className={`relative rounded-lg p-1.5 text-center transition-colors min-h-[44px] flex flex-col items-center justify-start ${
                       isSelected
-                        ? "bg-[#722F37] text-white"
+                        ? "bg-[#601B28] text-white"
                         : isToday
-                        ? "bg-[#722F37]/10 text-[#722F37] font-semibold"
+                        ? "bg-[#601B28]/10 text-[#601B28] font-semibold"
                         : "hover:bg-gray-50 text-gray-700"
                     }`}
                     data-testid={`button-day-${dateStr}`}
@@ -323,7 +323,7 @@ export default function ProPlanning() {
             </div>
             <Button
               size="sm"
-              className="bg-[#722F37] hover:bg-[#5a252c] text-white gap-1"
+              className="bg-[#601B28] hover:bg-[#4E1522] text-white gap-1"
               onClick={() => { setIsNewOpen(true); setNewDate(selectedDate); }}
               data-testid="button-new-appointment"
             >
@@ -355,7 +355,7 @@ export default function ProPlanning() {
                   className={`border shadow-sm cursor-pointer transition-colors ${
                     apt.isPast || apt.status === "cancelled"
                       ? "border-gray-100 bg-gray-50/60 opacity-70"
-                      : "border-gray-100 bg-white hover:border-[#722F37]/30 hover:shadow-md"
+                      : "border-gray-100 bg-white hover:border-[#601B28]/30 hover:shadow-md"
                   }`}
                   onClick={() => { setSelectedAppointment(apt); setIsDetailOpen(true); }}
                   data-testid={`card-appointment-${apt.id}`}
@@ -364,7 +364,7 @@ export default function ProPlanning() {
                     <div className="flex gap-4">
                       {/* Heure */}
                       <div className="text-center min-w-[52px]">
-                        <p className={`text-lg font-bold leading-none ${apt.isPast || apt.status === "cancelled" ? "text-gray-400" : "text-[#722F37]"}`}>
+                        <p className={`text-lg font-bold leading-none ${apt.isPast || apt.status === "cancelled" ? "text-gray-400" : "text-[#601B28]"}`}>
                           {apt.time}
                         </p>
                         <p className="text-xs text-gray-400 mt-0.5">{formatDuration(apt.durationMin)}</p>
@@ -396,7 +396,7 @@ export default function ProPlanning() {
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DialogContent className="sm:max-w-md bg-white">
           <DialogHeader>
-            <DialogTitle className="text-[#722F37]">{t("pro.appointmentDetails")}</DialogTitle>
+            <DialogTitle className="text-[#601B28]">{t("pro.appointmentDetails")}</DialogTitle>
           </DialogHeader>
 
           {selectedAppointment && (
@@ -404,7 +404,7 @@ export default function ProPlanning() {
               {/* Résumé */}
               <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
                 <div className="text-center min-w-[60px]">
-                  <p className="text-2xl font-bold text-[#722F37]">{selectedAppointment.time}</p>
+                  <p className="text-2xl font-bold text-[#601B28]">{selectedAppointment.time}</p>
                   <p className="text-xs text-gray-500">{formatDuration(selectedAppointment.durationMin)}</p>
                 </div>
                 <div className="flex-1 border-l border-gray-200 pl-4">
@@ -559,7 +559,7 @@ export default function ProPlanning() {
               {fr ? "Annuler" : "Cancel"}
             </Button>
             <Button
-              className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+              className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
               disabled={!newDate || !newTime || !newClientId || createMutation.isPending}
               onClick={() => createMutation.mutate()}
               data-testid="button-confirm-new-rdv"

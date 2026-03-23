@@ -35,7 +35,7 @@ interface FullStats {
 }
 
 const PIE_COLORS = [
-  "#722F37",
+  "#601B28",
   "#a85060",
   "#c47c85",
   "#d4a0a6",
@@ -57,8 +57,8 @@ function StatCard({
   label,
   value,
   sub,
-  color = "text-[#722F37]",
-  bg = "bg-[#722F37]/10",
+  color = "text-[#601B28]",
+  bg = "bg-[#601B28]/10",
 }: {
   icon: any;
   label: string;
@@ -86,7 +86,7 @@ const CustomBarTooltip = ({ active, payload, label }: any) => {
     return (
       <div className="bg-white border border-gray-200 rounded-lg shadow-md px-3 py-2 text-sm">
         <p className="font-semibold text-gray-700 mb-1">{label}</p>
-        <p className="text-[#722F37] font-bold">{fmt(payload[0].value)}</p>
+        <p className="text-[#601B28] font-bold">{fmt(payload[0].value)}</p>
       </div>
     );
   }
@@ -98,7 +98,7 @@ const CustomPieTooltip = ({ active, payload }: any) => {
     return (
       <div className="bg-white border border-gray-200 rounded-lg shadow-md px-3 py-2 text-sm">
         <p className="font-semibold text-gray-700">{payload[0].name}</p>
-        <p className="text-[#722F37]">{payload[0].value} projet{payload[0].value > 1 ? "s" : ""}</p>
+        <p className="text-[#601B28]">{payload[0].value} projet{payload[0].value > 1 ? "s" : ""}</p>
       </div>
     );
   }
@@ -124,7 +124,7 @@ export default function ProStatistiques() {
   return (
     <div className="min-h-screen pb-24 bg-[#faf9f8]">
       {/* Header */}
-      <div className="bg-[#722F37] text-white px-4 lg:px-8 pt-6 pb-10">
+      <div className="bg-[#601B28] text-white px-4 lg:px-8 pt-6 pb-10">
         <div className="max-w-3xl mx-auto">
           <Link href="/dashboard-pro">
             <button className="flex items-center gap-1.5 text-white/70 text-sm mb-4 hover:text-white transition-colors">
@@ -148,7 +148,7 @@ export default function ProStatistiques() {
       <div className="max-w-3xl mx-auto px-4 lg:px-8 -mt-4">
         {isLoading ? (
           <div className="flex justify-center py-20">
-            <Loader2 className="h-8 w-8 text-[#722F37] animate-spin" />
+            <Loader2 className="h-8 w-8 text-[#601B28] animate-spin" />
           </div>
         ) : stats ? (
           <>
@@ -159,8 +159,8 @@ export default function ProStatistiques() {
                 label="CA du mois en cours"
                 value={fmt(stats.monthlyRevenue)}
                 sub="Projets complétés ce mois"
-                color="text-[#722F37]"
-                bg="bg-[#722F37]/10"
+                color="text-[#601B28]"
+                bg="bg-[#601B28]/10"
               />
               <StatCard
                 icon={ShoppingBag}
@@ -191,7 +191,7 @@ export default function ProStatistiques() {
             {/* Graphique barres : CA 6 derniers mois */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-5">
               <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="h-5 w-5 text-[#722F37]" />
+                <TrendingUp className="h-5 w-5 text-[#601B28]" />
                 <h2 className="font-semibold text-gray-900 text-sm">
                   Évolution du CA — 6 derniers mois
                 </h2>
@@ -219,7 +219,7 @@ export default function ProStatistiques() {
                     <Tooltip content={<CustomBarTooltip />} cursor={{ fill: "#f9f4f5" }} />
                     <Bar
                       dataKey="total"
-                      fill="#722F37"
+                      fill="#601B28"
                       radius={[6, 6, 0, 0]}
                       maxBarSize={48}
                     />
@@ -236,7 +236,7 @@ export default function ProStatistiques() {
             {/* Graphique camembert : types de vêtements */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-6">
               <div className="flex items-center gap-2 mb-4">
-                <ShoppingBag className="h-5 w-5 text-[#722F37]" />
+                <ShoppingBag className="h-5 w-5 text-[#601B28]" />
                 <h2 className="font-semibold text-gray-900 text-sm">
                   Répartition des vêtements confectionnés
                 </h2>

@@ -103,7 +103,7 @@ export default function SuiviProjet() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <Loader2 className="h-8 w-8 animate-spin text-[#722F37]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#601B28]" />
       </div>
     );
   }
@@ -115,7 +115,7 @@ export default function SuiviProjet() {
         <h2 className="font-serif text-2xl text-gray-700 mb-2">Projet introuvable</h2>
         <p className="text-gray-400 mb-6">Ce projet n'existe pas ou vous n'y avez pas accès.</p>
         <Link href="/mes-projets">
-          <Button className="bg-[#722F37] text-white">Voir mes projets</Button>
+          <Button className="bg-[#601B28] text-white">Voir mes projets</Button>
         </Link>
       </div>
     );
@@ -170,7 +170,7 @@ export default function SuiviProjet() {
           {(project as any).clientDeadline && (
             <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-1">
-                <Calendar className="h-4 w-4 text-[#722F37]" />
+                <Calendar className="h-4 w-4 text-[#601B28]" />
                 <span className="text-xs text-gray-500 font-medium">Votre deadline</span>
               </div>
               <p className="text-sm font-semibold text-gray-900">
@@ -181,7 +181,7 @@ export default function SuiviProjet() {
           {!(project as any).clientDeadline && project.deadline && (
             <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-1">
-                <Calendar className="h-4 w-4 text-[#722F37]" />
+                <Calendar className="h-4 w-4 text-[#601B28]" />
                 <span className="text-xs text-gray-500 font-medium">Livraison prévue</span>
               </div>
               <p className="text-sm font-semibold text-gray-900">
@@ -203,7 +203,7 @@ export default function SuiviProjet() {
           {(project.amount != null && project.amount > 0) && (
             <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-1">
-                <Euro className="h-4 w-4 text-[#722F37]" />
+                <Euro className="h-4 w-4 text-[#601B28]" />
                 <span className="text-xs text-gray-500 font-medium">Montant</span>
               </div>
               <p className="text-sm font-semibold text-gray-900">{project.amount}€</p>
@@ -211,7 +211,7 @@ export default function SuiviProjet() {
           )}
           <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-1">
-              <User className="h-4 w-4 text-[#722F37]" />
+              <User className="h-4 w-4 text-[#601B28]" />
               <span className="text-xs text-gray-500 font-medium">Artisan</span>
             </div>
             <p className="text-sm font-semibold text-gray-900 truncate">{tailorName || "—"}</p>
@@ -219,7 +219,7 @@ export default function SuiviProjet() {
           {project.clothingType && (
             <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-1">
-                <Scissors className="h-4 w-4 text-[#722F37]" />
+                <Scissors className="h-4 w-4 text-[#601B28]" />
                 <span className="text-xs text-gray-500 font-medium">Type</span>
               </div>
               <p className="text-sm font-semibold text-gray-900">{project.clothingType}</p>
@@ -229,8 +229,8 @@ export default function SuiviProjet() {
 
         {/* Notes artisan */}
         {project.notes && (
-          <div className="bg-[#722F37]/5 border border-[#722F37]/20 rounded-xl p-4">
-            <p className="text-xs text-[#722F37] font-semibold mb-1.5">📝 Note de l'artisan</p>
+          <div className="bg-[#601B28]/5 border border-[#601B28]/20 rounded-xl p-4">
+            <p className="text-xs text-[#601B28] font-semibold mb-1.5">📝 Note de l'artisan</p>
             <p className="text-sm text-gray-700 leading-relaxed">{project.notes}</p>
           </div>
         )}
@@ -239,7 +239,7 @@ export default function SuiviProjet() {
         {project.status !== "pending" && project.status !== "quoted" && project.status !== "cancelled" && (
           <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
             <h2 className="font-semibold text-gray-900 mb-5 flex items-center gap-2">
-              <Package className="h-4 w-4 text-[#722F37]" />
+              <Package className="h-4 w-4 text-[#601B28]" />
               Avancement de la confection
             </h2>
             <div className="space-y-4">
@@ -250,19 +250,19 @@ export default function SuiviProjet() {
                 return (
                   <div key={step.key} className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm
-                      ${isDone ? "bg-green-100 text-green-600" : isCurrent ? "bg-[#722F37] text-white" : "bg-gray-100 text-gray-400"}`}>
+                      ${isDone ? "bg-green-100 text-green-600" : isCurrent ? "bg-[#601B28] text-white" : "bg-gray-100 text-gray-400"}`}>
                       {isDone ? <CheckCircle2 className="h-4 w-4" /> : isCurrent ? <Clock className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
                     </div>
                     <div className="flex-1">
-                      <p className={`text-sm font-medium ${isDone ? "text-green-700" : isCurrent ? "text-[#722F37]" : "text-gray-400"}`}>
+                      <p className={`text-sm font-medium ${isDone ? "text-green-700" : isCurrent ? "text-[#601B28]" : "text-gray-400"}`}>
                         {step.icon} {step.label}
                       </p>
                       {isCurrent && (
-                        <p className="text-xs text-[#722F37]/70 mt-0.5">Étape en cours</p>
+                        <p className="text-xs text-[#601B28]/70 mt-0.5">Étape en cours</p>
                       )}
                     </div>
                     {isCurrent && (
-                      <span className="text-[10px] font-semibold bg-[#722F37] text-white px-2 py-0.5 rounded-full">En cours</span>
+                      <span className="text-[10px] font-semibold bg-[#601B28] text-white px-2 py-0.5 rounded-full">En cours</span>
                     )}
                     {isDone && (
                       <span className="text-[10px] font-semibold text-green-600">✓</span>
@@ -308,7 +308,7 @@ export default function SuiviProjet() {
                 {canReview && (
                   <Button
                     variant="outline"
-                    className="w-full border-[#722F37] text-[#722F37] hover:bg-[#722F37] hover:text-white h-12"
+                    className="w-full border-[#601B28] text-[#601B28] hover:bg-[#601B28] hover:text-white h-12"
                     data-testid="button-leave-review"
                     onClick={() => setShowReviewModal(true)}
                   >
@@ -333,7 +333,7 @@ export default function SuiviProjet() {
       <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-serif text-[#722F37]">Confirmer la réception</DialogTitle>
+            <DialogTitle className="font-serif text-[#601B28]">Confirmer la réception</DialogTitle>
           </DialogHeader>
           <p className="text-gray-600 text-sm leading-relaxed">
             En confirmant, vous attestez avoir bien reçu votre commande. Le paiement sera libéré à l'artisan. <strong>Cette action est irréversible.</strong>
@@ -356,7 +356,7 @@ export default function SuiviProjet() {
       <Dialog open={showReviewModal} onOpenChange={setShowReviewModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-serif text-[#722F37]">Laisser un avis</DialogTitle>
+            <DialogTitle className="font-serif text-[#601B28]">Laisser un avis</DialogTitle>
           </DialogHeader>
           <p className="text-gray-500 text-sm">Votre avis sera publié après validation par l'équipe SEAMLIER.</p>
           <div className="flex gap-2 justify-center my-2">
@@ -381,7 +381,7 @@ export default function SuiviProjet() {
           <div className="flex gap-3 mt-1">
             <Button variant="outline" className="flex-1" onClick={() => setShowReviewModal(false)}>Annuler</Button>
             <Button
-              className="flex-1 bg-[#722F37] hover:bg-[#5e2530] text-white"
+              className="flex-1 bg-[#601B28] hover:bg-[#5e2530] text-white"
               onClick={() => reviewMutation.mutate()}
               disabled={reviewMutation.isPending || !reviewComment.trim()}
               data-testid="button-submit-review"

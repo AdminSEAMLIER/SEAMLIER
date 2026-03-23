@@ -17,7 +17,7 @@ export default function MagazineDetail() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <Loader2 className="h-8 w-8 animate-spin text-[#722F37]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#601B28]" />
       </div>
     );
   }
@@ -27,7 +27,7 @@ export default function MagazineDetail() {
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-white">
         <p className="mb-4 text-gray-500">Article introuvable</p>
         <Link href="/magazine">
-          <Button className="bg-[#722F37]" data-testid="button-back-magazine">Retour au magazine</Button>
+          <Button className="bg-[#601B28]" data-testid="button-back-magazine">Retour au magazine</Button>
         </Link>
       </div>
     );
@@ -37,14 +37,14 @@ export default function MagazineDetail() {
     <div className="min-h-screen bg-white pb-24">
       <article className="max-w-3xl mx-auto px-4 pt-8">
         <Link href="/magazine">
-          <Button variant="ghost" className="mb-8 text-gray-500 hover:text-[#722F37] pl-0" data-testid="button-back">
+          <Button variant="ghost" className="mb-8 text-gray-500 hover:text-[#601B28] pl-0" data-testid="button-back">
             <ArrowLeft className="mr-2 h-4 w-4" /> Retour au magazine
           </Button>
         </Link>
 
         <header className="mb-10">
           {article.category && (
-            <Badge variant="outline" className="text-[10px] text-[#722F37] border-[#722F37]/30 mb-4">
+            <Badge variant="outline" className="text-[10px] text-[#601B28] border-[#601B28]/30 mb-4">
               {article.category}
             </Badge>
           )}
@@ -81,7 +81,7 @@ export default function MagazineDetail() {
         )}
 
         {article.excerpt && (
-          <p className="text-xl font-medium text-gray-700 mb-8 italic border-l-4 border-[#722F37] pl-6" data-testid="text-article-excerpt">
+          <p className="text-xl font-medium text-gray-700 mb-8 italic border-l-4 border-[#601B28] pl-6" data-testid="text-article-excerpt">
             {article.excerpt}
           </p>
         )}

@@ -65,10 +65,10 @@ export default function ModifierMotDePasse() {
             </Button>
           </Link>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-              <Lock className="h-5 w-5 text-[#722F37]" />
+            <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+              <Lock className="h-5 w-5 text-[#601B28]" />
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]">
               Modifier le mot de passe
             </h1>
           </div>
@@ -81,7 +81,7 @@ export default function ModifierMotDePasse() {
       <div className="max-w-2xl mx-auto px-4 lg:px-6 py-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg text-[#722F37]">Changer votre mot de passe</CardTitle>
+            <CardTitle className="text-lg text-[#601B28]">Changer votre mot de passe</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -171,7 +171,7 @@ export default function ModifierMotDePasse() {
                 </Link>
                 <Button 
                   type="submit"
-                  className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+                  className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
                   disabled={changeMutation.isPending}
                   data-testid="button-save-password"
                 >

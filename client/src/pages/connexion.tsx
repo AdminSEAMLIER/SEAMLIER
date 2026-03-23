@@ -86,11 +86,11 @@ export default function Connexion() {
       <header className="bg-white border-b border-zinc-100 px-4 py-4">
         <div className="max-w-md mx-auto flex items-center justify-between">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="hover:text-[#722F37]" data-testid="button-back">
+            <Button variant="ghost" size="icon" className="hover:text-[#601B28]" data-testid="button-back">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
-          <Logo textClassName="text-xl text-[#722F37]" />
+          <Logo textClassName="text-xl text-[#601B28]" />
           <LanguageToggle />
         </div>
       </header>
@@ -98,7 +98,7 @@ export default function Connexion() {
       <main className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <h1 className="font-serif text-2xl text-[#722F37] mb-2" data-testid="text-title">
+            <h1 className="font-serif text-2xl text-[#601B28] mb-2" data-testid="text-title">
               {t('auth.login')}
             </h1>
             <p className="text-zinc-500 text-sm" data-testid="text-subtitle">
@@ -121,7 +121,7 @@ export default function Connexion() {
                       placeholder={t('auth.emailPlaceholder')}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 h-11 border-zinc-200 focus:border-[#722F37] focus:ring-[#722F37]"
+                      className="pl-10 h-11 border-zinc-200 focus:border-[#601B28] focus:ring-[#601B28]"
                       data-testid="input-email"
                     />
                   </div>
@@ -139,7 +139,7 @@ export default function Connexion() {
                       placeholder={t('auth.passwordPlaceholder')}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 pr-10 h-11 border-zinc-200 focus:border-[#722F37] focus:ring-[#722F37]"
+                      className="pl-10 pr-10 h-11 border-zinc-200 focus:border-[#601B28] focus:ring-[#601B28]"
                       data-testid="input-password"
                     />
                     <button
@@ -154,7 +154,7 @@ export default function Connexion() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-[#722F37] hover:bg-[#5a1f25] text-white h-12 text-base font-medium transition-all shadow-md"
+                  className="w-full bg-[#601B28] hover:bg-[#5a1f25] text-white h-12 text-base font-medium transition-all shadow-md"
                   disabled={isLoading}
                   data-testid="button-submit"
                 >
@@ -175,20 +175,20 @@ export default function Connexion() {
 
       <footer className="py-8 text-center space-y-4">
         <Link href="/mot-de-passe-oublie">
-          <span className="text-[#722F37] text-sm hover:underline cursor-pointer" data-testid="link-forgot-password">
+          <span className="text-[#601B28] text-sm hover:underline cursor-pointer" data-testid="link-forgot-password">
             Mot de passe oublié ?
           </span>
         </Link>
         <p className="text-zinc-500 text-sm">
           {t('auth.noAccount')}{" "}
           <Link href="/inscription">
-            <span className="text-[#722F37] font-semibold hover:underline cursor-pointer" data-testid="link-signup">
+            <span className="text-[#601B28] font-semibold hover:underline cursor-pointer" data-testid="link-signup">
               {t('auth.createAccount')}
             </span>
           </Link>
         </p>
         <Link href="/">
-          <span className="text-xs text-zinc-400 hover:text-[#722F37] uppercase tracking-widest cursor-pointer transition-colors" data-testid="link-home">
+          <span className="text-xs text-zinc-400 hover:text-[#601B28] uppercase tracking-widest cursor-pointer transition-colors" data-testid="link-home">
             {t('common.backToHome')}
           </span>
         </Link>

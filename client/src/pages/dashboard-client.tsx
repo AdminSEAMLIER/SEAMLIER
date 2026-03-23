@@ -83,7 +83,7 @@ export default function DashboardClient() {
       label: "Trouver un artisan",
       sublabel: "Découvrez nos couturiers",
       href: "/decouverte",
-      color: "bg-[#722F37]",
+      color: "bg-[#601B28]",
     },
     {
       icon: CalendarCheck,
@@ -113,7 +113,7 @@ export default function DashboardClient() {
   return (
     <div className="min-h-screen pb-24 bg-[#faf9f8]">
       {/* Hero greeting */}
-      <div className="bg-[#722F37] text-white px-4 lg:px-8 pt-8 pb-12">
+      <div className="bg-[#601B28] text-white px-4 lg:px-8 pt-8 pb-12">
         <div className="max-w-3xl mx-auto">
           <p className="text-white/70 text-sm mb-1">Bienvenue sur SEAMLIER</p>
           <h1 className="font-serif text-2xl lg:text-3xl font-medium">
@@ -123,7 +123,7 @@ export default function DashboardClient() {
             Trouvez le couturier idéal pour votre prochain projet.
           </p>
           <Link href="/decouverte">
-            <Button className="mt-5 bg-white text-[#722F37] hover:bg-white/90 font-semibold h-10 px-5 text-sm">
+            <Button className="mt-5 bg-white text-[#601B28] hover:bg-white/90 font-semibold h-10 px-5 text-sm">
               <Compass className="h-4 w-4 mr-2" />
               Explorer les artisans
             </Button>
@@ -138,7 +138,7 @@ export default function DashboardClient() {
             const Icon = action.icon;
             return (
               <Link key={action.href} href={action.href}>
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:border-[#722F37]/30 hover:shadow-md transition-all cursor-pointer relative overflow-hidden">
+                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:border-[#601B28]/30 hover:shadow-md transition-all cursor-pointer relative overflow-hidden">
                   {action.badge && action.badge > 0 ? (
                     <span className="absolute top-3 right-3 min-w-[20px] h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
                       {action.badge > 9 ? "9+" : action.badge}
@@ -176,12 +176,12 @@ export default function DashboardClient() {
         {/* Featured tailors */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-serif text-xl text-[#722F37] flex items-center gap-2">
+            <h2 className="font-serif text-xl text-[#601B28] flex items-center gap-2">
               <Star className="h-5 w-5" />
               Nos artisans
             </h2>
             <Link href="/decouverte">
-              <button className="text-[#722F37] text-sm font-medium flex items-center gap-1 hover:underline">
+              <button className="text-[#601B28] text-sm font-medium flex items-center gap-1 hover:underline">
                 Voir tous <ChevronRight className="h-4 w-4" />
               </button>
             </Link>
@@ -209,12 +209,12 @@ export default function DashboardClient() {
         {projects.filter(p => ["terminé", "completed", "cancelled"].includes(p.status)).length > 0 && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-serif text-xl text-[#722F37] flex items-center gap-2">
+              <h2 className="font-serif text-xl text-[#601B28] flex items-center gap-2">
                 <History className="h-5 w-5" />
                 Historique
               </h2>
               <Link href="/mes-projets">
-                <button className="text-[#722F37] text-sm font-medium flex items-center gap-1 hover:underline">
+                <button className="text-[#601B28] text-sm font-medium flex items-center gap-1 hover:underline">
                   Tout voir <ChevronRight className="h-4 w-4" />
                 </button>
               </Link>
@@ -228,7 +228,7 @@ export default function DashboardClient() {
                   const isCancelled = p.status === "cancelled";
                   return (
                     <Link key={p.id} href={`/suivi-projet/${p.id}`}>
-                      <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3 hover:border-[#722F37]/20 hover:shadow-md transition-all cursor-pointer">
+                      <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3 hover:border-[#601B28]/20 hover:shadow-md transition-all cursor-pointer">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isCompleted ? "bg-green-50" : "bg-red-50"}`}>
                           {isCompleted ? <CheckCircle2 className="h-4 w-4 text-green-600" /> : <XCircle className="h-4 w-4 text-red-400" />}
                         </div>
@@ -247,7 +247,7 @@ export default function DashboardClient() {
                           </div>
                         </div>
                         {(p as any).amountArtisan ? (
-                          <span className="text-sm font-bold text-[#722F37] flex items-center gap-0.5 shrink-0">
+                          <span className="text-sm font-bold text-[#601B28] flex items-center gap-0.5 shrink-0">
                             <Euro className="h-3.5 w-3.5" />{(p as any).amountArtisan}
                           </span>
                         ) : null}
@@ -263,12 +263,12 @@ export default function DashboardClient() {
         {clientEvents.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-serif text-xl text-[#722F37] flex items-center gap-2">
+              <h2 className="font-serif text-xl text-[#601B28] flex items-center gap-2">
                 <PartyPopper className="h-5 w-5" />
                 Mes événements
               </h2>
               <Link href="/evenement/creer">
-                <button className="text-[#722F37] text-sm font-medium flex items-center gap-1 hover:underline">
+                <button className="text-[#601B28] text-sm font-medium flex items-center gap-1 hover:underline">
                   + Créer <ChevronRight className="h-4 w-4" />
                 </button>
               </Link>
@@ -276,9 +276,9 @@ export default function DashboardClient() {
             <div className="space-y-2">
               {clientEvents.slice(0, 3).map((ev: any) => (
                 <Link key={ev.id} href={`/evenement/${ev.id}`} data-testid={`link-event-${ev.id}`}>
-                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3 hover:border-[#722F37]/30 hover:shadow-md transition-all cursor-pointer">
-                    <div className="w-9 h-9 rounded-lg bg-[#722F37]/10 flex items-center justify-center shrink-0">
-                      <PartyPopper className="h-4 w-4 text-[#722F37]" />
+                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3 hover:border-[#601B28]/30 hover:shadow-md transition-all cursor-pointer">
+                    <div className="w-9 h-9 rounded-lg bg-[#601B28]/10 flex items-center justify-center shrink-0">
+                      <PartyPopper className="h-4 w-4 text-[#601B28]" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 text-sm truncate">{ev.name}</p>
@@ -289,7 +289,7 @@ export default function DashboardClient() {
                         <span>{ev.participant_count} participant{ev.participant_count > 1 ? "s" : ""}</span>
                       </div>
                     </div>
-                    <span className="text-xs text-[#722F37] font-medium shrink-0">
+                    <span className="text-xs text-[#601B28] font-medium shrink-0">
                       {ev.tailor_first_name} {ev.tailor_last_name}
                     </span>
                   </div>
@@ -303,15 +303,15 @@ export default function DashboardClient() {
         {clientEvents.length === 0 && (
           <div className="mb-8">
             <Link href="/evenement/creer">
-              <div className="bg-gradient-to-r from-[#722F37]/5 to-[#722F37]/10 border border-[#722F37]/20 rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:from-[#722F37]/10 hover:to-[#722F37]/15 transition-colors">
-                <div className="w-10 h-10 rounded-lg bg-[#722F37] flex items-center justify-center shrink-0">
+              <div className="bg-gradient-to-r from-[#601B28]/5 to-[#601B28]/10 border border-[#601B28]/20 rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:from-[#601B28]/10 hover:to-[#601B28]/15 transition-colors">
+                <div className="w-10 h-10 rounded-lg bg-[#601B28] flex items-center justify-center shrink-0">
                   <PartyPopper className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-[#722F37] text-sm">Organiser un événement collectif</p>
+                  <p className="font-semibold text-[#601B28] text-sm">Organiser un événement collectif</p>
                   <p className="text-gray-500 text-xs mt-0.5">Mariage, EVJF, groupe d'amies — invitez vos proches !</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-[#722F37] shrink-0" />
+                <ChevronRight className="h-4 w-4 text-[#601B28] shrink-0" />
               </div>
             </Link>
           </div>
@@ -320,8 +320,8 @@ export default function DashboardClient() {
         {/* Magazine teaser */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#722F37]/10 flex items-center justify-center">
-              <BookOpen className="h-5 w-5 text-[#722F37]" />
+            <div className="w-10 h-10 rounded-lg bg-[#601B28]/10 flex items-center justify-center">
+              <BookOpen className="h-5 w-5 text-[#601B28]" />
             </div>
             <div>
               <p className="font-semibold text-gray-900 text-sm">Magazine SEAMLIER</p>
@@ -329,7 +329,7 @@ export default function DashboardClient() {
             </div>
           </div>
           <Link href="/magazine">
-            <Button variant="outline" size="sm" className="border-[#722F37] text-[#722F37] hover:bg-[#722F37] hover:text-white shrink-0">
+            <Button variant="outline" size="sm" className="border-[#601B28] text-[#601B28] hover:bg-[#601B28] hover:text-white shrink-0">
               Lire
             </Button>
           </Link>

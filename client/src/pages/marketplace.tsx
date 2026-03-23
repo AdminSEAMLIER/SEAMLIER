@@ -56,7 +56,7 @@ export default function Marketplace() {
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
       <div className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
-          <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-2">
+          <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28] mb-2">
             {t('marketplace.title')}
           </h1>
           <p className="text-muted-foreground mb-6">
@@ -91,7 +91,7 @@ export default function Marketplace() {
 
       <section className="px-4 lg:px-6 py-4 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-          <h2 className="font-serif text-2xl text-[#722F37]">
+          <h2 className="font-serif text-2xl text-[#601B28]">
             {t('marketplace.availableProducts')}
           </h2>
           <p className="text-muted-foreground text-sm">

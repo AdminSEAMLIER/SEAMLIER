@@ -70,7 +70,7 @@ function CheckoutForm({ clientSecret, montants, onSuccess, onClose }: FormProps)
         <label className="block text-sm font-medium text-gray-700 mb-2">
           {isFr ? "Informations de carte" : "Card details"}
         </label>
-        <div className="border border-gray-200 rounded-md p-3 bg-white focus-within:ring-2 focus-within:ring-[#722F37] focus-within:border-transparent transition-all">
+        <div className="border border-gray-200 rounded-md p-3 bg-white focus-within:ring-2 focus-within:ring-[#601B28] focus-within:border-transparent transition-all">
           <CardElement
             options={{
               style: {
@@ -100,7 +100,7 @@ function CheckoutForm({ clientSecret, montants, onSuccess, onClose }: FormProps)
         </Button>
         <Button
           type="submit"
-          className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+          className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
           disabled={paying || !stripe}
           data-testid="button-confirm-payment"
         >
@@ -191,7 +191,7 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
     <>
       <Button
         size="sm"
-        className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+        className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
         onClick={openDialog}
         disabled={loading || paid}
         data-testid={`button-pay-${projectId}`}
@@ -208,7 +208,7 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
       <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
         <DialogContent className="max-w-md" data-testid="dialog-payment">
           <DialogHeader>
-            <DialogTitle className="text-[#722F37]">
+            <DialogTitle className="text-[#601B28]">
               {paid
                 ? (isFr ? "Paiement réussi ✓" : "Payment successful ✓")
                 : (isFr ? "Paiement sécurisé" : "Secure payment")}
@@ -217,7 +217,7 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-10 gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-[#722F37]" />
+              <Loader2 className="h-8 w-8 animate-spin text-[#601B28]" />
               <p className="text-sm text-gray-500">{isFr ? "Initialisation du paiement…" : "Initializing payment…"}</p>
             </div>
           ) : paid ? (
@@ -231,7 +231,7 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
                   ? "Les fonds seront conservés en séquestre jusqu'à votre confirmation de réception."
                   : "Funds will be held in escrow until you confirm receipt."}
               </p>
-              <Button className="bg-[#722F37] hover:bg-[#5a252c] text-white w-full mt-2" onClick={handleClose} data-testid="button-close-payment-success">
+              <Button className="bg-[#601B28] hover:bg-[#4E1522] text-white w-full mt-2" onClick={handleClose} data-testid="button-close-payment-success">
                 {isFr ? "Fermer" : "Close"}
               </Button>
             </div>

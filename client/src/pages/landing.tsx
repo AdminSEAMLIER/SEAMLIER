@@ -76,12 +76,12 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
       {!embedded && (
       <header className="border-b border-gray-100 sticky top-0 z-50 bg-white">
         <div className="w-full px-2 md:px-8 py-2 md:py-4 flex items-center justify-between gap-1 md:gap-2">
-          <Logo className="text-[#722F37] shrink-0" textClassName="text-base lg:text-lg text-[#722F37]" />
+          <Logo className="text-[#601B28] shrink-0" textClassName="text-base lg:text-lg text-[#601B28]" />
           <div className="flex items-center gap-1 md:gap-2 lg:gap-4">
             <LanguageToggle />
             {isAuthenticated && user ? (
               <Link href={user.role === 'admin' ? '/admin/dashboard' : user.role === 'tailor' ? '/dashboard-pro' : '/dashboard-client'}>
-                <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white px-2 md:px-4 text-xs md:text-sm h-8 md:h-9 gap-1.5" data-testid="button-mon-espace">
+                <Button size="sm" className="bg-[#601B28] hover:bg-[#4E1522] text-white px-2 md:px-4 text-xs md:text-sm h-8 md:h-9 gap-1.5" data-testid="button-mon-espace">
                   <LayoutDashboard className="h-4 w-4" />
                   {t('landing.mySpace')}
                 </Button>
@@ -89,12 +89,12 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
             ) : (
               <>
                 <Link href="/connexion">
-                  <Button variant="ghost" size="sm" className="text-[#722F37] px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9" data-testid="button-connexion-header">
+                  <Button variant="ghost" size="sm" className="text-[#601B28] px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9" data-testid="button-connexion-header">
                     {t('landing.login')}
                   </Button>
                 </Link>
                 <Link href="/inscription">
-                  <Button size="sm" className="bg-[#722F37] hover:bg-[#5a252c] text-white px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9" data-testid="button-inscription-header">
+                  <Button size="sm" className="bg-[#601B28] hover:bg-[#4E1522] text-white px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9" data-testid="button-inscription-header">
                     {t('landing.signup')}
                   </Button>
                 </Link>
@@ -132,7 +132,7 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
             </div>
             <Button 
               size="lg" 
-              className="h-14 px-6 bg-[#722F37] hover:bg-[#5a252c] text-white shadow-lg w-full sm:w-auto" 
+              className="h-14 px-6 bg-[#601B28] hover:bg-[#4E1522] text-white shadow-lg w-full sm:w-auto" 
               data-testid="button-search-hero"
               onClick={handleSearch}
             >
@@ -158,7 +158,7 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
       <section className="py-16 lg:py-24 px-2 md:px-8 bg-white">
         <div className="w-full max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-4">
+            <h2 className="font-serif text-3xl lg:text-4xl text-[#601B28] mb-4">
               {t('landing.howItWorks')}
             </h2>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
@@ -169,10 +169,10 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
           <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
             {steps.map((step) => (
               <div key={step.number} className="text-center">
-                <div className="w-16 h-16 rounded-full bg-[#722F37] text-white flex items-center justify-center mx-auto mb-6">
+                <div className="w-16 h-16 rounded-full bg-[#601B28] text-white flex items-center justify-center mx-auto mb-6">
                   <span className="text-2xl font-bold">{step.number}</span>
                 </div>
-                <h3 className="font-semibold text-xl text-[#722F37] mb-3">
+                <h3 className="font-semibold text-xl text-[#601B28] mb-3">
                   {step.title}
                 </h3>
                 <p className="text-gray-600 leading-relaxed">
@@ -187,7 +187,7 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
       <section id="featured-tailors" className="py-16 lg:py-24 px-2 md:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-4">
+            <h2 className="font-serif text-3xl lg:text-4xl text-[#601B28] mb-4">
               {t('landing.popularCities')}
             </h2>
           </div>
@@ -217,7 +217,7 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
       <section className="py-16 lg:py-24 px-2 md:px-8 bg-white">
         <div className="w-full max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-4">
+            <h2 className="font-serif text-3xl lg:text-4xl text-[#601B28] mb-4">
               {t('landing.whyChooseUs')}
             </h2>
           </div>
@@ -225,10 +225,10 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="border border-gray-100 bg-white shadow-sm p-6">
               <CardContent className="p-0 text-center">
-                <div className="w-14 h-14 rounded-full bg-white border border-[#722F37] flex items-center justify-center mx-auto mb-4">
-                  <Shield className="h-7 w-7 text-[#722F37]" />
+                <div className="w-14 h-14 rounded-full bg-white border border-[#601B28] flex items-center justify-center mx-auto mb-4">
+                  <Shield className="h-7 w-7 text-[#601B28]" />
                 </div>
-                <h3 className="font-semibold text-lg text-[#722F37] mb-2">{t('landing.verifiedPros')}</h3>
+                <h3 className="font-semibold text-lg text-[#601B28] mb-2">{t('landing.verifiedPros')}</h3>
                 <p className="text-gray-600 text-sm">
                   {t('landing.verifiedProsDesc')}
                 </p>
@@ -237,10 +237,10 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
 
             <Card className="border border-gray-100 bg-white shadow-sm p-6">
               <CardContent className="p-0 text-center">
-                <div className="w-14 h-14 rounded-full bg-white border border-[#722F37] flex items-center justify-center mx-auto mb-4">
-                  <Star className="h-7 w-7 text-[#722F37]" />
+                <div className="w-14 h-14 rounded-full bg-white border border-[#601B28] flex items-center justify-center mx-auto mb-4">
+                  <Star className="h-7 w-7 text-[#601B28]" />
                 </div>
-                <h3 className="font-semibold text-lg text-[#722F37] mb-2">{t('landing.authenticReviews')}</h3>
+                <h3 className="font-semibold text-lg text-[#601B28] mb-2">{t('landing.authenticReviews')}</h3>
                 <p className="text-gray-600 text-sm">
                   {t('landing.authenticReviewsDesc')}
                 </p>
@@ -249,10 +249,10 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
 
             <Card className="border border-gray-100 bg-white shadow-sm p-6">
               <CardContent className="p-0 text-center">
-                <div className="w-14 h-14 rounded-full bg-white border border-[#722F37] flex items-center justify-center mx-auto mb-4">
-                  <Scissors className="h-7 w-7 text-[#722F37]" />
+                <div className="w-14 h-14 rounded-full bg-white border border-[#601B28] flex items-center justify-center mx-auto mb-4">
+                  <Scissors className="h-7 w-7 text-[#601B28]" />
                 </div>
-                <h3 className="font-semibold text-lg text-[#722F37] mb-2">{t('landing.freeService')}</h3>
+                <h3 className="font-semibold text-lg text-[#601B28] mb-2">{t('landing.freeService')}</h3>
                 <p className="text-gray-600 text-sm">
                   {t('landing.freeServiceDesc')}
                 </p>
@@ -272,7 +272,7 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
             {t('landing.joinNetwork')}
           </p>
           <Link href="/professionnel">
-            <Button size="sm" variant="outline" className="bg-white/90 text-[#722F37] border-white/50 hover:bg-white text-sm" data-testid="button-join-pro">
+            <Button size="sm" variant="outline" className="bg-white/90 text-[#601B28] border-white/50 hover:bg-white text-sm" data-testid="button-join-pro">
               {t('landing.joinAsPro')}
               <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
@@ -289,11 +289,11 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
               © 2026 SEAMLIER. {t('footer.allRightsReserved')}
             </p>
             <div className="flex items-center gap-6 text-sm text-gray-500">
-              <Link href="/mentions-legales" className="hover:text-[#722F37] transition-colors" data-testid="link-mentions">{t('footer.legalNotice')}</Link>
-              <Link href="/cgv" className="hover:text-[#722F37] transition-colors" data-testid="link-cgv">{t('footer.terms')}</Link>
-              <Link href="/cgu" className="hover:text-[#722F37] transition-colors" data-testid="link-cgu">CGU</Link>
-              <Link href="/confidentialite" className="hover:text-[#722F37] transition-colors" data-testid="link-privacy">{t('footer.privacy')}</Link>
-              <Link href="/politique-remboursement" className="hover:text-[#722F37] transition-colors" data-testid="link-refund">Remboursement</Link>
+              <Link href="/mentions-legales" className="hover:text-[#601B28] transition-colors" data-testid="link-mentions">{t('footer.legalNotice')}</Link>
+              <Link href="/cgv" className="hover:text-[#601B28] transition-colors" data-testid="link-cgv">{t('footer.terms')}</Link>
+              <Link href="/cgu" className="hover:text-[#601B28] transition-colors" data-testid="link-cgu">CGU</Link>
+              <Link href="/confidentialite" className="hover:text-[#601B28] transition-colors" data-testid="link-privacy">{t('footer.privacy')}</Link>
+              <Link href="/politique-remboursement" className="hover:text-[#601B28] transition-colors" data-testid="link-refund">Remboursement</Link>
             </div>
           </div>
         </div>

@@ -254,7 +254,7 @@ export default function ProProfil() {
   if (authLoading) {
     return (
       <div className="min-h-screen pb-20 lg:pb-8 bg-white flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#722F37]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#601B28]" />
       </div>
     );
   }
@@ -265,7 +265,7 @@ export default function ProProfil() {
         <div className="text-center">
           <p className="text-gray-600 mb-4">Vous devez être connecté pour accéder à votre profil.</p>
           <Link href="/connexion">
-            <Button className="bg-[#722F37]" data-testid="button-go-login">Se connecter</Button>
+            <Button className="bg-[#601B28]" data-testid="button-go-login">Se connecter</Button>
           </Link>
         </div>
       </div>
@@ -306,10 +306,10 @@ export default function ProProfil() {
       <div className="bg-gray-50 border-b border-gray-100 hidden">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-              <User className="h-5 w-5 text-[#722F37]" />
+            <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+              <User className="h-5 w-5 text-[#601B28]" />
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]">
               {t('nav.profile')}
             </h1>
           </div>
@@ -326,7 +326,7 @@ export default function ProProfil() {
               <div className="relative">
                 <Avatar className="h-24 w-24 border-2 border-gray-100">
                   <AvatarImage src={profile.profileImageUrl} alt={fullName} />
-                  <AvatarFallback className="bg-[#722F37]/10 text-[#722F37] text-2xl font-medium">
+                  <AvatarFallback className="bg-[#601B28]/10 text-[#601B28] text-2xl font-medium">
                     {getInitials()}
                   </AvatarFallback>
                 </Avatar>
@@ -349,8 +349,8 @@ export default function ProProfil() {
 
               <div className="flex-1 text-center sm:text-left">
                 <div className="flex items-center justify-center sm:justify-start gap-2 mb-1 flex-wrap">
-                  <h2 className="font-serif text-xl text-[#722F37]" data-testid="text-profile-name">{fullName || "—"}</h2>
-                  <Badge className="bg-[#722F37]/10 text-[#722F37] border-none">
+                  <h2 className="font-serif text-xl text-[#601B28]" data-testid="text-profile-name">{fullName || "—"}</h2>
+                  <Badge className="bg-[#601B28]/10 text-[#601B28] border-none">
                     <Briefcase className="h-3 w-3 mr-1" />
                     Pro
                   </Badge>
@@ -372,7 +372,7 @@ export default function ProProfil() {
 
         <Card className="border border-gray-100 bg-white shadow-sm mb-6">
           <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle className="text-lg text-[#722F37]">{t('profile.personalInfo')}</CardTitle>
+            <CardTitle className="text-lg text-[#601B28]">{t('profile.personalInfo')}</CardTitle>
             {!isEditing && (
               <Button
                 variant="ghost"
@@ -486,7 +486,7 @@ export default function ProProfil() {
                   {t('profile.cancel')}
                 </Button>
                 <Button
-                  className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+                  className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
                   onClick={handleSave}
                   disabled={saveMutation.isPending}
                   data-testid="button-save"
@@ -505,13 +505,13 @@ export default function ProProfil() {
 
         <Card className="border border-gray-100 bg-white shadow-sm mb-6">
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-            <CardTitle className="text-lg text-[#722F37] flex items-center gap-2">
+            <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
               <ImageIcon className="h-5 w-5" />
               Mon Portfolio
             </CardTitle>
             <Button
               size="sm"
-              className="bg-[#722F37] hover:bg-[#5a252c] text-white gap-1"
+              className="bg-[#601B28] hover:bg-[#4E1522] text-white gap-1"
               onClick={() => setIsAddingPortfolio(!isAddingPortfolio)}
               data-testid="button-add-portfolio"
             >
@@ -523,7 +523,7 @@ export default function ProProfil() {
             {isAddingPortfolio && (
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4 space-y-3">
                 <div
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-[#722F37] transition-colors"
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-[#601B28] transition-colors"
                   onClick={() => portfolioInputRef.current?.click()}
                 >
                   {newPortfolioImage ? (
@@ -563,7 +563,7 @@ export default function ProProfil() {
                 </div>
                 <div className="flex gap-2">
                   <Button
-                    className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+                    className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
                     onClick={handleAddPortfolio}
                     disabled={addPortfolioMutation.isPending}
                     data-testid="button-save-portfolio"
@@ -583,7 +583,7 @@ export default function ProProfil() {
 
             {portfolioLoading ? (
               <div className="flex justify-center py-6">
-                <Loader2 className="h-6 w-6 animate-spin text-[#722F37]" />
+                <Loader2 className="h-6 w-6 animate-spin text-[#601B28]" />
               </div>
             ) : portfolioItems.length === 0 && !isAddingPortfolio ? (
               <div className="text-center py-8 text-gray-400">
@@ -622,32 +622,32 @@ export default function ProProfil() {
 
         <Card className="border border-gray-100 bg-white shadow-sm mb-6">
           <CardHeader>
-            <CardTitle className="text-lg text-[#722F37]">{t('profile.quickAccess')}</CardTitle>
+            <CardTitle className="text-lg text-[#601B28]">{t('profile.quickAccess')}</CardTitle>
           </CardHeader>
           <CardContent className="bg-white">
             <div className="grid grid-cols-3 gap-3">
               <Link href="/gestion-demandes">
                 <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer" data-testid="link-demandes">
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-2">
-                    <FileText className="h-5 w-5 text-[#722F37]" />
+                    <FileText className="h-5 w-5 text-[#601B28]" />
                   </div>
-                  <span className="text-sm text-[#722F37] font-medium text-center">{t('nav.requests')}</span>
+                  <span className="text-sm text-[#601B28] font-medium text-center">{t('nav.requests')}</span>
                 </div>
               </Link>
               <Link href="/atelier">
                 <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer" data-testid="link-projets">
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-2">
-                    <FolderKanban className="h-5 w-5 text-[#722F37]" />
+                    <FolderKanban className="h-5 w-5 text-[#601B28]" />
                   </div>
-                  <span className="text-sm text-[#722F37] font-medium text-center">{t('nav.projects')}</span>
+                  <span className="text-sm text-[#601B28] font-medium text-center">{t('nav.projects')}</span>
                 </div>
               </Link>
               <Link href="/portefeuille">
                 <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer" data-testid="link-planning">
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-2">
-                    <TrendingUp className="h-5 w-5 text-[#722F37]" />
+                    <TrendingUp className="h-5 w-5 text-[#601B28]" />
                   </div>
-                  <span className="text-sm text-[#722F37] font-medium text-center">{t('nav.planning')}</span>
+                  <span className="text-sm text-[#601B28] font-medium text-center">{t('nav.planning')}</span>
                 </div>
               </Link>
             </div>
@@ -656,7 +656,7 @@ export default function ProProfil() {
 
         <Card className="border border-gray-100 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg text-[#722F37]">{t('profile.account')}</CardTitle>
+            <CardTitle className="text-lg text-[#601B28]">{t('profile.account')}</CardTitle>
           </CardHeader>
           <CardContent className="bg-white">
             <div className="space-y-3">

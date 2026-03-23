@@ -16,25 +16,25 @@ export default function CGV() {
               <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </Button>
           </Link>
-          <Logo className="text-[#722F37]" textClassName="text-lg text-[#722F37]" />
+          <Logo className="text-[#601B28]" textClassName="text-lg text-[#601B28]" />
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8 lg:py-12">
-        <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-8">
+        <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28] mb-8">
           {t('terms.title')}
         </h1>
 
         <div className="prose prose-gray max-w-none">
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('terms.object')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('terms.object')}</h2>
             <p className="text-muted-foreground leading-relaxed">
               {t('terms.objectText')}
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('terms.role')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('terms.role')}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               {t('terms.roleIntro')}
             </p>
@@ -52,7 +52,7 @@ export default function CGV() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('terms.process')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('terms.process')}</h2>
             <ul className="text-muted-foreground space-y-3">
               <li>
                 <strong>{t('terms.precision')}</strong> {t('terms.precisionText')}
@@ -64,7 +64,7 @@ export default function CGV() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('terms.pricing')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('terms.pricing')}</h2>
             <ul className="text-muted-foreground space-y-3">
               <li>
                 <strong>{t('terms.transparency')}</strong> {t('terms.transparencyText')}
@@ -76,21 +76,21 @@ export default function CGV() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('terms.withdrawal')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('terms.withdrawal')}</h2>
             <p className="text-muted-foreground leading-relaxed">
               {t('terms.withdrawalText')}
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('terms.responsibility')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('terms.responsibility')}</h2>
             <p className="text-muted-foreground leading-relaxed">
               {t('terms.responsibilityText')}
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('terms.disputes')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('terms.disputes')}</h2>
             <p className="text-muted-foreground leading-relaxed">
               {t('terms.disputesText')}
             </p>

@@ -16,18 +16,18 @@ export default function MentionsLegales() {
               <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </Button>
           </Link>
-          <Logo className="text-[#722F37]" textClassName="text-lg text-[#722F37]" />
+          <Logo className="text-[#601B28]" textClassName="text-lg text-[#601B28]" />
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8 lg:py-12">
-        <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37] mb-8">
+        <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28] mb-8">
           {t('legal.title')}
         </h1>
 
         <div className="prose prose-gray max-w-none">
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('legal.editor')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('legal.editor')}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               {t('legal.editorText')}
             </p>
@@ -38,7 +38,7 @@ export default function MentionsLegales() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('legal.hosting')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('legal.hosting')}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               {t('legal.hostingText')}
             </p>
@@ -48,20 +48,20 @@ export default function MentionsLegales() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('legal.ip')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('legal.ip')}</h2>
             <p className="text-muted-foreground leading-relaxed">
               {t('legal.ipText')}
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-[#722F37] mb-4">{t('legal.dataProtection')}</h2>
+            <h2 className="text-xl font-semibold text-[#601B28] mb-4">{t('legal.dataProtection')}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               {t('legal.dataProtectionText')}
             </p>
             <p className="text-muted-foreground leading-relaxed mt-4">
               {t('legal.moreInfo')}{" "}
-              <Link href="/confidentialite" className="text-[#722F37] hover:underline">
+              <Link href="/confidentialite" className="text-[#601B28] hover:underline">
                 {t('legal.privacyPolicyLink')}
               </Link>.
             </p>

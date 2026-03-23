@@ -204,10 +204,10 @@ export default function ProDashboard() {
       <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-              <Home className="h-5 w-5 text-[#722F37]" />
+            <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+              <Home className="h-5 w-5 text-[#601B28]" />
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]" data-testid="text-pro-welcome">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]" data-testid="text-pro-welcome">
               {t('pro.welcome')}
             </h1>
           </div>
@@ -221,16 +221,16 @@ export default function ProDashboard() {
 
         {/* Onboarding wizard — displayed until all steps are complete */}
         {!onboardingDone && onboarding && (
-          <Card className="border border-[#722F37]/20 bg-white shadow-sm overflow-hidden" data-testid="card-onboarding">
+          <Card className="border border-[#601B28]/20 bg-white shadow-sm overflow-hidden" data-testid="card-onboarding">
             <div className="h-1 bg-gray-100">
               <div
-                className="h-1 bg-[#722F37] transition-all duration-500"
+                className="h-1 bg-[#601B28] transition-all duration-500"
                 style={{ width: `${(onboarding.completedCount / 4) * 100}%` }}
               />
             </div>
             <CardContent className="p-5">
               <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="h-5 w-5 text-[#722F37]" />
+                <Sparkles className="h-5 w-5 text-[#601B28]" />
                 <div>
                   <p className="font-semibold text-gray-900">Configurez votre profil</p>
                   <p className="text-xs text-gray-500">{onboarding.completedCount} / 4 étapes complétées</p>
@@ -289,14 +289,14 @@ export default function ProDashboard() {
                     {!item.done && (
                       item.href
                         ? <Link href={item.href}>
-                            <Button size="sm" variant="outline" className="text-xs text-[#722F37] border-[#722F37]/30 shrink-0">
+                            <Button size="sm" variant="outline" className="text-xs text-[#601B28] border-[#601B28]/30 shrink-0">
                               {item.cta}
                             </Button>
                           </Link>
                         : <Button
                             size="sm"
                             variant="outline"
-                            className="text-xs text-[#722F37] border-[#722F37]/30 shrink-0"
+                            className="text-xs text-[#601B28] border-[#601B28]/30 shrink-0"
                             onClick={() => completeOnboardingMutation.mutate(4)}
                             disabled={completeOnboardingMutation.isPending}
                             data-testid="button-onboarding-complete"
@@ -316,7 +316,7 @@ export default function ProDashboard() {
             <CardContent className="p-5 bg-white space-y-4">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-2">
-                  <Ruler className="h-5 w-5 text-[#722F37]" />
+                  <Ruler className="h-5 w-5 text-[#601B28]" />
                   <span className="font-semibold text-gray-900">Plan Couturier</span>
                   <Badge className="bg-blue-50 text-blue-700 border-none text-[10px]">Starter</Badge>
                 </div>
@@ -386,9 +386,9 @@ export default function ProDashboard() {
               {stats.map((stat) => (
                 <div key={stat.label} className="p-4 bg-gray-50 rounded-lg text-center" data-testid={`stat-${stat.label.replace(/\s/g, "-").toLowerCase()}`}>
                   <div className="flex items-center justify-center gap-2 mb-2">
-                    <stat.icon className="h-5 w-5 text-[#722F37]" />
+                    <stat.icon className="h-5 w-5 text-[#601B28]" />
                   </div>
-                  <p className="text-2xl font-bold text-[#722F37]">{stat.value}</p>
+                  <p className="text-2xl font-bold text-[#601B28]">{stat.value}</p>
                   <p className="text-sm text-gray-500">{stat.label}</p>
                 </div>
               ))}
@@ -398,7 +398,7 @@ export default function ProDashboard() {
 
         <Card className="border border-gray-100 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg text-[#722F37]">{t('pro.quickActions')}</CardTitle>
+            <CardTitle className="text-lg text-[#601B28]">{t('pro.quickActions')}</CardTitle>
           </CardHeader>
           <CardContent className="bg-white">
             <div className="grid grid-cols-2 gap-3">
@@ -406,11 +406,11 @@ export default function ProDashboard() {
                 <Link key={link.href} href={link.href}>
                   <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" data-testid={`link-pro-${link.label.replace(/\s/g, "-").toLowerCase()}`}>
                     <div className="relative">
-                      <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center mb-2">
-                        <link.icon className="h-5 w-5 text-[#722F37]" />
+                      <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center mb-2">
+                        <link.icon className="h-5 w-5 text-[#601B28]" />
                       </div>
                       {link.count > 0 && (
-                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#722F37] text-white text-xs rounded-full flex items-center justify-center">
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#601B28] text-white text-xs rounded-full flex items-center justify-center">
                           {link.count}
                         </span>
                       )}
@@ -425,9 +425,9 @@ export default function ProDashboard() {
 
         <Card className="border border-gray-100 bg-white shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle className="text-lg text-[#722F37]">{t('pro.recentMessages')}</CardTitle>
+            <CardTitle className="text-lg text-[#601B28]">{t('pro.recentMessages')}</CardTitle>
             <Link href="/messagerie">
-              <Button variant="ghost" size="sm" className="text-[#722F37]" data-testid="button-pro-view-messages">
+              <Button variant="ghost" size="sm" className="text-[#601B28]" data-testid="button-pro-view-messages">
                 {t('landing.viewAll')}
                 <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
@@ -438,8 +438,8 @@ export default function ProDashboard() {
               <div className="space-y-3">
                 {conversations.slice(0, 3).map((conv) => (
                   <div key={conv.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                    <div className="w-10 h-10 rounded-full bg-[#722F37]/10 flex items-center justify-center">
-                      <span className="text-[#722F37] font-medium">
+                    <div className="w-10 h-10 rounded-full bg-[#601B28]/10 flex items-center justify-center">
+                      <span className="text-[#601B28] font-medium">
                         {conv.otherParticipant?.firstName?.charAt(0) || "?"}
                       </span>
                     </div>
@@ -465,16 +465,16 @@ export default function ProDashboard() {
 
         <Card className="border border-gray-100 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg text-[#722F37]">{t('pro.revenue')}</CardTitle>
+            <CardTitle className="text-lg text-[#601B28]">{t('pro.revenue')}</CardTitle>
           </CardHeader>
           <CardContent className="bg-white">
             <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-              <div className="w-12 h-12 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-[#722F37]" />
+              <div className="w-12 h-12 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-[#601B28]" />
               </div>
               <div className="flex-1">
                 <p className="text-sm text-gray-500">{t('pro.thisMonth')}</p>
-                <p className="text-2xl font-bold text-[#722F37]" data-testid="text-pro-revenue">
+                <p className="text-2xl font-bold text-[#601B28]" data-testid="text-pro-revenue">
                   {tailorStats ? `${tailorStats.monthlyRevenue.toFixed(0)}€` : "0€"}
                 </p>
               </div>
@@ -486,7 +486,7 @@ export default function ProDashboard() {
       <Dialog open={showUpgradeModal} onOpenChange={(open) => { setShowUpgradeModal(open); if (!open) setShowConfirmStep(false); }}>
         <DialogContent className="sm:max-w-md bg-white" data-testid="dialog-pro-upgrade">
           <DialogHeader>
-            <DialogTitle className="text-[#722F37] font-serif text-xl">
+            <DialogTitle className="text-[#601B28] font-serif text-xl">
               {showConfirmStep ? "Confirmer votre abonnement" : "Passer au Plan Pro"}
             </DialogTitle>
             <DialogDescription>
@@ -575,7 +575,7 @@ export default function ProDashboard() {
                   Retour
                 </Button>
                 <Button
-                  className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+                  className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
                   onClick={handleConfirmUpgrade}
                   disabled={upgradeMutation.isPending}
                   data-testid="button-confirm-pro-upgrade"

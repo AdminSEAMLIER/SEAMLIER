@@ -94,7 +94,7 @@ function SubscribeForm({ interval, onSuccess }: { interval: "month" | "year"; on
           {error}
         </div>
       )}
-      <Button type="submit" disabled={!stripe || loading} className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white" data-testid="button-subscribe-submit">
+      <Button type="submit" disabled={!stripe || loading} className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white" data-testid="button-subscribe-submit">
         {loading ? <Loader2 size={16} className="animate-spin mr-2" /> : <CreditCard size={16} className="mr-2" />}
         {loading ? "Traitement..." : `Souscrire — ${amount}`}
       </Button>
@@ -179,10 +179,10 @@ export default function ProParametres() {
             </Button>
           </Link>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-              <Settings className="h-5 w-5 text-[#722F37]" />
+            <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+              <Settings className="h-5 w-5 text-[#601B28]" />
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">Paramètres</h1>
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]">Paramètres</h1>
           </div>
           <p className="text-gray-600 mt-2">Gérez les paramètres de votre compte professionnel</p>
         </div>
@@ -193,7 +193,7 @@ export default function ProParametres() {
         {/* ── Plan & Abonnement ── */}
         <Card className="border border-gray-100 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg text-[#722F37] flex items-center gap-2">
+            <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
               <Crown className="h-5 w-5" />Plan & Abonnement
             </CardTitle>
           </CardHeader>
@@ -225,17 +225,17 @@ export default function ProParametres() {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => { setInterval("month"); setShowPayForm(true); }}
-                    className="p-4 rounded-xl border-2 border-[#722F37] bg-[#722F37]/5 text-left hover:bg-[#722F37]/10 transition-colors"
+                    className="p-4 rounded-xl border-2 border-[#601B28] bg-[#601B28]/5 text-left hover:bg-[#601B28]/10 transition-colors"
                     data-testid="button-plan-monthly"
                   >
-                    <p className="font-bold text-[#722F37] text-lg">29€</p>
+                    <p className="font-bold text-[#601B28] text-lg">29€</p>
                     <p className="text-xs text-gray-500">par mois</p>
                     <p className="text-xs font-semibold text-gray-700 mt-2">0% de commission</p>
                     <p className="text-xs text-gray-500">Mesures illimitées</p>
                   </button>
                   <button
                     onClick={() => { setInterval("year"); setShowPayForm(true); }}
-                    className="p-4 rounded-xl border-2 border-gray-200 text-left hover:border-[#722F37] hover:bg-[#722F37]/5 transition-colors relative"
+                    className="p-4 rounded-xl border-2 border-gray-200 text-left hover:border-[#601B28] hover:bg-[#601B28]/5 transition-colors relative"
                     data-testid="button-plan-yearly"
                   >
                     <Badge className="absolute top-2 right-2 bg-green-100 text-green-700 border-none text-[9px] px-1.5">−17%</Badge>
@@ -295,7 +295,7 @@ export default function ProParametres() {
         {/* ── Visibilité ── */}
         <Card className="border border-gray-100 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg text-[#722F37] flex items-center gap-2">
+            <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
               <Eye className="h-5 w-5" />Visibilité
             </CardTitle>
           </CardHeader>
@@ -327,7 +327,7 @@ export default function ProParametres() {
         {/* ── Langue ── */}
         <Card className="border border-gray-100 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg text-[#722F37] flex items-center gap-2">
+            <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
               <Globe className="h-5 w-5" />Langue
             </CardTitle>
           </CardHeader>
@@ -353,7 +353,7 @@ export default function ProParametres() {
         {/* ── Sécurité ── */}
         <Card className="border border-gray-100 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg text-[#722F37] flex items-center gap-2">
+            <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
               <Shield className="h-5 w-5" />Sécurité
             </CardTitle>
           </CardHeader>
@@ -366,7 +366,7 @@ export default function ProParametres() {
           </CardContent>
         </Card>
 
-        <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white" onClick={handleSave} data-testid="button-save-settings">
+        <Button className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white" onClick={handleSave} data-testid="button-save-settings">
           <Save className="h-4 w-4 mr-2" />Enregistrer les paramètres
         </Button>
       </div>
@@ -375,7 +375,7 @@ export default function ProParametres() {
       <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <DialogContent className="sm:max-w-md bg-white" data-testid="dialog-cancel-subscription">
           <DialogHeader>
-            <DialogTitle className="text-[#722F37]">Résilier l'abonnement Premium</DialogTitle>
+            <DialogTitle className="text-[#601B28]">Résilier l'abonnement Premium</DialogTitle>
             <DialogDescription className="text-gray-600 mt-2 space-y-2">
               <span className="block">Votre abonnement restera <strong>actif jusqu'à la fin de la période en cours</strong>, puis vous repasserez automatiquement en plan Starter.</span>
               {periodEndDate && (

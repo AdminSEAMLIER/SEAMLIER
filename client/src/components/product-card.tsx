@@ -23,7 +23,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
         
         <CardContent className="p-3 bg-white">
-          <p className="font-medium text-[#722F37] text-sm line-clamp-1">{product.title}</p>
+          <p className="font-medium text-[#601B28] text-sm line-clamp-1">{product.title}</p>
           <p className="text-xs text-gray-500 mt-0.5">
             {product.price.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
           </p>

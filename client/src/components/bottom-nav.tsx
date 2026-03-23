@@ -43,7 +43,7 @@ export function BottomNav() {
                 className={cn(
                   "flex flex-col items-center justify-center gap-1 w-16 h-full transition-colors",
                   isActive 
-                    ? "text-[#722F37]" 
+                    ? "text-[#601B28]" 
                     : "text-muted-foreground hover:text-foreground"
                 )}
                 data-testid={`nav-${item.labelKey.split('.')[1]}`}

@@ -88,7 +88,7 @@ export default function Home() {
             </div>
             <Button 
               size="lg" 
-              className="h-12 px-6 bg-[#722F37] text-white w-full sm:w-auto shadow-lg" 
+              className="h-12 px-6 bg-[#601B28] text-white w-full sm:w-auto shadow-lg" 
               onClick={handleSearch}
               data-testid="button-search-home"
             >
@@ -118,17 +118,17 @@ export default function Home() {
 
       <section className="py-12 lg:py-16 px-4 lg:px-8 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="font-serif text-2xl lg:text-3xl text-[#722F37] mb-8 text-center">
+          <h2 className="font-serif text-2xl lg:text-3xl text-[#601B28] mb-8 text-center">
             {t('landing.howItWorks')}
           </h2>
 
           <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
             {steps.map((step) => (
               <div key={step.number} className="text-center">
-                <div className="w-12 h-12 rounded-full bg-[#722F37] text-white flex items-center justify-center mx-auto mb-4">
+                <div className="w-12 h-12 rounded-full bg-[#601B28] text-white flex items-center justify-center mx-auto mb-4">
                   <span className="text-lg font-bold">{step.number}</span>
                 </div>
-                <h3 className="font-semibold text-lg text-[#722F37] mb-2">
+                <h3 className="font-semibold text-lg text-[#601B28] mb-2">
                   {step.title}
                 </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
@@ -144,11 +144,11 @@ export default function Home() {
         <section className="py-12 lg:py-16 px-4 lg:px-8 bg-white border-y border-border">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="font-serif text-2xl lg:text-3xl text-[#722F37]">
+              <h2 className="font-serif text-2xl lg:text-3xl text-[#601B28]">
                 {t('landing.featuredTailors')}
               </h2>
               <Link href="/decouverte">
-                <Button variant="ghost" className="text-[#722F37]" data-testid="button-view-all-tailors">
+                <Button variant="ghost" className="text-[#601B28]" data-testid="button-view-all-tailors">
                   {t('landing.viewAll')}
                   <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
@@ -172,7 +172,7 @@ export default function Home() {
 
       <section className="py-12 lg:py-16 px-4 lg:px-8 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="font-serif text-2xl lg:text-3xl text-[#722F37] mb-6 text-center">
+          <h2 className="font-serif text-2xl lg:text-3xl text-[#601B28] mb-6 text-center">
             {t('landing.popularCities')}
           </h2>
 
@@ -200,7 +200,7 @@ export default function Home() {
 
       <section className="py-12 lg:py-16 px-4 lg:px-8 bg-gray-50 border-t border-gray-100">
         <div className="max-w-6xl mx-auto">
-          <h2 className="font-serif text-2xl lg:text-3xl text-[#722F37] mb-8 text-center">
+          <h2 className="font-serif text-2xl lg:text-3xl text-[#601B28] mb-8 text-center">
             {t('landing.whyChooseUs')}
           </h2>
 
@@ -208,9 +208,9 @@ export default function Home() {
             <Card className="p-6">
               <CardContent className="text-center">
                 <div className="w-12 h-12 rounded-full bg-card border border-primary flex items-center justify-center mx-auto mb-4">
-                  <Shield className="h-6 w-6 text-[#722F37]" />
+                  <Shield className="h-6 w-6 text-[#601B28]" />
                 </div>
-                <h3 className="font-semibold text-[#722F37] mb-2">{t('landing.verifiedPros')}</h3>
+                <h3 className="font-semibold text-[#601B28] mb-2">{t('landing.verifiedPros')}</h3>
                 <p className="text-muted-foreground text-sm">
                   {t('landing.verifiedProsDesc')}
                 </p>
@@ -220,9 +220,9 @@ export default function Home() {
             <Card className="p-6">
               <CardContent className="text-center">
                 <div className="w-12 h-12 rounded-full bg-card border border-primary flex items-center justify-center mx-auto mb-4">
-                  <Star className="h-6 w-6 text-[#722F37]" />
+                  <Star className="h-6 w-6 text-[#601B28]" />
                 </div>
-                <h3 className="font-semibold text-[#722F37] mb-2">{t('landing.authenticReviews')}</h3>
+                <h3 className="font-semibold text-[#601B28] mb-2">{t('landing.authenticReviews')}</h3>
                 <p className="text-muted-foreground text-sm">
                   {t('landing.authenticReviewsDesc')}
                 </p>
@@ -232,9 +232,9 @@ export default function Home() {
             <Card className="p-6">
               <CardContent className="text-center">
                 <div className="w-12 h-12 rounded-full bg-card border border-primary flex items-center justify-center mx-auto mb-4">
-                  <Scissors className="h-6 w-6 text-[#722F37]" />
+                  <Scissors className="h-6 w-6 text-[#601B28]" />
                 </div>
-                <h3 className="font-semibold text-[#722F37] mb-2">{t('landing.freeService')}</h3>
+                <h3 className="font-semibold text-[#601B28] mb-2">{t('landing.freeService')}</h3>
                 <p className="text-muted-foreground text-sm">
                   {t('landing.freeServiceDesc')}
                 </p>
@@ -248,7 +248,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
             <div>
-              <p style={{ fontFamily: "'Satoshi', sans-serif" }} className="text-2xl font-bold text-[#722F37] mb-2">
+              <p style={{ fontFamily: "'Satoshi', sans-serif" }} className="text-2xl font-bold text-[#601B28] mb-2">
                 SEAMLIER
               </p>
               <p className="text-muted-foreground text-sm">
@@ -257,9 +257,9 @@ export default function Home() {
             </div>
 
             <div className="flex flex-wrap gap-6 text-sm text-muted-foreground">
-              <Link href="/mentions-legales" className="hover:text-[#722F37]">{t('footer.legalNotice')}</Link>
-              <Link href="/confidentialite" className="hover:text-[#722F37]">{t('footer.privacy')}</Link>
-              <a href="#" className="hover:text-[#722F37]">{t('footer.terms')}</a>
+              <Link href="/mentions-legales" className="hover:text-[#601B28]">{t('footer.legalNotice')}</Link>
+              <Link href="/confidentialite" className="hover:text-[#601B28]">{t('footer.privacy')}</Link>
+              <a href="#" className="hover:text-[#601B28]">{t('footer.terms')}</a>
               <span>contact@seamlier.com</span>
             </div>
           </div>

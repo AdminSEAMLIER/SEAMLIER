@@ -43,20 +43,20 @@ export default function ForgotPassword() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/connexion">
-            <span className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#722F37] cursor-pointer mb-6 transition-colors">
+            <span className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#601B28] cursor-pointer mb-6 transition-colors">
               <ArrowLeft className="h-4 w-4" />
               Retour à la connexion
             </span>
           </Link>
-          <h1 className="font-serif text-3xl text-[#722F37] mb-2">SEAMLIER</h1>
+          <h1 className="font-serif text-3xl text-[#601B28] mb-2">SEAMLIER</h1>
           <p className="text-gray-500 text-sm">Réinitialisation de mot de passe</p>
         </div>
 
         <Card className="border-none shadow-lg">
           <CardHeader className="pb-4">
             <div className="flex justify-center mb-4">
-              <div className="w-12 h-12 rounded-full bg-[#722F37]/10 flex items-center justify-center">
-                {sent ? <CheckCircle className="h-6 w-6 text-green-600" /> : <Mail className="h-6 w-6 text-[#722F37]" />}
+              <div className="w-12 h-12 rounded-full bg-[#601B28]/10 flex items-center justify-center">
+                {sent ? <CheckCircle className="h-6 w-6 text-green-600" /> : <Mail className="h-6 w-6 text-[#601B28]" />}
               </div>
             </div>
             <CardTitle className="text-center text-lg text-gray-800">
@@ -71,7 +71,7 @@ export default function ForgotPassword() {
                 </p>
                 <p className="text-gray-400 text-xs">Ce lien est valable 2 heures. Vérifiez vos spams si vous ne le voyez pas.</p>
                 <Link href="/connexion">
-                  <Button className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white mt-4" data-testid="button-back-to-login">
+                  <Button className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white mt-4" data-testid="button-back-to-login">
                     Retour à la connexion
                   </Button>
                 </Link>
@@ -96,7 +96,7 @@ export default function ForgotPassword() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white h-11"
+                  className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white h-11"
                   disabled={forgotMutation.isPending}
                   data-testid="button-submit"
                 >

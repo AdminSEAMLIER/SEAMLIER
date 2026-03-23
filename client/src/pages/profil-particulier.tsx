@@ -147,7 +147,7 @@ export default function ProfilParticulier() {
   if (isLoading) {
     return (
       <div className="min-h-screen pb-20 lg:pb-8 bg-white flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#722F37]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#601B28]" />
       </div>
     );
   }
@@ -158,7 +158,7 @@ export default function ProfilParticulier() {
         <div className="text-center">
           <p className="text-muted-foreground mb-4">Vous devez être connecté pour accéder à votre profil.</p>
           <Link href="/connexion">
-            <Button className="bg-[#722F37]" data-testid="button-go-login">Se connecter</Button>
+            <Button className="bg-[#601B28]" data-testid="button-go-login">Se connecter</Button>
           </Link>
         </div>
       </div>
@@ -170,10 +170,10 @@ export default function ProfilParticulier() {
       <div className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-              <User className="h-5 w-5 text-[#722F37]" />
+            <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+              <User className="h-5 w-5 text-[#601B28]" />
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]">
               {t('profile.title')}
             </h1>
           </div>
@@ -190,7 +190,7 @@ export default function ProfilParticulier() {
               <div className="relative">
                 <Avatar className="h-24 w-24 border-2 border-gray-200">
                   <AvatarImage src={profile.profileImageUrl} alt={fullName} />
-                  <AvatarFallback className="bg-[#722F37]/10 text-[#722F37] text-2xl font-medium">
+                  <AvatarFallback className="bg-[#601B28]/10 text-[#601B28] text-2xl font-medium">
                     {getInitials()}
                   </AvatarFallback>
                 </Avatar>
@@ -211,7 +211,7 @@ export default function ProfilParticulier() {
                 </button>
               </div>
               <div className="text-center sm:text-left flex-1">
-                <h2 className="text-xl font-semibold text-[#722F37]" data-testid="text-profile-name">{fullName || "—"}</h2>
+                <h2 className="text-xl font-semibold text-[#601B28]" data-testid="text-profile-name">{fullName || "—"}</h2>
                 <p className="text-muted-foreground" data-testid="text-profile-email">{profile.email}</p>
               </div>
             </div>
@@ -220,7 +220,7 @@ export default function ProfilParticulier() {
 
         <Card className="mb-6">
           <CardHeader className="flex flex-row items-center justify-between gap-1">
-            <CardTitle className="text-lg text-[#722F37]">{t('profile.personalInfo')}</CardTitle>
+            <CardTitle className="text-lg text-[#601B28]">{t('profile.personalInfo')}</CardTitle>
             {!isEditing && (
               <Button 
                 variant="ghost" 
@@ -334,7 +334,7 @@ export default function ProfilParticulier() {
                   {t('profile.cancel')}
                 </Button>
                 <Button 
-                  className="flex-1 bg-[#722F37] text-white"
+                  className="flex-1 bg-[#601B28] text-white"
                   onClick={handleSave}
                   disabled={saveMutation.isPending}
                   data-testid="button-save"
@@ -353,48 +353,48 @@ export default function ProfilParticulier() {
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-lg text-[#722F37]">{t('profile.quickAccess')}</CardTitle>
+            <CardTitle className="text-lg text-[#601B28]">{t('profile.quickAccess')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-3">
               <Link href="/decouverte">
                 <div className="flex flex-col items-center p-4 bg-gray-100 rounded-md transition-colors cursor-pointer hover:bg-gray-200" data-testid="link-recherche">
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-2">
-                    <Search className="h-5 w-5 text-[#722F37]" />
+                    <Search className="h-5 w-5 text-[#601B28]" />
                   </div>
-                  <span className="text-xs text-[#722F37] font-medium text-center">{t('nav.search')}</span>
+                  <span className="text-xs text-[#601B28] font-medium text-center">{t('nav.search')}</span>
                 </div>
               </Link>
               <Link href="/messages">
                 <div className="flex flex-col items-center p-4 bg-gray-100 rounded-md transition-colors cursor-pointer hover:bg-gray-200" data-testid="link-messages">
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-2">
-                    <MessageCircle className="h-5 w-5 text-[#722F37]" />
+                    <MessageCircle className="h-5 w-5 text-[#601B28]" />
                   </div>
-                  <span className="text-xs text-[#722F37] font-medium text-center">{t('nav.messages')}</span>
+                  <span className="text-xs text-[#601B28] font-medium text-center">{t('nav.messages')}</span>
                 </div>
               </Link>
               <Link href="/mes-projets">
                 <div className="flex flex-col items-center p-4 bg-gray-100 rounded-md transition-colors cursor-pointer hover:bg-gray-200" data-testid="link-mes-projets">
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-2">
-                    <FolderKanban className="h-5 w-5 text-[#722F37]" />
+                    <FolderKanban className="h-5 w-5 text-[#601B28]" />
                   </div>
-                  <span className="text-xs text-[#722F37] font-medium text-center">{t('nav.projects')}</span>
+                  <span className="text-xs text-[#601B28] font-medium text-center">{t('nav.projects')}</span>
                 </div>
               </Link>
               <Link href="/mesures">
                 <div className="flex flex-col items-center p-4 bg-gray-100 rounded-md transition-colors cursor-pointer hover:bg-gray-200" data-testid="link-mesures">
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-2">
-                    <Ruler className="h-5 w-5 text-[#722F37]" />
+                    <Ruler className="h-5 w-5 text-[#601B28]" />
                   </div>
-                  <span className="text-xs text-[#722F37] font-medium text-center">{t('nav.measures')}</span>
+                  <span className="text-xs text-[#601B28] font-medium text-center">{t('nav.measures')}</span>
                 </div>
               </Link>
               <Link href="/magazine">
                 <div className="flex flex-col items-center p-4 bg-gray-100 rounded-md transition-colors cursor-pointer hover:bg-gray-200" data-testid="link-magazine">
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-2">
-                    <BookOpen className="h-5 w-5 text-[#722F37]" />
+                    <BookOpen className="h-5 w-5 text-[#601B28]" />
                   </div>
-                  <span className="text-xs text-[#722F37] font-medium text-center">{t('nav.magazine')}</span>
+                  <span className="text-xs text-[#601B28] font-medium text-center">{t('nav.magazine')}</span>
                 </div>
               </Link>
             </div>
@@ -403,7 +403,7 @@ export default function ProfilParticulier() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg text-[#722F37]">{t('profile.account')}</CardTitle>
+            <CardTitle className="text-lg text-[#601B28]">{t('profile.account')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">

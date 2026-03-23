@@ -127,7 +127,7 @@ export default function InscriptionParticulier() {
                 <ArrowLeft className="h-5 w-5 text-gray-600" />
               </Button>
             </Link>
-            <Logo className="text-2xl text-[#722F37]" />
+            <Logo className="text-2xl text-[#601B28]" />
           </div>
           <LanguageToggle />
         </div>
@@ -136,7 +136,7 @@ export default function InscriptionParticulier() {
       <main className="max-w-6xl mx-auto px-4 py-8 lg:py-16">
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           <div className="hidden lg:block">
-            <h1 className="font-serif text-xl lg:text-2xl text-[#722F37] mb-4">
+            <h1 className="font-serif text-xl lg:text-2xl text-[#601B28] mb-4">
               {t('auth.createAccount')}
             </h1>
             <p className="text-gray-600 text-lg mb-8">
@@ -146,8 +146,8 @@ export default function InscriptionParticulier() {
             <div className="space-y-4">
               {benefits.map((benefit, index) => (
                 <div key={index} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-                    <Check className="h-4 w-4 text-[#722F37]" />
+                  <div className="w-8 h-8 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+                    <Check className="h-4 w-4 text-[#601B28]" />
                   </div>
                   <span className="text-gray-700">{benefit}</span>
                 </div>
@@ -158,13 +158,13 @@ export default function InscriptionParticulier() {
               <p className="text-gray-600 italic">
                 "{t('auth.testimonialClient')}"
               </p>
-              <p className="text-[#722F37] font-medium mt-3">— Marie L., Paris</p>
+              <p className="text-[#601B28] font-medium mt-3">— Marie L., Paris</p>
             </div>
           </div>
 
           <div>
             <div className="lg:hidden mb-8">
-              <h1 className="font-serif text-xl text-[#722F37] mb-2">
+              <h1 className="font-serif text-xl text-[#601B28] mb-2">
                 {t('auth.createAccount')}
               </h1>
               <p className="text-gray-600">
@@ -187,7 +187,7 @@ export default function InscriptionParticulier() {
                               placeholder="Marie Dupont" 
                               {...field} 
                               data-testid="input-fullname"
-                              className="border-gray-200 focus:border-[#722F37] focus:ring-[#722F37]"
+                              className="border-gray-200 focus:border-[#601B28] focus:ring-[#601B28]"
                             />
                           </FormControl>
                           <FormMessage />
@@ -207,7 +207,7 @@ export default function InscriptionParticulier() {
                               placeholder={t('auth.emailPlaceholder')} 
                               {...field} 
                               data-testid="input-email"
-                              className="border-gray-200 focus:border-[#722F37] focus:ring-[#722F37]"
+                              className="border-gray-200 focus:border-[#601B28] focus:ring-[#601B28]"
                             />
                           </FormControl>
                           <FormMessage />
@@ -229,7 +229,7 @@ export default function InscriptionParticulier() {
                               placeholder="06 12 34 56 78" 
                               {...field} 
                               data-testid="input-phone"
-                              className="border-gray-200 focus:border-[#722F37] focus:ring-[#722F37]"
+                              className="border-gray-200 focus:border-[#601B28] focus:ring-[#601B28]"
                             />
                           </FormControl>
                           <FormMessage />
@@ -250,7 +250,7 @@ export default function InscriptionParticulier() {
                                 placeholder={t('auth.minChars')} 
                                 {...field} 
                                 data-testid="input-password"
-                                className="border-gray-200 focus:border-[#722F37] focus:ring-[#722F37] pr-10"
+                                className="border-gray-200 focus:border-[#601B28] focus:ring-[#601B28] pr-10"
                               />
                               <button
                                 type="button"
@@ -280,7 +280,7 @@ export default function InscriptionParticulier() {
                                 placeholder={t('auth.confirmPasswordPlaceholder')} 
                                 {...field} 
                                 data-testid="input-confirm-password"
-                                className="border-gray-200 focus:border-[#722F37] focus:ring-[#722F37] pr-10"
+                                className="border-gray-200 focus:border-[#601B28] focus:ring-[#601B28] pr-10"
                               />
                               <button
                                 type="button"
@@ -308,14 +308,14 @@ export default function InscriptionParticulier() {
                               id="cgv-particulier"
                               checked={field.value}
                               onChange={field.onChange}
-                              className="mt-1 h-4 w-4 accent-[#722F37] cursor-pointer shrink-0"
+                              className="mt-1 h-4 w-4 accent-[#601B28] cursor-pointer shrink-0"
                               data-testid="checkbox-cgv"
                             />
                             <label htmlFor="cgv-particulier" className="text-sm text-gray-600 leading-snug cursor-pointer">
                               J'accepte les{" "}
-                              <Link href="/cgv" className="text-[#722F37] hover:underline font-medium" target="_blank">Conditions Générales de Vente</Link>
+                              <Link href="/cgv" className="text-[#601B28] hover:underline font-medium" target="_blank">Conditions Générales de Vente</Link>
                               {" "}et les{" "}
-                              <Link href="/cgu" className="text-[#722F37] hover:underline font-medium" target="_blank">Conditions Générales d'Utilisation</Link>
+                              <Link href="/cgu" className="text-[#601B28] hover:underline font-medium" target="_blank">Conditions Générales d'Utilisation</Link>
                               {" "}de SEAMLIER.
                             </label>
                           </div>
@@ -327,7 +327,7 @@ export default function InscriptionParticulier() {
                     <div className="pt-2">
                       <Button 
                         type="submit" 
-                        className="w-full bg-[#722F37] hover:bg-[#5a1f25] text-white"
+                        className="w-full bg-[#601B28] hover:bg-[#5a1f25] text-white"
                         disabled={registerMutation.isPending}
                         data-testid="button-submit"
                       >
@@ -340,7 +340,7 @@ export default function InscriptionParticulier() {
                 <div className="mt-6 pt-6 border-t border-gray-100 text-center">
                   <p className="text-gray-600">
                     {t('auth.hasAccount')}{" "}
-                    <Link href="/connexion" className="text-[#722F37] font-medium hover:underline" data-testid="link-login">
+                    <Link href="/connexion" className="text-[#601B28] font-medium hover:underline" data-testid="link-login">
                       {t('auth.login')}
                     </Link>
                   </p>
@@ -350,7 +350,7 @@ export default function InscriptionParticulier() {
 
             <p className="text-center text-sm text-gray-500 mt-6">
               {t('auth.areYouTailor')}{" "}
-              <Link href="/professionnel" className="text-[#722F37] font-medium hover:underline" data-testid="link-pro-signup">
+              <Link href="/professionnel" className="text-[#601B28] font-medium hover:underline" data-testid="link-pro-signup">
                 {t('auth.createProAccount')}
               </Link>
             </p>

@@ -78,7 +78,7 @@ export default function MesRendezVous() {
   return (
     <div className="min-h-screen pb-24 bg-[#faf9f8]">
       {/* En-tête */}
-      <div className="bg-[#722F37] text-white px-4 lg:px-8 pt-6 pb-10">
+      <div className="bg-[#601B28] text-white px-4 lg:px-8 pt-6 pb-10">
         <div className="max-w-2xl mx-auto">
           <Link href="/dashboard-client">
             <button className="flex items-center gap-1.5 text-white/70 text-sm mb-4 hover:text-white transition-colors">
@@ -195,7 +195,7 @@ function AppointmentCard({
         <div className="flex items-center gap-3 mb-3">
           <Avatar className="h-9 w-9 border border-gray-100 flex-shrink-0">
             <AvatarImage src={appt.tailor_image || undefined} />
-            <AvatarFallback className="bg-[#722F37]/10 text-[#722F37] text-sm">
+            <AvatarFallback className="bg-[#601B28]/10 text-[#601B28] text-sm">
               {(appt.tailor_first_name || "A").charAt(0)}
             </AvatarFallback>
           </Avatar>

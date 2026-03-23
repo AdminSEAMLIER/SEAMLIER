@@ -49,7 +49,7 @@ export default function EvenementRejoindre() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <Loader2 className="h-8 w-8 animate-spin text-[#722F37]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#601B28]" />
       </div>
     );
   }
@@ -63,7 +63,7 @@ export default function EvenementRejoindre() {
         <h2 className="font-serif text-2xl text-gray-700 mb-2">Événement introuvable</h2>
         <p className="text-gray-400 mb-6">Ce lien d'invitation est invalide ou a expiré.</p>
         <Link href="/">
-          <Button className="bg-[#722F37] text-white">Retour à l'accueil</Button>
+          <Button className="bg-[#601B28] text-white">Retour à l'accueil</Button>
         </Link>
       </div>
     );
@@ -81,7 +81,7 @@ export default function EvenementRejoindre() {
           L'artisan va vous contacter pour établir votre devis personnalisé.
         </p>
         <Button
-          className="bg-[#722F37] hover:bg-[#5a252c] text-white"
+          className="bg-[#601B28] hover:bg-[#4E1522] text-white"
           onClick={() => setLocation("/mes-projets")}
         >
           Voir mes projets
@@ -97,7 +97,7 @@ export default function EvenementRejoindre() {
   return (
     <div className="min-h-screen bg-white pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#722F37] to-[#9b4a53] px-4 py-12 text-center text-white">
+      <div className="bg-gradient-to-r from-[#601B28] to-[#9b4a53] px-4 py-12 text-center text-white">
         <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4">
           <span className="text-3xl">🎉</span>
         </div>
@@ -110,8 +110,8 @@ export default function EvenementRejoindre() {
         <Card className="border border-gray-100">
           <CardContent className="pt-5 space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#722F37]/10 flex items-center justify-center">
-                <Scissors className="h-5 w-5 text-[#722F37]" />
+              <div className="w-10 h-10 rounded-full bg-[#601B28]/10 flex items-center justify-center">
+                <Scissors className="h-5 w-5 text-[#601B28]" />
               </div>
               <div>
                 <p className="text-xs text-gray-400 font-medium">Artisan</p>
@@ -121,8 +121,8 @@ export default function EvenementRejoindre() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#722F37]/10 flex items-center justify-center">
-                <Users className="h-5 w-5 text-[#722F37]" />
+              <div className="w-10 h-10 rounded-full bg-[#601B28]/10 flex items-center justify-center">
+                <Users className="h-5 w-5 text-[#601B28]" />
               </div>
               <div>
                 <p className="text-xs text-gray-400 font-medium">Participants</p>
@@ -130,8 +130,8 @@ export default function EvenementRejoindre() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#722F37]/10 flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-[#722F37]" />
+              <div className="w-10 h-10 rounded-full bg-[#601B28]/10 flex items-center justify-center">
+                <Calendar className="h-5 w-5 text-[#601B28]" />
               </div>
               <div>
                 <p className="text-xs text-gray-400 font-medium">Organisé par</p>
@@ -149,8 +149,8 @@ export default function EvenementRejoindre() {
         </Card>
 
         {/* Info block */}
-        <div className="bg-[#722F37]/5 border border-[#722F37]/20 rounded-xl p-4">
-          <p className="text-sm text-[#722F37] font-medium mb-1">Comment ça fonctionne ?</p>
+        <div className="bg-[#601B28]/5 border border-[#601B28]/20 rounded-xl p-4">
+          <p className="text-sm text-[#601B28] font-medium mb-1">Comment ça fonctionne ?</p>
           <ul className="text-xs text-gray-600 space-y-1 list-disc list-inside">
             <li>En rejoignant, un projet personnalisé est créé pour vous</li>
             <li>L'artisan vous contactera pour établir votre devis individuel</li>
@@ -160,7 +160,7 @@ export default function EvenementRejoindre() {
 
         {user ? (
           <Button
-            className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white h-12 text-base font-semibold"
+            className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white h-12 text-base font-semibold"
             onClick={() => joinMutation.mutate()}
             disabled={joinMutation.isPending}
             data-testid="button-join-event"
@@ -176,7 +176,7 @@ export default function EvenementRejoindre() {
           <div className="space-y-2">
             <p className="text-center text-sm text-gray-500">Connectez-vous pour rejoindre cet événement</p>
             <Button
-              className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white h-12"
+              className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white h-12"
               onClick={() => setLocation(`/connexion?redirect=/evenement/rejoindre/${inviteCode}`)}
               data-testid="button-login-to-join"
             >

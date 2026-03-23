@@ -65,10 +65,10 @@ export default function ProModifierMotDePasse() {
             </Button>
           </Link>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white border border-[#722F37] flex items-center justify-center">
-              <Lock className="h-5 w-5 text-[#722F37]" />
+            <div className="w-10 h-10 rounded-full bg-white border border-[#601B28] flex items-center justify-center">
+              <Lock className="h-5 w-5 text-[#601B28]" />
             </div>
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]">
               Modifier le mot de passe
             </h1>
           </div>
@@ -82,7 +82,7 @@ export default function ProModifierMotDePasse() {
         <form onSubmit={handleSubmit}>
           <Card className="border border-gray-100 bg-white shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg text-[#722F37]">
+              <CardTitle className="text-lg text-[#601B28]">
                 Changer de mot de passe
               </CardTitle>
             </CardHeader>
@@ -153,7 +153,7 @@ export default function ProModifierMotDePasse() {
 
               <Button 
                 type="submit"
-                className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white mt-4"
+                className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white mt-4"
                 disabled={changeMutation.isPending}
                 data-testid="button-save-password"
               >

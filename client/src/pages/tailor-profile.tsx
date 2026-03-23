@@ -230,18 +230,18 @@ export default function TailorProfile() {
       <div className="px-4 lg:px-6 -mt-12 max-w-4xl mx-auto relative z-10">
         <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
           <AvatarImage src={tailor.user.profileImageUrl || undefined} />
-          <AvatarFallback className="bg-[#722F37] text-white text-3xl">
+          <AvatarFallback className="bg-[#601B28] text-white text-3xl">
             {getInitials(tailor.user)}
           </AvatarFallback>
         </Avatar>
 
         <div className="mt-4">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="font-serif text-2xl lg:text-3xl text-[#722F37]">
+            <h1 className="font-serif text-2xl lg:text-3xl text-[#601B28]">
               {getFullName(tailor.user)}
             </h1>
             {tailor.isVerified && (
-              <BadgeCheck className="h-5 w-5 text-[#722F37]" fill="currentColor" />
+              <BadgeCheck className="h-5 w-5 text-[#601B28]" fill="currentColor" />
             )}
           </div>
 
@@ -288,14 +288,14 @@ export default function TailorProfile() {
           <div className="flex flex-col gap-3 mt-6">
             <div className="flex gap-3">
               <Link href={`/messages?tailor=${tailorId}`} className="flex-1">
-                <Button className="w-full h-12 bg-[#722F37] hover:bg-[#5a252c] text-white" data-testid="button-contact">
+                <Button className="w-full h-12 bg-[#601B28] hover:bg-[#4E1522] text-white" data-testid="button-contact">
                   <MessageCircle className="h-5 w-5 mr-2" />
                   Envoyer un message
                 </Button>
               </Link>
               <Button
                 variant="outline"
-                className="flex-1 h-12 border-[#722F37] text-[#722F37]"
+                className="flex-1 h-12 border-[#601B28] text-[#601B28]"
                 data-testid="button-book"
                 onClick={() => setBookingOpen(true)}
               >
@@ -304,7 +304,7 @@ export default function TailorProfile() {
               </Button>
             </div>
             <Button
-              className="w-full h-12 bg-white border border-[#722F37] text-[#722F37] hover:bg-[#722F37]/5"
+              className="w-full h-12 bg-white border border-[#601B28] text-[#601B28] hover:bg-[#601B28]/5"
               data-testid="button-request-quote"
               onClick={() => setDevisOpen(true)}
             >
@@ -315,10 +315,10 @@ export default function TailorProfile() {
 
         <Tabs defaultValue="portfolio" className="mt-8">
           <TabsList className="w-full grid grid-cols-2 bg-transparent border-b border-gray-200 rounded-none h-auto p-0">
-            <TabsTrigger value="portfolio" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#722F37] data-[state=active]:bg-transparent data-[state=active]:text-[#722F37] data-[state=active]:shadow-none bg-transparent py-3" data-testid="tab-portfolio">
+            <TabsTrigger value="portfolio" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#601B28] data-[state=active]:bg-transparent data-[state=active]:text-[#601B28] data-[state=active]:shadow-none bg-transparent py-3" data-testid="tab-portfolio">
               {t('tailorProfile.portfolio')} ({portfolio?.length || 0})
             </TabsTrigger>
-            <TabsTrigger value="reviews" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#722F37] data-[state=active]:bg-transparent data-[state=active]:text-[#722F37] data-[state=active]:shadow-none bg-transparent py-3" data-testid="tab-reviews">
+            <TabsTrigger value="reviews" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#601B28] data-[state=active]:bg-transparent data-[state=active]:text-[#601B28] data-[state=active]:shadow-none bg-transparent py-3" data-testid="tab-reviews">
               {t('tailorProfile.reviewsTab')} ({reviews?.length || 0})
             </TabsTrigger>
           </TabsList>
@@ -432,7 +432,7 @@ export default function TailorProfile() {
               Annuler
             </Button>
             <Button
-              className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+              className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
               onClick={handleBooking}
               disabled={bookingMutation.isPending || !bookingDate || !bookingTime}
               data-testid="button-confirm-booking"
@@ -518,7 +518,7 @@ export default function TailorProfile() {
                 <button
                   type="button"
                   onClick={() => photoInputRef.current?.click()}
-                  className="w-full h-24 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-[#722F37]/40 hover:text-[#722F37] transition-colors"
+                  className="w-full h-24 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-[#601B28]/40 hover:text-[#601B28] transition-colors"
                   data-testid="button-add-photo"
                 >
                   <Camera className="h-6 w-6" />
@@ -554,7 +554,7 @@ export default function TailorProfile() {
               Annuler
             </Button>
             <Button
-              className="flex-1 bg-[#722F37] hover:bg-[#5a252c] text-white"
+              className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
               onClick={() => devisMutation.mutate()}
               disabled={devisMutation.isPending || !devisDescription}
               data-testid="button-confirm-devis"

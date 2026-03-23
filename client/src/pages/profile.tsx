@@ -64,7 +64,7 @@ export default function Profile() {
       <div className="bg-card border-b border-border">
         <div className="max-w-2xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
           <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#722F37]">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]">
               {t('userProfile.title')}
             </h1>
             <ThemeToggle />
@@ -73,7 +73,7 @@ export default function Profile() {
           <div className="flex items-center gap-4">
             <Avatar className="h-20 w-20 border-4 border-white shadow-md">
               <AvatarImage src={user?.profileImageUrl || undefined} />
-              <AvatarFallback className="bg-[#722F37] text-white text-2xl">
+              <AvatarFallback className="bg-[#601B28] text-white text-2xl">
                 {user?.firstName?.charAt(0) || <User className="h-8 w-8" />}
               </AvatarFallback>
             </Avatar>
@@ -89,7 +89,7 @@ export default function Profile() {
                 </div>
               )}
               {user?.role === "tailor" && (
-                <span className="inline-block bg-[#722F37]/10 text-[#722F37] text-xs font-medium px-2 py-1 rounded-full mt-2">
+                <span className="inline-block bg-[#601B28]/10 text-[#601B28] text-xs font-medium px-2 py-1 rounded-full mt-2">
                   {t('userProfile.tailor')}
                 </span>
               )}
