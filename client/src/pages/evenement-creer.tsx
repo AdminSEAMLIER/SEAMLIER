@@ -19,6 +19,7 @@ export default function EvenementCreer() {
   const [eventDate, setEventDate] = useState("");
   const [tailorId, setTailorId] = useState("");
   const [description, setDescription] = useState("");
+  const [registrationDeadline, setRegistrationDeadline] = useState("");
   const [created, setCreated] = useState<any>(null);
   const [copied, setCopied] = useState(false);
 
@@ -29,7 +30,10 @@ export default function EvenementCreer() {
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!name || !eventDate || !tailorId) throw new Error("Tous les champs obligatoires sont requis");
-      const res = await apiRequest("POST", "/api/events", { name, eventDate, tailorId, description });
+      const res = await apiRequest("POST", "/api/events", {
+        name, eventDate, tailorId, description,
+        registrationDeadline: registrationDeadline || undefined,
+      });
       return res.json();
     },
     onSuccess: (data) => {
@@ -106,6 +110,13 @@ export default function EvenementCreer() {
           <div className="space-y-2">
             <Button
               className="w-full bg-[#722F37] hover:bg-[#5a252c] text-white"
+              onClick={() => setLocation(`/evenement/${created.id}`)}
+            >
+              Voir les détails de l'événement
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
               onClick={() => setLocation("/dashboard-client")}
             >
               Retour au tableau de bord
@@ -195,6 +206,24 @@ export default function EvenementCreer() {
             rows={3}
             data-testid="input-event-description"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="event-deadline">Date limite d'inscription (optionnel)</Label>
+          <div className="relative">
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              id="event-deadline"
+              type="date"
+              min={today}
+              max={eventDate || undefined}
+              value={registrationDeadline}
+              onChange={(e) => setRegistrationDeadline(e.target.value)}
+              className="pl-9"
+              data-testid="input-registration-deadline"
+            />
+          </div>
+          <p className="text-xs text-gray-400">Les inscriptions se fermeront automatiquement après cette date.</p>
         </div>
 
         <Button

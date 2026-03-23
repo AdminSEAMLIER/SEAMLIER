@@ -546,6 +546,7 @@ export async function registerRoutes(
       const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
       // Revenus du mois : somme de amount_artisan pour les projets complétés ce mois
+      // amount_artisan est stocké en centimes → diviser par 100
       const [revenueRows] = await pool.query(
         `SELECT COALESCE(SUM(amount_artisan), 0) as total
          FROM projects
@@ -553,8 +554,9 @@ export async function registerRoutes(
          AND updated_at >= ?`,
         [tailor.id, firstOfMonth]
       ) as any[];
-      const monthlyRevenue = Array.isArray(revenueRows) && revenueRows[0]
+      const rawRevenue = Array.isArray(revenueRows) && revenueRows[0]
         ? parseFloat(revenueRows[0].total) || 0 : 0;
+      const monthlyRevenue = rawRevenue > 1000 ? Math.round(rawRevenue / 100) : rawRevenue;
 
       // Projets en cours (status = in_progress)
       const [activeRows] = await pool.query(
@@ -591,21 +593,23 @@ export async function registerRoutes(
       const now = new Date();
       const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // CA du mois en cours
+      // CA du mois en cours (amount_artisan en centimes → /100)
       const [revenueRows] = await pool.query(
         `SELECT COALESCE(SUM(amount_artisan), 0) as total FROM projects
          WHERE tailor_id = ? AND status = 'completed' AND updated_at >= ?`,
         [tailor.id, firstOfMonth]
       ) as any[];
-      const monthlyRevenue = parseFloat(revenueRows?.[0]?.total) || 0;
+      const rawMonthly = parseFloat(revenueRows?.[0]?.total) || 0;
+      const monthlyRevenue = rawMonthly > 1000 ? Math.round(rawMonthly / 100) : rawMonthly;
 
-      // Panier moyen (tous projets complétés)
+      // Panier moyen (amount_artisan en centimes → /100)
       const [avgRows] = await pool.query(
         `SELECT COALESCE(AVG(amount_artisan), 0) as avg_val FROM projects
          WHERE tailor_id = ? AND status = 'completed' AND amount_artisan > 0`,
         [tailor.id]
       ) as any[];
-      const averageOrderValue = parseFloat(avgRows?.[0]?.avg_val) || 0;
+      const rawAvg = parseFloat(avgRows?.[0]?.avg_val) || 0;
+      const averageOrderValue = rawAvg > 1000 ? Math.round(rawAvg / 100) : rawAvg;
 
       // Nombre total de clients distincts
       const [clientRows] = await pool.query(
@@ -942,11 +946,10 @@ export async function registerRoutes(
           if (tailor?.userId && project.clientId) {
             const conv = await storage.getOrCreateConversation(tailor.userId, project.clientId);
             const garmentLabel = (project as any).clothingType || project.title || "votre commande";
-            const rdvLink = `https://seamlier.fr/prendre-rdv?tailor=${tailor.userId}`;
             await storage.createMessage({
               conversationId: conv.id,
               senderId: tailor.userId,
-              content: `🎉 Super ! Devis validé — la confection de ${garmentLabel} vient de démarrer. Prenez votre premier rendez-vous dès maintenant pour qu'on commence dans les meilleures conditions : ${rdvLink}`,
+              content: `🎉 Votre devis a été validé et la confection de ${garmentLabel} démarre ! Prenez dès maintenant votre premier rendez-vous avec moi 👇\n[RDV:/prendre-rdv?tailor=${tailor.userId}]`,
             });
           }
         } catch (msgErr) {
@@ -1269,7 +1272,7 @@ export async function registerRoutes(
   // Reviews
   async function recalculateTailorRating(tailorId: string) {
     const [rows] = await pool.query(
-      `SELECT AVG(rating) as avg_rating, COUNT(*) as cnt FROM reviews WHERE tailor_id = ? AND is_approved = 1`,
+      `SELECT AVG(rating) as avg_rating, COUNT(*) as cnt FROM reviews WHERE tailor_id = ? AND is_approved >= 0`,
       [tailorId]
     ) as any[];
     const avg = parseFloat((rows as any[])[0]?.avg_rating) || 0;
@@ -2108,7 +2111,7 @@ export async function registerRoutes(
   app.post("/api/events", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
-      const { name, eventDate, tailorId, description } = req.body;
+      const { name, eventDate, tailorId, description, registrationDeadline } = req.body;
       if (!name || !eventDate || !tailorId) {
         return res.status(400).json({ error: "name, eventDate et tailorId sont requis" });
       }
@@ -2118,8 +2121,8 @@ export async function registerRoutes(
       if ((existing as any[]).length > 0) inviteCode = generateInviteCode() + "X";
       const eventId = require("crypto").randomUUID();
       await pool.query(
-        `INSERT INTO events (id, name, event_date, tailor_id, organizer_id, invite_code, description) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [eventId, name, eventDate, tailorId, userId, inviteCode, description || null]
+        `INSERT INTO events (id, name, event_date, tailor_id, organizer_id, invite_code, description, registration_deadline) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [eventId, name, eventDate, tailorId, userId, inviteCode, description || null, registrationDeadline || null]
       );
       // Organizer joins automatically
       const participantId = require("crypto").randomUUID();
@@ -2198,7 +2201,7 @@ export async function registerRoutes(
       const [evRows] = await pool.query(`
         SELECT e.*, 
           tu.first_name as tailor_first_name, tu.last_name as tailor_last_name,
-          tu.profile_image_url as tailor_avatar,
+          tu.profile_image_url as tailor_avatar, tu.id as tailor_user_id,
           ou.first_name as organizer_first_name, ou.last_name as organizer_last_name
         FROM events e
         JOIN tailors t ON t.id = e.tailor_id
@@ -2272,6 +2275,65 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to get client events:", error);
       res.status(500).json({ error: "Failed to get events" });
+    }
+  });
+
+  // Update event (organizer or tailor only)
+  app.patch("/api/events/:id", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const { registrationDeadline, description, name } = req.body;
+      const [evRows] = await pool.query(`SELECT * FROM events WHERE id = ?`, [req.params.id]) as any[];
+      const event = (evRows as any[])[0];
+      if (!event) return res.status(404).json({ error: "Event not found" });
+      const tailor = await storage.getTailorByUserId(userId);
+      const isTailor = tailor && tailor.id === event.tailor_id;
+      const isOrganizer = event.organizer_id === userId;
+      if (!isTailor && !isOrganizer) return res.status(403).json({ error: "Unauthorized" });
+      const updates: string[] = [];
+      const params: any[] = [];
+      if (registrationDeadline !== undefined) { updates.push("registration_deadline = ?"); params.push(registrationDeadline || null); }
+      if (description !== undefined) { updates.push("description = ?"); params.push(description || null); }
+      if (name !== undefined) { updates.push("name = ?"); params.push(name); }
+      if (updates.length > 0) {
+        params.push(req.params.id);
+        await pool.query(`UPDATE events SET ${updates.join(", ")} WHERE id = ?`, params);
+      }
+      const [updated] = await pool.query(`SELECT * FROM events WHERE id = ?`, [req.params.id]) as any[];
+      res.json((updated as any[])[0]);
+    } catch (error) {
+      console.error("Failed to update event:", error);
+      res.status(500).json({ error: "Failed to update event" });
+    }
+  });
+
+  // Broadcast message from tailor to all event participants
+  app.post("/api/events/:id/broadcast", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const [evRows] = await pool.query(`SELECT * FROM events WHERE id = ?`, [req.params.id]) as any[];
+      const event = (evRows as any[])[0];
+      if (!event || event.tailor_id !== tailor.id) return res.status(403).json({ error: "Unauthorized" });
+      const { content } = req.body;
+      if (!content?.trim()) return res.status(400).json({ error: "Message vide" });
+      const [partRows] = await pool.query(
+        `SELECT user_id FROM event_participants WHERE event_id = ? AND user_id != ?`,
+        [event.id, userId]
+      ) as any[];
+      let sent = 0;
+      for (const part of (partRows as any[])) {
+        try {
+          const conv = await storage.getOrCreateConversation(userId, part.user_id);
+          await storage.createMessage({ conversationId: conv.id, senderId: userId, content });
+          sent++;
+        } catch (e) { console.error("Broadcast message error:", e); }
+      }
+      res.json({ success: true, sent });
+    } catch (error) {
+      console.error("Failed to broadcast:", error);
+      res.status(500).json({ error: "Failed to broadcast" });
     }
   });
 

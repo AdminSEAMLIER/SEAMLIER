@@ -58,6 +58,7 @@ import MesRendezVous from "@/pages/mes-rendez-vous";
 import DashboardClient from "@/pages/dashboard-client";
 import EvenementCreer from "@/pages/evenement-creer";
 import EvenementRejoindre from "@/pages/evenement-rejoindre";
+import EvenementDetail from "@/pages/evenement-detail";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -276,6 +277,12 @@ function Router() {
 
       <Route path="/evenement/rejoindre/:inviteCode">
         <EvenementRejoindre />
+      </Route>
+
+      <Route path="/evenement/:id">
+        <ProtectedRoute>
+          <EvenementDetail />
+        </ProtectedRoute>
       </Route>
 
       {/* Pro routes */}

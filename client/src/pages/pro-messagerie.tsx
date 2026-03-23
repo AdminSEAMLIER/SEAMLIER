@@ -5,6 +5,7 @@ import {
   MapPin, Clock, CheckCircle2, Circle, AlertCircle, AlertTriangle,
   StickyNote, ChevronDown, Tag,
 } from "lucide-react";
+import { renderMessageContent } from "@/lib/message-renderer";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -705,7 +706,7 @@ export default function ProMessagerie() {
                               }`}
                               data-testid={`message-${msg.id}`}
                             >
-                              <p className="text-sm whitespace-pre-line">{msg.content}</p>
+                              <div className="text-sm">{renderMessageContent(msg.content, isSent)}</div>
                               <p className={`text-[10px] mt-1 ${isSent ? 'text-white/70' : 'text-gray-400'}`}>
                                 {msg.sentAt ? new Date(msg.sentAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ""}
                               </p>

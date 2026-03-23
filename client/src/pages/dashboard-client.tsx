@@ -275,26 +275,25 @@ export default function DashboardClient() {
             </div>
             <div className="space-y-2">
               {clientEvents.slice(0, 3).map((ev: any) => (
-                <div
-                  key={ev.id}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-[#722F37]/10 flex items-center justify-center shrink-0">
-                    <PartyPopper className="h-4 w-4 text-[#722F37]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-sm truncate">{ev.name}</p>
-                    <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
-                      <Calendar className="h-3 w-3" />
-                      <span>{new Date(ev.event_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}</span>
-                      <Users className="h-3 w-3 ml-1" />
-                      <span>{ev.participant_count} participant{ev.participant_count > 1 ? "s" : ""}</span>
+                <Link key={ev.id} href={`/evenement/${ev.id}`} data-testid={`link-event-${ev.id}`}>
+                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3 hover:border-[#722F37]/30 hover:shadow-md transition-all cursor-pointer">
+                    <div className="w-9 h-9 rounded-lg bg-[#722F37]/10 flex items-center justify-center shrink-0">
+                      <PartyPopper className="h-4 w-4 text-[#722F37]" />
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{ev.name}</p>
+                      <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+                        <Calendar className="h-3 w-3" />
+                        <span>{new Date(ev.event_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}</span>
+                        <Users className="h-3 w-3 ml-1" />
+                        <span>{ev.participant_count} participant{ev.participant_count > 1 ? "s" : ""}</span>
+                      </div>
+                    </div>
+                    <span className="text-xs text-[#722F37] font-medium shrink-0">
+                      {ev.tailor_first_name} {ev.tailor_last_name}
+                    </span>
                   </div>
-                  <span className="text-xs text-[#722F37] font-medium shrink-0">
-                    {ev.tailor_first_name} {ev.tailor_last_name}
-                  </span>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

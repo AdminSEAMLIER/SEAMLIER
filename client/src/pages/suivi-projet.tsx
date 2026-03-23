@@ -200,13 +200,13 @@ export default function SuiviProjet() {
               </p>
             </div>
           )}
-          {project.amountArtisan != null && (
+          {(project.amount != null && project.amount > 0) && (
             <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-1">
                 <Euro className="h-4 w-4 text-[#722F37]" />
                 <span className="text-xs text-gray-500 font-medium">Montant</span>
               </div>
-              <p className="text-sm font-semibold text-gray-900">{project.amountArtisan}€</p>
+              <p className="text-sm font-semibold text-gray-900">{project.amount}€</p>
             </div>
           )}
           <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">

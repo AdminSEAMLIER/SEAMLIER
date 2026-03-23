@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { renderMessageContent } from "@/lib/message-renderer";
 import type { ConversationWithParticipant, MessageWithSender } from "@shared/schema";
 
 export default function Messages() {
@@ -268,7 +269,7 @@ export default function Messages() {
                           )}
                           data-testid={`message-${message.id}`}
                         >
-                          <p className="text-sm">{message.content}</p>
+                          <div className="text-sm">{renderMessageContent(message.content, isSent)}</div>
                           <p className={cn(
                             "text-[10px] mt-1",
                             isSent ? "text-white/70" : "text-muted-foreground"

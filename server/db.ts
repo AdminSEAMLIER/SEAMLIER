@@ -77,12 +77,25 @@ export async function ensureTables() {
         organizer_id VARCHAR(36) NOT NULL,
         invite_code VARCHAR(10) NOT NULL UNIQUE,
         description TEXT,
+        registration_deadline DATE NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
     console.log("[DB] events table ensured ✅");
   } catch (err) {
     console.warn("[DB] events table:", (err as any)?.message);
+  }
+
+  // Add registration_deadline column if missing (migration)
+  try {
+    await pool.execute(`ALTER TABLE events ADD COLUMN IF NOT EXISTS registration_deadline DATE NULL`);
+  } catch (err) {
+    // MySQL doesn't support IF NOT EXISTS for ALTER TABLE columns in older versions
+    // Ignore duplicate column errors
+    const msg = (err as any)?.message || "";
+    if (!msg.includes("Duplicate column")) {
+      console.warn("[DB] events.registration_deadline migration:", msg);
+    }
   }
 
   // event_participants table
