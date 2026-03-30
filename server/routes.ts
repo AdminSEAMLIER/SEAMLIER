@@ -147,7 +147,8 @@ export async function registerRoutes(
 
   app.get("/api/tailors/:id/reviews", async (req, res) => {
     try {
-      const reviews = await storage.getReviewsByTailor(req.params.id);
+      const allReviews = await storage.getReviewsByTailor(req.params.id);
+      const reviews = allReviews.filter((r: any) => r.isApproved === 1 || r.is_approved === 1);
       res.json(reviews);
     } catch (error) {
       console.error("Failed to fetch reviews:", error);
@@ -1296,7 +1297,7 @@ export async function registerRoutes(
   // Reviews
   async function recalculateTailorRating(tailorId: string) {
     const [rows] = await pool.query(
-      `SELECT AVG(rating) as avg_rating, COUNT(*) as cnt FROM reviews WHERE tailor_id = ? AND is_approved >= 0`,
+      `SELECT AVG(rating) as avg_rating, COUNT(*) as cnt FROM reviews WHERE tailor_id = ? AND is_approved = 1`,
       [tailorId]
     ) as any[];
     const avg = parseFloat((rows as any[])[0]?.avg_rating) || 0;
@@ -1453,27 +1454,64 @@ export async function registerRoutes(
 
   app.get("/api/admin/global-stats", requireAdmin, async (req, res) => {
     try {
+      const now = new Date();
+      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
       const [revenueRows] = await pool.query(
         "SELECT COALESCE(SUM(amount), 0) as total FROM projects WHERE status = 'completed'"
       ) as any[];
       const totalRevenue = parseFloat(revenueRows?.[0]?.total) || 0;
 
+      const [monthRevenueRows] = await pool.query(
+        "SELECT COALESCE(SUM(amount), 0) as total FROM projects WHERE status = 'completed' AND created_at >= ?",
+        [firstOfMonth]
+      ) as any[];
+      const monthRevenue = parseFloat(monthRevenueRows?.[0]?.total) || 0;
+
       const [avgRows] = await pool.query(
         "SELECT COALESCE(AVG(amount), 0) as avg_val FROM projects WHERE status = 'completed' AND amount > 0"
       ) as any[];
-      const avgOrderValue = parseFloat(avgRows?.[0]?.avg_val) || 0;
+      const avgProjectValue = parseFloat(avgRows?.[0]?.avg_val) || 0;
+
+      const [completedRows] = await pool.query(
+        "SELECT COUNT(*) as cnt FROM projects WHERE status = 'completed'"
+      ) as any[];
+      const totalProjectsCompleted = parseInt(completedRows?.[0]?.cnt) || 0;
 
       const [artisanRows] = await pool.query(
         "SELECT COUNT(*) as cnt FROM tailors WHERE is_verified = 1"
       ) as any[];
-      const activeArtisans = parseInt(artisanRows?.[0]?.cnt) || 0;
+      const activeArtisansCount = parseInt(artisanRows?.[0]?.cnt) || 0;
 
       const [clientRows] = await pool.query(
         "SELECT COUNT(*) as cnt FROM users WHERE role = 'client'"
       ) as any[];
-      const totalClients = parseInt(clientRows?.[0]?.cnt) || 0;
+      const activeClientsCount = parseInt(clientRows?.[0]?.cnt) || 0;
 
-      res.json({ totalRevenue, avgOrderValue, activeArtisans, totalClients });
+      const [starterRows] = await pool.query(
+        "SELECT COUNT(*) as cnt FROM tailors WHERE subscription_plan = 'Starter' OR subscription_plan IS NULL"
+      ) as any[];
+      const starterCount = parseInt(starterRows?.[0]?.cnt) || 0;
+
+      const [proRows] = await pool.query(
+        "SELECT COUNT(*) as cnt FROM tailors WHERE subscription_plan = 'Pro'"
+      ) as any[];
+      const proCount = parseInt(proRows?.[0]?.cnt) || 0;
+
+      res.json({
+        totalRevenue,
+        monthRevenue,
+        avgProjectValue,
+        totalProjectsCompleted,
+        activeArtisansCount,
+        activeClientsCount,
+        starterCount,
+        proCount,
+        // legacy aliases
+        avgOrderValue: avgProjectValue,
+        activeArtisans: activeArtisansCount,
+        totalClients: activeClientsCount,
+      });
     } catch (error) {
       console.error("Error fetching global stats:", error);
       res.status(500).json({ error: "Failed to fetch global stats" });
@@ -2600,6 +2638,61 @@ export async function registerRoutes(
   });
 
     registerStripeRoutes(app);
+
+  // ─── Tailor Schedule ───────────────────────────────────────────────────────
+
+  app.get('/api/tailor/:tailorId/schedule', async (req, res) => {
+    try {
+      const { tailorId } = req.params;
+      const [rows] = await pool.query('SELECT * FROM tailor_schedule WHERE tailor_id = ? ORDER BY day_of_week', [tailorId]) as any[];
+      res.json(Array.isArray(rows) ? rows : []);
+    } catch (error: any) { res.status(500).json({ error: error.message }); }
+  });
+
+  app.post('/api/tailor/schedule', requireAuth, async (req: any, res) => {
+    try {
+      const tailor = await storage.getTailorByUserId(req.authUserId);
+      if (!tailor) return res.status(403).json({ error: 'Not a tailor' });
+      const { schedule } = req.body;
+      for (const day of schedule) {
+        const [existing] = await pool.query('SELECT id FROM tailor_schedule WHERE tailor_id = ? AND day_of_week = ?', [tailor.id, day.dayOfWeek]) as any[];
+        if (Array.isArray(existing) && existing.length > 0) {
+          await pool.query('UPDATE tailor_schedule SET start_time = ?, end_time = ?, is_closed = ? WHERE tailor_id = ? AND day_of_week = ?', [day.startTime, day.endTime, day.isClosed ? 1 : 0, tailor.id, day.dayOfWeek]);
+        } else {
+          const newId = require('crypto').randomUUID();
+          await pool.query('INSERT INTO tailor_schedule (id, tailor_id, day_of_week, start_time, end_time, is_closed) VALUES (?, ?, ?, ?, ?, ?)', [newId, tailor.id, day.dayOfWeek, day.startTime, day.endTime, day.isClosed ? 1 : 0]);
+        }
+      }
+      res.json({ success: true });
+    } catch (error: any) { res.status(500).json({ error: error.message }); }
+  });
+
+  app.get('/api/tailor/:tailorId/availability', async (req, res) => {
+    try {
+      const { tailorId } = req.params;
+      const { date } = req.query;
+      if (!date) return res.status(400).json({ error: 'date requis' });
+      const d = new Date(date as string);
+      const dayOfWeek = d.getDay();
+      const [scheduleRows] = await pool.query('SELECT * FROM tailor_schedule WHERE tailor_id = ? AND day_of_week = ?', [tailorId, dayOfWeek]) as any[];
+      const schedule = Array.isArray(scheduleRows) ? scheduleRows[0] : null;
+      if (!schedule || schedule.is_closed) return res.json({ slots: [], isClosed: true });
+      const slots = [];
+      const [startH, startM] = schedule.start_time.split(':').map(Number);
+      const [endH, endM] = schedule.end_time.split(':').map(Number);
+      const startTotal = startH * 60 + startM;
+      const endTotal = endH * 60 + endM;
+      const [apptRows] = await pool.query("SELECT scheduled_at, duration FROM appointments WHERE tailor_id = ? AND DATE(scheduled_at) = ? AND status = 'confirmed'", [tailorId, date]) as any[];
+      const bookedSlots = Array.isArray(apptRows) ? apptRows.map((a: any) => { const t = new Date(a.scheduled_at); return { start: t.getHours() * 60 + t.getMinutes(), duration: a.duration || 60 }; }) : [];
+      for (let m = startTotal; m < endTotal; m += 30) {
+        const h = Math.floor(m / 60);
+        const min = m % 60;
+        const timeStr = String(h).padStart(2, '0') + ':' + String(min).padStart(2, '0');
+        const isBooked = bookedSlots.some((b: any) => m >= b.start && m < b.start + b.duration);
+      }
+      res.json({ slots, isClosed: false });
+    } catch (error: any) { res.status(500).json({ error: error.message }); }
+  });
   return httpServer;
 }
 

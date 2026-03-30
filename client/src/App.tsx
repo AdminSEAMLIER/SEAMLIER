@@ -21,6 +21,7 @@ import Mesures from "@/pages/mesures";
 import Magazine from "@/pages/magazine";
 import MagazineDetail from "@/pages/magazine-detail";
 import AdminDashboard from "@/pages/admin-magazine";
+import PrendreRdv from "@/pages/prendre-rdv";
 import TailorProfile from "@/pages/tailor-profile";
 import ProductDetail from "@/pages/product-detail";
 import ProDashboard from "@/pages/pro-dashboard";
@@ -60,7 +61,6 @@ import DashboardClient from "@/pages/dashboard-client";
 import EvenementCreer from "@/pages/evenement-creer";
 import EvenementRejoindre from "@/pages/evenement-rejoindre";
 import EvenementDetail from "@/pages/evenement-detail";
-import PrendreRdv from "@/pages/prendre-rdv";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -376,6 +376,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
+      <Route path="/prendre-rdv" component={PrendreRdv} />
       {/* Admin routes */}
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/seamlier" component={AdminDashboard} />

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import ScheduleEditor from "@/components/ScheduleEditor";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -366,6 +367,18 @@ export default function ProParametres() {
           </CardContent>
         </Card>
 
+
+        {/* ── Horaires de travail ── */}
+        <Card className="border border-gray-100 bg-white shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
+              Horaires de travail
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="bg-white space-y-3">
+            <ScheduleEditor tailorId={tailor?.id} />
+          </CardContent>
+        </Card>
         <Button className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white" onClick={handleSave} data-testid="button-save-settings">
           <Save className="h-4 w-4 mr-2" />Enregistrer les paramètres
         </Button>

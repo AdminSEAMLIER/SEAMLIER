@@ -811,6 +811,8 @@ class DatabaseStorage implements IStorage {
         experience: tailors.experience,
         isVerified: tailors.isVerified,
         subscriptionPlan: tailors.subscriptionPlan,
+        stripeSubscriptionId: tailors.stripeSubscriptionId,
+        subscriptionCurrentPeriodEnd: tailors.subscriptionCurrentPeriodEnd,
         firstName: users.firstName,
         lastName: users.lastName,
         email: users.email,
@@ -820,7 +822,16 @@ class DatabaseStorage implements IStorage {
       })
         .from(tailors)
         .innerJoin(users, eq(tailors.userId, users.id));
-      return result;
+      return result.map((t: any) => {
+        let paymentStatus = "En attente";
+        if (t.subscriptionPlan === "Starter") {
+          paymentStatus = "—";
+        } else if (t.stripeSubscriptionId && t.subscriptionCurrentPeriodEnd) {
+          const now = Date.now() / 1000;
+          paymentStatus = t.subscriptionCurrentPeriodEnd > now ? "Payé" : "Expiré";
+        }
+        return { ...t, paymentStatus };
+      });
     } catch (error) {
       console.error("getRegisteredTailors error:", error);
       return [];
@@ -1082,7 +1093,7 @@ class DatabaseStorage implements IStorage {
 
   async getAllReviewsForAdmin(): Promise<any[]> {
     const [rows] = await pool.query(`
-      SELECT r.id, r.rating, r.comment, r.created_at,
+      SELECT r.id, r.rating, r.comment, r.created_at, r.is_approved,
              u.first_name as client_first, u.last_name as client_last, u.email as client_email,
              tu.first_name as tailor_first, tu.last_name as tailor_last,
              t.id as tailor_id
@@ -1101,6 +1112,7 @@ class DatabaseStorage implements IStorage {
       tailorName: `${r.tailor_first || ""} ${r.tailor_last || ""}`.trim() || "—",
       clientName: `${r.client_first || ""} ${r.client_last || ""}`.trim() || r.client_email || "—",
       createdAt: r.created_at ? new Date(r.created_at).toLocaleDateString("fr-FR") : "—",
+      isApproved: r.is_approved,
     }));
   }
 
