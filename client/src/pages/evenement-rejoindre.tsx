@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Calendar, Users, CheckCircle, Scissors, ArrowLeft } from "lucide-react";
+import { Loader2, Calendar, Users, CheckCircle, Scissors, LogIn, UserPlus } from "lucide-react";
 
 export default function EvenementRejoindre() {
   const params = useParams<{ inviteCode: string }>();
@@ -15,6 +15,7 @@ export default function EvenementRejoindre() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [joined, setJoined] = useState(false);
+  const [autoJoinTriggered, setAutoJoinTriggered] = useState(false);
 
   const { data: event, isLoading, isError } = useQuery<any>({
     queryKey: ["/api/events/join", inviteCode],
@@ -35,6 +36,7 @@ export default function EvenementRejoindre() {
     onSuccess: (data) => {
       if (data.alreadyJoined) {
         toast({ title: "Déjà inscrit", description: "Vous avez déjà rejoint cet événement." });
+        setJoined(true);
       } else {
         setJoined(true);
         queryClient.invalidateQueries({ queryKey: ["/api/client/events"] });
@@ -45,6 +47,14 @@ export default function EvenementRejoindre() {
       toast({ title: "Erreur", description: "Impossible de rejoindre l'événement.", variant: "destructive" });
     },
   });
+
+  // Auto-join as soon as user is authenticated (handles redirect back from login/register)
+  useEffect(() => {
+    if (user && event && !joined && !autoJoinTriggered && !joinMutation.isPending) {
+      setAutoJoinTriggered(true);
+      joinMutation.mutate();
+    }
+  }, [user, event, joined, autoJoinTriggered]);
 
   if (isLoading) {
     return (
@@ -173,14 +183,29 @@ export default function EvenementRejoindre() {
             Rejoindre l'événement
           </Button>
         ) : (
-          <div className="space-y-2">
-            <p className="text-center text-sm text-gray-500">Connectez-vous pour rejoindre cet événement</p>
+          <div className="space-y-3">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+              <p className="text-sm font-medium text-amber-800 mb-1">Compte requis pour rejoindre</p>
+              <p className="text-xs text-amber-700">
+                Vous serez automatiquement intégré à l'événement après votre connexion ou inscription.
+              </p>
+            </div>
             <Button
-              className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white h-12"
+              className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white h-12 text-base font-semibold"
               onClick={() => setLocation(`/connexion?redirect=/evenement/rejoindre/${inviteCode}`)}
               data-testid="button-login-to-join"
             >
-              Se connecter
+              <LogIn className="h-5 w-5 mr-2" />
+              J'ai déjà un compte — Se connecter
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full h-12 text-base font-semibold border-[#601B28] text-[#601B28] hover:bg-[#601B28]/5"
+              onClick={() => setLocation(`/inscription?redirect=/evenement/rejoindre/${inviteCode}`)}
+              data-testid="button-register-to-join"
+            >
+              <UserPlus className="h-5 w-5 mr-2" />
+              Créer un compte particulier
             </Button>
           </div>
         )}

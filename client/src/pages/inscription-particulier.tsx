@@ -43,6 +43,9 @@ export default function InscriptionParticulier() {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const redirectTo = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("redirect") || null
+    : null;
 
   const form = useForm<InscriptionForm>({
     resolver: zodResolver(inscriptionSchema),
@@ -81,7 +84,8 @@ export default function InscriptionParticulier() {
           title: t('auth.accountCreated'),
           description: t('auth.verifyEmailSent', 'Un email de confirmation a été envoyé. Vérifiez votre boîte de réception pour activer votre compte.'),
         });
-        setLocation("/connexion");
+        const dest = redirectTo ? `/connexion?redirect=${encodeURIComponent(redirectTo)}` : "/connexion";
+        setLocation(dest);
       } else {
         queryClient.setQueryData(["auth-user"], {
           id: result.id,
@@ -94,7 +98,7 @@ export default function InscriptionParticulier() {
           title: t('auth.accountCreated'),
           description: t('auth.welcomeDesc'),
         });
-        setLocation("/dashboard-client");
+        setLocation(redirectTo || "/dashboard-client");
       }
     },
     onError: (error: Error) => {

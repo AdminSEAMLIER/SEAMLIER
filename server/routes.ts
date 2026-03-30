@@ -1630,7 +1630,7 @@ export async function registerRoutes(
           bio: t.bio || null,
           joinDate: null,
           subscriptionPlan: t.subscriptionPlan || "Starter",
-          paymentStatus: "En attente",
+          paymentStatus: t.paymentStatus || "En attente",
           createdAt: t.createdAt || new Date(),
         }));
 
@@ -1802,7 +1802,7 @@ export async function registerRoutes(
           phone: t.phone || "",
           bio: t.bio || null,
           subscriptionPlan: t.subscriptionPlan || "Starter",
-          paymentStatus: "En attente",
+          paymentStatus: t.paymentStatus || "En attente",
           createdAt: t.createdAt || new Date(),
         });
       }
@@ -2722,14 +2722,19 @@ export async function registerRoutes(
         return res.json({ slots: [], isClosed: true, isException: true, reason: exRows[0].reason });
       }
 
-      // Check regular schedule
+      // Check regular schedule — try tailor_working_hours first (main page), fallback to tailor_schedule
       const d = new Date(dateStr);
       const dayOfWeek = d.getDay();
+      const [whRows] = await pool.query(
+        'SELECT * FROM tailor_working_hours WHERE tailor_id = ? AND day_of_week = ?',
+        [tailorId, dayOfWeek]
+      ) as any[];
       const [scheduleRows] = await pool.query(
         'SELECT * FROM tailor_schedule WHERE tailor_id = ? AND day_of_week = ?',
         [tailorId, dayOfWeek]
       ) as any[];
-      const schedule = Array.isArray(scheduleRows) ? scheduleRows[0] : null;
+      const schedule = (Array.isArray(whRows) && whRows.length > 0 ? whRows[0] : null)
+                    || (Array.isArray(scheduleRows) ? scheduleRows[0] : null);
       if (!schedule || schedule.is_closed) return res.json({ slots: [], isClosed: true, isException: false });
 
       // Build slots
@@ -2766,17 +2771,20 @@ export async function registerRoutes(
       const { year, month } = req.query; // month = 1-12
       if (!year || !month) return res.status(400).json({ error: 'year and month required' });
 
-      // Get regular schedule (which weekdays are closed)
-      const [schedRows] = await pool.query(
+      // Get regular schedule — merge tailor_working_hours (main) + tailor_schedule (fallback)
+      const [whAllRows] = await pool.query(
+        'SELECT day_of_week, is_closed FROM tailor_working_hours WHERE tailor_id = ?',
+        [tailorId]
+      ) as any[];
+      const [schedAllRows] = await pool.query(
         'SELECT day_of_week, is_closed FROM tailor_schedule WHERE tailor_id = ?',
         [tailorId]
       ) as any[];
-      const closedWeekdays: number[] = Array.isArray(schedRows)
-        ? schedRows.filter((r: any) => r.is_closed).map((r: any) => r.day_of_week)
-        : [];
-
-      // Days without schedule entry are considered open (no restriction)
-      // If schedule is empty, no days are closed by default
+      // Use working_hours if it has entries, else use tailor_schedule
+      const activeSchedule = (Array.isArray(whAllRows) && whAllRows.length > 0)
+        ? whAllRows : (Array.isArray(schedAllRows) ? schedAllRows : []);
+      const closedWeekdays: number[] = activeSchedule
+        .filter((r: any) => r.is_closed).map((r: any) => r.day_of_week);
 
       // Get exceptions for the month
       const y = parseInt(year as string);

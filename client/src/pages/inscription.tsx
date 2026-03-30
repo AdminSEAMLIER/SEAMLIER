@@ -10,6 +10,10 @@ import { useLocation } from "wouter";
 export default function Inscription() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
+  const redirectTo = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("redirect") || ""
+    : "";
+  const redirectSuffix = redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : "";
 
   return (
     <div className="min-h-screen bg-muted/50">
@@ -42,7 +46,7 @@ export default function Inscription() {
         <div className="grid sm:grid-cols-2 gap-6">
           <Card
             className="border-2 border-border hover:border-[#601B28] transition-colors cursor-pointer group"
-            onClick={() => setLocation('/inscription/particulier')}
+            onClick={() => setLocation(`/inscription/particulier${redirectSuffix}`)}
             data-testid="card-inscription-particulier"
           >
             <CardContent className="p-8 text-center">

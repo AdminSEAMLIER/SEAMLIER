@@ -15,11 +15,15 @@ import { API_ENDPOINTS, apiFetch } from "@/lib/api-config";
 export default function Connexion() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const redirectTo = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("redirect") || null
+    : null;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +60,9 @@ export default function Connexion() {
           description: t('auth.welcomeBack'),
         });
 
-        if (data.role === 'admin') {
+        if (redirectTo) {
+          setLocation(redirectTo);
+        } else if (data.role === 'admin') {
           setLocation('/admin/dashboard');
         } else if (data.role === 'tailor') {
           setLocation('/dashboard-pro');
