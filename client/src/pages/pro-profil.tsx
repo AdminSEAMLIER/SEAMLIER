@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, TrendingUp, Star, Settings, FileText, FolderKanban, Loader2, Briefcase, ImageIcon, XCircle } from "lucide-react";
+import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, TrendingUp, Star, Settings, FileText, FolderKanban, Loader2, Briefcase, ImageIcon, XCircle, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -660,6 +660,16 @@ export default function ProProfil() {
           </CardHeader>
           <CardContent className="bg-white">
             <div className="space-y-3">
+              <Link href="/pro/horaires">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start bg-white border border-[#601B28]/30 text-[#601B28] hover:bg-[#601B28]/5"
+                  data-testid="button-horaires"
+                >
+                  <Clock className="h-4 w-4 mr-3" />
+                  Horaires de travail
+                </Button>
+              </Link>
               <Link href="/pro-profil/parametres">
                 <Button
                   variant="outline"

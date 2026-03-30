@@ -1,4 +1,4 @@
-import { Home, Compass, MessageCircle, Ruler, BookOpen, User, FileText, FolderKanban, Calendar, ArrowLeftRight, Briefcase, Users, LogOut, BarChart2 } from "lucide-react";
+import { Home, Compass, MessageCircle, Ruler, BookOpen, User, FileText, FolderKanban, Calendar, ArrowLeftRight, Briefcase, Users, LogOut, BarChart2, Clock } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -27,6 +27,7 @@ const proNavItems = [
   { icon: FolderKanban, labelKey: "nav.projects", path: "/atelier" },
   { icon: MessageCircle, labelKey: "nav.messaging", path: "/messagerie", isMessages: true },
   { icon: Calendar, labelKey: "nav.planning", path: "/portefeuille" },
+  { icon: Clock, labelKey: "nav.schedule", path: "/pro/horaires" },
   { icon: BarChart2, labelKey: "nav.stats", path: "/pro-statistiques" },
   { icon: User, labelKey: "nav.profile", path: "/pro-profil" },
 ];
