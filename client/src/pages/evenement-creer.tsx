@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Calendar, Users, CheckCircle, Loader2, PartyPopper, Clock, Euro, Info } from "lucide-react";
+import { ArrowLeft, Calendar, Users, CheckCircle, Loader2, PartyPopper, Clock, Euro, Info, ImagePlus, X } from "lucide-react";
 import type { TailorWithUser } from "@shared/schema";
 
 export default function EvenementCreer() {
@@ -24,6 +24,8 @@ export default function EvenementCreer() {
   const [pricePerPerson, setPricePerPerson] = useState("");
   const [priceGroup, setPriceGroup] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
+  const [inspirationPhotos, setInspirationPhotos] = useState<string[]>([]);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [created, setCreated] = useState<any>(null);
 
   const { data: tailors = [] } = useQuery<TailorWithUser[]>({
@@ -41,6 +43,7 @@ export default function EvenementCreer() {
         pricePerPerson: pricePerPerson ? parseFloat(pricePerPerson) : undefined,
         priceGroup: priceGroup ? parseFloat(priceGroup) : undefined,
         deliveryDate: deliveryDate || undefined,
+        inspirationPhotos: inspirationPhotos.length > 0 ? inspirationPhotos : undefined,
       });
       return res.json();
     },
@@ -54,6 +57,24 @@ export default function EvenementCreer() {
   });
 
   const today = new Date().toISOString().slice(0, 10);
+
+  function handlePhotoFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    files.forEach(file => {
+      if (!file.type.startsWith("image/")) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result as string;
+        setInspirationPhotos(prev => prev.length < 6 ? [...prev, base64] : prev);
+      };
+      reader.readAsDataURL(file);
+    });
+    if (e.target) e.target.value = "";
+  }
+
+  function removePhoto(idx: number) {
+    setInspirationPhotos(prev => prev.filter((_, i) => i !== idx));
+  }
 
   if (created) {
     return (
@@ -300,6 +321,54 @@ export default function EvenementCreer() {
             </div>
             <p className="text-xs text-gray-400">Les inscriptions se fermeront automatiquement après cette date.</p>
           </div>
+        </div>
+
+        {/* Section : Photos d'inspiration */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+          <h2 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
+            <ImagePlus className="h-4 w-4 text-[#601B28]" />
+            Photos d'inspiration
+            <span className="text-xs font-normal text-gray-400 ml-1">(facultatif, max 6)</span>
+          </h2>
+          <p className="text-xs text-gray-500">
+            Partagez des photos de modèles, coupes, couleurs ou tissus pour aider l'artisan à visualiser votre projet.
+          </p>
+
+          <div className="grid grid-cols-3 gap-2">
+            {inspirationPhotos.map((photo, idx) => (
+              <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group" data-testid={`img-inspiration-${idx}`}>
+                <img src={photo} alt={`Inspiration ${idx + 1}`} className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removePhoto(idx)}
+                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                  data-testid={`button-remove-photo-${idx}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            {inspirationPhotos.length < 6 && (
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                className="aspect-square rounded-xl border-2 border-dashed border-[#601B28]/30 flex flex-col items-center justify-center gap-1 text-[#601B28]/50 hover:border-[#601B28] hover:text-[#601B28] transition-colors"
+                data-testid="button-add-photo"
+              >
+                <ImagePlus className="h-5 w-5" />
+                <span className="text-xs">Ajouter</span>
+              </button>
+            )}
+          </div>
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handlePhotoFiles}
+            data-testid="input-inspiration-photos"
+          />
         </div>
 
         <Button

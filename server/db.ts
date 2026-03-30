@@ -107,6 +107,7 @@ export async function ensureTables() {
   await addColumnIfMissing("events", "price_group", "DECIMAL(10,2) NULL");
   await addColumnIfMissing("events", "delivery_date", "DATE NULL");
   await addColumnIfMissing("events", "validation_code", "VARCHAR(6) NULL");
+  await addColumnIfMissing("events", "inspiration_photos", "MEDIUMTEXT NULL");
 
   // event_participants table
   try {

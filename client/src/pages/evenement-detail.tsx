@@ -300,6 +300,25 @@ export default function EvenementDetail() {
               {event.description && (
                 <p className="text-sm text-gray-600 mt-1">{event.description}</p>
               )}
+              {/* Photos d'inspiration */}
+              {Array.isArray(event.inspiration_photos) && event.inspiration_photos.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs font-medium text-gray-500 mb-2">
+                    📸 {isFr ? "Photos d'inspiration" : "Inspiration photos"}
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    {event.inspiration_photos.map((photo: string, idx: number) => (
+                      <a key={idx} href={photo} target="_blank" rel="noopener noreferrer" data-testid={`img-inspiration-detail-${idx}`}>
+                        <img
+                          src={photo}
+                          alt={`Inspiration ${idx + 1}`}
+                          className="h-20 w-20 rounded-xl object-cover border border-gray-200 hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="flex flex-wrap gap-2 mt-3">
                 <Badge variant="outline" className="text-xs">
                   <Users className="h-3 w-3 mr-1" />

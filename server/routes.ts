@@ -2194,7 +2194,7 @@ export async function registerRoutes(
   app.post("/api/events", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
-      const { name, eventDate, tailorId, description, registrationDeadline, maxParticipants, pricePerPerson, priceGroup, deliveryDate } = req.body;
+      const { name, eventDate, tailorId, description, registrationDeadline, maxParticipants, pricePerPerson, priceGroup, deliveryDate, inspirationPhotos } = req.body;
       if (!name || !eventDate || !tailorId) {
         return res.status(400).json({ error: "name, eventDate et tailorId sont requis" });
       }
@@ -2204,11 +2204,14 @@ export async function registerRoutes(
       // Generate a private 4-digit validation code for the organizer to share with participants
       const validationCode = String(Math.floor(1000 + Math.random() * 9000));
       const eventId = require("crypto").randomUUID();
+      const photosJson = Array.isArray(inspirationPhotos) && inspirationPhotos.length > 0
+        ? JSON.stringify(inspirationPhotos)
+        : null;
       await pool.query(
-        `INSERT INTO events (id, name, event_date, tailor_id, organizer_id, invite_code, validation_code, description, registration_deadline, status, max_participants, price_per_person, price_group, delivery_date)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_tailor_approval', ?, ?, ?, ?)`,
+        `INSERT INTO events (id, name, event_date, tailor_id, organizer_id, invite_code, validation_code, description, registration_deadline, status, max_participants, price_per_person, price_group, delivery_date, inspiration_photos)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_tailor_approval', ?, ?, ?, ?, ?)`,
         [eventId, name, eventDate, tailorId, userId, inviteCode, validationCode, description || null, registrationDeadline || null,
-         maxParticipants || null, pricePerPerson || null, priceGroup || null, deliveryDate || null]
+         maxParticipants || null, pricePerPerson || null, priceGroup || null, deliveryDate || null, photosJson]
       );
       // Notify the tailor via in-app message
       try {
@@ -2337,6 +2340,9 @@ export async function registerRoutes(
       event.participants = partRows;
       event.userHasJoined = (partRows as any[]).some((p: any) => p.user_id === userId);
       event.participantCount = (partRows as any[]).length;
+      // Parse inspiration_photos JSON
+      try { event.inspiration_photos = event.inspiration_photos ? JSON.parse(event.inspiration_photos) : []; }
+      catch { event.inspiration_photos = []; }
       // Only expose validation_code to organizer and tailor
       const isOrganizerOrTailor = event.organizer_id === userId || event.tailor_user_id === userId;
       if (!isOrganizerOrTailor) delete event.validation_code;
