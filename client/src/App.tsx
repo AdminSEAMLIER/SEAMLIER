@@ -376,7 +376,6 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/prendre-rdv" component={PrendreRdv} />
       {/* Admin routes */}
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/seamlier" component={AdminDashboard} />
