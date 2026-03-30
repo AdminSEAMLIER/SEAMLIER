@@ -137,4 +137,39 @@ export async function ensureTables() {
   } catch (err) {
     console.warn("[DB] tailor_working_hours table:", (err as any)?.message);
   }
+
+  // tailor_schedule table (used by schedule editor / new booking system)
+  try {
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS tailor_schedule (
+        id VARCHAR(36) PRIMARY KEY,
+        tailor_id VARCHAR(36) NOT NULL,
+        day_of_week INT NOT NULL COMMENT '0=Sunday, 1=Monday, ..., 6=Saturday',
+        start_time VARCHAR(5) NULL COMMENT 'HH:MM format',
+        end_time VARCHAR(5) NULL COMMENT 'HH:MM format',
+        is_closed TINYINT(1) NOT NULL DEFAULT 0,
+        UNIQUE KEY uq_schedule_tailor_day (tailor_id, day_of_week)
+      )
+    `);
+    console.log("[DB] tailor_schedule table ensured ✅");
+  } catch (err) {
+    console.warn("[DB] tailor_schedule table:", (err as any)?.message);
+  }
+
+  // tailor_exceptions table (exceptional closures)
+  try {
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS tailor_exceptions (
+        id VARCHAR(36) PRIMARY KEY,
+        tailor_id VARCHAR(36) NOT NULL,
+        date DATE NOT NULL,
+        reason VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_exception_tailor_date (tailor_id, date)
+      )
+    `);
+    console.log("[DB] tailor_exceptions table ensured ✅");
+  } catch (err) {
+    console.warn("[DB] tailor_exceptions table:", (err as any)?.message);
+  }
 }

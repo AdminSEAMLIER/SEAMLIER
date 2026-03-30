@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import ScheduleEditor from "@/components/ScheduleEditor";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Settings, Globe, Shield, Eye, Save, Crown, CheckCircle, AlertCircle, Loader2, CreditCard, Calendar } from "lucide-react";
+import { ArrowLeft, Settings, Globe, Shield, Eye, Save, Crown, CheckCircle, AlertCircle, Loader2, CreditCard, Calendar, Clock, Trash2, Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -100,6 +101,193 @@ function SubscribeForm({ interval, onSuccess }: { interval: "month" | "year"; on
         {loading ? "Traitement..." : `Souscrire — ${amount}`}
       </Button>
     </form>
+  );
+}
+
+// ── Availability Section ────────────────────────────────────────────────────
+
+const DAYS_ORDERED = [
+  { label: "Lundi",    dow: 1 },
+  { label: "Mardi",   dow: 2 },
+  { label: "Mercredi", dow: 3 },
+  { label: "Jeudi",   dow: 4 },
+  { label: "Vendredi", dow: 5 },
+  { label: "Samedi",  dow: 6 },
+  { label: "Dimanche", dow: 0 },
+];
+
+function buildTimeSlots() {
+  const slots: string[] = [];
+  for (let h = 0; h < 24; h++)
+    for (const m of [0, 30])
+      slots.push(`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`);
+  return slots;
+}
+const TIME_SLOTS = buildTimeSlots();
+
+function AvailabilitySection({ tailorId }: { tailorId: string }) {
+  const { toast } = useToast();
+
+  // ── Regular schedule ──
+  const [schedule, setSchedule] = useState(
+    DAYS_ORDERED.map(d => ({ dayOfWeek: d.dow, startTime: "09:00", endTime: "18:00", isClosed: d.dow === 0 }))
+  );
+
+  const { data: existingSchedule } = useQuery({
+    queryKey: ["/api/tailor", tailorId, "schedule"],
+    queryFn: async () => { const r = await fetch(`/api/tailor/${tailorId}/schedule`); return r.json(); },
+    enabled: !!tailorId,
+  });
+
+  useEffect(() => {
+    if (existingSchedule && existingSchedule.length > 0) {
+      setSchedule(prev => prev.map(d => {
+        const found = existingSchedule.find((e: any) => e.day_of_week === d.dayOfWeek);
+        return found ? { dayOfWeek: d.dayOfWeek, startTime: found.start_time, endTime: found.end_time, isClosed: !!found.is_closed } : d;
+      }));
+    }
+  }, [existingSchedule]);
+
+  const saveSched = useMutation({
+    mutationFn: async () => {
+      const r = await fetch("/api/tailor/schedule", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ schedule }) });
+      if (!r.ok) throw new Error();
+    },
+    onSuccess: () => toast({ title: "Horaires enregistrés" }),
+    onError: () => toast({ title: "Erreur", variant: "destructive" }),
+  });
+
+  const updateDay = (dow: number, field: string, value: any) =>
+    setSchedule(prev => prev.map(d => d.dayOfWeek === dow ? { ...d, [field]: value } : d));
+
+  // ── Exceptions ──
+  const [newDate, setNewDate] = useState("");
+  const [newReason, setNewReason] = useState("");
+
+  const { data: exceptions = [] } = useQuery<any[]>({
+    queryKey: ["/api/tailor", tailorId, "exceptions"],
+    queryFn: async () => { const r = await fetch(`/api/tailor/${tailorId}/exceptions`); return r.json(); },
+    enabled: !!tailorId,
+  });
+
+  const addException = useMutation({
+    mutationFn: async () => {
+      const r = await fetch("/api/tailor/exceptions", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ date: newDate, reason: newReason }) });
+      if (!r.ok) throw new Error();
+    },
+    onSuccess: () => { setNewDate(""); setNewReason(""); queryClient.invalidateQueries({ queryKey: ["/api/tailor", tailorId, "exceptions"] }); toast({ title: "Fermeture ajoutée" }); },
+    onError: () => toast({ title: "Erreur", variant: "destructive" }),
+  });
+
+  const delException = useMutation({
+    mutationFn: async (id: string) => {
+      const r = await fetch(`/api/tailor/exceptions/${id}`, { method: "DELETE", credentials: "include" });
+      if (!r.ok) throw new Error();
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/tailor", tailorId, "exceptions"] }); toast({ title: "Fermeture supprimée" }); },
+    onError: () => toast({ title: "Erreur", variant: "destructive" }),
+  });
+
+  return (
+    <Card className="border border-gray-100 bg-white shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
+          <Clock className="h-5 w-5" />Mes disponibilités
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6 bg-white">
+
+        {/* Horaires habituels */}
+        <div>
+          <p className="text-sm font-semibold text-gray-700 mb-3">Horaires habituels</p>
+          <div className="space-y-1">
+            {DAYS_ORDERED.map(({ label, dow }) => {
+              const day = schedule.find(d => d.dayOfWeek === dow)!;
+              return (
+                <div key={dow} className="flex flex-wrap items-center gap-2 py-2 border-b border-gray-50 last:border-0" data-testid={`row-schedule-${dow}`}>
+                  <span className="w-24 text-sm font-medium text-gray-700 shrink-0">{label}</span>
+                  <label className="flex items-center gap-1.5 cursor-pointer shrink-0">
+                    <input type="checkbox" checked={day.isClosed}
+                      onChange={e => updateDay(dow, "isClosed", e.target.checked)}
+                      className="accent-[#601B28] w-4 h-4"
+                      data-testid={`checkbox-closed-${dow}`} />
+                    <span className="text-xs text-gray-500">Fermé</span>
+                  </label>
+                  {!day.isClosed && (
+                    <div className="flex items-center gap-2">
+                      <select value={day.startTime} onChange={e => updateDay(dow, "startTime", e.target.value)}
+                        className="border border-gray-200 rounded px-2 py-1 text-sm bg-white" data-testid={`select-start-${dow}`}>
+                        {TIME_SLOTS.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      <span className="text-gray-400 text-sm">—</span>
+                      <select value={day.endTime} onChange={e => updateDay(dow, "endTime", e.target.value)}
+                        className="border border-gray-200 rounded px-2 py-1 text-sm bg-white" data-testid={`select-end-${dow}`}>
+                        {TIME_SLOTS.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                  )}
+                  {day.isClosed && <span className="text-xs text-gray-400 italic">Indisponible ce jour</span>}
+                </div>
+              );
+            })}
+          </div>
+          <Button onClick={() => saveSched.mutate()} disabled={saveSched.isPending}
+            className="mt-3 bg-[#601B28] hover:bg-[#4E1522] text-white text-sm"
+            data-testid="button-save-schedule">
+            {saveSched.isPending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Enregistrement...</> : <><Save className="h-4 w-4 mr-2" />Sauvegarder les horaires</>}
+          </Button>
+        </div>
+
+        {/* Fermetures exceptionnelles */}
+        <div className="border-t border-gray-100 pt-5">
+          <p className="text-sm font-semibold text-gray-700 mb-3">Fermetures exceptionnelles</p>
+          <p className="text-xs text-gray-400 mb-3">Vacances, jours fériés... Ces dates seront grisées dans le calendrier de réservation.</p>
+
+          {/* Liste des exceptions */}
+          {(exceptions as any[]).length > 0 ? (
+            <div className="space-y-2 mb-4">
+              {(exceptions as any[]).map((ex: any) => (
+                <div key={ex.id} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg" data-testid={`row-exception-${ex.id}`}>
+                  <div>
+                    <span className="text-sm font-medium text-gray-800">
+                      {new Date(ex.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                    </span>
+                    {ex.reason && <span className="text-xs text-gray-500 ml-2">— {ex.reason}</span>}
+                  </div>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500 hover:bg-red-50"
+                    onClick={() => delException.mutate(ex.id)} data-testid={`button-delete-exception-${ex.id}`}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 italic mb-4">Aucune fermeture exceptionnelle enregistrée.</p>
+          )}
+
+          {/* Ajouter une exception */}
+          <div className="flex flex-wrap items-end gap-2 bg-gray-50 rounded-xl p-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-gray-500">Date fermée</label>
+              <Input type="date" value={newDate} onChange={e => setNewDate(e.target.value)}
+                className="h-9 text-sm w-40" data-testid="input-exception-date"
+                min={new Date().toISOString().split("T")[0]} />
+            </div>
+            <div className="flex flex-col gap-1 flex-1">
+              <label className="text-xs text-gray-500">Raison (optionnel)</label>
+              <Input value={newReason} onChange={e => setNewReason(e.target.value)}
+                placeholder="Congés, férié..." className="h-9 text-sm" data-testid="input-exception-reason" />
+            </div>
+            <Button onClick={() => newDate && addException.mutate()} disabled={!newDate || addException.isPending}
+              className="bg-[#601B28] hover:bg-[#4E1522] text-white h-9"
+              data-testid="button-add-exception">
+              {addException.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Plus className="h-4 w-4 mr-1" />Ajouter</>}
+            </Button>
+          </div>
+        </div>
+
+      </CardContent>
+    </Card>
   );
 }
 
@@ -368,17 +556,8 @@ export default function ProParametres() {
         </Card>
 
 
-        {/* ── Horaires de travail ── */}
-        <Card className="border border-gray-100 bg-white shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
-              Horaires de travail
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="bg-white space-y-3">
-            <ScheduleEditor tailorId={tailor?.id} />
-          </CardContent>
-        </Card>
+        {/* ── Mes disponibilités ── */}
+        {tailor?.id && <AvailabilitySection tailorId={tailor.id} />}
         <Button className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white" onClick={handleSave} data-testid="button-save-settings">
           <Save className="h-4 w-4 mr-2" />Enregistrer les paramètres
         </Button>
