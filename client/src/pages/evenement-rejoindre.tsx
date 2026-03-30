@@ -6,7 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Calendar, Users, CheckCircle, Scissors, LogIn, UserPlus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, Calendar, Users, CheckCircle, Scissors, LogIn, UserPlus, Lock } from "lucide-react";
 
 export default function EvenementRejoindre() {
   const params = useParams<{ inviteCode: string }>();
@@ -15,7 +16,8 @@ export default function EvenementRejoindre() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [joined, setJoined] = useState(false);
-  const [autoJoinTriggered, setAutoJoinTriggered] = useState(false);
+  const [validationCode, setValidationCode] = useState("");
+  const [codeError, setCodeError] = useState("");
 
   const { data: event, isLoading, isError } = useQuery<any>({
     queryKey: ["/api/events/join", inviteCode],
@@ -29,9 +31,11 @@ export default function EvenementRejoindre() {
   });
 
   const joinMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", `/api/events/join/${inviteCode}`, {});
-      return res.json();
+    mutationFn: async (code: string) => {
+      const res = await apiRequest("POST", `/api/events/join/${inviteCode}`, { validationCode: code });
+      const data = await res.json();
+      if (!res.ok) throw data;
+      return data;
     },
     onSuccess: (data) => {
       if (data.alreadyJoined) {
@@ -43,18 +47,25 @@ export default function EvenementRejoindre() {
         queryClient.invalidateQueries({ queryKey: ["/api/client/projects"] });
       }
     },
-    onError: () => {
-      toast({ title: "Erreur", description: "Impossible de rejoindre l'événement.", variant: "destructive" });
+    onError: (err: any) => {
+      if (err?.invalidCode) {
+        setCodeError("Code incorrect. Vérifiez le code communiqué par l'organisateur.");
+      } else if (err?.error) {
+        toast({ title: "Erreur", description: err.error, variant: "destructive" });
+      } else {
+        toast({ title: "Erreur", description: "Impossible de rejoindre l'événement.", variant: "destructive" });
+      }
     },
   });
 
-  // Auto-join as soon as user is authenticated (handles redirect back from login/register)
-  useEffect(() => {
-    if (user && event && !joined && !autoJoinTriggered && !joinMutation.isPending) {
-      setAutoJoinTriggered(true);
-      joinMutation.mutate();
+  const handleJoin = () => {
+    setCodeError("");
+    if (!validationCode.trim()) {
+      setCodeError("Veuillez entrer le code de validation.");
+      return;
     }
-  }, [user, event, joined, autoJoinTriggered]);
+    joinMutation.mutate(validationCode.trim());
+  };
 
   if (isLoading) {
     return (
@@ -136,7 +147,9 @@ export default function EvenementRejoindre() {
               </div>
               <div>
                 <p className="text-xs text-gray-400 font-medium">Participants</p>
-                <p className="font-semibold text-gray-900">{event.participant_count} personne{event.participant_count > 1 ? "s" : ""} inscrite{event.participant_count > 1 ? "s" : ""}</p>
+                <p className="font-semibold text-gray-900">
+                  {event.participant_count} personne{event.participant_count > 1 ? "s" : ""} inscrite{event.participant_count > 1 ? "s" : ""}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -169,25 +182,49 @@ export default function EvenementRejoindre() {
         </div>
 
         {user ? (
-          <Button
-            className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white h-12 text-base font-semibold"
-            onClick={() => joinMutation.mutate()}
-            disabled={joinMutation.isPending}
-            data-testid="button-join-event"
-          >
-            {joinMutation.isPending ? (
-              <Loader2 className="h-5 w-5 animate-spin mr-2" />
-            ) : (
-              <CheckCircle className="h-5 w-5 mr-2" />
-            )}
-            Rejoindre l'événement
-          </Button>
+          /* Authenticated: show code input + join button */
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <Lock className="h-4 w-4 text-[#601B28]" />
+                Code de validation
+              </label>
+              <p className="text-xs text-gray-500">
+                Demandez le code à l'organisateur de l'événement pour pouvoir rejoindre.
+              </p>
+              <Input
+                type="text"
+                inputMode="numeric"
+                placeholder="Entrez le code à 4 chiffres"
+                value={validationCode}
+                onChange={(e) => { setValidationCode(e.target.value); setCodeError(""); }}
+                maxLength={6}
+                className={`text-center text-xl tracking-widest font-bold h-14 ${codeError ? "border-red-400" : ""}`}
+                data-testid="input-validation-code"
+              />
+              {codeError && <p className="text-red-500 text-xs">{codeError}</p>}
+            </div>
+            <Button
+              className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white h-12 text-base font-semibold"
+              onClick={handleJoin}
+              disabled={joinMutation.isPending}
+              data-testid="button-join-event"
+            >
+              {joinMutation.isPending ? (
+                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+              ) : (
+                <CheckCircle className="h-5 w-5 mr-2" />
+              )}
+              Rejoindre l'événement
+            </Button>
+          </div>
         ) : (
+          /* Not authenticated */
           <div className="space-y-3">
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
               <p className="text-sm font-medium text-amber-800 mb-1">Compte requis pour rejoindre</p>
               <p className="text-xs text-amber-700">
-                Vous serez automatiquement intégré à l'événement après votre connexion ou inscription.
+                Connectez-vous ou créez un compte, puis entrez le code de validation.
               </p>
             </div>
             <Button
@@ -196,7 +233,7 @@ export default function EvenementRejoindre() {
               data-testid="button-login-to-join"
             >
               <LogIn className="h-5 w-5 mr-2" />
-              J'ai déjà un compte — Se connecter
+              Se connecter
             </Button>
             <Button
               variant="outline"
@@ -205,7 +242,7 @@ export default function EvenementRejoindre() {
               data-testid="button-register-to-join"
             >
               <UserPlus className="h-5 w-5 mr-2" />
-              Créer un compte particulier
+              Créer un compte
             </Button>
           </div>
         )}

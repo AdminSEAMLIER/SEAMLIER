@@ -95,6 +95,10 @@ export async function ensureTables() {
     console.warn("[DB] events table:", (err as any)?.message);
   }
 
+  // projects: delivery date for event-linked projects
+  await addColumnIfMissing("projects", "delivery_date", "DATE NULL");
+  await addColumnIfMissing("projects", "event_id", "VARCHAR(36) NULL");
+
   // events: add new columns if table already existed
   await addColumnIfMissing("events", "registration_deadline", "DATE NULL");
   await addColumnIfMissing("events", "status", "VARCHAR(30) NOT NULL DEFAULT 'pending_tailor_approval'");
@@ -102,6 +106,7 @@ export async function ensureTables() {
   await addColumnIfMissing("events", "price_per_person", "DECIMAL(10,2) NULL");
   await addColumnIfMissing("events", "price_group", "DECIMAL(10,2) NULL");
   await addColumnIfMissing("events", "delivery_date", "DATE NULL");
+  await addColumnIfMissing("events", "validation_code", "VARCHAR(6) NULL");
 
   // event_participants table
   try {

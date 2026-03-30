@@ -2201,11 +2201,13 @@ export async function registerRoutes(
       let inviteCode = generateInviteCode();
       const [existing] = await pool.query(`SELECT id FROM events WHERE invite_code = ?`, [inviteCode]) as any[];
       if ((existing as any[]).length > 0) inviteCode = generateInviteCode() + "X";
+      // Generate a private 4-digit validation code for the organizer to share with participants
+      const validationCode = String(Math.floor(1000 + Math.random() * 9000));
       const eventId = require("crypto").randomUUID();
       await pool.query(
-        `INSERT INTO events (id, name, event_date, tailor_id, organizer_id, invite_code, description, registration_deadline, status, max_participants, price_per_person, price_group, delivery_date)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending_tailor_approval', ?, ?, ?, ?)`,
-        [eventId, name, eventDate, tailorId, userId, inviteCode, description || null, registrationDeadline || null,
+        `INSERT INTO events (id, name, event_date, tailor_id, organizer_id, invite_code, validation_code, description, registration_deadline, status, max_participants, price_per_person, price_group, delivery_date)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_tailor_approval', ?, ?, ?, ?)`,
+        [eventId, name, eventDate, tailorId, userId, inviteCode, validationCode, description || null, registrationDeadline || null,
          maxParticipants || null, pricePerPerson || null, priceGroup || null, deliveryDate || null]
       );
       // Notify the tailor via in-app message
@@ -2267,23 +2269,31 @@ export async function registerRoutes(
   app.post("/api/events/join/:inviteCode", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
+      const { validationCode } = req.body;
       const [evRows] = await pool.query(`SELECT * FROM events WHERE invite_code = ?`, [req.params.inviteCode.toUpperCase()]) as any[];
       if (!(evRows as any[]).length) return res.status(404).json({ error: "Événement introuvable" });
       const event = (evRows as any[])[0];
       if (event.status && event.status !== 'active') {
         return res.status(403).json({ error: "Cet événement n'est pas encore ouvert aux inscriptions." });
       }
+      // Validate the private code
+      if (!validationCode) {
+        return res.status(400).json({ error: "Code de validation requis.", needsCode: true });
+      }
+      if (event.validation_code && event.validation_code !== String(validationCode).trim()) {
+        return res.status(403).json({ error: "Code de validation incorrect.", invalidCode: true });
+      }
       // Check if already joined
       const [existing] = await pool.query(
         `SELECT id FROM event_participants WHERE event_id = ? AND user_id = ?`, [event.id, userId]
       ) as any[];
       if ((existing as any[]).length > 0) return res.json({ alreadyJoined: true, eventId: event.id });
-      // Create a project linked to the event
+      // Create a project linked to the event (in_progress so it appears in artisan's project list)
       const projectId = require("crypto").randomUUID();
       await pool.query(
-        `INSERT INTO projects (id, tailor_id, client_id, title, status, progress, current_step, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'pending', 0, 'prise_mesures', NOW(), NOW())`,
-        [projectId, event.tailor_id, userId, `[Événement] ${event.name}`]
+        `INSERT INTO projects (id, tailor_id, client_id, title, status, progress, current_step, delivery_date, event_id, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'in_progress', 0, 'prise_mesures', ?, ?, NOW(), NOW())`,
+        [projectId, event.tailor_id, userId, `[Événement] ${event.name}`, event.delivery_date || null, event.id]
       );
       // Add participant
       const participantId = require("crypto").randomUUID();
@@ -2327,6 +2337,9 @@ export async function registerRoutes(
       event.participants = partRows;
       event.userHasJoined = (partRows as any[]).some((p: any) => p.user_id === userId);
       event.participantCount = (partRows as any[]).length;
+      // Only expose validation_code to organizer and tailor
+      const isOrganizerOrTailor = event.organizer_id === userId || event.tailor_user_id === userId;
+      if (!isOrganizerOrTailor) delete event.validation_code;
       res.json(event);
     } catch (error) {
       console.error("Failed to get event details:", error);

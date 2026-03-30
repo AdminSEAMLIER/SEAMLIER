@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   ArrowLeft, Calendar, Users, Copy, Check, Clock, Megaphone,
-  Loader2, Edit2, Save, X, MessageSquare, Share2, CheckCircle, XCircle, AlertCircle, Euro
+  Loader2, Edit2, Save, X, MessageSquare, Share2, CheckCircle, XCircle, AlertCircle, Euro, Lock
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -415,6 +415,38 @@ export default function EvenementDetail() {
                 </button>
               </div>
             </div>
+
+            {/* Validation code — visible to organizer only */}
+            {isOrganizer && event.validation_code && (
+              <div className="mt-3 bg-[#601B28]/5 border border-[#601B28]/20 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Lock className="h-4 w-4 text-[#601B28]" />
+                  <span className="text-sm font-semibold text-[#601B28]">
+                    {isFr ? "Code de validation (privé)" : "Validation code (private)"}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-600 mb-3">
+                  {isFr
+                    ? "Communiquez ce code uniquement aux personnes que vous souhaitez intégrer à l'événement. Elles en auront besoin pour rejoindre."
+                    : "Share this code only with people you want to join the event. They will need it to register."}
+                </p>
+                <div className="flex items-center gap-3">
+                  <span className="font-mono font-bold text-3xl tracking-[0.3em] text-[#601B28]">
+                    {event.validation_code}
+                  </span>
+                  <button
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(event.validation_code);
+                      toast({ title: isFr ? "Code copié !" : "Code copied!" });
+                    }}
+                    className="text-gray-400 hover:text-[#601B28] transition-colors"
+                    data-testid="button-copy-validation-code"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>}
 

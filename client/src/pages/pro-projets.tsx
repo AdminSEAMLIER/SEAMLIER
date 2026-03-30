@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { FolderKanban, Clock, Euro, User, ChevronRight, Ruler, Calendar, MessageSquare, Phone, Mail, Camera, Image, Users, CheckCircle, Circle, Loader2, Check, X, Plus } from "lucide-react";
+import { FolderKanban, Clock, Euro, User, ChevronRight, Ruler, Calendar, MessageSquare, Phone, Mail, Camera, Image, Users, CheckCircle, Circle, Loader2, Check, X, Plus, Boxes, ExternalLink } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,7 +43,16 @@ export default function ProProjets() {
   const { data: allProjects = [], isLoading } = useQuery<ProjectWithClient[]>({
     queryKey: ["/api/projects"],
   });
-  const projects = allProjects.filter(p => p.status !== "pending" && p.status !== "quoted");
+  // Separate event projects from regular projects
+  const eventProjects = allProjects.filter(p => p.title?.startsWith("[Événement]"));
+  const projects = allProjects.filter(p =>
+    p.status !== "pending" && p.status !== "quoted" && !p.title?.startsWith("[Événement]")
+  );
+
+  // Fetch tailor group events for the overview section
+  const { data: tailorEvents = [] } = useQuery<any[]>({
+    queryKey: ["/api/tailor/events"],
+  });
 
   const clientId = selectedProject?.client?.id;
   const { data: clientMeasurements } = useQuery<any>({
@@ -179,6 +188,9 @@ export default function ProProjets() {
     return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
 
+  const activeEvents = tailorEvents.filter((e: any) => e.status === 'active');
+  const pendingEvents = tailorEvents.filter((e: any) => e.status === 'pending_tailor_approval');
+
   return (
     <div className="min-h-screen pb-20 lg:pb-8 bg-white">
       <div className="bg-gray-50 border-b border-gray-100">
@@ -213,6 +225,106 @@ export default function ProProjets() {
           </CardContent>
         </Card>
 
+        {/* ── Commandes groupées ── */}
+        {tailorEvents.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Boxes className="h-4 w-4 text-[#601B28]" />
+              <h2 className="font-semibold text-gray-900 text-sm">
+                Commandes groupées ({tailorEvents.length})
+              </h2>
+            </div>
+            <div className="space-y-3">
+              {tailorEvents.map((ev: any) => {
+                const evProjects = eventProjects.filter((p: any) =>
+                  p.title === `[Événement] ${ev.name}`
+                );
+                const delivDate = ev.delivery_date
+                  ? new Date(ev.delivery_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
+                  : null;
+                const evDate = ev.event_date
+                  ? new Date(ev.event_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })
+                  : null;
+                return (
+                  <Card key={ev.id} className="border border-[#601B28]/20 bg-white shadow-sm overflow-hidden">
+                    <CardContent className="p-0">
+                      {/* Header */}
+                      <div className={`px-4 py-3 flex items-center justify-between ${ev.status === 'pending_tailor_approval' ? 'bg-amber-50' : 'bg-[#601B28]/5'}`}>
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">{ev.name}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {ev.status === 'pending_tailor_approval' ? '⏳ En attente de validation' :
+                             ev.status === 'active' ? '✅ Ouvert aux inscriptions' :
+                             ev.status === 'rejected' ? '❌ Refusée' : ev.status}
+                          </p>
+                        </div>
+                        <Link href={`/evenement/${ev.id}`}>
+                          <Button size="sm" variant="outline" className="text-xs border-[#601B28]/30 text-[#601B28]" data-testid={`button-view-event-${ev.id}`}>
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            Détails
+                          </Button>
+                        </Link>
+                      </div>
+                      {/* Details */}
+                      <div className="px-4 py-3 space-y-2">
+                        <div className="flex flex-wrap gap-4 text-xs text-gray-600">
+                          {evDate && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3.5 w-3.5 text-[#601B28]" />
+                              Événement : {evDate}
+                            </span>
+                          )}
+                          {delivDate && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3.5 w-3.5 text-[#601B28]" />
+                              Livraison : {delivDate}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1">
+                            <Users className="h-3.5 w-3.5 text-[#601B28]" />
+                            {ev.participant_count ?? 0} participant{(ev.participant_count ?? 0) > 1 ? "s" : ""}
+                          </span>
+                        </div>
+                        {/* Participant projects */}
+                        {evProjects.length > 0 && (
+                          <div className="border-t border-gray-100 pt-2 mt-2">
+                            <p className="text-xs font-medium text-gray-500 mb-2">Projets liés :</p>
+                            <div className="space-y-1">
+                              {evProjects.map((p: any) => (
+                                <div
+                                  key={p.id}
+                                  className="flex items-center justify-between py-1 px-2 rounded-lg bg-gray-50 cursor-pointer hover:bg-[#601B28]/5 transition-colors"
+                                  onClick={() => handleOpenProject(p)}
+                                  data-testid={`row-event-project-${p.id}`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <User className="h-3.5 w-3.5 text-gray-400" />
+                                    <span className="text-xs text-gray-700">
+                                      {p.client?.firstName} {p.client?.lastName}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {getStatusBadge(p.status)}
+                                    <ChevronRight className="h-3 w-3 text-gray-400" />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {evProjects.length === 0 && ev.status === 'active' && (
+                          <p className="text-xs text-gray-400 italic">Aucun participant inscrit pour l'instant.</p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Projets individuels ── */}
         {isLoading ? (
           <Card className="border border-gray-100 bg-white shadow-sm">
             <CardContent className="p-8 bg-white text-center">
