@@ -1,0 +1,44 @@
+cd /home/podu7204/public_html/seamlier
+[podu7204@brun seamlier]$ wget -O seamlier-new.zip "https://18e791f4-fe64-44d5-a271-1843e04a3af8-00-1n5ybujplpk4x.riker.replit.dev/seamlier-deploy.zip"
+--2026-03-30 17:28:40--  https://18e791f4-fe64-44d5-a271-1843e04a3af8-00-1n5ybujplpk4x.riker.replit.dev/seamlier-deploy.zip
+Résolution de 18e791f4-fe64-44d5-a271-1843e04a3af8-00-1n5ybujplpk4x.riker.replit.dev (18e791f4-fe64-44d5-a271-1843e04a3af8-00-1n5ybujplpk4x.riker.replit.dev)… 34.173.153.191
+Connexion à 18e791f4-fe64-44d5-a271-1843e04a3af8-00-1n5ybujplpk4x.riker.replit.dev (18e791f4-fe64-44d5-a271-1843e04a3af8-00-1n5ybujplpk4x.riker.replit.dev)|34.173.153.191|:443… connecté.
+requête HTTP transmise, en attente de la réponse…
+200 OK
+Taille : 46336 (45K) [text/html]
+Sauvegarde en : « seamlier-new.zip »
+
+seamlier-new.zip      100%[=======================>]  45,25K   202KB/s    ds 0,2s
+
+2026-03-30 17:28:41 (202 KB/s) — « seamlier-new.zip » sauvegardé [46336/46336]
+
+[podu7204@brun seamlier]$ unzip -o seamlier-new.zip
+Archive:  seamlier-new.zip
+  End-of-central-directory signature not found.  Either this file is not
+  a zipfile, or it constitutes one disk of a multi-part archive.  In the
+  latter case the central directory and zipfile comment will be found on
+  the last disk(s) of this archive.
+unzip:  cannot find zipfile directory in one of seamlier-new.zip or
+        seamlier-new.zip.zip, and cannot find seamlier-new.zip.ZIP, period.
+[podu7204@brun seamlier]$ touch tmp/restart.txt
+[podu7204@brun seamlier]$ cd /home/podu7204/public_html/seamlier
+[podu7204@brun seamlier]$ wget -O seamlier-new.zip "https://18e791f4-fe64-44d5-a271-1843e04a3af8-00-1n5ybujplpk4x.riker.replit.dev/seamlier-deploy.zip"
+--2026-03-30 17:28:57--  https://18e791f4-fe64-44d5-a271-1843e04a3af8-00-1n5ybujplpk4x.riker.replit.dev/seamlier-deploy.zip
+Résolution de 18e791f4-fe64-44d5-a271-1843e04a3af8-00-1n5ybujplpk4x.riker.replit.dev (18e791f4-fe64-44d5-a271-1843e04a3af8-00-1n5ybujplpk4x.riker.replit.dev)… 34.173.153.191
+Connexion à 18e791f4-fe64-44d5-a271-1843e04a3af8-00-1n5ybujplpk4x.riker.replit.dev (18e791f4-fe64-44d5-a271-1843e04a3af8-00-1n5ybujplpk4x.riker.replit.dev)|34.173.153.191|:443… connecté.
+requête HTTP transmise, en attente de la réponse… 200 OK
+Taille : 46336 (45K) [text/html]
+Sauvegarde en : « seamlier-new.zip »
+
+seamlier-new.zip      100%[=======================>]  45,25K   207KB/s    ds 0,2s
+
+2026-03-30 17:28:58 (207 KB/s) — « seamlier-new.zip » sauvegardé [46336/46336]
+
+[podu7204@brun seamlier]$ unzip -o seamlier-new.zip
+Archive:  seamlier-new.zip
+  End-of-central-directory signature not found.  Either this file is not
+  a zipfile, or it constitutes one disk of a multi-part archive.  In the
+  latter case the central directory and zipfile comment will be found on
+  the last disk(s) of this archive.
+unzip:  cannot find zipfile directory in one of seamlier-new.zip or
+        seamlier-new.zip.zip, and cannot find seamlier-new.zip.ZIP, period.

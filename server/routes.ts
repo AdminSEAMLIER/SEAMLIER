@@ -2628,14 +2628,16 @@ export async function registerRoutes(
   // Run once at startup (delayed) and then every 24h
   setTimeout(() => { runDailyChecks(); setInterval(runDailyChecks, 24 * 60 * 60 * 1000); }, 30000);
 
-  app.get("/download/seamlier-deploy.zip", (req, res) => {
-    const filePath = path.resolve("seamlier-deploy.zip");
-    res.download(filePath, "seamlier-deploy.zip", (err) => {
-      if (err) {
-        res.status(404).send("Fichier non trouvé");
-      }
+  const deployZipPath = path.join(process.cwd(), "seamlier-deploy.zip");
+  const serveZip = (req: Request, res: Response) => {
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Content-Disposition", "attachment; filename=seamlier-deploy.zip");
+    res.sendFile(deployZipPath, (err) => {
+      if (err && !res.headersSent) res.status(404).send("Fichier non trouvé");
     });
-  });
+  };
+  app.get("/download/seamlier-deploy.zip", serveZip);
+  app.get("/seamlier-deploy.zip", serveZip);
 
     registerStripeRoutes(app);
 
