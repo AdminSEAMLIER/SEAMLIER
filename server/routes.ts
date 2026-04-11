@@ -941,6 +941,11 @@ export async function registerRoutes(
   app.patch("/api/projects/:id", requireAuth, async (req: any, res) => {
     try {
       const prevProject = await storage.getProject(req.params.id);
+      const userId = req.authUserId;
+      const tailorCheck = await storage.getTailorByUserId(userId);
+      if (!prevProject) return res.status(404).json({ error: "Project not found" });
+      const isOwner = tailorCheck?.id === prevProject.tailorId || userId === prevProject.clientId;
+      if (!isOwner) return res.status(403).json({ error: "Forbidden" });
       const project = await storage.updateProject(req.params.id, req.body);
       if (!project) {
         return res.status(404).json({ error: "Project not found" });
@@ -1142,6 +1147,11 @@ export async function registerRoutes(
   app.patch("/api/appointments/:id", requireAuth, async (req: any, res) => {
     try {
       const callerId = req.authUserId;
+      const existingAppointment = await storage.getAppointment(req.params.id);
+      if (!existingAppointment) return res.status(404).json({ error: "Appointment not found" });
+      const tailorCheck = await storage.getTailorByUserId(callerId);
+      const isOwner = tailorCheck?.id === existingAppointment.tailorId || callerId === existingAppointment.clientId;
+      if (!isOwner) return res.status(403).json({ error: "Forbidden" });
       const appointment = await storage.updateAppointment(req.params.id, req.body);
       if (!appointment) {
         return res.status(404).json({ error: "Appointment not found" });

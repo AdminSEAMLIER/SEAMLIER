@@ -74,6 +74,7 @@ export interface IStorage {
   updateProject(id: string, updates: Partial<InsertProject>): Promise<Project | undefined>;
 
   getAppointmentsByTailor(tailorId: string): Promise<AppointmentWithClient[]>;
+  getAppointment(id: string): Promise<Appointment | undefined>;
   getAppointmentsByClient(clientId: string): Promise<AppointmentWithClient[]>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment | undefined>;
@@ -650,6 +651,11 @@ class DatabaseStorage implements IStorage {
     await db.update(appointments)
       .set(updates)
       .where(eq(appointments.id, id));
+    const result = await db.select().from(appointments).where(eq(appointments.id, id));
+    return result[0];
+  }
+
+  async getAppointment(id: string): Promise<Appointment | undefined> {
     const result = await db.select().from(appointments).where(eq(appointments.id, id));
     return result[0];
   }
