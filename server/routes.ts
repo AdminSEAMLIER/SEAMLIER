@@ -889,8 +889,17 @@ export async function registerRoutes(
 
       if (user.role === "tailor") {
         const tailor = await storage.getTailorByUserId(userId);
-        if (!tailor) {
-          return res.status(403).json({ error: "Tailor profile not found" });
+        if (!tailor) return res.status(403).json({ error: "Tailor profile not found" });
+        if (!tailor.subscriptionPlan || tailor.subscriptionPlan === "Starter") {
+          const startOfMonth = new Date();
+          startOfMonth.setDate(1);
+          startOfMonth.setHours(0, 0, 0, 0);
+          const [countRows] = await pool.query(
+            "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND created_at >= ?",
+            [tailor.id, startOfMonth]
+          ) as any[];
+          const monthlyCount = Array.isArray(countRows) && countRows[0] ? Number(countRows[0].cnt) : 0;
+          if (monthlyCount >= 10) return res.status(403).json({ error: "Limite mensuelle atteinte" });
         }
         const project = await storage.createProject({
           ...req.body,
