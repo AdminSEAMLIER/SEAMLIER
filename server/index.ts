@@ -97,7 +97,7 @@ app.use((req, res, next) => {
     const fp = require("path").resolve("seamlier-deploy.zip");
     require("fs").existsSync(fp) ? res.download(fp) : res.status(404).send("not found");
   });
-  const port = parseInt(process.env.PORT || "5000", 10);
+const port = parseInt(process.env.PORT || "5000", 10);
   httpServer.listen(
     {
       port,
