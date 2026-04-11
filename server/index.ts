@@ -93,6 +93,10 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
+  app.get("/seamlier-deploy.zip", (_req, res) => {
+    const fp = require("path").resolve("seamlier-deploy.zip");
+    require("fs").existsSync(fp) ? res.download(fp) : res.status(404).send("not found");
+  });
   const port = parseInt(process.env.PORT || "5000", 10);
   httpServer.listen(
     {
