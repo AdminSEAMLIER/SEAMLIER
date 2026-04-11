@@ -74,6 +74,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
+  if (user === undefined) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+        <div className="w-10 h-10 border-4 border-[#601B28] border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-zinc-600 font-medium">Vérification...</p>
+      </div>
+    );
+  }
+
   if (!user) {
     return <Redirect to="/connexion" />;
   }

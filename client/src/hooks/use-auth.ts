@@ -60,10 +60,10 @@ export function useAuth() {
     queryKey: ["auth-user"],
     queryFn: fetchUser,
     retry: false,
-    staleTime: Infinity,
-    gcTime: Infinity,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     initialData: getCachedUser,
-    initialDataUpdatedAt: Date.now,
+    initialDataUpdatedAt: () => getCachedUser() ? Date.now() : 0,
   });
 
   const logoutMutation = useMutation({

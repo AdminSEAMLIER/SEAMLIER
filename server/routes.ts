@@ -713,7 +713,7 @@ export async function registerRoutes(
       const tailor = await storage.getTailorByUserId(userId);
       if (!tailor) return res.status(403).json({ error: "Not a tailor" });
       const [rows] = await pool.query(
-        "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND status IN ('in_progress','completed')",
+        "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND status IN ('in_progress','completed') AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')",
         [tailor.id]
       ) as any[];
       const cnt = Array.isArray(rows) && rows[0] ? parseInt(rows[0].cnt) || 0 : 0;
