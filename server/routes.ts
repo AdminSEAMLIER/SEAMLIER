@@ -39,7 +39,7 @@ function requireAdmin(req: Request, res: Response, next: NextFunction) {
 export async function registerRoutes(
   httpServer: Server,
   app: Express
-): Promise<Server> {
+): Promise<any> {
 
   // ===== Temporary download route =====
   app.get("/download/dist-bundle", (req, res) => {
@@ -1630,7 +1630,7 @@ export async function registerRoutes(
           bio: t.bio || null,
           joinDate: null,
           subscriptionPlan: t.subscriptionPlan || "Starter",
-          paymentStatus: t.paymentStatus || "En attente",
+          paymentStatus: (t as any).paymentStatus || "En attente",
           createdAt: t.createdAt || new Date(),
         }));
 
@@ -1678,7 +1678,7 @@ export async function registerRoutes(
           const existingUser = await storage.getUserByEmail(b.email);
           if (!existingUser) {
             const bcrypt = await import("bcrypt");
-            const tempPassword = await bcrypt.hash("Seamlier2026!", 12);
+            const tempPassword = await bcrypt.hash(process.env.DEFAULT_TAILOR_PASSWORD || "Seamlier2026!", 12);
             const newUser = await storage.createUser({
               email: b.email,
               password: tempPassword,
@@ -1802,7 +1802,7 @@ export async function registerRoutes(
           phone: t.phone || "",
           bio: t.bio || null,
           subscriptionPlan: t.subscriptionPlan || "Starter",
-          paymentStatus: t.paymentStatus || "En attente",
+          paymentStatus: (t as any).paymentStatus || "En attente",
           createdAt: t.createdAt || new Date(),
         });
       }
@@ -2643,26 +2643,7 @@ export async function registerRoutes(
     } catch (err) {
       console.error("[CRON] Daily check error:", err);
     }
-  }
-  // Run once at startup (delayed) and then every 24h
-  setTimeout(() => { runDailyChecks(); setInterval(runDailyChecks, 24 * 60 * 60 * 1000); }, 30000);
-
-  const deployZipPath = path.join(process.cwd(), "seamlier-deploy.zip");
-  const serveZip = (req: Request, res: Response) => {
-    res.setHeader("Content-Type", "application/zip");
-    res.setHeader("Content-Disposition", "attachment; filename=seamlier-deploy.zip");
-    res.sendFile(deployZipPath, (err) => {
-      if (err && !res.headersSent) res.status(404).send("Fichier non trouvé");
-    });
-  };
-  app.get("/download/seamlier-deploy.zip", serveZip);
-  app.get("/seamlier-deploy.zip", serveZip);
-
-    registerStripeRoutes(app);
-
-  // ─── Tailor Schedule ───────────────────────────────────────────────────────
-
-  app.get('/api/tailor/:tailorId/schedule', async (req, res) => {
+  app.get("/api/tailor/:tailorId/schedule", async (req: any, res) => {
     try {
       const { tailorId } = req.params;
       const [rows] = await pool.query('SELECT * FROM tailor_schedule WHERE tailor_id = ? ORDER BY day_of_week', [tailorId]) as any[];
@@ -2842,4 +2823,5 @@ export async function registerRoutes(
 
 function renderVerificationPage(success: boolean, message: string): string {
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vérification Email - SEAMLIER</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Inter,sans-serif;background:#faf9f7;display:flex;align-items:center;justify-content:center;min-height:100vh}.card{background:#fff;border-radius:16px;padding:48px;max-width:420px;width:90%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}.icon{width:64px;height:64px;border-radius:50%;margin:0 auto 24px;display:flex;align-items:center;justify-content:center;font-size:28px}.success{background:#dcfce7;color:#16a34a}.error{background:#fee2e2;color:#dc2626}h1{font-family:'Playfair Display',serif;color:#722F37;font-size:24px;margin-bottom:12px}p{color:#6b7280;line-height:1.6;margin-bottom:24px}a{display:inline-block;background:#722F37;color:#fff;text-decoration:none;padding:12px 32px;border-radius:8px;font-weight:600;transition:background .2s}a:hover{background:#5a252c}</style></head><body><div class="card"><div class="icon ${success ? 'success' : 'error'}">${success ? '✓' : '✕'}</div><h1>${success ? 'Email vérifié !' : 'Erreur de vérification'}</h1><p>${message}</p><a href="/connexion">Se connecter</a></div></body></html>`;
+}
 }

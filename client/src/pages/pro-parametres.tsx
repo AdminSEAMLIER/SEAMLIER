@@ -557,7 +557,7 @@ export default function ProParametres() {
 
 
         {/* ── Mes disponibilités ── */}
-        {tailor?.id && <AvailabilitySection tailorId={tailor.id} />}
+        {planData?.tailorId && <AvailabilitySection tailorId={planData!.tailorId} />}
         <Button className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white" onClick={handleSave} data-testid="button-save-settings">
           <Save className="h-4 w-4 mr-2" />Enregistrer les paramètres
         </Button>

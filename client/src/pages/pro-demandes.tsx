@@ -383,7 +383,7 @@ export default function ProDemandes() {
                     {project.deadline && (
                       <div className="flex items-center gap-1 text-gray-600">
                         <Clock className="h-4 w-4 text-[#601B28]" />
-                        <span>{formatDate(project.deadline)}</span>
+                        <span>{formatDate(project.deadline ? new Date(project.deadline).toISOString() : "")}</span>
                       </div>
                     )}
                   </div>

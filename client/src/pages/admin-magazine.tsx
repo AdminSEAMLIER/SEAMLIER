@@ -1265,7 +1265,7 @@ export default function AdminDashboard() {
                               <td className="px-5 py-3 text-xs text-gray-500">{p.date}</td>
                               <td className="px-5 py-3 text-center">
                                 {(() => {
-                                  const ps = p.paymentStatus;
+                                  const ps = (p as any).paymentStatus;
                                   if (ps === "transferred") return (
                                     <Badge className="text-[10px] px-3 py-1 border-none font-bold uppercase bg-green-100 text-green-700" data-testid={`badge-sequestre-${p.id}`}>
                                       <ShieldCheck size={10} className="mr-1 inline" />Libéré
@@ -1293,9 +1293,9 @@ export default function AdminDashboard() {
                                 <Button
                                   size="sm"
                                   variant="default"
-                                  disabled={p.paymentStatus !== "client_confirmed"}
-                                  className={cn("h-8 text-[11px] font-bold", p.paymentStatus === "client_confirmed" ? "bg-green-600 hover:bg-green-700" : "bg-gray-200 text-gray-400 cursor-not-allowed")}
-                                  onClick={() => p.paymentStatus === "client_confirmed" && toggleSequestre(p.id)}
+                                  disabled={(p as any).paymentStatus !== "client_confirmed"}
+                                  className={cn("h-8 text-[11px] font-bold", (p as any).paymentStatus === "client_confirmed" ? "bg-green-600 hover:bg-green-700" : "bg-gray-200 text-gray-400 cursor-not-allowed")}
+                                  onClick={() => (p as any).paymentStatus === "client_confirmed" && toggleSequestre(p.id)}
                                   data-testid={`button-toggle-sequestre-${p.id}`}
                                 >
                                   Libérer

@@ -184,12 +184,11 @@ export default function Discovery() {
             </div>
             <div className="flex flex-wrap gap-2">
               {specialtyKeys.map((specialty) => (
-                <FilterChip
+                <FilterChip // @ts-ignore
                   key={specialty.key}
                   label={specialty.key === "all" ? t('discovery.allSpecialties') : t(`specialties.${specialty.key}`)}
                   isActive={selectedFilter === specialty.key}
                   onClick={() => setSelectedFilter(specialty.key)}
-                  className={selectedFilter === specialty.key ? "bg-[#601B28] text-white border-[#601B28]" : "bg-white text-gray-600 border-gray-200 hover:border-[#601B28] hover:text-[#601B28]"}
                 />
               ))}
             </div>

@@ -11,16 +11,6 @@ const app = express();
 const httpServer = createServer(app);
 
 const projectRoot = process.cwd();
-app.get("/seamlier-mysql.zip", (_req, res) => {
-  const filePath = path.join(projectRoot, "seamlier-mysql.zip");
-  if (fs.existsSync(filePath)) return res.download(filePath);
-  res.status(404).send("File not found");
-});
-app.get("/mysql-schema.sql", (_req, res) => {
-  const filePath = path.join(projectRoot, "mysql-schema.sql");
-  if (fs.existsSync(filePath)) return res.download(filePath);
-  res.status(404).send("File not found");
-});
 
 declare module "http" {
   interface IncomingMessage {

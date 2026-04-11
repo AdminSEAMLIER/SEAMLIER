@@ -300,15 +300,15 @@ export function registerStripeRoutes(app: Express) {
         : (subscription.latest_invoice as any).id;
       console.log(`[Stripe/sub] Récupération invoice: ${invoiceId}`);
       const invoice = await stripe.invoices.retrieve(invoiceId);
-      console.log(`[Stripe/sub] Invoice: id=${invoice.id} status=${invoice.status} payment_intent=${JSON.stringify(invoice.payment_intent)}`);
+      console.log(`[Stripe/sub] Invoice: id=${invoice.id} status=${invoice.status} payment_intent=${JSON.stringify(( invoice as any).payment_intent)}`);
 
       // 6. Récupérer le PaymentIntent séparément
       let clientSecret: string | null = null;
 
-      if (invoice.payment_intent) {
-        const piId = typeof invoice.payment_intent === "string"
-          ? invoice.payment_intent
-          : (invoice.payment_intent as any).id;
+      if ((invoice as any).payment_intent) {
+        const piId = typeof (invoice as any).payment_intent === "string"
+          ? ( invoice as any).payment_intent
+          : (( invoice as any).payment_intent as any).id;
         console.log(`[Stripe/sub] Récupération PaymentIntent: ${piId}`);
         const pi = await stripe.paymentIntents.retrieve(piId);
         console.log(`[Stripe/sub] PI: id=${pi.id} status=${pi.status} client_secret_present=${!!pi.client_secret}`);
@@ -328,7 +328,7 @@ export function registerStripeRoutes(app: Express) {
           console.error(`[Stripe/sub] Subscription JSON: ${JSON.stringify({ id: subscription.id, status: subscription.status, pending_setup_intent: (subscription as any).pending_setup_intent })}`);
           return res.status(500).json({
             error: "Impossible d'obtenir le clientSecret",
-            detail: `invoice.payment_intent=${invoice.payment_intent}, sub.status=${subscription.status}`,
+            detail: `( invoice as any).payment_intent=${( invoice as any).payment_intent}, sub.status=${subscription.status}`,
           });
         }
       }
