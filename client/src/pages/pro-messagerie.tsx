@@ -118,9 +118,9 @@ function ClientFichePanel({ clientId, open, onClose }: { clientId: string; open:
   const [showStatusMenu, setShowStatusMenu] = useState(false);
 
   const { data, isLoading } = useQuery<ClientSummary>({
-    queryKey: ["/api/tailor/clients", clientId, "summary"],
+    queryKey: ["/api/tailors/clients", clientId, "summary"],
     queryFn: async () => {
-      const res = await fetch(`/api/tailor/clients/${clientId}/summary`, { credentials: "include" });
+      const res = await fetch(`/api/tailors/clients/${clientId}/summary`, { credentials: "include" });
       if (!res.ok) throw new Error("Erreur lors du chargement de la fiche client");
       return res.json();
     },
@@ -128,9 +128,9 @@ function ClientFichePanel({ clientId, open, onClose }: { clientId: string; open:
   });
 
   const { data: noteData } = useQuery<{ note: string; clientStatus: string }>({
-    queryKey: ["/api/tailor/client", clientId, "notes"],
+    queryKey: ["/api/tailors/client", clientId, "notes"],
     queryFn: async () => {
-      const res = await fetch(`/api/tailor/client/${clientId}/notes`, { credentials: "include" });
+      const res = await fetch(`/api/tailors/client/${clientId}/notes`, { credentials: "include" });
       if (!res.ok) return { note: "", clientStatus: "nouveau" };
       return res.json();
     },
@@ -146,7 +146,7 @@ function ClientFichePanel({ clientId, open, onClose }: { clientId: string; open:
 
   const saveNotesMutation = useMutation({
     mutationFn: async (payload: { note: string; clientStatus: string }) => {
-      const res = await fetch(`/api/tailor/client/${clientId}/notes`, {
+      const res = await fetch(`/api/tailors/client/${clientId}/notes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -155,7 +155,7 @@ function ClientFichePanel({ clientId, open, onClose }: { clientId: string; open:
       if (!res.ok) throw new Error("Failed to save");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tailor/client", clientId, "notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tailors/client", clientId, "notes"] });
       toast({ title: "Note enregistrée", description: "La note a été sauvegardée." });
     },
     onError: () => toast({ title: "Erreur", description: "Impossible de sauvegarder.", variant: "destructive" }),

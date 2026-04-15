@@ -135,7 +135,7 @@ export default function ProDashboard() {
   const currentPlan = (planData?.subscriptionPlan || "Starter") as "Starter" | "Pro";
 
   const { data: projectCountData } = useQuery<{ count: number }>({
-    queryKey: ["/api/tailor/projects/count"],
+    queryKey: ["/api/tailors/projects/count"],
     enabled: currentPlan === "Starter",
   });
   const measureCount = projectCountData?.count ?? 0;
@@ -154,7 +154,7 @@ export default function ProDashboard() {
     newRequests: number;
     averageRating: number;
   }>({
-    queryKey: ["/api/tailor/stats"],
+    queryKey: ["/api/tailors/stats"],
     refetchInterval: 30000,
   });
 

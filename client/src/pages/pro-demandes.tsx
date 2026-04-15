@@ -39,11 +39,11 @@ export default function ProDemandes() {
   const [quoteAmounts, setQuoteAmounts] = useState<Record<string, string>>({});
 
   const { data: allProjects = [], isLoading } = useQuery<ProjectWithClient[]>({
-    queryKey: ["/api/tailor/projects"],
+    queryKey: ["/api/tailors/projects"],
   });
 
   const { data: tailorEvents = [] } = useQuery<any[]>({
-    queryKey: ["/api/tailor/events"],
+    queryKey: ["/api/tailors/events"],
   });
 
   const pendingEvents = tailorEvents.filter((e: any) => e.status === "pending_tailor_approval");
@@ -55,7 +55,7 @@ export default function ProDemandes() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tailor/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tailors/events"] });
       toast({ title: "Commande acceptée", description: "Le client a été notifié." });
     },
     onError: () => toast({ title: "Erreur", description: "Impossible d'accepter.", variant: "destructive" }),
@@ -68,7 +68,7 @@ export default function ProDemandes() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tailor/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tailors/events"] });
       toast({ title: "Commande refusée", description: "L'organisateur a été informé." });
     },
     onError: () => toast({ title: "Erreur", description: "Impossible de refuser.", variant: "destructive" }),
@@ -94,7 +94,7 @@ export default function ProDemandes() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tailor/projects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tailors/projects"] });
       setOpenQuoteId(null);
     },
     onError: () => {

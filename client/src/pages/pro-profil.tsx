@@ -178,7 +178,7 @@ export default function ProProfil() {
   const portfolioInputRef = useRef<HTMLInputElement>(null);
 
   const { data: portfolioItems = [], isLoading: portfolioLoading } = useQuery<any[]>({
-    queryKey: ["/api/tailor/portfolio"],
+    queryKey: ["/api/tailors/portfolio"],
     enabled: !!user,
   });
 
@@ -188,7 +188,7 @@ export default function ProProfil() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tailor/portfolio"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tailors/portfolio"] });
       if (tailorProfile?.id) {
         queryClient.invalidateQueries({ queryKey: ["/api/tailors", tailorProfile.id, "portfolio"] });
       }
@@ -206,7 +206,7 @@ export default function ProProfil() {
       await apiRequest("DELETE", `/api/portfolio/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tailor/portfolio"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tailors/portfolio"] });
       if (tailorProfile?.id) {
         queryClient.invalidateQueries({ queryKey: ["/api/tailors", tailorProfile.id, "portfolio"] });
       }

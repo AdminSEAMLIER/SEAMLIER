@@ -119,10 +119,10 @@ export default function ProPlanning() {
 
   // Données
   const { data: rawAppointments = [], isLoading } = useQuery<AppointmentWithClient[]>({
-    queryKey: ["/api/tailor/appointments"],
+    queryKey: ["/api/tailors/appointments"],
   });
   const { data: tailorClients = [] } = useQuery<Array<{ id: string; firstName?: string; lastName?: string; email?: string }>>({
-    queryKey: ["/api/tailor/clients"],
+    queryKey: ["/api/tailors/clients"],
   });
 
   const displayAppointments: DisplayAppointment[] = rawAppointments.map(toDisplay);
@@ -131,7 +131,7 @@ export default function ProPlanning() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiRequest("DELETE", `/api/appointments/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tailor/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tailors/appointments"] });
       setIsDetailOpen(false);
       toast({ title: fr ? "Rendez-vous supprimé" : "Appointment deleted" });
     },
@@ -142,7 +142,7 @@ export default function ProPlanning() {
     mutationFn: ({ id, status }: { id: string; status: string }) =>
       apiRequest("PATCH", `/api/appointments/${id}`, { status }).then(r => r.json()),
     onSuccess: (_, { status }) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tailor/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tailors/appointments"] });
       setIsDetailOpen(false);
       const label = status === "confirmed"
         ? (fr ? "Rendez-vous confirmé" : "Appointment confirmed")
@@ -171,7 +171,7 @@ export default function ProPlanning() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tailor/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tailors/appointments"] });
       setIsNewOpen(false);
       setNewClientId(""); setNewDate(""); setNewTime(""); setNewNotes(""); setNewLocation("");
       toast({ title: fr ? "Rendez-vous créé" : "Appointment created" });

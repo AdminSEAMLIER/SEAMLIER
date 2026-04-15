@@ -538,7 +538,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/tailor/projects", requireAuth, async (req: any, res) => {
+  app.get("/api/tailors/projects", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
@@ -551,7 +551,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/tailor/requests", requireAuth, async (req: any, res) => {
+  app.get("/api/tailors/requests", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
@@ -565,7 +565,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/tailor/stats", requireAuth, async (req: any, res) => {
+  app.get("/api/tailors/stats", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
@@ -611,7 +611,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/tailor/stats-full", requireAuth, async (req: any, res) => {
+  app.get("/api/tailors/stats-full", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
@@ -707,7 +707,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/tailor/projects/count", requireAuth, async (req: any, res) => {
+  app.get("/api/tailors/projects/count", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
@@ -741,7 +741,7 @@ export async function registerRoutes(
   });
 
   // ── CRM : Notes et statut client par artisan ──────────────────────────────
-  app.get("/api/tailor/client/:clientId/notes", requireAuth, async (req: any, res) => {
+  app.get("/api/tailors/client/:clientId/notes", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
@@ -759,7 +759,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/tailor/client/:clientId/notes", requireAuth, async (req: any, res) => {
+  app.post("/api/tailors/client/:clientId/notes", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
@@ -1019,7 +1019,7 @@ export async function registerRoutes(
   });
 
   // ── CRM : fiche client unifiée ───────────────────────────────────────────
-  app.get("/api/tailor/clients/:clientId/summary", requireAuth, async (req: any, res) => {
+  app.get("/api/tailors/clients/:clientId/summary", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
@@ -1063,7 +1063,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/tailor/appointments", requireAuth, async (req: any, res) => {
+  app.get("/api/tailors/appointments", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
@@ -1253,7 +1253,7 @@ export async function registerRoutes(
   });
 
   // Portfolio management for tailors
-  app.get("/api/tailor/portfolio", requireAuth, async (req: any, res) => {
+  app.get("/api/tailors/portfolio", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
@@ -2064,7 +2064,7 @@ export async function registerRoutes(
   });
 
   // Tailor reads a specific client's measurements (for project view)
-  app.get("/api/tailor/clients", requireAuth, async (req: any, res) => {
+  app.get("/api/tailors/clients", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
@@ -2080,7 +2080,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/tailor/client/:clientId/measurements", requireAuth, async (req: any, res) => {
+  app.get("/api/tailors/client/:clientId/measurements", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
@@ -2373,7 +2373,7 @@ export async function registerRoutes(
   });
 
   // Tailor: list events
-  app.get("/api/tailor/events", requireAuth, async (req: any, res) => {
+  app.get("/api/tailors/events", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
@@ -2662,15 +2662,15 @@ export async function registerRoutes(
     } catch (err) {
       console.error("[CRON] Daily check error:", err);
     }
-  app.get("/api/tailor/:tailorId/schedule", async (req: any, res) => {
+  app.get("/api/tailors/:tailorId/schedule", async (req: any, res) => {
     try {
-      const { tailorId } = req.params;
+      const tailorId = req.query.tailorId as string;
       const [rows] = await pool.query('SELECT * FROM tailor_schedule WHERE tailor_id = ? ORDER BY day_of_week', [tailorId]) as any[];
       res.json(Array.isArray(rows) ? rows : []);
     } catch (error: any) { res.status(500).json({ error: error.message }); }
   });
 
-  app.post('/api/tailor/schedule', requireAuth, async (req: any, res) => {
+  app.post('/api/tailors/schedule', requireAuth, async (req: any, res) => {
     try {
       const tailor = await storage.getTailorByUserId(req.authUserId);
       if (!tailor) return res.status(403).json({ error: 'Not a tailor' });
@@ -2690,15 +2690,15 @@ export async function registerRoutes(
 
   // ─── Tailor Exceptions ──────────────────────────────────────────────────────
 
-  app.get('/api/tailor/:tailorId/exceptions', async (req, res) => {
+  app.get('/api/tailors/exceptions', async (req, res) => {
     try {
-      const { tailorId } = req.params;
+      const tailorId = req.query.tailorId as string;
       const [rows] = await pool.query('SELECT * FROM tailor_exceptions WHERE tailor_id = ? ORDER BY date ASC', [tailorId]) as any[];
       res.json(Array.isArray(rows) ? rows : []);
     } catch (error: any) { res.status(500).json({ error: error.message }); }
   });
 
-  app.post('/api/tailor/exceptions', requireAuth, async (req: any, res) => {
+  app.post('/api/tailors/exceptions', requireAuth, async (req: any, res) => {
     try {
       const tailor = await storage.getTailorByUserId(req.authUserId);
       if (!tailor) return res.status(403).json({ error: 'Not a tailor' });
@@ -2714,20 +2714,20 @@ export async function registerRoutes(
     } catch (error: any) { res.status(500).json({ error: error.message }); }
   });
 
-  app.delete('/api/tailor/exceptions/:id', requireAuth, async (req: any, res) => {
+  app.delete('/api/tailors/exceptions', requireAuth, async (req: any, res) => {
     try {
       const tailor = await storage.getTailorByUserId(req.authUserId);
       if (!tailor) return res.status(403).json({ error: 'Not a tailor' });
-      await pool.query('DELETE FROM tailor_exceptions WHERE id = ? AND tailor_id = ?', [req.params.id, tailor.id]);
+      await pool.query('DELETE FROM tailor_exceptions WHERE id = ? AND tailor_id = ?', [req.query.id, tailor.id]);
       res.json({ success: true });
     } catch (error: any) { res.status(500).json({ error: error.message }); }
   });
 
   // ─── Availability ──────────────────────────────────────────────────────────
 
-  app.get('/api/tailor/:tailorId/availability', async (req, res) => {
+  app.get('/api/tailors/availability', async (req, res) => {
     try {
-      const { tailorId } = req.params;
+      const tailorId = req.query.tailorId as string;
       const { date } = req.query;
       if (!date) return res.status(400).json({ error: 'date requis' });
       const dateStr = date as string;
@@ -2784,9 +2784,9 @@ export async function registerRoutes(
   });
 
   // ─── Closed days for a month (for calendar UI) ─────────────────────────────
-  app.get('/api/tailor/:tailorId/closed-days', async (req, res) => {
+  app.get('/api/tailors/closed-days', async (req, res) => {
     try {
-      const { tailorId } = req.params;
+      const tailorId = req.query.tailorId as string;
       const { year, month } = req.query; // month = 1-12
       if (!year || !month) return res.status(400).json({ error: 'year and month required' });
 

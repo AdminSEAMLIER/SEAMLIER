@@ -39,7 +39,7 @@ export default function PrendreRdv() {
     queryFn: async () => {
       const y = visibleMonth.getFullYear();
       const m = visibleMonth.getMonth() + 1;
-      const r = await fetch(`/api/tailor/${tailorId}/closed-days?year=${y}&month=${m}`);
+      const r = await fetch(`/api/tailors/closed-days?tailorId=${tailorId}&year=${y}&month=${m}`);
       return r.json();
     },
     enabled: !!tailorId,
@@ -53,7 +53,7 @@ export default function PrendreRdv() {
     queryFn: async () => {
       const y = nextMonth.getFullYear();
       const m = nextMonth.getMonth() + 1;
-      const r = await fetch(`/api/tailor/${tailorId}/closed-days?year=${y}&month=${m}`);
+      const r = await fetch(`/api/tailors/closed-days?tailorId=${tailorId}&year=${y}&month=${m}`);
       return r.json();
     },
     enabled: !!tailorId,
@@ -69,7 +69,7 @@ export default function PrendreRdv() {
   }>({
     queryKey: ["/api/tailor", tailorId, "availability", dateStr],
     queryFn: async () => {
-      const r = await fetch(`/api/tailor/${tailorId}/availability?date=${dateStr}`);
+      const r = await fetch(`/api/tailors/availability?tailorId=${tailorId}&date=${dateStr}`);
       return r.json();
     },
     enabled: !!tailorId && !!dateStr,

@@ -51,14 +51,14 @@ export default function ProProjets() {
 
   // Fetch tailor group events for the overview section
   const { data: tailorEvents = [] } = useQuery<any[]>({
-    queryKey: ["/api/tailor/events"],
+    queryKey: ["/api/tailors/events"],
   });
 
   const clientId = selectedProject?.client?.id;
   const { data: clientMeasurements } = useQuery<any>({
-    queryKey: ["/api/tailor/client", clientId, "measurements"],
+    queryKey: ["/api/tailors/client", clientId, "measurements"],
     queryFn: async () => {
-      const res = await apiRequest("GET", `/api/tailor/client/${clientId}/measurements`);
+      const res = await apiRequest("GET", `/api/tailors/client/${clientId}/measurements`);
       if (!res.ok) return null;
       return res.json();
     },
@@ -121,7 +121,7 @@ export default function ProProjets() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tailor/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tailors/appointments"] });
       setIsBookingOpen(false);
       setBookingDate(""); setBookingTime(""); setBookingNotes("");
       toast({ title: "Rendez-vous créé", description: "Le client a été notifié." });

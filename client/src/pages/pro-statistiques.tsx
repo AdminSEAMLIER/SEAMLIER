@@ -109,9 +109,9 @@ export default function ProStatistiques() {
   const { user } = useAuth();
 
   const { data: stats, isLoading } = useQuery<FullStats>({
-    queryKey: ["/api/tailor/stats-full"],
+    queryKey: ["/api/tailors/stats-full"],
     queryFn: async () => {
-      const res = await fetch("/api/tailor/stats-full", { credentials: "include" });
+      const res = await fetch("/api/tailors/stats-full", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch stats");
       return res.json();
     },

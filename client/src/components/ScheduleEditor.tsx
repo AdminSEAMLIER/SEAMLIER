@@ -39,7 +39,7 @@ export default function ScheduleEditor({ tailorId }: { tailorId?: string }) {
   const { data: existing } = useQuery({
     queryKey: ["/api/tailor", tailorId, "schedule"],
     queryFn: async () => {
-      const res = await fetch("/api/tailor/" + tailorId + "/schedule");
+      const res = await fetch("/api/schedule?tailorId=" + tailorId);
       return res.json();
     },
     enabled: !!tailorId,
@@ -66,7 +66,7 @@ export default function ScheduleEditor({ tailorId }: { tailorId?: string }) {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/tailor/schedule", {
+      const res = await fetch("/api/schedule", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

@@ -135,7 +135,7 @@ function AvailabilitySection({ tailorId }: { tailorId: string }) {
 
   const { data: existingSchedule } = useQuery({
     queryKey: ["/api/tailor", tailorId, "schedule"],
-    queryFn: async () => { const r = await fetch(`/api/tailor/${tailorId}/schedule`); return r.json(); },
+    queryFn: async () => { const r = await fetch(`/api/schedule?tailorId=${tailorId}`); return r.json(); },
     enabled: !!tailorId,
   });
 
@@ -150,7 +150,7 @@ function AvailabilitySection({ tailorId }: { tailorId: string }) {
 
   const saveSched = useMutation({
     mutationFn: async () => {
-      const r = await fetch("/api/tailor/schedule", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ schedule }) });
+      const r = await fetch("/api/schedule", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ schedule }) });
       if (!r.ok) throw new Error();
     },
     onSuccess: () => toast({ title: "Horaires enregistrés" }),
@@ -166,13 +166,13 @@ function AvailabilitySection({ tailorId }: { tailorId: string }) {
 
   const { data: exceptions = [] } = useQuery<any[]>({
     queryKey: ["/api/tailor", tailorId, "exceptions"],
-    queryFn: async () => { const r = await fetch(`/api/tailor/${tailorId}/exceptions`); return r.json(); },
+    queryFn: async () => { const r = await fetch(`/api/tailors/exceptions?tailorId=${tailorId}`); return r.json(); },
     enabled: !!tailorId,
   });
 
   const addException = useMutation({
     mutationFn: async () => {
-      const r = await fetch("/api/tailor/exceptions", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ date: newDate, reason: newReason }) });
+      const r = await fetch("/api/tailors/exceptions", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ date: newDate, reason: newReason }) });
       if (!r.ok) throw new Error();
     },
     onSuccess: () => { setNewDate(""); setNewReason(""); queryClient.invalidateQueries({ queryKey: ["/api/tailor", tailorId, "exceptions"] }); toast({ title: "Fermeture ajoutée" }); },
@@ -181,7 +181,7 @@ function AvailabilitySection({ tailorId }: { tailorId: string }) {
 
   const delException = useMutation({
     mutationFn: async (id: string) => {
-      const r = await fetch(`/api/tailor/exceptions/${id}`, { method: "DELETE", credentials: "include" });
+      const r = await fetch(`/api/tailors/exceptions?id=${id}`, { method: "DELETE", credentials: "include" });
       if (!r.ok) throw new Error();
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/tailor", tailorId, "exceptions"] }); toast({ title: "Fermeture supprimée" }); },

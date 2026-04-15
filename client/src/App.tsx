@@ -215,15 +215,15 @@ function Router() {
       </Route>
 
       <Route path="/magazine">
-        <ProtectedRoute>
+
           <ClientLayout><Magazine /></ClientLayout>
-        </ProtectedRoute>
+
       </Route>
 
       <Route path="/magazine/:id">
-        <ProtectedRoute>
+
           <ClientLayout><MagazineDetail /></ClientLayout>
-        </ProtectedRoute>
+
       </Route>
 
       <Route path="/messages">

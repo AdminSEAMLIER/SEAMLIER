@@ -86,7 +86,7 @@ export default function EvenementDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events", id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/tailor/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tailors/events"] });
       toast({ title: isFr ? "Commande acceptée !" : "Order accepted!", description: isFr ? "Le client a été notifié avec le lien d'invitation." : "The client was notified with the invite link." });
     },
     onError: () => toast({ title: "Erreur", variant: "destructive" }),
@@ -99,7 +99,7 @@ export default function EvenementDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events", id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/tailor/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tailors/events"] });
       setShowRejectForm(false);
       toast({ title: isFr ? "Commande refusée" : "Order rejected" });
     },
