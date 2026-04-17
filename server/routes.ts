@@ -84,6 +84,67 @@ export async function registerRoutes(
     }
   });
 
+
+  // ─── Routes planning (avant /:id pour éviter conflit Express) ──────────────
+  app.get('/api/tailors/availability', async (req, res) => {
+    try {
+      const tailorId = req.query.tailorId as string;
+      const { date } = req.query;
+      if (!date) return res.status(400).json({ error: 'date requis' });
+      const dateStr = date as string;
+      const [exRows] = await pool.query('SELECT * FROM tailor_exceptions WHERE tailor_id = ? AND date = ?', [tailorId, dateStr]) as any[];
+      if (Array.isArray(exRows) && exRows.length > 0) return res.json({ slots: [], isClosed: true, isException: true, reason: exRows[0].reason });
+      const d = new Date(dateStr);
+      const dayOfWeek = d.getDay();
+      const [whRows] = await pool.query('SELECT * FROM tailor_working_hours WHERE tailor_id = ? AND day_of_week = ?', [tailorId, dayOfWeek]) as any[];
+      const [schRows] = await pool.query('SELECT * FROM tailor_schedule WHERE tailor_id = ? AND day_of_week = ?', [tailorId, dayOfWeek]) as any[];
+      const schedule = (Array.isArray(whRows) && whRows.length > 0 ? whRows[0] : null) || (Array.isArray(schRows) ? schRows[0] : null);
+      if (!schedule || schedule.is_closed) return res.json({ slots: [], isClosed: true, isException: false });
+      const [sh, sm] = schedule.start_time.split(':').map(Number);
+      const [eh, em] = schedule.end_time.split(':').map(Number);
+      const startTotal = sh * 60 + sm, endTotal = eh * 60 + em;
+      const [apptRows] = await pool.query("SELECT scheduled_at, duration FROM appointments WHERE tailor_id = ? AND DATE(scheduled_at) = ? AND status IN ('confirmed','scheduled')", [tailorId, dateStr]) as any[];
+      const booked = Array.isArray(apptRows) ? apptRows.map((a: any) => { const t = new Date(a.scheduled_at); return { start: t.getHours() * 60 + t.getMinutes(), duration: a.duration || 60 }; }) : [];
+      const slots = [];
+      for (let m = startTotal; m < endTotal; m += 30) {
+        const timeStr = String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0');
+        slots.push({ time: timeStr, available: !booked.some((b: any) => m >= b.start && m < b.start + b.duration) });
+      }
+      res.json({ slots, isClosed: false, isException: false });
+    } catch (error: any) { res.status(500).json({ error: error.message }); }
+  });
+
+  app.get('/api/tailors/closed-days', async (req, res) => {
+    try {
+      const tailorId = req.query.tailorId as string;
+      const { year, month } = req.query;
+      if (!year || !month) return res.status(400).json({ error: 'year and month required' });
+      const [whRows] = await pool.query('SELECT day_of_week, is_closed FROM tailor_working_hours WHERE tailor_id = ?', [tailorId]) as any[];
+      const [schRows] = await pool.query('SELECT day_of_week, is_closed FROM tailor_schedule WHERE tailor_id = ?', [tailorId]) as any[];
+      const rows = Array.isArray(whRows) && whRows.length > 0 ? whRows : (Array.isArray(schRows) ? schRows : []);
+      const closedWeekdays = rows.filter((r: any) => r.is_closed).map((r: any) => r.day_of_week);
+      const y = parseInt(year as string), mo = parseInt(month as string);
+      const dateFrom = `${y}-${String(mo).padStart(2,'0')}-01`;
+      const dateTo = `${y}-${String(mo).padStart(2,'0')}-${new Date(y,mo,0).getDate()}`;
+      const [exRows] = await pool.query('SELECT date FROM tailor_exceptions WHERE tailor_id = ? AND date BETWEEN ? AND ?', [tailorId, dateFrom, dateTo]) as any[];
+      const exceptionDates = Array.isArray(exRows) ? exRows.map((r: any) => { const d = new Date(r.date); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }) : [];
+      const closedDates = [...exceptionDates];
+      for (let day = 1; day <= new Date(y,mo,0).getDate(); day++) {
+        const dow = new Date(y,mo-1,day).getDay();
+        if (closedWeekdays.includes(dow)) { const ds = `${y}-${String(mo).padStart(2,'0')}-${String(day).padStart(2,'0')}`; if (!closedDates.includes(ds)) closedDates.push(ds); }
+      }
+      res.json({ closedDates, closedWeekdays, exceptionDates });
+    } catch (error: any) { res.status(500).json({ error: error.message }); }
+  });
+
+  app.get('/api/tailors/exceptions', async (req, res) => {
+    try {
+      const tailorId = req.query.tailorId as string;
+      const [rows] = await pool.query('SELECT * FROM tailor_exceptions WHERE tailor_id = ? ORDER BY date ASC', [tailorId]) as any[];
+      res.json(Array.isArray(rows) ? rows : []);
+    } catch (error: any) { res.status(500).json({ error: error.message }); }
+  });
+
   app.get("/api/tailors/:id", async (req, res) => {
     try {
       const tailor = await storage.getTailor(req.params.id);

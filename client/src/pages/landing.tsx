@@ -1,4 +1,5 @@
 import { Link, useLocation as useWouterLocation } from "wouter";
+import MagazinePreview from "@/components/MagazinePreview";
 import { useTranslation } from "react-i18next";
 import { MapPin, Search, MessageCircle, CheckCircle, Star, ArrowRight, Scissors, Users, Shield, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,7 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
           <Logo className="text-[#601B28] shrink-0" textClassName="text-base lg:text-lg text-[#601B28]" />
           <div className="flex items-center gap-1 md:gap-2 lg:gap-4">
             <LanguageToggle />
+            <Link href="/magazine"><Button variant="ghost" size="sm" className="text-[#601B28] px-1.5 md:px-3 lg:px-4 text-xs md:text-sm lg:text-base h-7 md:h-8 lg:h-9">Magazine</Button></Link>
             {isAuthenticated && user ? (
               <Link href={user.role === 'admin' ? '/admin/dashboard' : user.role === 'tailor' ? '/dashboard-pro' : '/dashboard-client'}>
                 <Button size="sm" className="bg-[#601B28] hover:bg-[#4E1522] text-white px-2 md:px-4 text-xs md:text-sm h-8 md:h-9 gap-1.5" data-testid="button-mon-espace">
@@ -280,6 +282,15 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
         </div>
       </section>
       )}
+      <section className="py-16 px-4 md:px-8 bg-[#faf9f7]">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-[#601B28]" style={{fontFamily:"Playfair Display,serif"}}>Le Magazine</h2>
+            <Link href="/magazine"><Button variant="ghost" className="text-[#601B28] hover:text-[#4E1522]">Voir tous les articles →</Button></Link>
+          </div>
+          <MagazinePreview />
+        </div>
+      </section>
 
       {!embedded && (
       <footer className="bg-white border-t border-gray-100 py-8 px-2 md:px-8">
