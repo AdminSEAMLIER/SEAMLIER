@@ -19,6 +19,7 @@ import Discovery from "@/pages/discovery";
 import Messages from "@/pages/messages";
 import Mesures from "@/pages/mesures";
 import Magazine from "@/pages/magazine";
+import MagazinePublic from "@/pages/magazine-public";
 import MagazineDetail from "@/pages/magazine-detail";
 import AdminDashboard from "@/pages/admin-magazine";
 import PrendreRdv from "@/pages/prendre-rdv";
@@ -213,17 +214,11 @@ function Router() {
           <ClientLayout><Mesures /></ClientLayout>
         </ProtectedRoute>
       </Route>
-
       <Route path="/magazine">
-
-          <ClientLayout><Magazine /></ClientLayout>
-
+        <MagazinePublic />
       </Route>
-
       <Route path="/magazine/:id">
-
-          <ClientLayout><MagazineDetail /></ClientLayout>
-
+        <MagazinePublic />
       </Route>
 
       <Route path="/messages">

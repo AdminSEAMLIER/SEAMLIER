@@ -1,0 +1,45 @@
+~/workspace$ sed -i 's|import { Logo } from "@/components/Logo";|import { Logo } from "@/components/logo";|' client/src/pages/magazine-public.tsx
+npm run build && echo "OK"
+
+> rest-express@1.0.0 build
+> tsx script/build.ts
+
+building client...
+vite v7.3.0 building client environment for production...
+transforming (26) ../node_modules/react/cjs/react.production.min.js
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 3520 modules transformed.
+../dist/public/registerSW.js                           0.13 kB
+../dist/public/manifest.webmanifest                    0.36 kB
+../dist/public/index.html                              1.60 kB │ gzip:   0.67 kB
+../dist/public/assets/paris-P4j6WzlJ.jpg             291.65 kB
+../dist/public/assets/bordeaux-huL-e8GK.jpg          310.62 kB
+../dist/public/assets/lyon-BlWWdtoF.jpg              333.89 kB
+../dist/public/assets/marseille-VSm_AVAX.jpg         353.85 kB
+../dist/public/assets/nice-BAsr2GWt.jpg              395.28 kB
+../dist/public/assets/toulouse-DHaOlM4L.jpg          621.59 kB
+../dist/public/assets/index-DVpyu5Ih.css             121.61 kB │ gzip:  18.33 kB
+../dist/public/assets/purify.es-CovBOfck.js           22.58 kB │ gzip:   8.63 kB
+../dist/public/assets/index.es-BmtqzJRV.js           158.83 kB │ gzip:  52.92 kB
+../dist/public/assets/html2canvas.esm-DXEQVQnt.js    201.04 kB │ gzip:  47.07 kB
+../dist/public/assets/jspdf.es.min-D4N81PzU.js       385.99 kB │ gzip: 124.93 kB
+../dist/public/assets/index-DevRrccr.js            1,618.52 kB │ gzip: 421.03 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 17.21s
+
+PWA v1.2.0
+mode      generateSW
+precache  10 entries (2451.48 KiB)
+files generated
+  ../dist/public/sw.js
+  ../dist/public/workbox-8c29f6e4.js
+building server...
+
+  dist/index.cjs  1.4mb ⚠️
+
+⚡ Done in 919ms
+OK
