@@ -1,0 +1,21 @@
+{
+  "name": "Seamlier",
+  "short_name": "Seamlier",
+  "description": "Trouvez les meilleurs couturiers de votre région",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#601B28",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
