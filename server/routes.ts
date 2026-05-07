@@ -41,12 +41,6 @@ export async function registerRoutes(
   app: Express
 ): Promise<any> {
 
-  // ===== Temporary download route =====
-  app.get("/download/dist-bundle", (req, res) => {
-    const filePath = path.resolve(process.cwd(), "dist/index.cjs");
-    res.download(filePath, "index.cjs");
-  });
-
   // ===== Professional Plan Routes =====
 
   app.get("/api/professionnel/plan", requireAuth, async (req, res) => {
@@ -2341,7 +2335,9 @@ export async function registerRoutes(
         WHERE e.invite_code = ?
       `, [req.params.inviteCode.toUpperCase()]) as any[];
       if (!(rows as any[]).length) return res.status(404).json({ error: "Événement introuvable" });
-      res.json((rows as any[])[0]);
+      const event = (rows as any[])[0];
+      delete event.validation_code;
+      res.json(event);
     } catch (error) {
       console.error("Failed to get event:", error);
       res.status(500).json({ error: "Failed to get event" });

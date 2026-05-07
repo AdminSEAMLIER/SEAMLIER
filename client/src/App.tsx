@@ -64,6 +64,20 @@ import EvenementCreer from "@/pages/evenement-creer";
 import EvenementRejoindre from "@/pages/evenement-rejoindre";
 import EvenementDetail from "@/pages/evenement-detail";
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  if (isLoading || user === undefined) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+        <div className="w-10 h-10 border-4 border-[#601B28] border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-zinc-600 font-medium">Chargement...</p>
+      </div>
+    );
+  }
+  if (!user || user.role !== "admin") return <Redirect to="/connexion" />;
+  return <>{children}</>;
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
 
@@ -382,8 +396,12 @@ function Router() {
       </Route>
 
       {/* Admin routes */}
-      <Route path="/admin/dashboard" component={AdminDashboard} />
-      <Route path="/admin/seamlier" component={AdminDashboard} />
+      <Route path="/admin/dashboard">
+        <AdminRoute><AdminDashboard /></AdminRoute>
+      </Route>
+      <Route path="/admin/seamlier">
+        <AdminRoute><AdminDashboard /></AdminRoute>
+      </Route>
 
       <Route component={NotFound} />
     </Switch>
