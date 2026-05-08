@@ -43,14 +43,16 @@ export default function ConnexionProfessionnel() {
       const data = await response.json();
 
       if (response.ok && data) {
-        queryClient.setQueryData(["auth-user"], {
+        const userData = {
           id: data.id,
           email: data.email,
           firstName: data.firstName,
           lastName: data.lastName,
           role: data.role,
           profileImageUrl: data.profileImageUrl,
-        });
+        };
+        queryClient.setQueryData(["auth-user"], userData);
+        localStorage.setItem("seamlier_auth", JSON.stringify(userData));
 
         toast({
           title: t('auth.loginSuccess'),
