@@ -2979,6 +2979,9 @@ export async function registerRoutes(
 
       try {
         const userId = req.authUserId;
+        if ((req.user as any)?.role !== "tailor") {
+          return res.status(403).json({ error: "Réservé aux professionnels" });
+        }
         const tailor = await storage.getTailorByUserId(userId);
         if (!tailor) return res.status(403).json({ error: "Not a tailor" });
 
@@ -3144,7 +3147,16 @@ export async function registerRoutes(
           );
         }
 
-        await sendDossierValidatedEmail(userRow.email, userName);
+        // Bug #2 fix: effacer toute raison de rejet précédente lors d'une validation
+        await pool.query(
+          "UPDATE tailors SET dossier_rejection_reason = NULL WHERE id = ?",
+          [tailorId]
+        );
+
+        // Bug #3 fix: logger si l'envoi échoue
+        const emailValidated = await sendDossierValidatedEmail(userRow.email, userName);
+        if (!emailValidated) console.error(`[DOSSIER] Email validation non envoyé à ${userRow.email}`);
+
         await createNotification(
           tailorRow.user_id,
           "dossier_validated",
@@ -3153,15 +3165,20 @@ export async function registerRoutes(
         );
 
         if (userRow.phone) {
-          await sendSms(userRow.phone, `SEAMLIER : Votre dossier professionnel a été validé. Félicitations ${userName} !`);
+          const smsValidated = await sendSms(userRow.phone, `SEAMLIER : Votre dossier professionnel a été validé. Félicitations ${userName} !`);
+          if (!smsValidated) console.error(`[DOSSIER] SMS validation non envoyé à ${userRow.phone}`);
         }
       } else if (action === "reject") {
+        // Bug #1 fix: réinitialiser is_verified lors d'un rejet
         await pool.query(
-          "UPDATE tailors SET dossier_status = 'rejected', dossier_rejection_reason = ? WHERE id = ?",
+          "UPDATE tailors SET dossier_status = 'rejected', dossier_rejection_reason = ?, is_verified = 0 WHERE id = ?",
           [rejectionReason || null, tailorId]
         );
 
-        await sendDossierRejectedEmail(userRow.email, userName, rejectionReason || "");
+        // Bug #3 fix: logger si l'envoi échoue
+        const emailRejected = await sendDossierRejectedEmail(userRow.email, userName, rejectionReason || "");
+        if (!emailRejected) console.error(`[DOSSIER] Email rejet non envoyé à ${userRow.email}`);
+
         await createNotification(
           tailorRow.user_id,
           "dossier_rejected",
@@ -3170,7 +3187,8 @@ export async function registerRoutes(
         );
 
         if (userRow.phone) {
-          await sendSms(userRow.phone, `SEAMLIER : Votre dossier requiert des corrections. Connectez-vous pour plus d'informations.`);
+          const smsRejected = await sendSms(userRow.phone, `SEAMLIER : Votre dossier requiert des corrections. Connectez-vous pour plus d'informations.`);
+          if (!smsRejected) console.error(`[DOSSIER] SMS rejet non envoyé à ${userRow.phone}`);
         }
       } else {
         return res.status(400).json({ error: "Action invalide. Utilisez 'validate' ou 'reject'." });
