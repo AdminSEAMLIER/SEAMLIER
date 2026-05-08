@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 export default function PrendreRdv() {
   const params = new URLSearchParams(window.location.search);
-  const tailorId = params.get("tailor");
+  const tailorUserId = params.get("tailor"); // USER ID from URL
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
@@ -22,41 +22,53 @@ export default function PrendreRdv() {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [booked, setBooked] = useState(false);
 
-  // Track visible month for closed-days fetching
   const [visibleMonth, setVisibleMonth] = useState(startOfMonth(new Date()));
 
   const dateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
 
-  // Fetch tailor profile
+  // Resolve userId → tailor object (gives us tailor.id = tailor table ID)
   const { data: tailor } = useQuery<any>({
-    queryKey: ["/api/tailors", tailorId],
-    enabled: !!tailorId,
+    queryKey: ["/api/tailor-by-user", tailorUserId],
+    queryFn: async () => {
+      const r = await fetch(`/api/tailor-by-user/${tailorUserId}`);
+      if (!r.ok) return null;
+      const d = await r.json();
+      return {
+        ...d,
+        firstName: d.user?.firstName ?? d.first_name,
+        lastName: d.user?.lastName ?? d.last_name,
+      };
+    },
+    enabled: !!tailorUserId,
   });
+
+  // tailorTableId is the tailors table PK — used for all availability/booking calls
+  const tailorTableId = tailor?.id ?? null;
 
   // Fetch closed days for current visible month
   const { data: closedDaysData } = useQuery<{ closedDates: string[]; closedWeekdays: number[]; exceptionDates: string[] }>({
-    queryKey: ["/api/tailor", tailorId, "closed-days", format(visibleMonth, "yyyy-MM")],
+    queryKey: ["/api/tailor", tailorTableId, "closed-days", format(visibleMonth, "yyyy-MM")],
     queryFn: async () => {
       const y = visibleMonth.getFullYear();
       const m = visibleMonth.getMonth() + 1;
-      const r = await fetch(`/api/tailors/closed-days?tailorId=${tailorId}&year=${y}&month=${m}`);
+      const r = await fetch(`/api/tailors/closed-days?tailorId=${tailorTableId}&year=${y}&month=${m}`);
       return r.json();
     },
-    enabled: !!tailorId,
+    enabled: !!tailorTableId,
     staleTime: 60 * 1000,
   });
 
-  // Fetch next month too so navigating forward is instant
+  // Prefetch next month
   const nextMonth = addMonths(visibleMonth, 1);
   useQuery<any>({
-    queryKey: ["/api/tailor", tailorId, "closed-days", format(nextMonth, "yyyy-MM")],
+    queryKey: ["/api/tailor", tailorTableId, "closed-days", format(nextMonth, "yyyy-MM")],
     queryFn: async () => {
       const y = nextMonth.getFullYear();
       const m = nextMonth.getMonth() + 1;
-      const r = await fetch(`/api/tailors/closed-days?tailorId=${tailorId}&year=${y}&month=${m}`);
+      const r = await fetch(`/api/tailors/closed-days?tailorId=${tailorTableId}&year=${y}&month=${m}`);
       return r.json();
     },
-    enabled: !!tailorId,
+    enabled: !!tailorTableId,
     staleTime: 60 * 1000,
   });
 
@@ -67,12 +79,12 @@ export default function PrendreRdv() {
     isException: boolean;
     reason?: string;
   }>({
-    queryKey: ["/api/tailor", tailorId, "availability", dateStr],
+    queryKey: ["/api/tailor", tailorTableId, "availability", dateStr],
     queryFn: async () => {
-      const r = await fetch(`/api/tailors/availability?tailorId=${tailorId}&date=${dateStr}`);
+      const r = await fetch(`/api/tailors/availability?tailorId=${tailorTableId}&date=${dateStr}`);
       return r.json();
     },
-    enabled: !!tailorId && !!dateStr,
+    enabled: !!tailorTableId && !!dateStr,
   });
 
   const closedDates = closedDaysData?.closedDates || [];
@@ -97,7 +109,7 @@ export default function PrendreRdv() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          tailorId,
+          tailorId: tailorTableId,
           scheduledAt: new Date(`${dateStr}T${selectedSlot}`).toISOString(),
           type: "consultation",
           duration: 30,
@@ -119,7 +131,7 @@ export default function PrendreRdv() {
     onError: () => toast({ title: "Erreur", description: "Impossible de réserver ce créneau.", variant: "destructive" }),
   });
 
-  if (!tailorId) {
+  if (!tailorUserId) {
     return (
       <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center p-4">
         <p className="text-gray-500">Artisan non trouvé.</p>
