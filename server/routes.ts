@@ -5,7 +5,7 @@ import path from "path";
 import { storage } from "./storage";
 import { db, pool } from "./db";
 import { eq } from "drizzle-orm";
-import { tailors, users } from "../shared/schema";
+import { tailors, users, insertEventSchema } from "../shared/schema";
 import { randomUUID } from "crypto";
 import { uploadDoc } from "./upload";
 import { generateProjectContract } from "./contract";
@@ -2317,6 +2317,20 @@ export async function registerRoutes(
       if (!name || !eventDate || !tailorId) {
         return res.status(400).json({ error: "name, eventDate et tailorId sont requis" });
       }
+      // Zod validation
+      const parsed = insertEventSchema.safeParse({
+        name, eventDate, tailorId, organizerId: userId, inviteCode: "PLACEHOLDER", validationCode: "0000",
+        description: description || undefined,
+        registrationDeadline: registrationDeadline || undefined,
+        status: "pending_tailor_approval",
+        maxParticipants: maxParticipants || undefined,
+        pricePerPerson: pricePerPerson || undefined,
+        priceGroup: priceGroup || undefined,
+        deliveryDate: deliveryDate || undefined,
+      });
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Données invalides", details: parsed.error.flatten() });
+      }
       let inviteCode = generateInviteCode();
       const [existing] = await pool.query(`SELECT id FROM events WHERE invite_code = ?`, [inviteCode]) as any[];
       if ((existing as any[]).length > 0) inviteCode = generateInviteCode() + "X";
@@ -2412,6 +2426,40 @@ export async function registerRoutes(
         `SELECT id FROM event_participants WHERE event_id = ? AND user_id = ?`, [event.id, userId]
       ) as any[];
       if ((existing as any[]).length > 0) return res.json({ alreadyJoined: true, eventId: event.id });
+      // Check registration deadline
+      if (event.registration_deadline) {
+        const deadline = new Date(event.registration_deadline);
+        deadline.setHours(23, 59, 59, 999);
+        if (new Date() > deadline) {
+          return res.status(403).json({ error: "Les inscriptions sont fermées — la date limite est dépassée." });
+        }
+      }
+      // Check max participants
+      if (event.max_participants) {
+        const [countRows] = await pool.query(
+          `SELECT COUNT(*) as cnt FROM event_participants WHERE event_id = ?`, [event.id]
+        ) as any[];
+        const currentCount = (countRows as any[])[0]?.cnt ?? 0;
+        if (currentCount >= event.max_participants) {
+          return res.status(403).json({ error: "Cet événement est complet." });
+        }
+      }
+      // Stripe payment if pricePerPerson > 0
+      if (event.price_per_person && event.price_per_person > 0 && process.env.STRIPE_SECRET_KEY) {
+        const StripeLib = (await import("stripe")).default;
+        const stripe = new StripeLib(process.env.STRIPE_SECRET_KEY);
+        const pi = await stripe.paymentIntents.create({
+          amount: Math.round(event.price_per_person * 100),
+          currency: "eur",
+          metadata: {
+            eventId: event.id,
+            userId,
+            inviteCode: req.params.inviteCode.toUpperCase(),
+          },
+          description: `SEAMLiER — Événement ${event.name}`,
+        });
+        return res.json({ needsPayment: true, clientSecret: pi.client_secret, eventId: event.id, amount: event.price_per_person });
+      }
       // Create a project linked to the event (in_progress so it appears in artisan's project list)
       const projectId = require("crypto").randomUUID();
       await pool.query(
@@ -2429,6 +2477,43 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to join event:", error);
       res.status(500).json({ error: "Failed to join event" });
+    }
+  });
+
+  // Confirm payment and complete event join
+  app.post("/api/events/join/:inviteCode/confirm-payment", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const { paymentIntentId } = req.body;
+      if (!paymentIntentId) return res.status(400).json({ error: "paymentIntentId requis" });
+      if (!process.env.STRIPE_SECRET_KEY) return res.status(500).json({ error: "Stripe non configuré" });
+      const StripeLib = (await import("stripe")).default;
+      const stripe = new StripeLib(process.env.STRIPE_SECRET_KEY);
+      const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+      if (pi.status !== "succeeded") return res.status(402).json({ error: "Paiement non confirmé" });
+      const eventId = pi.metadata?.eventId;
+      if (!eventId) return res.status(400).json({ error: "Métadonnées manquantes" });
+      const [evRows] = await pool.query(`SELECT * FROM events WHERE id = ?`, [eventId]) as any[];
+      if (!(evRows as any[]).length) return res.status(404).json({ error: "Événement introuvable" });
+      const event = (evRows as any[])[0];
+      // Check if already joined (idempotent)
+      const [existing] = await pool.query(`SELECT id, project_id FROM event_participants WHERE event_id = ? AND user_id = ?`, [event.id, userId]) as any[];
+      if ((existing as any[]).length > 0) return res.json({ alreadyJoined: true, eventId: event.id, projectId: (existing as any[])[0]?.project_id });
+      const projectId = require("crypto").randomUUID();
+      await pool.query(
+        `INSERT INTO projects (id, tailor_id, client_id, title, status, progress, current_step, delivery_date, event_id, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'in_progress', 0, 'prise_mesures', ?, ?, NOW(), NOW())`,
+        [projectId, event.tailor_id, userId, `[Événement] ${event.name}`, event.delivery_date || null, event.id]
+      );
+      const participantId = require("crypto").randomUUID();
+      await pool.query(
+        `INSERT IGNORE INTO event_participants (id, event_id, user_id, project_id) VALUES (?, ?, ?, ?)`,
+        [participantId, event.id, userId, projectId]
+      );
+      res.status(201).json({ success: true, eventId: event.id, projectId });
+    } catch (error) {
+      console.error("Failed to confirm event payment:", error);
+      res.status(500).json({ error: "Failed to confirm payment" });
     }
   });
 
@@ -2630,6 +2715,27 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to reject event:", error);
       res.status(500).json({ error: "Failed to reject event" });
+    }
+  });
+
+  // Delete event
+  app.delete("/api/events/:id", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const [evRows] = await pool.query(`SELECT * FROM events WHERE id = ?`, [req.params.id]) as any[];
+      if (!(evRows as any[]).length) return res.status(404).json({ error: "Événement introuvable" });
+      const event = (evRows as any[])[0];
+      const [userRows] = await pool.query(`SELECT role FROM users WHERE id = ?`, [userId]) as any[];
+      const role = (userRows as any[])[0]?.role;
+      if (event.organizer_id !== userId && role !== "admin") {
+        return res.status(403).json({ error: "Non autorisé" });
+      }
+      await pool.query(`DELETE FROM event_participants WHERE event_id = ?`, [event.id]);
+      await pool.query(`DELETE FROM events WHERE id = ?`, [event.id]);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to delete event:", error);
+      res.status(500).json({ error: "Failed to delete event" });
     }
   });
 
