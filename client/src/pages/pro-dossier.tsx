@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,6 +72,23 @@ const DOC_TYPES: {
   },
 ];
 
+/** Extrait le nom d'origine et la date d'upload depuis une URL multer `TIMESTAMP-originalname` */
+function getFileInfo(url: string | null): { filename: string; uploadedAt: Date | null } | null {
+  if (!url) return null;
+  const segment = url.split("/").pop() ?? "";
+  const dashIdx = segment.indexOf("-");
+  if (dashIdx === -1) return { filename: segment, uploadedAt: null };
+  const ts = Number(segment.slice(0, dashIdx));
+  const filename = segment.slice(dashIdx + 1).replace(/_/g, " ");
+  const uploadedAt = Number.isFinite(ts) && ts > 0 ? new Date(ts) : null;
+  return { filename, uploadedAt };
+}
+
+function isUploadUrl(value: string | null): boolean {
+  if (!value) return false;
+  return value.startsWith("/uploads/") || value.startsWith("http");
+}
+
 function StatusBadge({ status, reason }: { status: DossierData["dossierStatus"]; reason?: string | null }) {
   if (status === "validated") {
     return (
@@ -134,10 +151,10 @@ export default function ProDossier() {
     }
   }
 
-  const maskIban = (iban: string | null) => {
-    if (!iban) return null;
-    if (iban.startsWith("http")) return iban; // it's a URL
-    return "•••• •••• •••• " + iban.slice(-4);
+  const maskIban = (value: string | null) => {
+    if (!value) return null;
+    if (isUploadUrl(value)) return value;
+    return "•••• •••• •••• " + value.slice(-4);
   };
 
   return (
@@ -195,7 +212,7 @@ export default function ProDossier() {
                   <div className="text-right">
                     {dossier?.ibanRib ? (
                       <span className="font-mono text-sm text-gray-800">
-                        {dossier.ibanRib.startsWith("http") ? "✓ Document déposé" : maskIban(dossier.ibanRib)}
+                        {isUploadUrl(dossier.ibanRib) ? "✓ Document déposé" : maskIban(dossier.ibanRib)}
                       </span>
                     ) : (
                       <span className="text-sm text-gray-400 italic">Non renseigné</span>
@@ -212,6 +229,7 @@ export default function ProDossier() {
                 const url = dossier?.[doc.urlKey] as string | null;
                 const isUploading = uploading === doc.docType;
                 const Icon = doc.icon;
+                const fileInfo = getFileInfo(url);
 
                 // Kbis expiry
                 const showExpiry = doc.docType === "kbis" && dossier?.kbisExpiryDate;
@@ -226,7 +244,7 @@ export default function ProDossier() {
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         <div className={cn(
-                          "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
+                          "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5",
                           url ? "bg-green-50" : "bg-gray-50"
                         )}>
                           <Icon className={cn("h-4.5 w-4.5", url ? "text-green-600" : "text-gray-400")} />
@@ -235,16 +253,43 @@ export default function ProDossier() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-medium text-sm text-gray-800">{doc.label}</p>
-                            {url ? (
-                              <span className="text-xs text-green-600 flex items-center gap-0.5">
-                                <CheckCircle2 className="h-3 w-3" /> Déposé
-                              </span>
-                            ) : (
+                            {!url && (
                               <span className="text-xs text-gray-400">Non déposé</span>
                             )}
                           </div>
 
                           <p className="text-xs text-gray-400 mt-0.5">{doc.hint}</p>
+
+                          {/* Infos fichier uploadé */}
+                          {url && fileInfo && (
+                            <div className="mt-2 space-y-1">
+                              <div className="flex items-center gap-1.5">
+                                <CheckCircle2 className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                                <span className="text-xs text-green-700 font-medium truncate max-w-[220px]">
+                                  {fileInfo.filename}
+                                </span>
+                              </div>
+                              {fileInfo.uploadedAt && (
+                                <p className="text-xs text-gray-400 pl-5">
+                                  Déposé le{" "}
+                                  {fileInfo.uploadedAt.toLocaleDateString("fr-FR", {
+                                    day: "2-digit",
+                                    month: "long",
+                                    year: "numeric",
+                                  })}
+                                </p>
+                              )}
+                              <a
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-xs text-[#601B28] hover:underline pl-5"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                Voir le document
+                              </a>
+                            </div>
+                          )}
 
                           {expiryDate && (
                             <p className={cn(
@@ -256,15 +301,7 @@ export default function ProDossier() {
                           )}
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
-                          {url && (
-                            <a href={url} target="_blank" rel="noopener noreferrer">
-                              <Button variant="ghost" size="sm" className="text-[#601B28] h-8 px-2">
-                                <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                                Voir
-                              </Button>
-                            </a>
-                          )}
+                        <div className="shrink-0">
                           <input
                             type="file"
                             accept=".pdf,.jpg,.jpeg,.png"
