@@ -627,14 +627,20 @@ export async function registerRoutes(
       if (!tailor) return res.status(403).json({ error: "Not a tailor" });
 
       const now = new Date();
-      const targetYear = parseInt(req.query.year as string) || now.getFullYear();
-      const targetMonth = req.query.month !== undefined
-        ? parseInt(req.query.month as string)
-        : now.getMonth(); // 0-indexed
+      const rawMonth = req.query.month;
+      const rawYear  = req.query.year;
+      const targetYear  = rawYear  !== undefined ? parseInt(rawYear  as string, 10) : now.getFullYear();
+      const targetMonth = rawMonth !== undefined ? parseInt(rawMonth as string, 10) : now.getMonth();
 
-      const firstOfMonth = new Date(targetYear, targetMonth, 1);
-      const firstOfNextMonth = new Date(targetYear, targetMonth + 1, 1);
-      const isCurrentMonth = targetYear === now.getFullYear() && targetMonth === now.getMonth();
+      // Serialize Date bounds as MySQL DATETIME strings (YYYY-MM-DD HH:MM:SS)
+      const toMysqlDatetime = (d: Date): string => {
+        const pad = (n: number) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      };
+
+      const firstOfMonth    = toMysqlDatetime(new Date(targetYear, targetMonth, 1));
+      const firstOfNextMonth = toMysqlDatetime(new Date(targetYear, targetMonth + 1, 1));
+      const isCurrentMonth  = targetYear === now.getFullYear() && targetMonth === now.getMonth();
 
       // Revenus du mois : projets complétés dans la période
       const [revenueRows] = await pool.query(
@@ -647,15 +653,24 @@ export async function registerRoutes(
       const monthlyRevenue = Array.isArray(revenueRows) && revenueRows[0]
         ? parseFloat(revenueRows[0].total) || 0 : 0;
 
-      // Projets actifs : en cours ce mois (créés dans la période, ou tous si mois courant)
-      const [activeRows] = await pool.query(
-        isCurrentMonth
-          ? "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND status = 'in_progress'"
-          : "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND created_at >= ? AND created_at < ?",
-        isCurrentMonth ? [tailor.id] : [tailor.id, firstOfMonth, firstOfNextMonth]
-      ) as any[];
-      const activeProjects = Array.isArray(activeRows) && activeRows[0]
-        ? parseInt(activeRows[0].cnt) || 0 : 0;
+      // Projets actifs : tous les in_progress pour le mois courant,
+      // ou projets créés dans la période pour les mois historiques
+      let activeProjects = 0;
+      if (isCurrentMonth) {
+        const [activeRows] = await pool.query(
+          "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND status = 'in_progress'",
+          [tailor.id]
+        ) as any[];
+        activeProjects = Array.isArray(activeRows) && activeRows[0]
+          ? parseInt(activeRows[0].cnt) || 0 : 0;
+      } else {
+        const [activeRows] = await pool.query(
+          "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND created_at >= ? AND created_at < ?",
+          [tailor.id, firstOfMonth, firstOfNextMonth]
+        ) as any[];
+        activeProjects = Array.isArray(activeRows) && activeRows[0]
+          ? parseInt(activeRows[0].cnt) || 0 : 0;
+      }
 
       // Nouvelles demandes : créées dans la période
       const [requestRows] = await pool.query(
