@@ -178,6 +178,23 @@ function HomeRoute() {
   return <Landing />;
 }
 
+// Route magazine intelligente : layout selon le rôle, page publique si non connecté
+function MagazineRoute() {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return null;
+  if (user?.role === "tailor") return <ProLayout><Magazine /></ProLayout>;
+  if (user) return <ClientLayout><Magazine /></ClientLayout>;
+  return <MagazinePublic />;
+}
+
+function MagazineDetailRoute() {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return null;
+  if (user?.role === "tailor") return <ProLayout><MagazineDetail /></ProLayout>;
+  if (user) return <ClientLayout><MagazineDetail /></ClientLayout>;
+  return <MagazineDetailPublic />;
+}
+
 function Router() {
   return (
     <>
@@ -229,10 +246,10 @@ function Router() {
         </ProtectedRoute>
       </Route>
       <Route path="/magazine">
-        <MagazinePublic />
+        <MagazineRoute />
       </Route>
       <Route path="/magazine/:id">
-        <MagazineDetailPublic />
+        <MagazineDetailRoute />
       </Route>
 
       <Route path="/messages">

@@ -40,7 +40,8 @@ function CheckoutForm({ clientSecret, montants, onSuccess, onClose }: FormProps)
     });
 
     if (stripeError) {
-      setError(stripeError.message ?? isFr ? "Erreur de paiement" : "Payment error");
+      console.error("[Stripe] confirmCardPayment error:", stripeError);
+      setError(stripeError.message ?? (isFr ? "Erreur de paiement" : "Payment error"));
       setPaying(false);
     } else if (paymentIntent?.status === "succeeded") {
       onSuccess();
