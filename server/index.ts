@@ -8,7 +8,9 @@ import path from "path";
 import fs from "fs";
 import { schedule } from "node-cron";
 import { generateMonthlyInvoice } from "./invoice";
-import { sendMonthlyInvoiceEmail } from "./email";
+import { generateAnnualFiscalPdf } from "./fiscal";
+import { sendMonthlyInvoiceEmail, sendKbisExpiryReminderEmail, sendAdminKbisAlertEmail, sendAnnualFiscalRecapEmail, sendAdminFiscalAlertEmail } from "./email";
+import { uploadsDir } from "./upload";
 
 const app = express();
 const httpServer = createServer(app);
@@ -72,6 +74,10 @@ app.use((req, res, next) => {
 (async () => {
   await ensureTables();
   await setupAuth(app);
+
+  // Serve uploaded files statically
+  app.use("/uploads", express.static(uploadsDir));
+
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -141,6 +147,90 @@ app.use((req, res, next) => {
       log(`[CRON] ${sent} facture(s) envoyée(s) sur ${tailors.length} artisan(s).`, "invoice-cron");
     } catch (err) {
       log(`[CRON] Erreur générale génération factures: ${err}`, "invoice-cron");
+    }
+  });
+
+  // ── Cron : vérification Kbis expirants — chaque lundi à 8h ───────────────
+  schedule("0 8 * * 1", async () => {
+    log("[CRON] Vérification des Kbis expirants...", "kbis-cron");
+    try {
+      const today = new Date();
+      const in30Days = new Date(today);
+      in30Days.setDate(in30Days.getDate() + 30);
+      const toMysqlDate = (d: Date): string => {
+        const pad = (n: number) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      };
+
+      const [kbisRows] = await pool.query(
+        `SELECT t.id, t.kbis_expiry_date, u.email, u.first_name, u.last_name
+         FROM tailors t
+         INNER JOIN users u ON t.user_id = u.id
+         WHERE t.kbis_expiry_date IS NOT NULL
+           AND t.kbis_expiry_date >= ? AND t.kbis_expiry_date <= ?`,
+        [toMysqlDate(today), toMysqlDate(in30Days)]
+      ) as any[];
+
+      const tailorRows = Array.isArray(kbisRows) ? kbisRows : [];
+      const adminEmail = process.env.ADMIN_EMAIL || "contact@seamlier.fr";
+
+      for (const t of tailorRows) {
+        const tailorName = [t.first_name, t.last_name].filter(Boolean).join(" ") || t.email;
+        const expiry = new Date(t.kbis_expiry_date);
+        const daysLeft = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        const expiryStr = `${String(expiry.getDate()).padStart(2, "0")}/${String(expiry.getMonth() + 1).padStart(2, "0")}/${expiry.getFullYear()}`;
+
+        await sendKbisExpiryReminderEmail(t.email, tailorName, expiryStr, daysLeft);
+        await sendAdminKbisAlertEmail(adminEmail, tailorName, expiryStr);
+      }
+
+      log(`[CRON] ${tailorRows.length} Kbis expirant(s) traité(s).`, "kbis-cron");
+    } catch (err) {
+      log(`[CRON] Erreur vérification Kbis: ${err}`, "kbis-cron");
+    }
+  });
+
+  // ── Cron : récapitulatif fiscal annuel — 1er janvier à 8h ─────────────────
+  schedule("0 8 1 1 *", async () => {
+    const prevYear = new Date().getFullYear() - 1;
+    log(`[CRON] Génération récapitulatifs fiscaux ${prevYear}…`, "fiscal-cron");
+    try {
+      const adminEmail = process.env.ADMIN_EMAIL || "contact@seamlier.fr";
+      const [tailorRows] = await pool.query(
+        `SELECT t.id as tailor_id, u.email, u.first_name, u.last_name
+         FROM tailors t
+         INNER JOIN users u ON t.user_id = u.id
+         WHERE t.is_verified = 1`
+      ) as any[];
+
+      const tailors = Array.isArray(tailorRows) ? tailorRows : [];
+
+      for (const tailor of tailors) {
+        try {
+          const tailorName = [tailor.first_name, tailor.last_name].filter(Boolean).join(" ") || tailor.email;
+          const { buffer, stats } = await generateAnnualFiscalPdf(tailor.tailor_id, tailorName, prevYear);
+
+          if (stats.projectCount === 0) continue;
+
+          await sendAnnualFiscalRecapEmail(tailor.email, tailorName, prevYear, buffer, {
+            projects: stats.projectCount,
+            gross: stats.grossTotal,
+            commission: stats.commission,
+            net: stats.netTotal,
+          });
+
+          const grossEur = stats.grossTotal / 100;
+          if (grossEur > 3000 || stats.projectCount > 20) {
+            await sendAdminFiscalAlertEmail(adminEmail, tailorName, tailor.email, prevYear, stats.grossTotal, stats.projectCount);
+          }
+        } catch (err) {
+          log(`[CRON] Erreur fiscal tailor ${tailor.tailor_id}: ${err}`, "fiscal-cron");
+        }
+      }
+
+      log(`[CRON] Récapitulatifs fiscaux ${prevYear} terminés.`, "fiscal-cron");
+    } catch (err) {
+      log(`[CRON] Erreur générale fiscal: ${err}`, "fiscal-cron");
     }
   });
 

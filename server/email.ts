@@ -445,6 +445,157 @@ export async function sendDeadlineWarningEmail(
   return sendEmail(recipientEmail, subject, html);
 }
 
+export async function sendDossierValidatedEmail(email: string, name: string): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const html = emailWrapper("Dossier validé — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Votre dossier a été validé !</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${name || ""},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      Bonne nouvelle ! Votre dossier professionnel a été <strong style="color:#16a34a">validé</strong> par l'équipe SEAMLIER.
+      Votre profil est désormais vérifié et visible par les clients.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/dashboard-pro" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Accéder à mon espace</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(email, "Votre dossier professionnel a été validé — SEAMLIER", html);
+}
+
+export async function sendDossierRejectedEmail(email: string, name: string, reason: string): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const html = emailWrapper("Dossier à compléter — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Action requise sur votre dossier</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${name || ""},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      Votre dossier professionnel n'a pas pu être validé en l'état. Voici le motif indiqué par notre équipe :
+    </p>
+    <div style="background:#fef2f2;border-left:3px solid #dc2626;padding:16px 20px;margin:0 0 24px;border-radius:0 8px 8px 0">
+      <p style="margin:0;color:#7f1d1d;font-size:14px">${reason || "Documents manquants ou illisibles."}</p>
+    </div>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      Veuillez mettre à jour votre dossier avec les documents corrects.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/pro-dossier" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Mettre à jour mon dossier</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(email, "Action requise — Votre dossier professionnel SEAMLIER", html);
+}
+
+export async function sendKbisExpiryReminderEmail(
+  email: string, name: string, expiryDate: string, daysLeft: number
+): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const html = emailWrapper("Kbis bientôt expiré — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#d97706;font-family:Georgia,serif;font-size:20px;font-weight:400">Votre Kbis expire bientôt</h2>
+    <div style="width:28px;height:2px;background-color:#d97706;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${name || ""},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      Votre extrait Kbis arrive à expiration dans <strong style="color:#d97706">${daysLeft} jour${daysLeft > 1 ? "s" : ""}</strong>
+      (le <strong>${expiryDate}</strong>).
+      Pensez à le renouveler et à mettre à jour votre dossier sur SEAMLIER.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/pro-dossier" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Mettre à jour mon Kbis</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(email, `Rappel : votre Kbis expire dans ${daysLeft} jour${daysLeft > 1 ? "s" : ""} — SEAMLIER`, html);
+}
+
+export async function sendAdminKbisAlertEmail(
+  adminEmail: string, tailorName: string, expiryDate: string
+): Promise<boolean> {
+  const html = emailWrapper("Alerte Kbis artisan — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#d97706;font-family:Georgia,serif;font-size:20px;font-weight:400">Alerte : Kbis artisan bientôt expiré</h2>
+    <div style="width:28px;height:2px;background-color:#d97706;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">
+      Le Kbis de l'artisan <strong>${tailorName}</strong> expire le <strong style="color:#d97706">${expiryDate}</strong>.
+    </p>
+    <p style="margin:0;color:#6b7280;font-size:13px">Pensez à en informer l'artisan ou à vérifier son dossier dans la console d'administration.</p>
+  `);
+  return sendEmail(adminEmail, `[ADMIN] Kbis expirant — ${tailorName}`, html);
+}
+
+export async function sendAnnualFiscalRecapEmail(
+  email: string,
+  name: string,
+  year: number,
+  pdfBuffer: Buffer,
+  stats: { projects: number; gross: number; commission: number; net: number }
+): Promise<boolean> {
+  const mailer = getTransporter();
+  if (!mailer) {
+    console.log(`[EMAIL DISABLED] Annual fiscal recap for ${email} (${year})`);
+    return false;
+  }
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@seamlier.fr";
+  const html = emailWrapper(`Récapitulatif fiscal ${year} — SEAMLIER`, `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Votre récapitulatif fiscal ${year}</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${name || ""},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      Veuillez trouver ci-joint votre récapitulatif fiscal annuel pour l'année <strong>${year}</strong>.
+    </p>
+    <div style="background:#f5f3f0;border-radius:10px;padding:20px 24px;margin:0 0 24px">
+      <table style="width:100%">
+        <tr><td style="color:#6b7280;font-size:13px">Projets complétés</td><td style="text-align:right;font-weight:600;font-size:13px;color:#1f2937">${stats.projects}</td></tr>
+        <tr><td style="color:#6b7280;font-size:13px;padding-top:8px">Montant brut</td><td style="text-align:right;font-weight:600;font-size:13px;color:#1f2937;padding-top:8px">${(stats.gross / 100).toFixed(2)} €</td></tr>
+        <tr><td style="color:#6b7280;font-size:13px;padding-top:8px">Commission SEAMLIER</td><td style="text-align:right;font-weight:600;font-size:13px;color:#1f2937;padding-top:8px">${(stats.commission / 100).toFixed(2)} €</td></tr>
+        <tr><td style="color:#6b7280;font-size:13px;padding-top:8px">Net perçu</td><td style="text-align:right;font-weight:700;font-size:15px;color:#722F37;padding-top:8px">${(stats.net / 100).toFixed(2)} €</td></tr>
+      </table>
+    </div>
+    <p style="margin:0;color:#9ca3af;font-size:12px;line-height:1.6">
+      Le récapitulatif détaillé (PDF) est joint à cet email.<br>
+      Ce document est à conserver 10 ans à des fins fiscales.
+    </p>
+  `);
+  try {
+    await mailer.sendMail({
+      from: `"SEAMLIER" <${from}>`,
+      to: email,
+      subject: `Récapitulatif fiscal SEAMLIER — ${year}`,
+      html,
+      attachments: [{
+        filename: `SEAMLIER_recap_fiscal_${year}.pdf`,
+        content: pdfBuffer,
+        contentType: "application/pdf",
+      }],
+    });
+    console.log(`[EMAIL] Annual fiscal recap sent to ${email} (${year})`);
+    return true;
+  } catch (err) {
+    console.error(`[EMAIL] Failed to send annual fiscal recap to ${email}:`, err);
+    return false;
+  }
+}
+
+export async function sendAdminFiscalAlertEmail(
+  adminEmail: string, tailorName: string, tailorEmail: string,
+  year: number, gross: number, projectCount: number
+): Promise<boolean> {
+  const html = emailWrapper(`Alerte fiscale artisan ${year} — SEAMLIER`, `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Alerte : artisan avec fort volume ${year}</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      L'artisan <strong>${tailorName}</strong> (${tailorEmail}) a dépassé le seuil de vigilance fiscale pour ${year} :
+    </p>
+    <div style="background:#f5f3f0;border-radius:10px;padding:16px 20px;margin:0 0 24px">
+      <p style="margin:0 0 6px;color:#4b5563;font-size:14px"><strong>Projets complétés :</strong> ${projectCount}</p>
+      <p style="margin:0;color:#4b5563;font-size:14px"><strong>Montant brut :</strong> <span style="color:#722F37;font-weight:700">${(gross / 100).toFixed(2)} €</span></p>
+    </div>
+    <p style="margin:0;color:#6b7280;font-size:13px">Vérifiez la situation dans la console d'administration SEAMLIER.</p>
+  `);
+  return sendEmail(adminEmail, `[ADMIN] Alerte fiscale — ${tailorName} (${year})`, html);
+}
+
 const MONTH_NAMES_FR = [
   "janvier", "février", "mars", "avril", "mai", "juin",
   "juillet", "août", "septembre", "octobre", "novembre", "décembre",

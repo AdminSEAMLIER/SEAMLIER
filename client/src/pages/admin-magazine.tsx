@@ -18,7 +18,7 @@ import {
   User, Building2, Phone, CreditCard, Briefcase, Hash,
   Globe, Bell, Palette, Shield, Database, Key, ToggleLeft,
   Bold, Italic, Underline, Star, Package, ArrowDownCircle,
-  Euro, BarChart3
+  Euro, BarChart3, FolderOpen, ExternalLink
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -984,6 +984,7 @@ export default function AdminDashboard() {
     { label: "Avis", icon: Star, id: "reviews" },
     { label: "Commandes groupées", icon: Users, id: "events" },
     { label: "Magazine", icon: FileText, id: "magazine" },
+    { label: "Dossiers pros", icon: FolderOpen, id: "dossiers" },
   ];
 
   const stats = [
@@ -3397,10 +3398,253 @@ export default function AdminDashboard() {
                 </>
               )}
 
+              {activeTab === "dossiers" && <AdminDossiers />}
+
             </div>
           </main>
         </div>
       </div>
     </SidebarProvider>
+  );
+}
+
+// ── Section Dossiers pros ──────────────────────────────────────────────────────
+
+type DossierPro = {
+  id: string;
+  siret: string | null;
+  kbisUrl: string | null;
+  kbisExpiryDate: string | null;
+  idCardUrl: string | null;
+  rcProUrl: string | null;
+  ibanRib: string | null;
+  dossierStatus: "pending" | "validated" | "rejected";
+  dossierRejectionReason: string | null;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
+};
+
+function AdminDossiers() {
+  const { toast } = useToast();
+  const [selected, setSelected] = useState<DossierPro | null>(null);
+  const [formSiret, setFormSiret] = useState("");
+  const [formKbisExpiry, setFormKbisExpiry] = useState("");
+  const [formReason, setFormReason] = useState("");
+
+  const { data: dossiers = [], isLoading } = useQuery<DossierPro[]>({
+    queryKey: ["/api/admin/dossiers"],
+  });
+
+  const validateMutation = useMutation({
+    mutationFn: ({ id, action, siret, kbisExpiryDate, rejectionReason }: {
+      id: string; action: "validate" | "reject";
+      siret?: string; kbisExpiryDate?: string; rejectionReason?: string;
+    }) =>
+      apiRequest("PATCH", `/api/admin/dossiers/${id}`, { action, siret, kbisExpiryDate, rejectionReason })
+        .then((r) => r.json()),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/dossiers"] });
+      toast({ title: vars.action === "validate" ? "Dossier validé" : "Dossier rejeté" });
+      setSelected(null);
+    },
+    onError: () => toast({ title: "Erreur", variant: "destructive" }),
+  });
+
+  function openDossier(d: DossierPro) {
+    setSelected(d);
+    setFormSiret(d.siret || "");
+    setFormKbisExpiry(d.kbisExpiryDate ? d.kbisExpiryDate.split("T")[0] : "");
+    setFormReason("");
+  }
+
+  const statusBadge = (s: DossierPro["dossierStatus"]) => {
+    if (s === "validated") return <Badge className="bg-green-100 text-green-700 border-none text-xs">Validé</Badge>;
+    if (s === "rejected") return <Badge className="bg-red-100 text-red-700 border-none text-xs">Rejeté</Badge>;
+    return <Badge className="bg-amber-100 text-amber-700 border-none text-xs">En attente</Badge>;
+  };
+
+  const pending = dossiers.filter((d) => d.dossierStatus === "pending").length;
+
+  return (
+    <>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Dossiers professionnels</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Validation des pièces justificatives des artisans</p>
+        </div>
+        {pending > 0 && (
+          <Badge className="bg-amber-100 text-amber-800 border-none">{pending} en attente</Badge>
+        )}
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-16">
+          <div className="w-8 h-8 border-4 border-[#601B28] border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : (
+        <Card className="border-none shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50">
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs">Artisan</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs">SIRET</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs">Kbis</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs">Documents</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs">Statut</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody>
+                {dossiers.map((d) => (
+                  <tr key={d.id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-gray-800">{[d.firstName, d.lastName].filter(Boolean).join(" ") || "—"}</p>
+                      <p className="text-xs text-gray-400">{d.email}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="font-mono text-xs text-gray-600">{d.siret || <span className="text-gray-300">—</span>}</span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-500">
+                      {d.kbisExpiryDate
+                        ? new Date(d.kbisExpiryDate).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" })
+                        : <span className="text-gray-300">—</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1">
+                        {[
+                          { url: d.kbisUrl, label: "Kbis" },
+                          { url: d.idCardUrl, label: "ID" },
+                          { url: d.rcProUrl, label: "RC" },
+                          { url: d.ibanRib, label: "RIB" },
+                        ].map(({ url, label }) => (
+                          <span
+                            key={label}
+                            className={cn(
+                              "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                              url ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"
+                            )}
+                            title={url || undefined}
+                          >
+                            {label}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">{statusBadge(d.dossierStatus)}</td>
+                    <td className="px-4 py-3">
+                      <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => openDossier(d)}>
+                        Instruire
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {/* Dialog d'instruction */}
+      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-[#601B28]">
+              Dossier — {selected ? [selected.firstName, selected.lastName].filter(Boolean).join(" ") || selected.email : ""}
+            </DialogTitle>
+          </DialogHeader>
+
+          {selected && (
+            <div className="space-y-4">
+              {/* Documents */}
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { url: selected.kbisUrl, label: "Extrait Kbis" },
+                  { url: selected.idCardUrl, label: "Pièce d'identité" },
+                  { url: selected.rcProUrl, label: "RC Pro" },
+                  { url: selected.ibanRib, label: "RIB / IBAN" },
+                ].map(({ url, label }) => (
+                  <div key={label} className={cn("rounded-lg border p-2.5 flex items-center justify-between", url ? "border-green-200 bg-green-50" : "border-gray-100 bg-gray-50")}>
+                    <span className="text-xs font-medium text-gray-700">{label}</span>
+                    {url ? (
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-[#601B28]">
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    ) : (
+                      <span className="text-xs text-gray-300">Non déposé</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* SIRET */}
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">SIRET</label>
+                <input
+                  type="text"
+                  value={formSiret}
+                  onChange={(e) => setFormSiret(e.target.value)}
+                  placeholder="14 chiffres"
+                  maxLength={20}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#601B28]/20"
+                />
+              </div>
+
+              {/* Kbis expiry */}
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Date d'expiration Kbis</label>
+                <input
+                  type="date"
+                  value={formKbisExpiry}
+                  onChange={(e) => setFormKbisExpiry(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#601B28]/20"
+                />
+              </div>
+
+              {/* Rejection reason */}
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Motif de rejet (si rejet)</label>
+                <textarea
+                  value={formReason}
+                  onChange={(e) => setFormReason(e.target.value)}
+                  placeholder="Documents manquants, illisibles..."
+                  rows={2}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#601B28]/20 resize-none"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <Button
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  disabled={validateMutation.isPending}
+                  onClick={() => validateMutation.mutate({
+                    id: selected.id,
+                    action: "validate",
+                    siret: formSiret || undefined,
+                    kbisExpiryDate: formKbisExpiry || undefined,
+                  })}
+                >
+                  <CheckCircle className="h-4 w-4 mr-1" /> Valider le dossier
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                  disabled={validateMutation.isPending}
+                  onClick={() => validateMutation.mutate({
+                    id: selected.id,
+                    action: "reject",
+                    rejectionReason: formReason || undefined,
+                  })}
+                >
+                  <XCircle className="h-4 w-4 mr-1" /> Rejeter
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

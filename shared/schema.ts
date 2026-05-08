@@ -46,6 +46,14 @@ export const tailors = mysqlTable("tailors", {
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
   stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
   subscriptionCurrentPeriodEnd: bigint("subscription_current_period_end", { mode: "number" }),
+  siret: varchar("siret", { length: 20 }),
+  kbisUrl: text("kbis_url"),
+  kbisExpiryDate: date("kbis_expiry_date"),
+  idCardUrl: text("id_card_url"),
+  rcProUrl: text("rc_pro_url"),
+  ibanRib: text("iban_rib"),
+  dossierStatus: varchar("dossier_status", { length: 20 }).default("pending"),
+  dossierRejectionReason: text("dossier_rejection_reason"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -145,6 +153,7 @@ export const projects = mysqlTable("projects", {
   fabricDepositReminderSent: boolean("fabric_deposit_reminder_sent").default(false),
   deliveryDate: date("delivery_date"),
   eventId: varchar("event_id", { length: 36 }),
+  contractUrl: text("contract_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -261,6 +270,16 @@ export const adminSettings = mysqlTable("admin_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const notifications = mysqlTable("notifications", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id),
+  type: varchar("type", { length: 50 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message"),
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const tailorWorkingHours = mysqlTable("tailor_working_hours", {
   id: varchar("id", { length: 36 }).primaryKey(),
   tailorId: varchar("tailor_id", { length: 36 }).notNull().references(() => tailors.id),
@@ -289,6 +308,7 @@ export const insertMagazineArticleSchema = createInsertSchema(magazineArticles).
 export const insertAdminSettingSchema = createInsertSchema(adminSettings).omit({ id: true, updatedAt: true });
 export const insertTailorClientDataSchema = createInsertSchema(tailorClientData).omit({ id: true, updatedAt: true });
 export const insertTailorWorkingHoursSchema = createInsertSchema(tailorWorkingHours).omit({ id: true });
+export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
 export const insertEventSchema = createInsertSchema(events).omit({ id: true, createdAt: true });
 export const insertEventParticipantSchema = createInsertSchema(eventParticipants).omit({ id: true, joinedAt: true });
 
@@ -326,6 +346,8 @@ export type InsertTailorClientData = z.infer<typeof insertTailorClientDataSchema
 export type TailorClientData = typeof tailorClientData.$inferSelect;
 export type InsertTailorWorkingHours = z.infer<typeof insertTailorWorkingHoursSchema>;
 export type TailorWorkingHours = typeof tailorWorkingHours.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type Event = typeof events.$inferSelect;
 export type InsertEventParticipant = z.infer<typeof insertEventParticipantSchema>;

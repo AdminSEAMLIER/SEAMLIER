@@ -6,6 +6,9 @@ import { storage } from "./storage";
 import { db, pool } from "./db";
 import { eq } from "drizzle-orm";
 import { tailors, users } from "../shared/schema";
+import { randomUUID } from "crypto";
+import { uploadDoc } from "./upload";
+import { generateProjectContract } from "./contract";
 import {
   sendNewMessageEmail,
   sendDeliveryEmail,
@@ -14,7 +17,10 @@ import {
   sendAppointmentConfirmationEmail,
   sendFabricDepositReminderEmail,
   sendDeadlineWarningEmail,
+  sendDossierValidatedEmail,
+  sendDossierRejectedEmail,
 } from "./email";
+import { sendSms } from "./sms";
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
@@ -1058,7 +1064,7 @@ export async function registerRoutes(
         }
       }
 
-      // Auto-message quand la confection commence (status → "in_progress")
+      // Auto-message + contrat quand la confection commence (status → "in_progress")
       if (req.body.status === "in_progress" && prevProject?.status !== "in_progress") {
         try {
           const tailor = await storage.getTailor(project.tailorId);
@@ -1073,6 +1079,20 @@ export async function registerRoutes(
           }
         } catch (msgErr) {
           console.error("Auto-message error on project start:", msgErr);
+        }
+
+        // Génération du contrat PDF
+        try {
+          const tailor = await storage.getTailor(project.tailorId);
+          const tailorUser = tailor ? await storage.getUser(tailor.userId) : null;
+          const clientUser = await storage.getUser(project.clientId);
+          const contractUrl = await generateProjectContract(project, tailorUser, clientUser);
+          await pool.query(
+            "UPDATE projects SET contract_url = ? WHERE id = ?",
+            [contractUrl, project.id]
+          );
+        } catch (contractErr) {
+          console.error("Contract generation error:", contractErr);
         }
       }
       res.json(project);
@@ -2802,6 +2822,359 @@ export async function registerRoutes(
 
 
   // ─── Closed days for a month (for calendar UI) ─────────────────────────────
+
+  // ── Helper: create notification ───────────────────────────────────────────
+  async function createNotification(userId: string, type: string, title: string, message: string) {
+    const id = randomUUID();
+    await pool.query(
+      "INSERT INTO notifications (id, user_id, type, title, message) VALUES (?, ?, ?, ?, ?)",
+      [id, userId, type, title, message]
+    );
+  }
+
+  // ── Feature 1: Pro Dossier Routes ─────────────────────────────────────────
+
+  app.get("/api/professionnel/dossier", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+
+      const [rows] = await pool.query(
+        `SELECT siret, kbis_url, kbis_expiry_date, id_card_url, rc_pro_url, iban_rib, dossier_status, dossier_rejection_reason
+         FROM tailors WHERE id = ?`,
+        [tailor.id]
+      ) as any[];
+      const row = Array.isArray(rows) && rows[0] ? rows[0] : {};
+      res.json({
+        siret: row.siret || null,
+        kbisUrl: row.kbis_url || null,
+        kbisExpiryDate: row.kbis_expiry_date || null,
+        idCardUrl: row.id_card_url || null,
+        rcProUrl: row.rc_pro_url || null,
+        ibanRib: row.iban_rib || null,
+        dossierStatus: row.dossier_status || "pending",
+        dossierRejectionReason: row.dossier_rejection_reason || null,
+      });
+    } catch (error) {
+      console.error("Failed to fetch dossier:", error);
+      res.status(500).json({ error: "Failed to fetch dossier" });
+    }
+  });
+
+  app.post("/api/professionnel/dossier/upload/:docType", requireAuth, (req: any, res) => {
+    uploadDoc(req, res, async (err) => {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      if (!req.file) {
+        return res.status(400).json({ error: "Aucun fichier fourni" });
+      }
+
+      try {
+        const userId = req.authUserId;
+        const tailor = await storage.getTailorByUserId(userId);
+        if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+
+        const { docType } = req.params;
+        const fileUrl = `/uploads/docs/${req.file.filename}`;
+
+        const validDocTypes: Record<string, string> = {
+          kbis: "kbis_url",
+          idCard: "id_card_url",
+          rcPro: "rc_pro_url",
+          ibanRib: "iban_rib",
+        };
+
+        if (!validDocTypes[docType]) {
+          return res.status(400).json({ error: "Type de document invalide" });
+        }
+
+        const field = validDocTypes[docType];
+        await pool.query(
+          `UPDATE tailors SET ${field} = ?, dossier_status = 'pending' WHERE id = ?`,
+          [fileUrl, tailor.id]
+        );
+
+        res.json({ url: fileUrl });
+      } catch (error) {
+        console.error("Failed to upload document:", error);
+        res.status(500).json({ error: "Failed to upload document" });
+      }
+    });
+  });
+
+  // ── Notifications ──────────────────────────────────────────────────────────
+
+  app.get("/api/notifications", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const [rows] = await pool.query(
+        `SELECT id, user_id, type, title, message, is_read, created_at
+         FROM notifications WHERE user_id = ?
+         ORDER BY is_read ASC, created_at DESC
+         LIMIT 50`,
+        [userId]
+      ) as any[];
+      const notifs = Array.isArray(rows) ? rows : [];
+      res.json(notifs.map((n: any) => ({
+        id: n.id,
+        userId: n.user_id,
+        type: n.type,
+        title: n.title,
+        message: n.message,
+        isRead: !!n.is_read,
+        createdAt: n.created_at,
+      })));
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+      res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      await pool.query(
+        "UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?",
+        [req.params.id, userId]
+      );
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+      res.status(500).json({ error: "Failed to mark as read" });
+    }
+  });
+
+  app.patch("/api/notifications/read-all", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      await pool.query(
+        "UPDATE notifications SET is_read = 1 WHERE user_id = ?",
+        [userId]
+      );
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error);
+      res.status(500).json({ error: "Failed to mark all as read" });
+    }
+  });
+
+  // ── Feature 2: Admin Dossier Validation ───────────────────────────────────
+
+  app.get("/api/admin/dossiers", requireAdmin, async (_req, res) => {
+    try {
+      const [rows] = await pool.query(
+        `SELECT t.id, t.siret, t.kbis_url, t.kbis_expiry_date, t.id_card_url,
+                t.rc_pro_url, t.iban_rib, t.dossier_status, t.dossier_rejection_reason,
+                u.email, u.first_name, u.last_name, u.phone
+         FROM tailors t
+         INNER JOIN users u ON t.user_id = u.id
+         ORDER BY t.created_at DESC`
+      ) as any[];
+      const tailorList = Array.isArray(rows) ? rows : [];
+      res.json(tailorList.map((t: any) => ({
+        id: t.id,
+        siret: t.siret,
+        kbisUrl: t.kbis_url,
+        kbisExpiryDate: t.kbis_expiry_date,
+        idCardUrl: t.id_card_url,
+        rcProUrl: t.rc_pro_url,
+        ibanRib: t.iban_rib,
+        dossierStatus: t.dossier_status || "pending",
+        dossierRejectionReason: t.dossier_rejection_reason,
+        email: t.email,
+        firstName: t.first_name,
+        lastName: t.last_name,
+        phone: t.phone,
+      })));
+    } catch (error) {
+      console.error("Failed to fetch dossiers:", error);
+      res.status(500).json({ error: "Failed to fetch dossiers" });
+    }
+  });
+
+  app.patch("/api/admin/dossiers/:tailorId", requireAdmin, async (req, res) => {
+    try {
+      const { tailorId } = req.params;
+      const { siret, kbisExpiryDate, action, rejectionReason } = req.body;
+
+      const [tailorRows] = await pool.query(
+        "SELECT t.id, t.user_id FROM tailors t WHERE t.id = ?",
+        [tailorId]
+      ) as any[];
+      const tailorRow = Array.isArray(tailorRows) && tailorRows[0] ? tailorRows[0] : null;
+      if (!tailorRow) return res.status(404).json({ error: "Tailor not found" });
+
+      const [userRows] = await pool.query(
+        "SELECT id, email, first_name, last_name, phone FROM users WHERE id = ?",
+        [tailorRow.user_id]
+      ) as any[];
+      const userRow = Array.isArray(userRows) && userRows[0] ? userRows[0] : null;
+      if (!userRow) return res.status(404).json({ error: "User not found" });
+
+      const userName = [userRow.first_name, userRow.last_name].filter(Boolean).join(" ") || userRow.email;
+
+      if (action === "validate") {
+        if (siret && kbisExpiryDate) {
+          await pool.query(
+            "UPDATE tailors SET dossier_status = 'validated', siret = ?, kbis_expiry_date = ?, is_verified = 1 WHERE id = ?",
+            [siret, kbisExpiryDate, tailorId]
+          );
+        } else if (siret) {
+          await pool.query(
+            "UPDATE tailors SET dossier_status = 'validated', siret = ?, is_verified = 1 WHERE id = ?",
+            [siret, tailorId]
+          );
+        } else if (kbisExpiryDate) {
+          await pool.query(
+            "UPDATE tailors SET dossier_status = 'validated', kbis_expiry_date = ?, is_verified = 1 WHERE id = ?",
+            [kbisExpiryDate, tailorId]
+          );
+        } else {
+          await pool.query(
+            "UPDATE tailors SET dossier_status = 'validated', is_verified = 1 WHERE id = ?",
+            [tailorId]
+          );
+        }
+
+        await sendDossierValidatedEmail(userRow.email, userName);
+        await createNotification(
+          tailorRow.user_id,
+          "dossier_validated",
+          "Dossier validé",
+          "Votre dossier professionnel a été validé par SEAMLIER."
+        );
+
+        if (userRow.phone) {
+          await sendSms(userRow.phone, `SEAMLIER : Votre dossier professionnel a été validé. Félicitations ${userName} !`);
+        }
+      } else if (action === "reject") {
+        await pool.query(
+          "UPDATE tailors SET dossier_status = 'rejected', dossier_rejection_reason = ? WHERE id = ?",
+          [rejectionReason || null, tailorId]
+        );
+
+        await sendDossierRejectedEmail(userRow.email, userName, rejectionReason || "");
+        await createNotification(
+          tailorRow.user_id,
+          "dossier_rejected",
+          "Dossier à compléter",
+          `Votre dossier n'a pas pu être validé : ${rejectionReason || "Documents manquants ou illisibles."}`
+        );
+
+        if (userRow.phone) {
+          await sendSms(userRow.phone, `SEAMLIER : Votre dossier requiert des corrections. Connectez-vous pour plus d'informations.`);
+        }
+      } else {
+        return res.status(400).json({ error: "Action invalide. Utilisez 'validate' ou 'reject'." });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to update dossier:", error);
+      res.status(500).json({ error: "Failed to update dossier" });
+    }
+  });
+
+  // ── Feature 6: RGPD Routes ─────────────────────────────────────────────────
+
+  app.get("/api/user/export-data", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+
+      const [userRows] = await pool.query(
+        "SELECT id, email, first_name, last_name, phone, role, location, created_at FROM users WHERE id = ?",
+        [userId]
+      ) as any[];
+      const user = Array.isArray(userRows) && userRows[0] ? userRows[0] : null;
+
+      const [measureRows] = await pool.query(
+        "SELECT * FROM measurements WHERE user_id = ?",
+        [userId]
+      ) as any[];
+
+      const [projectRows] = await pool.query(
+        `SELECT id, title, description, clothing_type, status, current_step, created_at, updated_at
+         FROM projects WHERE client_id = ?`,
+        [userId]
+      ) as any[];
+
+      const [appointmentRows] = await pool.query(
+        "SELECT id, type, scheduled_at, status, notes FROM appointments WHERE client_id = ?",
+        [userId]
+      ) as any[];
+
+      const [reviewRows] = await pool.query(
+        "SELECT id, rating, comment, created_at FROM reviews WHERE user_id = ?",
+        [userId]
+      ) as any[];
+
+      const [convRows] = await pool.query(
+        `SELECT c.id, c.last_message_preview, c.last_message_at
+         FROM conversations c
+         WHERE c.participant1_id = ? OR c.participant2_id = ?`,
+        [userId, userId]
+      ) as any[];
+
+      const convIds = (Array.isArray(convRows) ? convRows : []).map((c: any) => c.id);
+      let messageRows: any[] = [];
+      if (convIds.length > 0) {
+        const placeholders = convIds.map(() => "?").join(",");
+        const [msgRows] = await pool.query(
+          `SELECT id, content, sent_at FROM messages WHERE sender_id = ? AND conversation_id IN (${placeholders})`,
+          [userId, ...convIds]
+        ) as any[];
+        messageRows = Array.isArray(msgRows) ? msgRows : [];
+      }
+
+      res.json({
+        exportedAt: new Date().toISOString(),
+        user,
+        measurements: Array.isArray(measureRows) ? measureRows : [],
+        projects: Array.isArray(projectRows) ? projectRows : [],
+        appointments: Array.isArray(appointmentRows) ? appointmentRows : [],
+        reviews: Array.isArray(reviewRows) ? reviewRows : [],
+        messages: messageRows,
+      });
+    } catch (error) {
+      console.error("Failed to export user data:", error);
+      res.status(500).json({ error: "Failed to export data" });
+    }
+  });
+
+  app.delete("/api/user/account", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+
+      await pool.query(
+        `UPDATE users SET
+          email = CONCAT('deleted_', SUBSTRING(id, 1, 8), '@seamlier.fr'),
+          first_name = 'Utilisateur',
+          last_name = 'Supprimé',
+          phone = NULL,
+          profile_image_url = NULL,
+          password = '<anonymized>'
+         WHERE id = ?`,
+        [userId]
+      );
+
+      await pool.query(
+        "DELETE FROM user_preferences WHERE user_id = ?",
+        [userId]
+      );
+
+      // Destroy session
+      if (req.session) {
+        req.session.destroy(() => {});
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to delete account:", error);
+      res.status(500).json({ error: "Failed to delete account" });
+    }
+  });
 
   return httpServer;
 }
