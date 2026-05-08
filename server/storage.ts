@@ -107,11 +107,11 @@ export interface IStorage {
   getAdminSetting(key: string): Promise<AdminSetting | undefined>;
   upsertAdminSetting(key: string, value: string): Promise<AdminSetting>;
 
-  getAllProjectsForAdmin(): Promise<any[]>;
-  getAllAppointmentsForAdmin(): Promise<any[]>;
+  getAllProjectsForAdmin(limit?: number, offset?: number): Promise<any[]>;
+  getAllAppointmentsForAdmin(limit?: number, offset?: number): Promise<any[]>;
   getMeasurementsByUserId(userId: string): Promise<Measurements | undefined>;
-  getAllMeasurementsForAdmin(): Promise<any[]>;
-  getAllReviewsForAdmin(): Promise<any[]>;
+  getAllMeasurementsForAdmin(limit?: number, offset?: number): Promise<any[]>;
+  getAllReviewsForAdmin(limit?: number, offset?: number): Promise<any[]>;
   deleteReview(id: string): Promise<void>;
 }
 
@@ -1003,7 +1003,7 @@ class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async getAllProjectsForAdmin(): Promise<any[]> {
+  async getAllProjectsForAdmin(limit = 200, offset = 0): Promise<any[]> {
     const [rows] = await pool.query(`
       SELECT
         p.id,
@@ -1021,7 +1021,8 @@ class DatabaseStorage implements IStorage {
       INNER JOIN tailors t ON p.tailor_id = t.id
       INNER JOIN users tu ON t.user_id = tu.id
       ORDER BY p.created_at DESC
-    `) as any[];
+      LIMIT ? OFFSET ?
+    `, [limit, offset]) as any[];
     if (!Array.isArray(rows)) return [];
     return rows.map((r: any) => ({
       id: r.id,
@@ -1036,7 +1037,7 @@ class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getAllAppointmentsForAdmin(): Promise<any[]> {
+  async getAllAppointmentsForAdmin(limit = 200, offset = 0): Promise<any[]> {
     const [rows] = await pool.query(`
       SELECT
         a.id,
@@ -1050,7 +1051,8 @@ class DatabaseStorage implements IStorage {
       INNER JOIN tailors t ON a.tailor_id = t.id
       INNER JOIN users tu ON t.user_id = tu.id
       ORDER BY a.scheduled_at ASC
-    `) as any[];
+      LIMIT ? OFFSET ?
+    `, [limit, offset]) as any[];
     if (!Array.isArray(rows)) return [];
     return rows.map((r: any) => {
       const dt = r.scheduled_at ? new Date(r.scheduled_at) : null;
@@ -1066,7 +1068,7 @@ class DatabaseStorage implements IStorage {
     });
   }
 
-  async getAllMeasurementsForAdmin(): Promise<any[]> {
+  async getAllMeasurementsForAdmin(limit = 200, offset = 0): Promise<any[]> {
     const [rows] = await pool.query(`
       SELECT m.id, m.user_id, m.neck, m.bust, m.waist, m.hips, m.shoulders,
              m.arm_length, m.back_length, m.inseam, m.height, m.weight, m.updated_at,
@@ -1074,7 +1076,8 @@ class DatabaseStorage implements IStorage {
       FROM measurements m
       INNER JOIN users u ON m.user_id = u.id COLLATE utf8mb4_unicode_ci
       ORDER BY m.updated_at DESC
-    `) as any[];
+      LIMIT ? OFFSET ?
+    `, [limit, offset]) as any[];
     if (!Array.isArray(rows)) return [];
     return rows.map((r: any) => {
       const fields = [r.neck, r.bust, r.waist, r.hips, r.shoulders, r.arm_length, r.back_length, r.inseam, r.height, r.weight];
@@ -1102,7 +1105,7 @@ class DatabaseStorage implements IStorage {
     });
   }
 
-  async getAllReviewsForAdmin(): Promise<any[]> {
+  async getAllReviewsForAdmin(limit = 200, offset = 0): Promise<any[]> {
     const [rows] = await pool.query(`
       SELECT r.id, r.rating, r.comment, r.created_at, r.is_approved,
              u.first_name as client_first, u.last_name as client_last, u.email as client_email,
@@ -1113,7 +1116,8 @@ class DatabaseStorage implements IStorage {
       INNER JOIN tailors t ON r.tailor_id = t.id COLLATE utf8mb4_unicode_ci
       INNER JOIN users tu ON t.user_id = tu.id COLLATE utf8mb4_unicode_ci
       ORDER BY r.created_at DESC
-    `) as any[];
+      LIMIT ? OFFSET ?
+    `, [limit, offset]) as any[];
     if (!Array.isArray(rows)) return [];
     return rows.map((r: any) => ({
       id: r.id,

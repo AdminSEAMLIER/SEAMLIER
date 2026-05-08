@@ -158,6 +158,18 @@ export const projects = mysqlTable("projects", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const disputes = mysqlTable("disputes", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  projectId: varchar("project_id", { length: 36 }).notNull(),
+  clientId: varchar("client_id", { length: 36 }).notNull(),
+  reason: text("reason").notNull(),
+  status: varchar("status", { length: 20 }).default("open"),
+  adminNote: text("admin_note"),
+  stripeRefundId: varchar("stripe_refund_id", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
 export const appointments = mysqlTable("appointments", {
   id: varchar("id", { length: 36 }).primaryKey(),
   tailorId: varchar("tailor_id", { length: 36 }).notNull().references(() => tailors.id),

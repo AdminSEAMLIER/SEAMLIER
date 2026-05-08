@@ -1,6 +1,8 @@
 import type { Express, Response } from "express";
 import Stripe from "stripe";
 import { storage } from "./storage";
+import { pool } from "./db";
+import { sendPaymentConfirmationEmail } from "./email";
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-04-10" as any })
@@ -42,6 +44,29 @@ export function registerStripeRoutes(app: Express) {
         if (projectId) {
           await storage.updateProject(projectId, { paymentStatus: "paid" } as any);
           console.log(`[Stripe] Projet ${projectId} → paymentStatus = paid`);
+          try {
+            const [rows] = await pool.query(`
+              SELECT p.title, p.amount_total,
+                     uc.email AS client_email, uc.first_name AS client_first, uc.last_name AS client_last,
+                     ut.first_name AS tailor_first, ut.last_name AS tailor_last
+              FROM projects p
+              JOIN users uc ON uc.id = p.client_id
+              JOIN tailors t ON t.id = p.tailor_id
+              JOIN users ut ON ut.id = t.user_id
+              WHERE p.id = ?
+              LIMIT 1
+            `, [projectId]) as any[];
+            const r = Array.isArray(rows) && rows[0] ? rows[0] : null;
+            if (r) {
+              const clientName = [r.client_first, r.client_last].filter(Boolean).join(" ") || r.client_email;
+              const tailorName = [r.tailor_first, r.tailor_last].filter(Boolean).join(" ") || "votre artisan";
+              const amount = r.amount_total ? Math.round(r.amount_total) / 100 : 0;
+              sendPaymentConfirmationEmail(r.client_email, clientName, tailorName, r.title || "Commande", amount)
+                .catch(err => console.error("[Stripe] Payment confirmation email failed:", err));
+            }
+          } catch (emailErr) {
+            console.error("[Stripe] Failed to fetch project for payment email:", emailErr);
+          }
         }
       }
 
@@ -121,9 +146,11 @@ export function registerStripeRoutes(app: Express) {
   // ── Création du PaymentIntent (commandes projets) ─────────────────────────
   app.post("/api/stripe/payment/create", async (req: any, res: Response) => {
     if (!stripe) return res.status(500).json({ error: "Stripe non configuré — STRIPE_SECRET_KEY manquante" });
+    const _user = req.user as any;
+    if (!_user) return res.status(401).json({ error: "Non authentifié" });
     try {
       const { projectId, prixConfection, planArtisan } = req.body ?? {};
-      console.log("[Stripe] /payment/create reçu:", { projectId, prixConfection, planArtisan, body: req.body });
+      console.log("[Stripe] /payment/create reçu:", { projectId, prixConfection, planArtisan });
       if (!projectId) return res.status(400).json({ error: "Champ manquant : projectId" });
       if (!prixConfection) return res.status(400).json({ error: "Champ manquant : prixConfection" });
       if (!planArtisan) return res.status(400).json({ error: "Champ manquant : planArtisan" });

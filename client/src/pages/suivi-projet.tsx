@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft, CheckCircle2, Circle, Clock, User, Scissors,
-  Calendar, MessageSquare, Star, Package, AlertCircle, Loader2, Euro,
+  Calendar, MessageSquare, Star, Package, AlertCircle, Loader2, Euro, Flag,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { ProjectWithTailor } from "@shared/schema";
@@ -45,6 +45,8 @@ export default function SuiviProjet() {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [disputeReason, setDisputeReason] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const { data: projects = [], isLoading } = useQuery<ProjectWithTailor[]>({
@@ -96,6 +98,19 @@ export default function SuiviProjet() {
       setShowReviewModal(false);
       setReviewComment("");
       toast({ title: "Avis envoyé, merci !", description: "Il sera publié après modération." });
+    },
+    onError: (err: any) => toast({ title: "Erreur", description: err?.message, variant: "destructive" }),
+  });
+
+  const disputeMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/disputes", { projectId: id, reason: disputeReason });
+      return res.json();
+    },
+    onSuccess: () => {
+      setShowDisputeModal(false);
+      setDisputeReason("");
+      toast({ title: "Signalement enregistré", description: "L'équipe SEAMLIER vous répondra sous 48h." });
     },
     onError: (err: any) => toast({ title: "Erreur", description: err?.message, variant: "destructive" }),
   });
@@ -325,6 +340,17 @@ export default function SuiviProjet() {
               Contacter l'artisan
             </Button>
           </Link>
+          {["paid", "client_confirmed", "transferred"].includes((project as any).paymentStatus ?? "") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs text-gray-400 hover:text-red-600 hover:bg-red-50"
+              onClick={() => setShowDisputeModal(true)}
+            >
+              <Flag className="h-3.5 w-3.5 mr-1.5" />
+              Signaler un problème
+            </Button>
+          )}
         </div>
 
       </div>
@@ -387,6 +413,33 @@ export default function SuiviProjet() {
               data-testid="button-submit-review"
             >
               {reviewMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Envoyer l'avis"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal litige */}
+      <Dialog open={showDisputeModal} onOpenChange={setShowDisputeModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-serif text-[#601B28]">Signaler un problème</DialogTitle>
+          </DialogHeader>
+          <p className="text-gray-500 text-sm">Décrivez le problème rencontré. L'équipe SEAMLIER examinera votre signalement sous 48h ouvrées.</p>
+          <Textarea
+            value={disputeReason}
+            onChange={e => setDisputeReason(e.target.value)}
+            placeholder="Ex. : l'article reçu ne correspond pas à la commande, problème de qualité, délai non respecté…"
+            className="min-h-[120px] text-sm"
+          />
+          <div className="flex gap-3 mt-1">
+            <Button variant="outline" className="flex-1" onClick={() => setShowDisputeModal(false)}>Annuler</Button>
+            <Button
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => disputeMutation.mutate()}
+              disabled={disputeMutation.isPending || !disputeReason.trim()}
+            >
+              {disputeMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Flag className="h-4 w-4 mr-1.5" />}
+              Envoyer le signalement
             </Button>
           </div>
         </DialogContent>

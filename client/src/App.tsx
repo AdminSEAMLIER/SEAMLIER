@@ -220,9 +220,7 @@ function Router() {
       </Route>
 
       <Route path="/decouverte">
-        <ProtectedRoute>
-          <ClientLayout><Discovery /></ClientLayout>
-        </ProtectedRoute>
+        <ClientLayout><Discovery /></ClientLayout>
       </Route>
 
       <Route path="/mesures">
@@ -302,7 +300,9 @@ function Router() {
       </Route>
 
       <Route path="/prendre-rdv">
-        <PrendreRdv />
+        <ProtectedRoute>
+          <PrendreRdv />
+        </ProtectedRoute>
       </Route>
 
       <Route path="/evenement/:id">

@@ -657,3 +657,45 @@ export async function sendMonthlyInvoiceEmail(
     return false;
   }
 }
+
+export async function sendWelcomeEmail(email: string, firstName?: string | null): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const name = firstName || "vous";
+  const html = emailWrapper("Bienvenue sur SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Bienvenue, ${name} !</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 16px;color:#4b5563;font-size:15px;line-height:1.7">
+      Votre adresse email est confirmée. Votre compte SEAMLIER est maintenant actif.
+    </p>
+    <p style="margin:0 0 24px;color:#4b5563;font-size:15px;line-height:1.7">
+      Découvrez nos artisans couturiers, déposez vos mesures et lancez votre première commande.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/decouverte" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Découvrir les artisans</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(email, "Bienvenue sur SEAMLIER", html);
+}
+
+export async function sendDossierReceivedEmail(email: string, name: string): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const html = emailWrapper("Dossier reçu — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Dossier bien reçu</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 16px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${name},</p>
+    <p style="margin:0 0 16px;color:#4b5563;font-size:15px;line-height:1.7">
+      Nous avons bien reçu votre document. Notre équipe l'examinera sous <strong>48 à 72 heures ouvrées</strong>.
+    </p>
+    <p style="margin:0 0 24px;color:#4b5563;font-size:15px;line-height:1.7">
+      Vous recevrez un email dès que votre dossier sera traité. En attendant, vous pouvez compléter ou remplacer vos documents depuis votre espace.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/pro-dossier" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Voir mon dossier</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(email, "Nous avons bien reçu votre document — SEAMLIER", html);
+}

@@ -19,6 +19,8 @@ import {
   sendDeadlineWarningEmail,
   sendDossierValidatedEmail,
   sendDossierRejectedEmail,
+  sendWelcomeEmail,
+  sendDossierReceivedEmail,
 } from "./email";
 import { sendSms } from "./sms";
 
@@ -67,10 +69,6 @@ export async function registerRoutes(
       console.error("Error fetching plan:", error);
       res.status(500).json({ message: "Erreur serveur" });
     }
-  });
-
-  app.post("/api/professionnel/upgrade", requireAuth, (_req, res) => {
-    res.status(403).json({ error: "Paiement requis — utilisez /api/stripe/subscription/create" });
   });
 
   // Public routes - Tailors
@@ -162,7 +160,7 @@ export async function registerRoutes(
   app.get("/api/tailor-by-user/:userId", async (req, res) => {
     try {
       const [rows] = await pool.query(`
-        SELECT t.*, u.first_name, u.last_name, u.profile_image_url, u.email, u.location
+        SELECT t.*, u.first_name, u.last_name, u.profile_image_url, u.location
         FROM tailors t
         JOIN users u ON u.id = t.user_id
         WHERE t.user_id = ?
@@ -176,7 +174,6 @@ export async function registerRoutes(
           firstName: row.first_name,
           lastName: row.last_name,
           profileImageUrl: row.profile_image_url,
-          email: row.email,
           location: row.location,
         },
       });
@@ -1661,8 +1658,11 @@ export async function registerRoutes(
   // Admin routes - Users listing
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
     try {
+      const limit = Math.min(parseInt(String(req.query.limit ?? "200")), 500);
+      const offset = Math.max(parseInt(String(req.query.offset ?? "0")), 0);
       const allUsers = await storage.getAllUsers();
-      res.json(allUsers);
+      const page = allUsers.slice(offset, offset + limit);
+      res.json(page);
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ error: "Failed to fetch users" });
@@ -1797,7 +1797,9 @@ export async function registerRoutes(
           const existingUser = await storage.getUserByEmail(b.email);
           if (!existingUser) {
             const bcrypt = await import("bcrypt");
-            const tempPassword = await bcrypt.hash(process.env.DEFAULT_TAILOR_PASSWORD || "Seamlier2026!", 12);
+            const defaultPwd = process.env.DEFAULT_TAILOR_PASSWORD;
+            if (!defaultPwd) throw new Error("DEFAULT_TAILOR_PASSWORD env var manquante");
+            const tempPassword = await bcrypt.hash(defaultPwd, 12);
             const newUser = await storage.createUser({
               email: b.email,
               password: tempPassword,
@@ -2196,7 +2198,9 @@ export async function registerRoutes(
   // Admin: all projects
   app.get("/api/admin/all-projects", requireAdmin, async (req, res) => {
     try {
-      const data = await storage.getAllProjectsForAdmin();
+      const limit = Math.min(parseInt(String(req.query.limit ?? "200")), 500);
+      const offset = Math.max(parseInt(String(req.query.offset ?? "0")), 0);
+      const data = await storage.getAllProjectsForAdmin(limit, offset);
       res.json(data);
     } catch (error) {
       console.error("admin all-projects error:", error);
@@ -2207,7 +2211,9 @@ export async function registerRoutes(
   // Admin: all appointments
   app.get("/api/admin/all-appointments", requireAdmin, async (req, res) => {
     try {
-      const data = await storage.getAllAppointmentsForAdmin();
+      const limit = Math.min(parseInt(String(req.query.limit ?? "200")), 500);
+      const offset = Math.max(parseInt(String(req.query.offset ?? "0")), 0);
+      const data = await storage.getAllAppointmentsForAdmin(limit, offset);
       res.json(data);
     } catch (error) {
       console.error("admin all-appointments error:", error);
@@ -2218,7 +2224,9 @@ export async function registerRoutes(
   // Admin - Measurements
   app.get("/api/admin/measures", requireAdmin, async (req, res) => {
     try {
-      const data = await storage.getAllMeasurementsForAdmin();
+      const limit = Math.min(parseInt(String(req.query.limit ?? "200")), 500);
+      const offset = Math.max(parseInt(String(req.query.offset ?? "0")), 0);
+      const data = await storage.getAllMeasurementsForAdmin(limit, offset);
       res.json(data);
     } catch (error) {
       console.error("Error fetching admin measures:", error);
@@ -2229,7 +2237,9 @@ export async function registerRoutes(
   // Admin - Reviews
   app.get("/api/admin/reviews", requireAdmin, async (req, res) => {
     try {
-      const data = await storage.getAllReviewsForAdmin();
+      const limit = Math.min(parseInt(String(req.query.limit ?? "200")), 500);
+      const offset = Math.max(parseInt(String(req.query.offset ?? "0")), 0);
+      const data = await storage.getAllReviewsForAdmin(limit, offset);
       res.json(data);
     } catch (error) {
       console.error("Error fetching admin reviews:", error);
@@ -2266,6 +2276,11 @@ export async function registerRoutes(
         verificationToken: null,
         verificationExpires: null,
       } as any);
+      if (userRaw.email) {
+        sendWelcomeEmail(userRaw.email, userRaw.firstName ?? null).catch(err =>
+          console.error("[Welcome email] Failed:", err)
+        );
+      }
       return res.send(renderVerificationPage(true, "Votre email a été vérifié avec succès ! Vous pouvez maintenant vous connecter."));
     } catch (error) {
       console.error("Email verification error:", error);
@@ -3005,6 +3020,18 @@ export async function registerRoutes(
           [fileUrl, tailor.id]
         );
 
+        const [userRows] = await pool.query(
+          "SELECT email, first_name, last_name FROM users WHERE id = ?",
+          [userId]
+        ) as any[];
+        const userRow = Array.isArray(userRows) && userRows[0] ? userRows[0] : null;
+        if (userRow) {
+          const userName = [userRow.first_name, userRow.last_name].filter(Boolean).join(" ") || userRow.email;
+          sendDossierReceivedEmail(userRow.email, userName).catch(err =>
+            console.error("[Dossier received email] Failed:", err)
+          );
+        }
+
         res.json({ url: fileUrl });
       } catch (error) {
         console.error("Failed to upload document:", error);
@@ -3198,6 +3225,151 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to update dossier:", error);
       res.status(500).json({ error: "Failed to update dossier" });
+    }
+  });
+
+  // ── Litiges ────────────────────────────────────────────────────────────────
+
+  app.post("/api/disputes", requireAuth, async (req: any, res) => {
+    try {
+      const clientId = req.authUserId;
+      const { projectId, reason } = req.body;
+      if (!projectId || !reason?.trim()) {
+        return res.status(400).json({ error: "projectId et reason requis" });
+      }
+      const [projectRows] = await pool.query(
+        "SELECT id, client_id FROM projects WHERE id = ?",
+        [projectId]
+      ) as any[];
+      const project = Array.isArray(projectRows) && projectRows[0] ? projectRows[0] : null;
+      if (!project) return res.status(404).json({ error: "Projet introuvable" });
+      if (project.client_id !== clientId) return res.status(403).json({ error: "Non autorisé" });
+
+      const [existing] = await pool.query(
+        "SELECT id FROM disputes WHERE project_id = ? AND client_id = ? AND status = 'open'",
+        [projectId, clientId]
+      ) as any[];
+      if (Array.isArray(existing) && existing.length > 0) {
+        return res.status(409).json({ error: "Un litige est déjà ouvert pour ce projet" });
+      }
+
+      const id = crypto.randomUUID();
+      await pool.query(
+        "INSERT INTO disputes (id, project_id, client_id, reason, status) VALUES (?, ?, ?, ?, 'open')",
+        [id, projectId, clientId, reason.trim()]
+      );
+      await createNotification(
+        clientId,
+        "dispute_opened",
+        "Litige signalé",
+        "Votre signalement a bien été enregistré. L'équipe SEAMLIER vous répondra sous 48h."
+      );
+      res.status(201).json({ id });
+    } catch (error) {
+      console.error("Failed to open dispute:", error);
+      res.status(500).json({ error: "Failed to open dispute" });
+    }
+  });
+
+  app.get("/api/admin/disputes", requireAdmin, async (_req, res) => {
+    try {
+      const [rows] = await pool.query(`
+        SELECT d.id, d.project_id, d.reason, d.status, d.admin_note,
+               d.stripe_refund_id, d.created_at, d.resolved_at,
+               p.title AS project_title, p.stripe_payment_intent_id, p.amount_total,
+               u.email AS client_email, u.first_name AS client_first, u.last_name AS client_last
+        FROM disputes d
+        JOIN projects p ON p.id = d.project_id
+        JOIN users u ON u.id = d.client_id
+        ORDER BY d.created_at DESC
+        LIMIT 200
+      `) as any[];
+      const disputes = (Array.isArray(rows) ? rows : []).map((r: any) => ({
+        id: r.id,
+        projectId: r.project_id,
+        projectTitle: r.project_title || "—",
+        reason: r.reason,
+        status: r.status,
+        adminNote: r.admin_note || null,
+        stripeRefundId: r.stripe_refund_id || null,
+        amountTotal: r.amount_total,
+        stripePaymentIntentId: r.stripe_payment_intent_id || null,
+        clientEmail: r.client_email,
+        clientName: [r.client_first, r.client_last].filter(Boolean).join(" ") || r.client_email,
+        createdAt: r.created_at ? new Date(r.created_at).toLocaleDateString("fr-FR") : "—",
+        resolvedAt: r.resolved_at ? new Date(r.resolved_at).toLocaleDateString("fr-FR") : null,
+      }));
+      res.json(disputes);
+    } catch (error) {
+      console.error("Failed to fetch disputes:", error);
+      res.status(500).json({ error: "Failed to fetch disputes" });
+    }
+  });
+
+  app.patch("/api/admin/disputes/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { action, adminNote, refundAmount } = req.body;
+      if (!["approve", "reject"].includes(action)) {
+        return res.status(400).json({ error: "Action invalide. Utilisez 'approve' ou 'reject'." });
+      }
+
+      const [disputeRows] = await pool.query(
+        "SELECT d.*, p.stripe_payment_intent_id, p.amount_total, u.email, u.first_name, u.last_name FROM disputes d JOIN projects p ON p.id = d.project_id JOIN users u ON u.id = d.client_id WHERE d.id = ?",
+        [id]
+      ) as any[];
+      const dispute = Array.isArray(disputeRows) && disputeRows[0] ? disputeRows[0] : null;
+      if (!dispute) return res.status(404).json({ error: "Litige introuvable" });
+      if (dispute.status !== "open") return res.status(409).json({ error: "Ce litige est déjà résolu" });
+
+      let stripeRefundId: string | null = null;
+
+      if (action === "approve" && dispute.stripe_payment_intent_id) {
+        try {
+          const stripe = process.env.STRIPE_SECRET_KEY
+            ? new (await import("stripe")).default(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-04-10" as any })
+            : null;
+          if (stripe) {
+            const amountCents = refundAmount
+              ? Math.round(refundAmount * 100)
+              : (dispute.amount_total ?? undefined);
+            const refund = await stripe.refunds.create({
+              payment_intent: dispute.stripe_payment_intent_id,
+              ...(amountCents ? { amount: amountCents } : {}),
+            });
+            stripeRefundId = refund.id;
+          }
+        } catch (stripeErr) {
+          console.error("[Dispute] Stripe refund failed:", stripeErr);
+        }
+      }
+
+      await pool.query(
+        `UPDATE disputes SET status = ?, admin_note = ?, stripe_refund_id = ?, resolved_at = NOW() WHERE id = ?`,
+        [action === "approve" ? "approved" : "rejected", adminNote || null, stripeRefundId, id]
+      );
+
+      const clientName = [dispute.first_name, dispute.last_name].filter(Boolean).join(" ") || dispute.email;
+      if (action === "approve") {
+        await createNotification(
+          dispute.client_id,
+          "dispute_approved",
+          "Litige résolu — Remboursement en cours",
+          `Votre litige a été approuvé. ${stripeRefundId ? "Le remboursement a été initié." : "Notre équipe vous contactera pour le remboursement."}`
+        );
+      } else {
+        await createNotification(
+          dispute.client_id,
+          "dispute_rejected",
+          "Litige clôturé",
+          adminNote || "Votre litige a été examiné et clôturé par notre équipe."
+        );
+      }
+
+      res.json({ success: true, stripeRefundId });
+    } catch (error) {
+      console.error("Failed to resolve dispute:", error);
+      res.status(500).json({ error: "Failed to resolve dispute" });
     }
   });
 

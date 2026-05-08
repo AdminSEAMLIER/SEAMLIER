@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { API_ENDPOINTS, apiFetch } from "@/lib/api-config";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,7 +19,7 @@ import {
   User, Building2, Phone, CreditCard, Briefcase, Hash,
   Globe, Bell, Palette, Shield, Database, Key, ToggleLeft,
   Bold, Italic, Underline, Star, Package, ArrowDownCircle,
-  Euro, BarChart3, FolderOpen, ExternalLink
+  Euro, BarChart3, FolderOpen, ExternalLink, Flag
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +45,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-const ADMIN_AUTH_KEY = "seamlier_admin_auth";
 
 type Project = {
   id: string;
@@ -196,11 +196,8 @@ type AdminReview = {
 
 export default function AdminDashboard() {
   const { toast } = useToast();
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    try {
-      return localStorage.getItem(ADMIN_AUTH_KEY) === "true";
-    } catch { return false; }
-  });
+  const { user: authUser, isLoading: authLoading } = useAuth();
+  const isAuthenticated = authUser?.role === "admin";
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
@@ -289,19 +286,10 @@ export default function AdminDashboard() {
   const settingsLoaded = useRef(false);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(ADMIN_AUTH_KEY, isAuthenticated ? "true" : "false");
-    } catch {}
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (isAuthenticated && !adminUser) {
-      fetch("/api/auth/user", { credentials: "include" })
-        .then(res => res.ok ? res.json() : null)
-        .then(data => { if (data && data.role === "admin") setAdminUser(data); })
-        .catch(() => {});
+    if (isAuthenticated && authUser && !adminUser) {
+      setAdminUser(authUser);
     }
-  }, [isAuthenticated, adminUser]);
+  }, [isAuthenticated, authUser, adminUser]);
 
   const [sequestreOverrides, setSequestreOverrides] = useState<Record<string, "Bloqué" | "Libéré">>({});
   const { data: rawProjects = [] } = useQuery<Project[]>({
@@ -595,7 +583,6 @@ export default function AdminDashboard() {
       }
       setAdminUser(data);
       await queryClient.invalidateQueries({ queryKey: ["auth-user"] });
-      setIsAuthenticated(true);
       toast({ title: "Accès autorisé", description: "Bienvenue sur la console d'administration." });
     } catch {
       toast({ title: "Erreur", description: "Impossible de se connecter au serveur.", variant: "destructive" });
@@ -609,8 +596,6 @@ export default function AdminDashboard() {
       await apiFetch('/api/logout');
       await queryClient.invalidateQueries({ queryKey: ["auth-user"] });
     } catch {}
-    setIsAuthenticated(false);
-    try { localStorage.removeItem(ADMIN_AUTH_KEY); } catch {}
     toast({ title: "Déconnexion", description: "Vous avez été déconnecté." });
   }, [toast]);
 
@@ -922,6 +907,14 @@ export default function AdminDashboard() {
   ), [artisans, artisanSearch]);
 
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#601B28]">
+        <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#601B28] px-4">
@@ -985,6 +978,7 @@ export default function AdminDashboard() {
     { label: "Commandes groupées", icon: Users, id: "events" },
     { label: "Magazine", icon: FileText, id: "magazine" },
     { label: "Dossiers pros", icon: FolderOpen, id: "dossiers" },
+    { label: "Litiges", icon: Flag, id: "litiges" },
   ];
 
   const stats = [
@@ -3399,6 +3393,7 @@ export default function AdminDashboard() {
               )}
 
               {activeTab === "dossiers" && <AdminDossiers />}
+              {activeTab === "litiges" && <AdminLitiges />}
 
             </div>
           </main>
@@ -3640,6 +3635,184 @@ function AdminDossiers() {
                 >
                   <XCircle className="h-4 w-4 mr-1" /> Rejeter
                 </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+// ── Section Litiges ───────────────────────────────────────────────────────────
+
+type Dispute = {
+  id: string;
+  projectId: string;
+  projectTitle: string;
+  reason: string;
+  status: "open" | "approved" | "rejected";
+  adminNote: string | null;
+  stripeRefundId: string | null;
+  amountTotal: number | null;
+  stripePaymentIntentId: string | null;
+  clientEmail: string;
+  clientName: string;
+  createdAt: string;
+  resolvedAt: string | null;
+};
+
+function AdminLitiges() {
+  const { toast } = useToast();
+  const [selected, setSelected] = useState<Dispute | null>(null);
+  const [adminNote, setAdminNote] = useState("");
+  const [refundAmount, setRefundAmount] = useState("");
+
+  const { data: disputes = [], refetch } = useQuery<Dispute[]>({
+    queryKey: ["/api/admin/disputes"],
+  });
+
+  const resolveMutation = useMutation({
+    mutationFn: ({ action }: { action: "approve" | "reject" }) =>
+      apiRequest("PATCH", `/api/admin/disputes/${selected!.id}`, {
+        action,
+        adminNote: adminNote || undefined,
+        refundAmount: refundAmount ? parseFloat(refundAmount) : undefined,
+      }).then(r => r.json()),
+    onSuccess: () => {
+      toast({ title: "Litige traité" });
+      setSelected(null);
+      setAdminNote("");
+      setRefundAmount("");
+      refetch();
+    },
+    onError: (e: any) => toast({ title: "Erreur", description: e.message, variant: "destructive" }),
+  });
+
+  const open = disputes.filter(d => d.status === "open");
+  const resolved = disputes.filter(d => d.status !== "open");
+
+  const statusBadge = (s: string) => {
+    if (s === "open") return <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium">Ouvert</span>;
+    if (s === "approved") return <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-medium">Approuvé</span>;
+    return <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">Rejeté</span>;
+  };
+
+  return (
+    <>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Litiges</h2>
+            <p className="text-sm text-gray-500 mt-0.5">{open.length} litige{open.length !== 1 ? "s" : ""} ouvert{open.length !== 1 ? "s" : ""}</p>
+          </div>
+        </div>
+
+        {open.length === 0 && resolved.length === 0 && (
+          <div className="text-center py-16 text-gray-400">
+            <Flag className="h-10 w-10 mx-auto mb-3 opacity-30" />
+            <p>Aucun litige enregistré</p>
+          </div>
+        )}
+
+        {open.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-xs uppercase tracking-widest text-gray-400 font-medium">En attente de traitement</p>
+            {open.map(d => (
+              <div key={d.id} className="border border-amber-200 bg-amber-50 rounded-xl p-4 flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    {statusBadge(d.status)}
+                    <span className="text-sm font-semibold text-gray-800 truncate">{d.projectTitle}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-1">{d.clientName} · {d.clientEmail}</p>
+                  <p className="text-sm text-gray-700 line-clamp-2">{d.reason}</p>
+                  <p className="text-xs text-gray-400 mt-1">Ouvert le {d.createdAt}{d.amountTotal ? ` · ${Math.round(d.amountTotal / 100)}€` : ""}</p>
+                </div>
+                <button
+                  onClick={() => { setSelected(d); setAdminNote(""); setRefundAmount(""); }}
+                  className="shrink-0 text-xs bg-[#601B28] text-white px-3 py-1.5 rounded-lg hover:bg-[#4E1522]"
+                >
+                  Instruire
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {resolved.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-xs uppercase tracking-widest text-gray-400 font-medium">Résolus</p>
+            {resolved.map(d => (
+              <div key={d.id} className="border border-gray-100 rounded-xl p-4 flex items-start gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    {statusBadge(d.status)}
+                    <span className="text-sm font-medium text-gray-700 truncate">{d.projectTitle}</span>
+                  </div>
+                  <p className="text-xs text-gray-400">{d.clientName} · résolu le {d.resolvedAt}</p>
+                  {d.adminNote && <p className="text-xs text-gray-500 mt-1 italic">{d.adminNote}</p>}
+                  {d.stripeRefundId && <p className="text-xs text-green-600 mt-1">Remboursement Stripe : {d.stripeRefundId}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <Dialog open={!!selected} onOpenChange={v => !v && setSelected(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-[#601B28]">Instruire le litige</DialogTitle>
+          </DialogHeader>
+          {selected && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-1">
+                <p><span className="font-medium">Projet :</span> {selected.projectTitle}</p>
+                <p><span className="font-medium">Client :</span> {selected.clientName}</p>
+                {selected.amountTotal && <p><span className="font-medium">Montant :</span> {Math.round(selected.amountTotal / 100)}€</p>}
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1">Motif du client</p>
+                <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{selected.reason}</p>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Note admin (optionnel)</label>
+                <textarea
+                  value={adminNote}
+                  onChange={e => setAdminNote(e.target.value)}
+                  rows={2}
+                  placeholder="Motif de la décision..."
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#601B28]/20"
+                />
+              </div>
+              {selected.stripePaymentIntentId && (
+                <div>
+                  <label className="text-xs font-medium text-gray-600 block mb-1">Montant remboursé (€ — laisser vide pour rembourser tout)</label>
+                  <input
+                    type="number"
+                    value={refundAmount}
+                    onChange={e => setRefundAmount(e.target.value)}
+                    placeholder={selected.amountTotal ? String(Math.round(selected.amountTotal / 100)) : ""}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#601B28]/20"
+                  />
+                </div>
+              )}
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={() => resolveMutation.mutate({ action: "reject" })}
+                  disabled={resolveMutation.isPending}
+                  className="flex-1 border border-gray-200 text-gray-600 rounded-lg py-2 text-sm hover:bg-gray-50"
+                >
+                  Rejeter
+                </button>
+                <button
+                  onClick={() => resolveMutation.mutate({ action: "approve" })}
+                  disabled={resolveMutation.isPending}
+                  className="flex-1 bg-green-600 text-white rounded-lg py-2 text-sm hover:bg-green-700 font-medium"
+                >
+                  {selected.stripePaymentIntentId ? "Approuver + Rembourser" : "Approuver"}
+                </button>
               </div>
             </div>
           )}
