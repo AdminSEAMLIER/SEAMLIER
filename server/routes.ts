@@ -21,6 +21,8 @@ import {
   sendDossierRejectedEmail,
   sendWelcomeEmail,
   sendDossierReceivedEmail,
+  sendNewProjectRequestEmail,
+  sendQuoteReadyEmail,
 } from "./email";
 import { sendSms } from "./sms";
 
@@ -1024,6 +1026,25 @@ export async function registerRoutes(
         ...(amount !== undefined ? { amount } : {}),
       });
       res.status(201).json(project);
+
+      // Notify artisan of new project request
+      try {
+        const [clientRows] = await pool.query(
+          `SELECT first_name, last_name FROM users WHERE id = ?`, [userId]
+        ) as any[];
+        const [tailorRows] = await pool.query(
+          `SELECT u.email, u.first_name, u.last_name FROM users u JOIN tailors t ON t.user_id = u.id WHERE t.id = ?`, [project.tailorId]
+        ) as any[];
+        const cl = (clientRows as any[])[0];
+        const ta = (tailorRows as any[])[0];
+        if (cl && ta && ta.email) {
+          const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim() || "Un client";
+          const tailorName = `${ta.first_name || ""} ${ta.last_name || ""}`.trim();
+          sendNewProjectRequestEmail(ta.email, tailorName, clientName, project.title || "Nouvelle commande").catch(() => {});
+        }
+      } catch (emailErr) {
+        console.error("[PROJECT EMAIL]", emailErr);
+      }
     } catch (error) {
       console.error("Failed to create project:", error);
       res.status(500).json({ error: "Failed to create project" });
@@ -1058,6 +1079,26 @@ export async function registerRoutes(
           }
         } catch (msgErr) {
           console.error("Auto-message error on quote:", msgErr);
+        }
+
+        // Email client : devis prêt
+        try {
+          const tailor = await storage.getTailor(project.tailorId);
+          const [clientRows] = await pool.query(
+            `SELECT email, first_name, last_name FROM users WHERE id = ?`, [project.clientId]
+          ) as any[];
+          const [tailorUserRows] = await pool.query(
+            `SELECT u.first_name, u.last_name FROM users u JOIN tailors t ON t.user_id = u.id WHERE t.id = ?`, [project.tailorId]
+          ) as any[];
+          const cl = (clientRows as any[])[0];
+          const ta = (tailorUserRows as any[])[0];
+          if (cl?.email && ta) {
+            const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim();
+            const tailorName = `${ta.first_name || ""} ${ta.last_name || ""}`.trim();
+            sendQuoteReadyEmail(cl.email, clientName, tailorName, project.title || "votre projet", project.amount ?? null).catch(() => {});
+          }
+        } catch (emailErr) {
+          console.error("[QUOTE EMAIL]", emailErr);
         }
       }
 

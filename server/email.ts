@@ -679,6 +679,118 @@ export async function sendWelcomeEmail(email: string, firstName?: string | null)
   return sendEmail(email, "Bienvenue sur SEAMLIER", html);
 }
 
+export async function sendAdminChargebackAlertEmail(
+  adminEmail: string,
+  chargeId: string,
+  amount: number,
+  customerEmail: string,
+  reason: string,
+  projectInfo: string = ""
+): Promise<boolean> {
+  const html = emailWrapper("⚠️ Chargeback Stripe reçu — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#dc2626;font-family:Georgia,serif;font-size:20px;font-weight:400">⚠️ Chargeback reçu</h2>
+    <div style="width:28px;height:2px;background-color:#dc2626;margin:0 0 20px"></div>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      Un chargeback a été ouvert sur votre compte Stripe${projectInfo ? ` pour${projectInfo}` : ""}.
+    </p>
+    <div style="background:#fef2f2;border-radius:8px;padding:16px 20px;margin:0 0 24px">
+      <table style="width:100%">
+        <tr><td style="color:#6b7280;font-size:13px">Charge ID</td><td style="text-align:right;font-weight:600;font-size:13px;color:#1f2937">${chargeId}</td></tr>
+        <tr><td style="color:#6b7280;font-size:13px;padding-top:8px">Montant contesté</td><td style="text-align:right;font-weight:700;font-size:15px;color:#dc2626;padding-top:8px">${amount.toFixed(2)} €</td></tr>
+        <tr><td style="color:#6b7280;font-size:13px;padding-top:8px">Email client</td><td style="text-align:right;font-weight:600;font-size:13px;color:#1f2937;padding-top:8px">${customerEmail}</td></tr>
+        <tr><td style="color:#6b7280;font-size:13px;padding-top:8px">Raison</td><td style="text-align:right;font-weight:600;font-size:13px;color:#1f2937;padding-top:8px">${reason}</td></tr>
+      </table>
+    </div>
+    <p style="margin:0 0 16px;color:#4b5563;font-size:14px;line-height:1.7">
+      Vous avez généralement <strong>7 à 21 jours</strong> pour répondre via le Dashboard Stripe avec les preuves de livraison.
+    </p>
+    <p style="margin:0;color:#9ca3af;font-size:12px">Connectez-vous au Dashboard Stripe pour gérer ce litige.</p>
+  `);
+  return sendEmail(adminEmail, `[URGENT] Chargeback Stripe — ${amount.toFixed(2)} € — charge ${chargeId}`, html);
+}
+
+export async function sendSubscriptionPaymentFailedEmail(
+  tailorEmail: string, tailorName: string, amount: number | null, nextRetry: string | null
+): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const amountStr = amount ? `${amount.toFixed(2)} €` : "votre abonnement";
+  const retryRow = nextRetry
+    ? `<p style="margin:0 0 20px;color:#4b5563;font-size:14px">Prochaine tentative : <strong>${nextRetry}</strong></p>`
+    : "";
+  const html = emailWrapper("Échec de paiement abonnement — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#d97706;font-family:Georgia,serif;font-size:20px;font-weight:400">Paiement de votre abonnement Pro échoué</h2>
+    <div style="width:28px;height:2px;background-color:#d97706;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${tailorName || ""},</p>
+    <p style="margin:0 0 16px;color:#4b5563;font-size:15px;line-height:1.7">
+      Le prélèvement de <strong>${amountStr}</strong> pour votre abonnement SEAMLIER Pro n'a pas pu être effectué.
+    </p>
+    ${retryRow}
+    <p style="margin:0 0 24px;color:#4b5563;font-size:14px;line-height:1.7">
+      Pour éviter la suspension de votre plan Pro, veuillez mettre à jour votre moyen de paiement dans vos paramètres.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/pro-parametres" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Mettre à jour mon moyen de paiement</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(tailorEmail, "Action requise — Paiement abonnement Pro SEAMLIER échoué", html);
+}
+
+export async function sendNewProjectRequestEmail(
+  tailorEmail: string, tailorName: string, clientName: string, projectTitle: string
+): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const html = emailWrapper("Nouvelle demande de confection — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Nouvelle demande reçue</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${tailorName || ""},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      <strong style="color:#1f2937">${clientName}</strong> vous a adressé une nouvelle demande de confection :
+    </p>
+    <div style="background:#f5f3f0;border-left:3px solid #722F37;padding:16px 20px;margin:0 0 28px;border-radius:0 8px 8px 0">
+      <p style="margin:0;color:#1f2937;font-size:15px;font-weight:600">${projectTitle}</p>
+    </div>
+    <p style="margin:0 0 24px;color:#4b5563;font-size:14px;line-height:1.7">
+      Connectez-vous pour consulter les détails et établir un devis. Le client attend votre réponse.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/dashboard-pro" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Voir la demande</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(tailorEmail, `Nouvelle demande de ${clientName} — SEAMLIER`, html);
+}
+
+export async function sendQuoteReadyEmail(
+  clientEmail: string, clientName: string, tailorName: string, projectTitle: string, amount: number | null
+): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const amountStr = amount ? `<strong style="color:#722F37;font-size:16px">${amount} €</strong>` : "un montant à confirmer";
+  const html = emailWrapper("Votre devis est prêt — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Votre devis est arrivé</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${clientName || ""},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      <strong style="color:#1f2937">${tailorName}</strong> a établi un devis pour votre projet <strong>"${projectTitle}"</strong> :
+    </p>
+    <div style="background:#f5f3f0;border-radius:8px;padding:20px 24px;margin:0 0 24px;text-align:center">
+      <p style="margin:0 0 4px;color:#6b7280;font-size:13px">Montant proposé</p>
+      <p style="margin:0">${amountStr}</p>
+    </div>
+    <p style="margin:0 0 24px;color:#4b5563;font-size:14px;line-height:1.7">
+      Vous pouvez accepter ou refuser ce devis depuis votre espace projet. Si vous avez des questions, la messagerie est disponible.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/mes-projets" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Voir le devis</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(clientEmail, `Votre devis "${projectTitle}" est prêt — SEAMLIER`, html);
+}
+
 export async function sendDossierReceivedEmail(email: string, name: string): Promise<boolean> {
   const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
   const html = emailWrapper("Dossier reçu — SEAMLIER", `

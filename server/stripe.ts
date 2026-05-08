@@ -2,7 +2,7 @@ import type { Express, Response } from "express";
 import Stripe from "stripe";
 import { storage } from "./storage";
 import { pool } from "./db";
-import { sendPaymentConfirmationEmail } from "./email";
+import { sendPaymentConfirmationEmail, sendAdminChargebackAlertEmail, sendSubscriptionPaymentFailedEmail } from "./email";
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-04-10" as any })
@@ -103,6 +103,68 @@ export function registerStripeRoutes(app: Express) {
             subscriptionCurrentPeriodEnd: null,
           } as any);
           console.log(`[Stripe] Artisan ${tailorId} → Plan Starter (abonnement expiré/annulé)`);
+        }
+      }
+
+      // Fix #4 — Chargeback Stripe → alerte email admin
+      if (event.type === "charge.dispute.created") {
+        const dispute = event.data.object as Stripe.Dispute;
+        const chargeId = typeof dispute.charge === "string" ? dispute.charge : (dispute.charge as any)?.id;
+        const amount = dispute.amount / 100;
+        const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER || "contact@seamlier.fr";
+
+        let projectInfo = "";
+        try {
+          if (chargeId) {
+            const charge = await stripe.charges.retrieve(chargeId);
+            const piId = typeof charge.payment_intent === "string" ? charge.payment_intent : (charge.payment_intent as any)?.id;
+            if (piId) {
+              const [projRows] = await pool.query(
+                "SELECT id, title FROM projects WHERE stripe_payment_intent_id = ? LIMIT 1",
+                [piId]
+              ) as any[];
+              const proj = Array.isArray(projRows) && projRows[0] ? projRows[0] : null;
+              if (proj) projectInfo = ` le projet #${proj.id} — "${proj.title}"`;
+            }
+          }
+        } catch { /* non bloquant */ }
+
+        sendAdminChargebackAlertEmail(
+          adminEmail, chargeId || "inconnu", amount,
+          (dispute as any).evidence?.customer_email_address || "inconnu",
+          dispute.reason || "non précisé",
+          projectInfo
+        ).catch(() => {});
+        console.log(`[Stripe] Chargeback reçu — charge ${chargeId} — ${amount}€ — raison: ${dispute.reason}`);
+      }
+
+      // Fix #6 — Paiement abonnement échoué → email dunning artisan
+      if (event.type === "invoice.payment_failed") {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId = typeof invoice.customer === "string" ? invoice.customer : (invoice.customer as any)?.id;
+        if (customerId) {
+          try {
+            const [rows] = await pool.query(`
+              SELECT t.id AS tailor_id, u.email, u.first_name, u.last_name
+              FROM tailors t
+              JOIN users u ON u.id = t.user_id
+              WHERE t.stripe_customer_id = ?
+              LIMIT 1
+            `, [customerId]) as any[];
+            const r = Array.isArray(rows) && rows[0] ? rows[0] : null;
+            if (r?.email) {
+              const name = [r.first_name, r.last_name].filter(Boolean).join(" ") || r.email;
+              const amount = invoice.amount_due ? invoice.amount_due / 100 : null;
+              const nextRetryTs = (invoice as any).next_payment_attempt;
+              const nextRetry = nextRetryTs
+                ? new Date(nextRetryTs * 1000).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
+                : null;
+              sendSubscriptionPaymentFailedEmail(r.email, name, amount, nextRetry).catch(() => {});
+              console.log(`[Stripe] Paiement abonnement échoué — artisan ${r.tailor_id} (${r.email})`);
+            }
+          } catch (err) {
+            console.error("[Stripe] invoice.payment_failed handler error:", err);
+          }
         }
       }
 
@@ -211,7 +273,43 @@ export function registerStripeRoutes(app: Express) {
     if (!admin || admin.role !== "admin") return res.status(403).json({ error: "Accès refusé" });
     try {
       const { projectId } = req.params;
-      const { montantArtisanCentimes, stripeAccountIdArtisan } = req.body;
+
+      // Fix #1 + #2 + #3 : récupérer toutes les données depuis la BDD
+      const [rows] = await pool.query(`
+        SELECT p.stripe_transfer_id, p.client_confirmed, p.amount_artisan,
+               u.stripe_account_id
+        FROM projects p
+        JOIN tailors t ON t.id = p.tailor_id
+        JOIN users u ON u.id = t.user_id
+        WHERE p.id = ?
+        LIMIT 1
+      `, [projectId]) as any[];
+      const project = Array.isArray(rows) && rows[0] ? rows[0] : null;
+      if (!project) return res.status(404).json({ error: "Projet introuvable" });
+
+      // Fix #1 — guard contre le double transfert
+      if (project.stripe_transfer_id) {
+        return res.status(409).json({
+          error: "Un virement a déjà été effectué pour ce projet",
+          transferId: project.stripe_transfer_id,
+        });
+      }
+
+      // Fix #2 — confirmation client obligatoire
+      if (!project.client_confirmed) {
+        return res.status(403).json({ error: "Le client n'a pas encore confirmé la réception de la prestation" });
+      }
+
+      // Fix #3 — stripeAccountId depuis la BDD, pas depuis req.body
+      const stripeAccountIdArtisan = project.stripe_account_id;
+      if (!stripeAccountIdArtisan) {
+        return res.status(400).json({ error: "L'artisan n'a pas finalisé son onboarding Stripe Connect" });
+      }
+
+      const montantArtisanCentimes = req.body.montantArtisanCentimes ?? project.amount_artisan;
+      if (!montantArtisanCentimes || montantArtisanCentimes <= 0) {
+        return res.status(400).json({ error: "Montant artisan invalide ou manquant" });
+      }
 
       const transfer = await stripe.transfers.create({
         amount: montantArtisanCentimes,
