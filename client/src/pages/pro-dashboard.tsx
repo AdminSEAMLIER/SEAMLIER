@@ -12,11 +12,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { 
-  Home, 
-  FileText, 
-  FolderKanban, 
-  MessageSquare, 
+import {
+  Home,
+  FileText,
+  FolderKanban,
+  MessageSquare,
   Calendar,
   Euro,
   TrendingUp,
@@ -28,7 +28,14 @@ import {
   CheckCircle,
   Loader2,
   Sparkles,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+
+const MONTH_NAMES_FR = [
+  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+];
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -42,6 +49,21 @@ export default function ProDashboard() {
   const [, navigate] = useLocation();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showConfirmStep, setShowConfirmStep] = useState(false);
+
+  const now = new Date();
+  const [statsMonth, setStatsMonth] = useState(now.getMonth()); // 0-indexed
+  const [statsYear, setStatsYear] = useState(now.getFullYear());
+  const isCurrentMonth = statsMonth === now.getMonth() && statsYear === now.getFullYear();
+
+  function prevMonth() {
+    if (statsMonth === 0) { setStatsMonth(11); setStatsYear(y => y - 1); }
+    else setStatsMonth(m => m - 1);
+  }
+  function nextMonth() {
+    if (isCurrentMonth) return;
+    if (statsMonth === 11) { setStatsMonth(0); setStatsYear(y => y + 1); }
+    else setStatsMonth(m => m + 1);
+  }
   
   const { data: products } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -154,8 +176,11 @@ export default function ProDashboard() {
     newRequests: number;
     averageRating: number;
   }>({
-    queryKey: ["/api/tailors/stats"],
-    refetchInterval: 30000,
+    queryKey: ["/api/tailors/stats", statsMonth, statsYear],
+    queryFn: () =>
+      fetch(`/api/tailors/stats?month=${statsMonth}&year=${statsYear}`, { credentials: "include" })
+        .then(r => r.json()),
+    refetchInterval: isCurrentMonth ? 30000 : false,
   });
 
   const stats = [
@@ -182,6 +207,7 @@ export default function ProDashboard() {
       icon: Star,
     },
   ];
+  const statsMonthLabel = `${MONTH_NAMES_FR[statsMonth]} ${statsYear}`;
 
   const quickLinks = [
     { label: t('nav.requests'), icon: FileText, href: "/gestion-demandes", count: 0 },
@@ -381,7 +407,32 @@ export default function ProDashboard() {
         )}
 
         <Card className="border border-gray-100 bg-white shadow-sm">
-          <CardContent className="p-6 bg-white">
+          <CardContent className="p-6 bg-white space-y-4">
+            {/* Month selector */}
+            <div className="flex items-center justify-between">
+              <button
+                onClick={prevMonth}
+                className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-[#601B28]"
+                aria-label="Mois précédent"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="text-sm font-medium text-gray-700 select-none">
+                {statsMonthLabel}
+                {isCurrentMonth && (
+                  <span className="ml-2 text-xs text-[#601B28] font-normal">• en cours</span>
+                )}
+              </span>
+              <button
+                onClick={nextMonth}
+                disabled={isCurrentMonth}
+                className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-[#601B28] disabled:opacity-30 disabled:cursor-not-allowed"
+                aria-label="Mois suivant"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               {stats.map((stat) => (
                 <div key={stat.label} className="p-4 bg-gray-50 rounded-lg text-center" data-testid={`stat-${stat.label.replace(/\s/g, "-").toLowerCase()}`}>

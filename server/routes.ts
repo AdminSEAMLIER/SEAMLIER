@@ -627,36 +627,46 @@ export async function registerRoutes(
       if (!tailor) return res.status(403).json({ error: "Not a tailor" });
 
       const now = new Date();
-      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const targetYear = parseInt(req.query.year as string) || now.getFullYear();
+      const targetMonth = req.query.month !== undefined
+        ? parseInt(req.query.month as string)
+        : now.getMonth(); // 0-indexed
 
-      // Revenus du mois : somme de amount (en euros, prix de confection) pour les projets complétés ce mois
+      const firstOfMonth = new Date(targetYear, targetMonth, 1);
+      const firstOfNextMonth = new Date(targetYear, targetMonth + 1, 1);
+      const isCurrentMonth = targetYear === now.getFullYear() && targetMonth === now.getMonth();
+
+      // Revenus du mois : projets complétés dans la période
       const [revenueRows] = await pool.query(
         `SELECT COALESCE(SUM(amount), 0) as total
          FROM projects
          WHERE tailor_id = ? AND status = 'completed'
-         AND updated_at >= ?`,
-        [tailor.id, firstOfMonth]
+           AND updated_at >= ? AND updated_at < ?`,
+        [tailor.id, firstOfMonth, firstOfNextMonth]
       ) as any[];
       const monthlyRevenue = Array.isArray(revenueRows) && revenueRows[0]
         ? parseFloat(revenueRows[0].total) || 0 : 0;
 
-      // Projets en cours (status = in_progress)
+      // Projets actifs : en cours ce mois (créés dans la période, ou tous si mois courant)
       const [activeRows] = await pool.query(
-        "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND status = 'in_progress'",
-        [tailor.id]
+        isCurrentMonth
+          ? "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND status = 'in_progress'"
+          : "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND created_at >= ? AND created_at < ?",
+        isCurrentMonth ? [tailor.id] : [tailor.id, firstOfMonth, firstOfNextMonth]
       ) as any[];
       const activeProjects = Array.isArray(activeRows) && activeRows[0]
         ? parseInt(activeRows[0].cnt) || 0 : 0;
 
-      // Nouvelles demandes (status = pending ou new)
+      // Nouvelles demandes : créées dans la période
       const [requestRows] = await pool.query(
-        "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND status IN ('pending','new')",
-        [tailor.id]
+        `SELECT COUNT(*) as cnt FROM projects
+         WHERE tailor_id = ? AND status IN ('pending','new')
+           AND created_at >= ? AND created_at < ?`,
+        [tailor.id, firstOfMonth, firstOfNextMonth]
       ) as any[];
       const newRequests = Array.isArray(requestRows) && requestRows[0]
         ? parseInt(requestRows[0].cnt) || 0 : 0;
 
-      // Note moyenne : champ rating de la table tailors
       const averageRating = tailor.rating || 0;
 
       res.json({ monthlyRevenue, activeProjects, newRequests, averageRating });

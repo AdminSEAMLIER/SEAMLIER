@@ -444,3 +444,65 @@ export async function sendDeadlineWarningEmail(
   `);
   return sendEmail(recipientEmail, subject, html);
 }
+
+const MONTH_NAMES_FR = [
+  "janvier", "février", "mars", "avril", "mai", "juin",
+  "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+];
+
+export async function sendMonthlyInvoiceEmail(
+  tailorEmail: string,
+  tailorName: string,
+  month: number, // 0-indexed
+  year: number,
+  pdfBuffer: Buffer,
+  projectCount: number,
+  netAmountEur: number
+): Promise<boolean> {
+  const mailer = getTransporter();
+  if (!mailer) {
+    console.log(`[EMAIL DISABLED] Monthly invoice for ${tailorEmail} (${MONTH_NAMES_FR[month]} ${year})`);
+    return false;
+  }
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@seamlier.fr";
+  const monthLabel = MONTH_NAMES_FR[month] + " " + year;
+  const name = tailorName || "Artisan";
+
+  const html = emailWrapper(`Récapitulatif ${monthLabel} — SEAMLIER`, `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Votre récapitulatif de ${monthLabel}</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${name},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      Veuillez trouver ci-joint votre récapitulatif de facturation pour le mois de <strong style="color:#1f2937">${monthLabel}</strong>.
+    </p>
+    <div style="background:#f5f3f0;border-radius:10px;padding:20px 24px;margin:0 0 24px">
+      <p style="margin:0 0 6px;color:#4b5563;font-size:14px">
+        <strong style="color:#1f2937">Confections complétées :</strong> ${projectCount}
+      </p>
+      <p style="margin:0;color:#4b5563;font-size:14px">
+        <strong style="color:#1f2937">Montant net transféré :</strong>
+        <span style="color:#722F37;font-size:16px;font-weight:700"> ${(netAmountEur / 100).toFixed(2)} €</span>
+      </p>
+    </div>
+    <p style="margin:0;color:#9ca3af;font-size:12px;line-height:1.6">
+      La facture détaillée (PDF) est jointe à cet email.<br>
+      Pour toute question, contactez-nous à <a href="mailto:contact@seamlier.fr" style="color:#722F37">contact@seamlier.fr</a>.
+    </p>
+  `);
+
+  const filename = `SEAMLIER_facture_${MONTH_NAMES_FR[month]}_${year}.pdf`;
+  try {
+    await mailer.sendMail({
+      from: `"SEAMLIER" <${from}>`,
+      to: tailorEmail,
+      subject: `Récapitulatif SEAMLIER — ${monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}`,
+      html,
+      attachments: [{ filename, content: pdfBuffer, contentType: "application/pdf" }],
+    });
+    console.log(`[EMAIL] Monthly invoice sent to ${tailorEmail} (${monthLabel})`);
+    return true;
+  } catch (err) {
+    console.error(`[EMAIL] Failed to send monthly invoice to ${tailorEmail}:`, err);
+    return false;
+  }
+}
