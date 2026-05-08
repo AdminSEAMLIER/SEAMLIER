@@ -372,7 +372,8 @@ export default function MesProjets() {
                       <Calendar className="h-4 w-4" />
                       {isFr ? "RDV" : "Book"}
                     </Button>
-                    {isInProgress && project.amount && project.amount > 0 && (
+                    {isInProgress && project.amount && project.amount > 0 &&
+                      !["paid", "client_confirmed", "transferred"].includes((project as any).paymentStatus ?? "") && (
                       <PaymentButton
                         projectId={project.id}
                         prixConfection={project.amount}
