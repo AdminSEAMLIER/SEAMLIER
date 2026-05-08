@@ -124,7 +124,7 @@ export default function ProDashboard() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/professionnel/onboarding"] }),
   });
 
-  const onboardingDone = !onboarding || (
+  const onboardingDone = !onboarding || !onboarding.steps || (
     onboarding.steps.profile &&
     onboarding.steps.portfolio &&
     onboarding.steps.availability &&
@@ -161,23 +161,23 @@ export default function ProDashboard() {
   const stats = [
     {
       label: t('pro.thisMonth'),
-      value: tailorStats ? `${tailorStats.monthlyRevenue.toFixed(0)}€` : "0€",
+      value: tailorStats ? `${(tailorStats.monthlyRevenue ?? 0).toFixed(0)}€` : "0€",
       icon: Euro,
     },
     {
       label: t('pro.activeProjects'),
-      value: tailorStats ? String(tailorStats.activeProjects) : "0",
+      value: tailorStats ? String(tailorStats.activeProjects ?? 0) : "0",
       icon: FolderKanban,
     },
     {
       label: t('pro.newRequests'),
-      value: tailorStats ? String(tailorStats.newRequests) : "0",
+      value: tailorStats ? String(tailorStats.newRequests ?? 0) : "0",
       icon: FileText,
     },
     {
       label: t('pro.averageRating'),
-      value: tailorStats && tailorStats.averageRating > 0
-        ? tailorStats.averageRating.toFixed(1)
+      value: tailorStats && (tailorStats.averageRating ?? 0) > 0
+        ? (tailorStats.averageRating ?? 0).toFixed(1)
         : "-",
       icon: Star,
     },
@@ -475,7 +475,7 @@ export default function ProDashboard() {
               <div className="flex-1">
                 <p className="text-sm text-gray-500">{t('pro.thisMonth')}</p>
                 <p className="text-2xl font-bold text-[#601B28]" data-testid="text-pro-revenue">
-                  {tailorStats ? `${tailorStats.monthlyRevenue.toFixed(0)}€` : "0€"}
+                  {tailorStats ? `${(tailorStats.monthlyRevenue ?? 0).toFixed(0)}€` : "0€"}
                 </p>
               </div>
             </div>
