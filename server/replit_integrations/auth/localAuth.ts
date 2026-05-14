@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import bcrypt from "bcrypt";
 import type { Express, RequestHandler } from "express";
 import mysqlSession from "express-mysql-session";
+import mysql2 from "mysql2";
 import { authStorage } from "./storage";
 import { storage } from "../../storage";
 import { pool } from "../../db";
@@ -15,30 +16,29 @@ import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail
 
 export function getSession() {
   const sessionTtl = 315360e6; // ~10 ans
-  const MySQLStore = mysqlSession(session as any);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const MySQLStore = mysqlSession(session as any) as any;
 
   const dbUrl = process.env.MYSQL_DATABASE_URL || process.env.DATABASE_URL || "";
-  const url = new URL(dbUrl);
-  const options = {
-    host: url.hostname,
-    port: parseInt(url.port || "3306"),
-    user: url.username,
-    password: url.password,
-    database: url.pathname.replace("/", ""),
-    createDatabaseTable: true,
-    expiration: 315360e6,
-    checkExpirationInterval: 9e5,
-    schema: {
-      tableName: "sessions",
-      columnNames: {
-        session_id: "session_id",
-        expires: "expires",
-        data: "data",
+
+  // Pool non-promise passé à MySQLStore pour préserver SSL et autres params Railway
+  const sessionPool = mysql2.createPool(dbUrl);
+  const sessionStore = new MySQLStore(
+    {
+      createDatabaseTable: true,
+      expiration: 315360e6,
+      checkExpirationInterval: 9e5,
+      schema: {
+        tableName: "sessions",
+        columnNames: {
+          session_id: "session_id",
+          expires: "expires",
+          data: "data",
+        },
       },
     },
-  };
-
-  const sessionStore = new MySQLStore(options);
+    sessionPool,
+  );
 
   return session({
     secret: process.env.SESSION_SECRET!,
