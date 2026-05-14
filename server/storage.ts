@@ -556,7 +556,7 @@ class DatabaseStorage implements IStorage {
   async getProjectsByTailor(tailorId: string): Promise<ProjectWithClient[]> {
     const result = await db.select()
       .from(projects)
-      .innerJoin(users, eq(projects.clientId, users.id))
+      .leftJoin(users, eq(projects.clientId, users.id))
       .where(eq(projects.tailorId, tailorId))
       .orderBy(desc(projects.createdAt));
 

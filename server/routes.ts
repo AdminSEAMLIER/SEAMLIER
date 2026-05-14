@@ -989,6 +989,9 @@ export async function registerRoutes(
           const monthlyCount = Array.isArray(countRows) && countRows[0] ? Number(countRows[0].cnt) : 0;
           if (monthlyCount >= 10) return res.status(403).json({ error: "Limite mensuelle atteinte" });
         }
+        if (!req.body.clientId) {
+          return res.status(400).json({ error: "clientId is required" });
+        }
         const project = await storage.createProject({
           ...req.body,
           tailorId: tailor.id,

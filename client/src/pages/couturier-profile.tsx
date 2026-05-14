@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState, useRef } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,27 +7,119 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PortfolioCard, PortfolioCardSkeleton } from "@/components/portfolio-card";
 import { ReviewCard, ReviewCardSkeleton } from "@/components/review-card";
 import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
-import { 
-  Star, 
-  MapPin, 
-  BadgeCheck, 
-  MessageCircle, 
-  Calendar, 
-  Clock, 
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import {
+  Star,
+  MapPin,
+  BadgeCheck,
+  MessageCircle,
+  Calendar,
+  Clock,
   ArrowLeft,
   Share2,
-  Heart
+  Heart,
+  Camera,
+  Euro,
+  X
 } from "lucide-react";
 import type { TailorWithUser, PortfolioWithTailor, ReviewWithUser } from "@shared/schema";
 
 export default function CouturierProfile() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [, params] = useRoute("/profil-pro/:id");
   const tailorId = params?.id;
+
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingTime, setBookingTime] = useState("");
+  const [bookingMessage, setBookingMessage] = useState("");
+  const [bookingType, setBookingType] = useState("consultation");
+
+  const [devisOpen, setDevisOpen] = useState(false);
+  const [devisDescription, setDevisDescription] = useState("");
+  const [devisGarment, setDevisGarment] = useState("");
+  const [devisPhoto, setDevisPhoto] = useState<string | null>(null);
+  const [devisRequestedPrice, setDevisRequestedPrice] = useState("");
+  const [devisClientDeadline, setDevisClientDeadline] = useState("");
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDevisPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setDevisPhoto(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const resetDevisForm = () => {
+    setDevisDescription("");
+    setDevisGarment("");
+    setDevisPhoto(null);
+    setDevisRequestedPrice("");
+    setDevisClientDeadline("");
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
+
+  const bookingMutation = useMutation({
+    mutationFn: () => {
+      if (!bookingDate || !bookingTime) throw new Error("Champs requis");
+      const scheduledAt = new Date(`${bookingDate}T${bookingTime}:00`).toISOString();
+      return apiRequest("POST", "/api/appointments", {
+        tailorId,
+        type: bookingType,
+        scheduledAt,
+        duration: 60,
+        notes: bookingMessage || null,
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Rendez-vous demandé", description: `Votre demande pour le ${bookingDate} à ${bookingTime} a été envoyée.` });
+      queryClient.invalidateQueries({ queryKey: ["/api/client/appointments"] });
+      setBookingOpen(false);
+      setBookingDate("");
+      setBookingTime("");
+      setBookingMessage("");
+    },
+    onError: (err: any) => {
+      toast({ title: "Erreur", description: err?.message || "Impossible d'envoyer la demande.", variant: "destructive" });
+    },
+  });
+
+  const devisMutation = useMutation({
+    mutationFn: () => {
+      if (!devisDescription) throw new Error("Description requise");
+      return apiRequest("POST", "/api/projects", {
+        tailorId,
+        title: devisGarment || "Demande de devis",
+        description: devisDescription,
+        clothingType: devisGarment || null,
+        requestedPrice: devisRequestedPrice ? parseFloat(devisRequestedPrice) : null,
+        modelPhotoUrl: devisPhoto || null,
+        clientDeadline: devisClientDeadline || null,
+        status: "pending",
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Devis demandé", description: "Votre demande de devis a été envoyée au couturier." });
+      queryClient.invalidateQueries({ queryKey: ["/api/client/projects"] });
+      setDevisOpen(false);
+      resetDevisForm();
+    },
+    onError: (err: any) => {
+      toast({ title: "Erreur", description: err?.message || "Impossible d'envoyer la demande.", variant: "destructive" });
+    },
+  });
 
   const { data: tailor, isLoading: tailorLoading } = useQuery<TailorWithUser>({
     queryKey: ["/api/tailors", tailorId],
@@ -75,6 +168,8 @@ export default function CouturierProfile() {
     );
   }
 
+  const tailorName = `${tailor.user.firstName || ''} ${tailor.user.lastName || ''}`.trim() || 'Couturier';
+
   return (
     <div className="min-h-screen bg-white">
       <header className="border-b border-border sticky top-0 z-50 bg-white">
@@ -106,7 +201,7 @@ export default function CouturierProfile() {
       <div className="relative h-48 md:h-64">
         <img
           src={tailor.coverImageUrl || `https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&h=400&fit=crop`}
-          alt={`${tailor.user.firstName || ''} ${tailor.user.lastName || ''}`.trim()}
+          alt={tailorName}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -115,16 +210,16 @@ export default function CouturierProfile() {
       <div className="px-4 lg:px-6 -mt-16 relative z-10 max-w-4xl mx-auto">
         <div className="flex items-end gap-4">
           <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
-            <AvatarImage src={tailor.user.profileImageUrl || undefined} alt={`${tailor.user.firstName || ''} ${tailor.user.lastName || ''}`.trim()} />
+            <AvatarImage src={tailor.user.profileImageUrl || undefined} alt={tailorName} />
             <AvatarFallback className="bg-[#601B28] text-white text-2xl">
               {`${tailor.user.firstName?.[0] || ''}${tailor.user.lastName?.[0] || ''}`.toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          
+
           <div className="flex-1 pt-4">
             <div className="flex items-center gap-2">
               <h1 className="font-serif text-2xl lg:text-3xl text-foreground">
-                {`${tailor.user.firstName || ''} ${tailor.user.lastName || ''}`.trim() || 'Couturier'}
+                {tailorName}
               </h1>
               {tailor.isVerified && (
                 <BadgeCheck className="h-6 w-6 text-primary" fill="currentColor" />
@@ -141,7 +236,7 @@ export default function CouturierProfile() {
                 <span>{tailor.user.location}</span>
               </div>
             )}
-            
+
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
               <span className="font-medium">{tailor.rating?.toFixed(1) || "Nouveau"}</span>
@@ -149,7 +244,7 @@ export default function CouturierProfile() {
                 <span className="text-muted-foreground">({tailor.reviewCount} Avis)</span>
               )}
             </div>
-            
+
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <Clock className="h-4 w-4" />
               <span>Disponible</span>
@@ -159,8 +254,8 @@ export default function CouturierProfile() {
           {tailor.specialties && tailor.specialties.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-4">
               {tailor.specialties.map((specialty) => (
-                <Badge 
-                  key={specialty} 
+                <Badge
+                  key={specialty}
                   variant="secondary"
                   className="bg-[#f8f5f5] text-[#601B28] border border-[#601B28]/20"
                 >
@@ -177,16 +272,30 @@ export default function CouturierProfile() {
           )}
 
           <div className="bg-muted border border-border rounded-lg p-4">
-            <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              <Link href={`/messages?tailor=${tailorId}`}>
-                <Button className="bg-[#601B28] hover:bg-[#4E1522] text-white w-full sm:w-auto" data-testid="button-contact-tailor">
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Envoyer un message
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Link href={`/messages?tailor=${tailorId}`} className="flex-1">
+                  <Button className="bg-[#601B28] hover:bg-[#4E1522] text-white w-full" data-testid="button-contact-tailor">
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Envoyer un message
+                  </Button>
+                </Link>
+                <Button
+                  variant="outline"
+                  className="flex-1 border-primary text-primary"
+                  data-testid="button-book-appointment"
+                  onClick={() => setBookingOpen(true)}
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Prendre rendez-vous
                 </Button>
-              </Link>
-              <Button variant="outline" className="border-primary text-primary w-full sm:w-auto" data-testid="button-book-appointment">
-                <Calendar className="h-4 w-4 mr-2" />
-                Prendre rendez-vous
+              </div>
+              <Button
+                className="w-full bg-white border border-[#601B28] text-[#601B28] hover:bg-[#601B28]/5"
+                data-testid="button-request-quote"
+                onClick={() => setDevisOpen(true)}
+              >
+                Demander un devis
               </Button>
             </div>
           </div>
@@ -243,8 +352,201 @@ export default function CouturierProfile() {
           </TabsContent>
         </Tabs>
       </div>
-      
+
       <div className="h-8" />
+
+      <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Prendre rendez-vous</DialogTitle>
+            <DialogDescription>
+              Choisissez une date et une heure pour rencontrer {tailorName}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Type de rendez-vous</Label>
+              <Select value={bookingType} onValueChange={setBookingType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="consultation">Consultation</SelectItem>
+                  <SelectItem value="measurements">Prise de mesures</SelectItem>
+                  <SelectItem value="fitting">Essayage</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="booking-date">Date</Label>
+              <Input
+                id="booking-date"
+                type="date"
+                value={bookingDate}
+                onChange={(e) => setBookingDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="booking-time">Heure</Label>
+              <Select value={bookingTime} onValueChange={setBookingTime}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionnez une heure" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="09:00">09:00</SelectItem>
+                  <SelectItem value="10:00">10:00</SelectItem>
+                  <SelectItem value="11:00">11:00</SelectItem>
+                  <SelectItem value="14:00">14:00</SelectItem>
+                  <SelectItem value="15:00">15:00</SelectItem>
+                  <SelectItem value="16:00">16:00</SelectItem>
+                  <SelectItem value="17:00">17:00</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="booking-message">Message (optionnel)</Label>
+              <Input
+                id="booking-message"
+                placeholder="Décrivez brièvement votre besoin..."
+                value={bookingMessage}
+                onChange={(e) => setBookingMessage(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setBookingOpen(false)}
+              disabled={bookingMutation.isPending}
+            >
+              Annuler
+            </Button>
+            <Button
+              className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
+              onClick={() => bookingMutation.mutate()}
+              disabled={bookingMutation.isPending || !bookingDate || !bookingTime}
+            >
+              {bookingMutation.isPending ? "Envoi…" : "Confirmer"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={devisOpen} onOpenChange={(open) => { setDevisOpen(open); if (!open) resetDevisForm(); }}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Demander un devis</DialogTitle>
+            <DialogDescription>
+              Décrivez votre projet à {tailorName} pour recevoir un devis personnalisé.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="devis-garment">Type de vêtement / projet</Label>
+              <Input
+                id="devis-garment"
+                placeholder="Ex: Robe de mariée, costume, retouche..."
+                value={devisGarment}
+                onChange={(e) => setDevisGarment(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="devis-description">Description du projet *</Label>
+              <Textarea
+                id="devis-description"
+                placeholder="Décrivez vos besoins, matières souhaitées, délais, inspirations..."
+                value={devisDescription}
+                onChange={(e) => setDevisDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="devis-deadline">Date limite souhaitée (optionnel)</Label>
+              <Input
+                id="devis-deadline"
+                type="date"
+                min={new Date().toISOString().slice(0, 10)}
+                value={devisClientDeadline}
+                onChange={(e) => setDevisClientDeadline(e.target.value)}
+              />
+              {devisClientDeadline && (() => {
+                const days = Math.ceil((new Date(devisClientDeadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                return days <= 7 ? (
+                  <p className="text-xs text-red-600 flex items-center gap-1">
+                    ⚡ Délai urgent — une majoration de 20% sera appliquée
+                  </p>
+                ) : null;
+              })()}
+            </div>
+            <div className="space-y-2">
+              <Label>Photo d'inspiration (optionnel)</Label>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleDevisPhoto}
+              />
+              {devisPhoto ? (
+                <div className="relative rounded-lg overflow-hidden border border-gray-200">
+                  <img src={devisPhoto} alt="Inspiration" className="w-full h-36 object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => { setDevisPhoto(null); if (photoInputRef.current) photoInputRef.current.value = ""; }}
+                    className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded-full p-1 shadow"
+                  >
+                    <X className="h-4 w-4 text-gray-600" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  className="w-full h-24 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-[#601B28]/40 hover:text-[#601B28] transition-colors"
+                >
+                  <Camera className="h-6 w-6" />
+                  <span className="text-xs">Ajouter une photo d'inspiration</span>
+                </button>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="devis-price">Budget estimé (optionnel)</Label>
+              <div className="relative">
+                <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="devis-price"
+                  type="number"
+                  placeholder="Votre budget approximatif"
+                  value={devisRequestedPrice}
+                  onChange={(e) => setDevisRequestedPrice(e.target.value)}
+                  className="pl-9"
+                  min="0"
+                />
+              </div>
+              <p className="text-xs text-gray-400">Le professionnel pourra ajuster ce montant dans son devis.</p>
+            </div>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => { setDevisOpen(false); resetDevisForm(); }}
+              disabled={devisMutation.isPending}
+            >
+              Annuler
+            </Button>
+            <Button
+              className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
+              onClick={() => devisMutation.mutate()}
+              disabled={devisMutation.isPending || !devisDescription}
+            >
+              {devisMutation.isPending ? "Envoi…" : "Envoyer la demande"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
