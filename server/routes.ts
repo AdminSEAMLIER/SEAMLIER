@@ -1407,7 +1407,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/portfolio", requireAuth, async (req: any, res) => {
+  app.post("/api/tailors/portfolio", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
       const tailor = await storage.getTailorByUserId(userId);
@@ -1425,7 +1425,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/portfolio/:id", requireAuth, async (req: any, res) => {
+  app.delete("/api/tailors/portfolio/:id", requireAuth, async (req: any, res) => {
     try {
       await storage.deletePortfolioItem(req.params.id);
       res.status(204).send();

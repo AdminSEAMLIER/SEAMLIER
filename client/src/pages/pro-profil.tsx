@@ -184,7 +184,7 @@ export default function ProProfil() {
 
   const addPortfolioMutation = useMutation({
     mutationFn: async (data: { imageUrl: string; title: string; category?: string }) => {
-      const res = await apiRequest("POST", "/api/portfolio", data);
+      const res = await apiRequest("POST", "/api/tailors/portfolio", data);
       return res.json();
     },
     onSuccess: () => {
@@ -203,7 +203,7 @@ export default function ProProfil() {
 
   const deletePortfolioMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/portfolio/${id}`);
+      await apiRequest("DELETE", `/api/tailors/portfolio/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tailors/portfolio"] });
