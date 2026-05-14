@@ -51,6 +51,9 @@ export async function registerRoutes(
   app: Express
 ): Promise<any> {
 
+  // Stripe routes registered first — must come before any catch-all middleware
+  registerStripeRoutes(app);
+
   // ===== Professional Plan Routes =====
 
   app.get("/api/professionnel/plan", requireAuth, async (req, res) => {
@@ -3512,8 +3515,6 @@ export async function registerRoutes(
       res.status(500).json({ error: "Failed to delete account" });
     }
   });
-
-  registerStripeRoutes(app);
 
   return httpServer;
 }
