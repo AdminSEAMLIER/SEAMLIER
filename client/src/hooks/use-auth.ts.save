@@ -62,7 +62,31 @@ export function useAuth() {
     retry: false,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    initialData: () => getCachedUser() ?? undefined,
+    initialData: const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
+
+  const { data: user, isLoading, error } = useQuery<User | null>({
+    queryKey: ["auth-user"],
+    queryFn: fetchUser,
+    retry: false,   
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    initialData: getCachedUser,
+    initialDataUpdatedAt: () => getCachedUser() ? Date.now() : 0,
+  });
+  
+  const logoutMutation = useMutation({
+    mutationFn: logoutRequest,
+    onSuccess: () => {
+      setCachedUser(null);
+      queryClient.setQueryData(["auth-user"], null);
+      setLocation("/connexion");
+                                                                                      
+      
+^G Get Help    ^O WriteOut    ^R Read File   ^Y Prev Pg     ^K Cut Text    ^C Cur Pos 
+    
+^X Exit        ^J Justify     ^W Where is    ^V Next Pg     ^U UnCut Text  ^T To 
+Spell  ,
     initialDataUpdatedAt: () => getCachedUser() ? Date.now() : 0,
   });
 
