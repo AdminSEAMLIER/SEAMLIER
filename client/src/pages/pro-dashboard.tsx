@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useSearch, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { QRCodeSVG } from "qrcode.react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,9 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
+  QrCode,
+  Copy,
+  ExternalLink,
 } from "lucide-react";
 
 const MONTH_NAMES_FR = [
@@ -49,6 +53,7 @@ export default function ProDashboard() {
   const [, navigate] = useLocation();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showConfirmStep, setShowConfirmStep] = useState(false);
+  const [showQrDialog, setShowQrDialog] = useState(false);
 
   const now = new Date();
   const [statsMonth, setStatsMonth] = useState(now.getMonth()); // 0-indexed
@@ -532,7 +537,104 @@ export default function ProDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {planData?.tailorId && (
+          <Card className="border border-gray-100 bg-white shadow-sm" data-testid="card-qr-code">
+            <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+              <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
+                <QrCode className="h-5 w-5" />
+                Mon profil public
+              </CardTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-[#601B28] border-[#601B28]/30"
+                onClick={() => setShowQrDialog(true)}
+                data-testid="button-show-qr"
+              >
+                Agrandir
+              </Button>
+            </CardHeader>
+            <CardContent className="bg-white">
+              <div className="flex items-center gap-4">
+                <div
+                  className="flex-shrink-0 p-2 bg-white border border-gray-200 rounded-lg cursor-pointer"
+                  onClick={() => setShowQrDialog(true)}
+                >
+                  <QRCodeSVG
+                    value={`${window.location.origin}/couturier/${planData.tailorId}`}
+                    size={80}
+                    fgColor="#601B28"
+                    bgColor="#ffffff"
+                    level="M"
+                  />
+                </div>
+                <div className="flex-1 min-w-0 space-y-2">
+                  <p className="text-sm text-gray-500">Partagez votre profil avec vos clients.</p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 text-xs"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/couturier/${planData.tailorId}`);
+                        toast({ title: "Lien copié !" });
+                      }}
+                      data-testid="button-copy-profile-link"
+                    >
+                      <Copy className="h-3 w-3 mr-1" />
+                      Copier le lien
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      asChild
+                    >
+                      <a href={`/couturier/${planData.tailorId}`} target="_blank" rel="noreferrer" data-testid="link-open-profile">
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
+
+      <Dialog open={showQrDialog} onOpenChange={setShowQrDialog}>
+        <DialogContent className="max-w-xs bg-white text-center" data-testid="dialog-qr-code">
+          <DialogHeader>
+            <DialogTitle className="text-[#601B28]">Mon QR Code profil</DialogTitle>
+            <DialogDescription>Faites scanner ce code pour accéder à votre profil public.</DialogDescription>
+          </DialogHeader>
+          {planData?.tailorId && (
+            <div className="flex flex-col items-center gap-4 py-2">
+              <div className="p-4 bg-white border border-gray-200 rounded-xl inline-block">
+                <QRCodeSVG
+                  value={`${window.location.origin}/couturier/${planData.tailorId}`}
+                  size={200}
+                  fgColor="#601B28"
+                  bgColor="#ffffff"
+                  level="M"
+                />
+              </div>
+              <Button
+                className="w-full bg-[#601B28] hover:bg-[#4E1522] text-white"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/couturier/${planData.tailorId}`);
+                  toast({ title: "Lien copié !" });
+                }}
+                data-testid="button-copy-qr-link"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copier le lien
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showUpgradeModal} onOpenChange={(open) => { setShowUpgradeModal(open); if (!open) setShowConfirmStep(false); }}>
         <DialogContent className="sm:max-w-md bg-white" data-testid="dialog-pro-upgrade">

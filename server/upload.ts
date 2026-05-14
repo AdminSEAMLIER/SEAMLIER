@@ -2,7 +2,11 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-export const uploadsDir = path.join(process.cwd(), "uploads");
+// On Railway, RAILWAY_VOLUME_MOUNT_PATH points to the persistent volume.
+// Fall back to /app/uploads in production (if volume is mounted there), then local.
+export const uploadsDir =
+  process.env.UPLOADS_DIR ||
+  (process.env.RAILWAY_ENVIRONMENT ? "/app/uploads" : path.join(process.cwd(), "uploads"));
 const docsDir = path.join(uploadsDir, "docs");
 const contractsDir = path.join(uploadsDir, "contracts");
 

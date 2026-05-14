@@ -3513,6 +3513,8 @@ export async function registerRoutes(
     }
   });
 
+  registerStripeRoutes(app);
+
   return httpServer;
 }
 
