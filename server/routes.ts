@@ -7,7 +7,7 @@ import { db, pool } from "./db";
 import { eq } from "drizzle-orm";
 import { tailors, users, insertEventSchema } from "../shared/schema";
 import { randomUUID } from "crypto";
-import { uploadDoc } from "./upload";
+import { uploadDoc, uploadPortfolio, uploadsDir } from "./upload";
 import { generateProjectContract } from "./contract";
 import {
   sendNewMessageEmail,
@@ -1410,22 +1410,34 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/tailors/portfolio", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const tailor = await storage.getTailorByUserId(userId);
-      if (!tailor) {
-        return res.status(403).json({ error: "Not a tailor" });
+  app.post("/api/tailors/portfolio", requireAuth, (req: any, res, next) => {
+    uploadPortfolio(req, res, async (err) => {
+      if (err) {
+        return res.status(400).json({ error: err.message || "Erreur d'upload" });
       }
-      const item = await storage.createPortfolioItem({
-        ...req.body,
-        tailorId: tailor.id,
-      });
-      res.status(201).json(item);
-    } catch (error) {
-      console.error("Failed to add portfolio item:", error);
-      res.status(500).json({ error: "Failed to add portfolio item" });
-    }
+      try {
+        const userId = req.authUserId;
+        const tailor = await storage.getTailorByUserId(userId);
+        if (!tailor) {
+          return res.status(403).json({ error: "Not a tailor" });
+        }
+        if (!req.file) {
+          return res.status(400).json({ error: "Image requise" });
+        }
+        const imageUrl = `/uploads/portfolio/${req.file.filename}`;
+        const item = await storage.createPortfolioItem({
+          tailorId: tailor.id,
+          imageUrl,
+          title: req.body.title || "Sans titre",
+          category: req.body.category || null,
+          description: req.body.description || null,
+        });
+        res.status(201).json(item);
+      } catch (error) {
+        console.error("Failed to add portfolio item:", error);
+        res.status(500).json({ error: "Failed to add portfolio item" });
+      }
+    });
   });
 
   app.delete("/api/tailors/portfolio/:id", requireAuth, async (req: any, res) => {

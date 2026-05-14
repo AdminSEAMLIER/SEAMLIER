@@ -174,7 +174,8 @@ export default function ProProfil() {
   const [isAddingPortfolio, setIsAddingPortfolio] = useState(false);
   const [newPortfolioTitle, setNewPortfolioTitle] = useState("");
   const [newPortfolioCategory, setNewPortfolioCategory] = useState("");
-  const [newPortfolioImage, setNewPortfolioImage] = useState<string>("");
+  const [newPortfolioFile, setNewPortfolioFile] = useState<File | null>(null);
+  const [newPortfolioPreview, setNewPortfolioPreview] = useState<string>("");
   const portfolioInputRef = useRef<HTMLInputElement>(null);
 
   const { data: portfolioItems = [], isLoading: portfolioLoading } = useQuery<any[]>({
@@ -183,8 +184,20 @@ export default function ProProfil() {
   });
 
   const addPortfolioMutation = useMutation({
-    mutationFn: async (data: { imageUrl: string; title: string; category?: string }) => {
-      const res = await apiRequest("POST", "/api/tailors/portfolio", data);
+    mutationFn: async (file: File) => {
+      const fd = new FormData();
+      fd.append("image", file);
+      fd.append("title", newPortfolioTitle.trim() || "Sans titre");
+      if (newPortfolioCategory.trim()) fd.append("category", newPortfolioCategory.trim());
+      const res = await fetch("/api/tailors/portfolio", {
+        method: "POST",
+        body: fd,
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || res.statusText);
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -195,7 +208,9 @@ export default function ProProfil() {
       setIsAddingPortfolio(false);
       setNewPortfolioTitle("");
       setNewPortfolioCategory("");
-      setNewPortfolioImage("");
+      setNewPortfolioFile(null);
+      if (newPortfolioPreview) URL.revokeObjectURL(newPortfolioPreview);
+      setNewPortfolioPreview("");
       toast({ title: "Photo ajoutée !", description: "Votre portfolio a été mis à jour." });
     },
     onError: () => toast({ title: "Erreur", description: "Impossible d'ajouter la photo.", variant: "destructive" }),
@@ -222,13 +237,13 @@ export default function ProProfil() {
       toast({ title: "Image trop lourde", description: "Max 8 Mo", variant: "destructive" });
       return;
     }
-    const reader = new FileReader();
-    reader.onloadend = () => setNewPortfolioImage(reader.result as string);
-    reader.readAsDataURL(file);
+    if (newPortfolioPreview) URL.revokeObjectURL(newPortfolioPreview);
+    setNewPortfolioFile(file);
+    setNewPortfolioPreview(URL.createObjectURL(file));
   };
 
   const handleAddPortfolio = () => {
-    if (!newPortfolioImage) {
+    if (!newPortfolioFile) {
       toast({ title: "Image requise", description: "Veuillez sélectionner une photo.", variant: "destructive" });
       return;
     }
@@ -236,11 +251,7 @@ export default function ProProfil() {
       toast({ title: "Titre requis", description: "Veuillez donner un titre.", variant: "destructive" });
       return;
     }
-    addPortfolioMutation.mutate({
-      imageUrl: newPortfolioImage,
-      title: newPortfolioTitle.trim(),
-      category: newPortfolioCategory.trim() || undefined,
-    });
+    addPortfolioMutation.mutate(newPortfolioFile);
   };
 
   const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
@@ -526,8 +537,8 @@ export default function ProProfil() {
                   className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-[#601B28] transition-colors"
                   onClick={() => portfolioInputRef.current?.click()}
                 >
-                  {newPortfolioImage ? (
-                    <img src={newPortfolioImage} alt="preview" className="w-full h-40 object-cover rounded-lg" />
+                  {newPortfolioPreview ? (
+                    <img src={newPortfolioPreview} alt="preview" className="w-full h-40 object-cover rounded-lg" />
                   ) : (
                     <div className="py-4">
                       <Camera className="h-8 w-8 text-gray-400 mx-auto mb-2" />
@@ -573,7 +584,7 @@ export default function ProProfil() {
                   <Button
                     variant="outline"
                     className="border-gray-200"
-                    onClick={() => { setIsAddingPortfolio(false); setNewPortfolioImage(""); setNewPortfolioTitle(""); setNewPortfolioCategory(""); }}
+                    onClick={() => { setIsAddingPortfolio(false); setNewPortfolioFile(null); if (newPortfolioPreview) URL.revokeObjectURL(newPortfolioPreview); setNewPortfolioPreview(""); setNewPortfolioTitle(""); setNewPortfolioCategory(""); }}
                   >
                     Annuler
                   </Button>
