@@ -98,6 +98,7 @@ export async function ensureTables() {
   // projects: delivery date for event-linked projects
   await addColumnIfMissing("projects", "delivery_date", "DATE NULL");
   await addColumnIfMissing("projects", "event_id", "VARCHAR(36) NULL");
+  await addColumnIfMissing("projects", "contract_url", "TEXT NULL");
 
   // events: add new columns if table already existed
   await addColumnIfMissing("events", "registration_deadline", "DATE NULL");
