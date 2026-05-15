@@ -99,11 +99,6 @@ export default function PrendreRdv() {
 
   const bookMutation = useMutation({
     mutationFn: async () => {
-      if (!isAuthenticated) {
-        const redirect = encodeURIComponent(window.location.href);
-        window.location.href = `/connexion?redirect=${redirect}`;
-        return;
-      }
       const r = await fetch("/api/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -116,19 +111,17 @@ export default function PrendreRdv() {
           status: "scheduled",
         }),
       });
-      if (r.status === 401) {
-        const redirect = encodeURIComponent(window.location.href);
-        window.location.href = `/connexion?redirect=${redirect}`;
-        return;
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({}));
+        throw new Error(body.error || body.message || `Erreur ${r.status}`);
       }
-      if (!r.ok) throw new Error();
       return r.json();
     },
     onSuccess: () => {
       setBooked(true);
       toast({ title: "Demande envoyée !", description: "L'artisan va confirmer votre rendez-vous." });
     },
-    onError: () => toast({ title: "Erreur", description: "Impossible de réserver ce créneau.", variant: "destructive" }),
+    onError: (err: any) => toast({ title: "Erreur", description: err?.message || "Impossible de réserver ce créneau.", variant: "destructive" }),
   });
 
   if (!tailorUserId) {

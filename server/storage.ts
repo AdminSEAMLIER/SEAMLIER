@@ -586,28 +586,32 @@ class DatabaseStorage implements IStorage {
   }
 
   async getProject(id: string): Promise<ProjectWithClient | undefined> {
-    const result = await db.select()
-      .from(projects)
-      .leftJoin(users, eq(projects.clientId, users.id))
-      .where(eq(projects.id, id));
-
-    if (!result || result.length === 0) return undefined;
-    return { ...result[0].projects, client: result[0].users ?? null };
+    const [projectRows] = await pool.query(`SELECT * FROM projects WHERE id = ?`, [id]) as any[];
+    const project = (projectRows as any[])[0];
+    if (!project) return undefined;
+    let client = null;
+    if (project.client_id) {
+      const [userRows] = await pool.query(`SELECT * FROM users WHERE id = ?`, [project.client_id]) as any[];
+      client = (userRows as any[])[0] ?? null;
+    }
+    return { ...project, client };
   }
 
   async createProject(project: InsertProject): Promise<Project> {
     const id = generateUUID();
     await db.insert(projects).values({ ...project, id });
-    const result = await db.select().from(projects).where(eq(projects.id, id));
-    return result[0];
+    // Use raw SQL SELECT * to avoid Drizzle generating column names that may not
+    // yet exist in the live DB (e.g. contract_url added by ensureTables at boot).
+    const [rows] = await pool.query(`SELECT * FROM projects WHERE id = ?`, [id]) as any[];
+    return (rows as any[])[0];
   }
 
   async updateProject(id: string, updates: Partial<InsertProject>): Promise<Project | undefined> {
     await db.update(projects)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(projects.id, id));
-    const result = await db.select().from(projects).where(eq(projects.id, id));
-    return result[0];
+    const [rows] = await pool.query(`SELECT * FROM projects WHERE id = ?`, [id]) as any[];
+    return (rows as any[])[0];
   }
 
   async getAppointmentsByTailor(tailorId: string): Promise<AppointmentWithClient[]> {
