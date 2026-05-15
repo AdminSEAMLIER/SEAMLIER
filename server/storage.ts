@@ -123,6 +123,15 @@ function generateUUID(): string {
   });
 }
 
+function snakeToCamel(row: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const [k, v] of Object.entries(row)) {
+    const camel = k.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+    result[camel] = v;
+  }
+  return result;
+}
+
 function parseTailorSpecialties<T extends Record<string, any>>(tailor: T): T {
   if (!tailor) return tailor;
   if (typeof tailor.specialties === 'string') {
@@ -592,9 +601,10 @@ class DatabaseStorage implements IStorage {
     let client = null;
     if (project.client_id) {
       const [userRows] = await pool.query(`SELECT * FROM users WHERE id = ?`, [project.client_id]) as any[];
-      client = (userRows as any[])[0] ?? null;
+      const rawClient = (userRows as any[])[0] ?? null;
+      client = rawClient ? snakeToCamel(rawClient) : null;
     }
-    return { ...project, client };
+    return { ...snakeToCamel(project), client } as any;
   }
 
   async createProject(project: InsertProject): Promise<Project> {
@@ -603,7 +613,7 @@ class DatabaseStorage implements IStorage {
     // Use raw SQL SELECT * to avoid Drizzle generating column names that may not
     // yet exist in the live DB (e.g. contract_url added by ensureTables at boot).
     const [rows] = await pool.query(`SELECT * FROM projects WHERE id = ?`, [id]) as any[];
-    return (rows as any[])[0];
+    return snakeToCamel((rows as any[])[0]) as any;
   }
 
   async updateProject(id: string, updates: Partial<InsertProject>): Promise<Project | undefined> {
@@ -611,7 +621,7 @@ class DatabaseStorage implements IStorage {
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(projects.id, id));
     const [rows] = await pool.query(`SELECT * FROM projects WHERE id = ?`, [id]) as any[];
-    return (rows as any[])[0];
+    return snakeToCamel((rows as any[])[0]) as any;
   }
 
   async getAppointmentsByTailor(tailorId: string): Promise<AppointmentWithClient[]> {

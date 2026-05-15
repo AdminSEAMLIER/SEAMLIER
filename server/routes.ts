@@ -3023,8 +3023,7 @@ export async function registerRoutes(
       if (!tailor) return res.status(403).json({ error: "Not a tailor" });
 
       const [rows] = await pool.query(
-        `SELECT siret, kbis_url, kbis_expiry_date, id_card_url, rc_pro_url, iban_rib, dossier_status, dossier_rejection_reason
-         FROM tailors WHERE id = ?`,
+        `SELECT * FROM tailors WHERE id = ?`,
         [tailor.id]
       ) as any[];
       const row = Array.isArray(rows) && rows[0] ? rows[0] : {};
