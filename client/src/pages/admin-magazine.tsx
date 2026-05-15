@@ -19,7 +19,8 @@ import {
   User, Building2, Phone, CreditCard, Briefcase, Hash,
   Globe, Bell, Palette, Shield, Database, Key, ToggleLeft,
   Bold, Italic, Underline, Star, Package, ArrowDownCircle,
-  Euro, BarChart3, FolderOpen, ExternalLink, Flag
+  Euro, BarChart3, FolderOpen, ExternalLink, Flag,
+  CalendarCheck, Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -81,6 +82,8 @@ type Artisan = {
   bio: string;
   subscriptionPlan: string;
   paymentStatus: string;
+  subscriptionCurrentPeriodEnd?: number | null;
+  stripeSubscriptionId?: string | null;
 };
 
 type ReplyMessage = {
@@ -263,6 +266,15 @@ export default function AdminDashboard() {
     subscriptionPlan: "Starter", paymentStatus: "En attente",
   });
 
+  const [editProjectId, setEditProjectId] = useState<string | null>(null);
+  const [editProjectStatus, setEditProjectStatus] = useState("");
+  const [editProjectAmount, setEditProjectAmount] = useState("");
+  const [editProjectNotes, setEditProjectNotes] = useState("");
+  const [refundDialogProjectId, setRefundDialogProjectId] = useState<string | null>(null);
+  const [refundPending, setRefundPending] = useState(false);
+  const [cancelSubArtisanId, setCancelSubArtisanId] = useState<string | null>(null);
+  const [cancelSubPending, setCancelSubPending] = useState(false);
+
   const [settingsPlatformName, setSettingsPlatformName] = useState("SEAMLiER");
   const [settingsContactEmail, setSettingsContactEmail] = useState("contact@seamlier.fr");
   const [settingsSupportEmail, setSettingsSupportEmail] = useState("support@seamlier.fr");
@@ -357,6 +369,8 @@ export default function AdminDashboard() {
       bio: a.bio || "",
       subscriptionPlan: a.subscriptionPlan || "Starter",
       paymentStatus: a.paymentStatus || "En attente",
+      subscriptionCurrentPeriodEnd: a.subscriptionCurrentPeriodEnd ?? null,
+      stripeSubscriptionId: a.stripeSubscriptionId ?? null,
     })),
   [dbArtisans]);
 
@@ -991,6 +1005,7 @@ export default function AdminDashboard() {
     { label: "Devis en cours", icon: FileText, id: "pending-quotes" },
     { label: "Projets", icon: ShoppingBag, id: "projects" },
     { label: "Paiements", icon: Euro, id: "payments" },
+    { label: "Rendez-vous", icon: CalendarCheck, id: "appointments" },
     { label: "Planning", icon: Calendar, id: "planning" },
     { label: "Abonnements", icon: CreditCard, id: "subscriptions" },
     { label: "Messagerie", icon: MessageSquare, id: "messaging" },
@@ -1370,9 +1385,26 @@ export default function AdminDashboard() {
                 };
                 return (
                   <>
-                    <div>
-                      <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900">Paiements</h1>
-                      <p className="text-gray-500 mt-1 text-sm">Transactions et commissions SEAMLiER (10%)</p>
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                      <div>
+                        <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900">Paiements</h1>
+                        <p className="text-gray-500 mt-1 text-sm">Transactions et commissions SEAMLiER (10%)</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5 text-xs"
+                        onClick={() => {
+                          const headers = ["Projet", "Client", "Artisan", "Montant client", "Commission", "Montant artisan", "Statut", "Date"];
+                          const rows = filteredPayments.map((p: any) => [p.title, p.client, p.tailor, p.amountClient.toFixed(2), p.commission.toFixed(2), p.amountArtisan.toFixed(2), p.paymentStatus, p.createdAt]);
+                          const csv = [headers, ...rows].map(r => r.map((v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+                          const blob = new Blob([csv], { type: "text/csv" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a"); a.href = url; a.download = "paiements.csv"; a.click(); URL.revokeObjectURL(url);
+                        }}
+                      >
+                        <Download className="h-3.5 w-3.5" /> Exporter CSV
+                      </Button>
                     </div>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                       {[
@@ -1429,6 +1461,7 @@ export default function AdminDashboard() {
                               <th className="px-4 py-3 text-right">Montant artisan</th>
                               <th className="px-4 py-3 text-center">Statut Stripe</th>
                               <th className="px-4 py-3 text-left">Date</th>
+                              <th className="px-4 py-3 text-center">Action</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-50">
@@ -1446,10 +1479,23 @@ export default function AdminDashboard() {
                                   </Badge>
                                 </td>
                                 <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{p.createdAt}</td>
+                                <td className="px-4 py-3 text-center">
+                                  {(p.paymentStatus === "paid" || p.paymentStatus === "client_confirmed") && p.stripePaymentIntentId && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 text-[11px] text-red-600 border-red-100 hover:bg-red-50"
+                                      onClick={() => setRefundDialogProjectId(p.id)}
+                                      data-testid={`button-refund-${p.id}`}
+                                    >
+                                      Rembourser
+                                    </Button>
+                                  )}
+                                </td>
                               </tr>
                             ))}
                             {filteredPayments.length === 0 && (
-                              <tr><td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-400">Aucun paiement trouvé</td></tr>
+                              <tr><td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-400">Aucun paiement trouvé</td></tr>
                             )}
                           </tbody>
                         </table>
@@ -1459,12 +1505,66 @@ export default function AdminDashboard() {
                 );
               })()}
 
+              {/* ===== REFUND DIALOG ===== */}
+              <Dialog open={!!refundDialogProjectId} onOpenChange={open => !open && setRefundDialogProjectId(null)}>
+                <DialogContent className="max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle className="font-serif text-red-700">Confirmer le remboursement</DialogTitle>
+                  </DialogHeader>
+                  <p className="text-sm text-gray-600 py-2">
+                    Cette action déclenchera un remboursement complet via Stripe pour ce projet. L'action est irréversible.
+                  </p>
+                  <DialogFooter>
+                    <Button variant="outline" size="sm" onClick={() => setRefundDialogProjectId(null)}>Annuler</Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      disabled={refundPending}
+                      onClick={async () => {
+                        if (!refundDialogProjectId) return;
+                        setRefundPending(true);
+                        try {
+                          await apiFetch(`/api/admin/refund/${refundDialogProjectId}`, { method: "POST" });
+                          queryClient.invalidateQueries({ queryKey: ["/api/admin/payments"] });
+                          queryClient.invalidateQueries({ queryKey: ["/api/admin/all-projects"] });
+                          toast({ title: "Remboursement effectué", description: "Le client sera remboursé sous 5 à 10 jours ouvrés." });
+                          setRefundDialogProjectId(null);
+                        } catch {
+                          toast({ title: "Erreur", description: "Impossible d'effectuer le remboursement", variant: "destructive" });
+                        } finally {
+                          setRefundPending(false);
+                        }
+                      }}
+                    >
+                      {refundPending ? "En cours..." : "Confirmer le remboursement"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
               {/* ===== PROJECTS ===== */}
               {activeTab === "projects" && (
                 <>
-                  <div>
-                    <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Projets & Séquestre</h1>
-                    <p className="text-gray-500 mt-1 text-sm">Gestion des flux financiers de la plateforme</p>
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <div>
+                      <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Projets & Séquestre</h1>
+                      <p className="text-gray-500 mt-1 text-sm">Gestion des flux financiers de la plateforme</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs"
+                      onClick={() => {
+                        const headers = ["Client", "Artisan", "Description", "Date", "Montant", "Statut paiement"];
+                        const rows = filteredProjects.map(p => [p.client, p.artisan, p.description, p.date, p.amount, (p as any).paymentStatus || ""]);
+                        const csv = [headers, ...rows].map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+                        const blob = new Blob([csv], { type: "text/csv" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a"); a.href = url; a.download = "projets.csv"; a.click(); URL.revokeObjectURL(url);
+                      }}
+                    >
+                      <Download className="h-3.5 w-3.5" /> Exporter CSV
+                    </Button>
                   </div>
                   <Card className="border-none shadow-sm overflow-hidden bg-white">
                     <div className="p-5 border-b border-gray-50 flex items-center justify-between gap-4 flex-wrap">
@@ -1525,16 +1625,32 @@ export default function AdminDashboard() {
                               </td>
                               <td className="px-5 py-3 text-right font-bold text-[#601B28]">{p.amount}</td>
                               <td className="px-5 py-3 text-center">
-                                <Button
-                                  size="sm"
-                                  variant="default"
-                                  disabled={(p as any).paymentStatus !== "client_confirmed"}
-                                  className={cn("h-8 text-[11px] font-bold", (p as any).paymentStatus === "client_confirmed" ? "bg-green-600 hover:bg-green-700" : "bg-gray-200 text-gray-400 cursor-not-allowed")}
-                                  onClick={() => (p as any).paymentStatus === "client_confirmed" && toggleSequestre(p.id)}
-                                  data-testid={`button-toggle-sequestre-${p.id}`}
-                                >
-                                  Libérer
-                                </Button>
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    disabled={(p as any).paymentStatus !== "client_confirmed"}
+                                    className={cn("h-8 text-[11px] font-bold", (p as any).paymentStatus === "client_confirmed" ? "bg-green-600 hover:bg-green-700" : "bg-gray-200 text-gray-400 cursor-not-allowed")}
+                                    onClick={() => (p as any).paymentStatus === "client_confirmed" && toggleSequestre(p.id)}
+                                    data-testid={`button-toggle-sequestre-${p.id}`}
+                                  >
+                                    Libérer
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 text-[11px] gap-1 border-gray-200 hover:bg-gray-50"
+                                    onClick={() => {
+                                      setEditProjectId(p.id);
+                                      setEditProjectStatus((p as any).rawStatus || "");
+                                      setEditProjectAmount(p.amount ? p.amount.replace(" €", "") : "");
+                                      setEditProjectNotes("");
+                                    }}
+                                    data-testid={`button-edit-project-${p.id}`}
+                                  >
+                                    <Pencil size={11} /> Modifier
+                                  </Button>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -1547,6 +1663,79 @@ export default function AdminDashboard() {
                   </Card>
                 </>
               )}
+
+              {/* ===== EDIT PROJECT DIALOG ===== */}
+              <Dialog open={!!editProjectId} onOpenChange={open => !open && setEditProjectId(null)}>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="font-serif">Modifier le projet</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-2">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">Statut</label>
+                      <select
+                        value={editProjectStatus}
+                        onChange={e => setEditProjectStatus(e.target.value)}
+                        className="w-full h-9 rounded-md border border-gray-200 px-3 text-sm"
+                      >
+                        <option value="">— Inchangé —</option>
+                        <option value="pending">En attente (pending)</option>
+                        <option value="quoted">Devis envoyé (quoted)</option>
+                        <option value="in_progress">En cours (in_progress)</option>
+                        <option value="completed">Terminé (completed)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">Montant (€)</label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={editProjectAmount}
+                        onChange={e => setEditProjectAmount(e.target.value)}
+                        placeholder="Montant en euros"
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">Notes admin</label>
+                      <Textarea
+                        value={editProjectNotes}
+                        onChange={e => setEditProjectNotes(e.target.value)}
+                        placeholder="Notes internes (non visibles par les utilisateurs)"
+                        className="min-h-[80px] resize-none text-sm"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" size="sm" onClick={() => setEditProjectId(null)}>Annuler</Button>
+                    <Button
+                      size="sm"
+                      className="bg-[#601B28] hover:bg-[#4E1522]"
+                      onClick={async () => {
+                        if (!editProjectId) return;
+                        const body: any = {};
+                        if (editProjectStatus) body.status = editProjectStatus;
+                        if (editProjectAmount) body.amount = editProjectAmount;
+                        if (editProjectNotes) body.adminNotes = editProjectNotes;
+                        try {
+                          await apiFetch(`/api/admin/projects/${editProjectId}`, {
+                            method: "PATCH",
+                            body: JSON.stringify(body),
+                          });
+                          queryClient.invalidateQueries({ queryKey: ["/api/admin/all-projects"] });
+                          toast({ title: "Projet mis à jour" });
+                          setEditProjectId(null);
+                        } catch {
+                          toast({ title: "Erreur", description: "Impossible de modifier le projet", variant: "destructive" });
+                        }
+                      }}
+                    >
+                      Enregistrer
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
 
               {/* ===== MESSAGING ===== */}
               {activeTab === "messaging" && (
@@ -1647,6 +1836,83 @@ export default function AdminDashboard() {
                     </Card>
                   </div>
 
+                </>
+              )}
+
+              {/* ===== RENDEZ-VOUS ===== */}
+              {activeTab === "appointments" && (
+                <>
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <div>
+                      <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Rendez-vous</h1>
+                      <p className="text-gray-500 mt-1 text-sm">Tous les rendez-vous entre clients et artisans</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs"
+                      onClick={() => {
+                        const headers = ["Date", "Heure", "Client", "Artisan", "Type RDV", "Statut"];
+                        const rows = planningEvents.map(e => [e.date, e.time, e.client, e.artisan, e.title, e.status]);
+                        const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+                        const blob = new Blob([csv], { type: "text/csv" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a"); a.href = url; a.download = "rendez-vous.csv"; a.click(); URL.revokeObjectURL(url);
+                      }}
+                    >
+                      <Download className="h-3.5 w-3.5" /> Exporter CSV
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {[
+                      { label: "Total RDV", value: planningEvents.length, color: "text-[#601B28]", bg: "bg-[#601B28]/5" },
+                      { label: "Confirmés", value: planningEvents.filter(e => e.status === "Confirmé").length, color: "text-green-600", bg: "bg-green-50" },
+                      { label: "En attente", value: planningEvents.filter(e => e.status === "En attente").length, color: "text-amber-600", bg: "bg-amber-50" },
+                      { label: "Annulés", value: planningEvents.filter(e => e.status === "Annulé").length, color: "text-red-500", bg: "bg-red-50" },
+                    ].map(s => (
+                      <Card key={s.label} className="border-none shadow-sm">
+                        <CardContent className="p-4">
+                          <p className="text-xs text-gray-500 font-medium">{s.label}</p>
+                          <p className={`text-2xl font-bold mt-0.5 ${s.color}`}>{s.value}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  <Card className="border-none shadow-sm overflow-hidden bg-white">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left" data-testid="table-appointments">
+                        <thead>
+                          <tr className="text-[11px] uppercase tracking-wider text-gray-400 bg-gray-50/30">
+                            <th className="px-5 py-3 font-bold">Date</th>
+                            <th className="px-5 py-3 font-bold">Heure</th>
+                            <th className="px-5 py-3 font-bold">Client</th>
+                            <th className="px-5 py-3 font-bold">Artisan</th>
+                            <th className="px-5 py-3 font-bold">Type RDV</th>
+                            <th className="px-5 py-3 font-bold text-center">Statut</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {planningEvents.length === 0 && (
+                            <tr><td colSpan={6} className="px-5 py-8 text-center text-sm text-gray-400">Aucun rendez-vous</td></tr>
+                          )}
+                          {planningEvents.map(ev => (
+                            <tr key={ev.id} className="hover:bg-gray-50/50 transition-colors" data-testid={`row-appointment-${ev.id}`}>
+                              <td className="px-5 py-3 text-xs text-gray-500">{ev.date}</td>
+                              <td className="px-5 py-3 text-xs font-medium">{ev.time}</td>
+                              <td className="px-5 py-3 text-sm text-gray-600">{ev.client}</td>
+                              <td className="px-5 py-3 text-sm text-gray-600">{ev.artisan}</td>
+                              <td className="px-5 py-3 text-sm font-semibold">{ev.title}</td>
+                              <td className="px-5 py-3 text-center">
+                                <Badge className={cn("text-[10px] border-none font-bold", ev.status === "Confirmé" ? "bg-green-100 text-green-700" : ev.status === "Annulé" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700")}>
+                                  {ev.status}
+                                </Badge>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </Card>
                 </>
               )}
 
@@ -2214,28 +2480,45 @@ export default function AdminDashboard() {
 
                 return (
                 <>
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div>
                       <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title-users">Utilisateurs</h1>
                       <p className="text-gray-500 mt-1 text-sm">Gestion des comptes inscrits sur la plateforme</p>
                     </div>
-                    {totalUnverified > 0 && (
+                    <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-red-200 text-red-600 hover:bg-red-50 gap-1.5"
+                        className="gap-1.5 text-xs"
                         onClick={() => {
-                          if (confirm(`Supprimer ${totalUnverified} compte(s) non activé(s) ? Cette action est irréversible.`)) {
-                            deleteUnverifiedMutation.mutate();
-                          }
+                          const headers = ["Prénom", "Nom", "Email", "Rôle", "Statut", "Inscription"];
+                          const rows = filteredUsers.map((u: any) => [u.firstName, u.lastName, u.email, u.role, u.emailVerified ? "Activé" : "En attente", u.createdAt ? new Date(u.createdAt).toLocaleDateString("fr-FR") : ""]);
+                          const csv = [headers, ...rows].map(r => r.map((v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+                          const blob = new Blob([csv], { type: "text/csv" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a"); a.href = url; a.download = "utilisateurs.csv"; a.click(); URL.revokeObjectURL(url);
                         }}
-                        disabled={deleteUnverifiedMutation.isPending}
-                        data-testid="button-delete-unverified"
                       >
-                        <Trash2 className="h-4 w-4" />
-                        Supprimer non activés ({totalUnverified})
+                        <Download className="h-3.5 w-3.5" /> Exporter CSV
                       </Button>
-                    )}
+                      {totalUnverified > 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-red-200 text-red-600 hover:bg-red-50 gap-1.5"
+                          onClick={() => {
+                            if (confirm(`Supprimer ${totalUnverified} compte(s) non activé(s) ? Cette action est irréversible.`)) {
+                              deleteUnverifiedMutation.mutate();
+                            }
+                          }}
+                          disabled={deleteUnverifiedMutation.isPending}
+                          data-testid="button-delete-unverified"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Supprimer non activés ({totalUnverified})
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -3151,6 +3434,59 @@ export default function AdminDashboard() {
                       </Card>
                     </div>
 
+                    {/* Pro artisans avec abonnement actif */}
+                    <Card className="border-none shadow-sm overflow-hidden bg-white">
+                      <div className="p-5 border-b border-gray-50">
+                        <CardTitle className="text-base font-serif">Abonnements Pro actifs</CardTitle>
+                        <p className="text-xs text-gray-500 mt-1">Artisans avec un abonnement Pro — possibilité d'annuler immédiatement</p>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                          <thead>
+                            <tr className="text-[11px] uppercase tracking-wider text-gray-400 bg-gray-50/30">
+                              <th className="px-5 py-3 font-bold">Artisan</th>
+                              <th className="px-5 py-3 font-bold">Email</th>
+                              <th className="px-5 py-3 font-bold text-center">Renouvellement</th>
+                              <th className="px-5 py-3 font-bold text-center">Montant</th>
+                              <th className="px-5 py-3 font-bold text-center">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-50">
+                            {proArtisans.length === 0 && (
+                              <tr><td colSpan={5} className="px-5 py-8 text-center text-sm text-gray-400">Aucun artisan Pro</td></tr>
+                            )}
+                            {proArtisans.map(a => {
+                              const renewDate = a.subscriptionCurrentPeriodEnd
+                                ? new Date(a.subscriptionCurrentPeriodEnd * 1000).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })
+                                : "—";
+                              return (
+                                <tr key={a.id} className="hover:bg-gray-50/50 transition-colors">
+                                  <td className="px-5 py-3">
+                                    <p className="text-sm font-semibold">{a.name}</p>
+                                    <p className="text-xs text-gray-400">{a.city || "—"}</p>
+                                  </td>
+                                  <td className="px-5 py-3 text-sm text-gray-600">{a.email}</td>
+                                  <td className="px-5 py-3 text-center text-sm text-gray-600">{renewDate}</td>
+                                  <td className="px-5 py-3 text-center text-sm font-bold text-purple-700">{settingsSubscriptionPrice} €/mois</td>
+                                  <td className="px-5 py-3 text-center">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 text-[11px] text-red-600 border-red-100 hover:bg-red-50"
+                                      onClick={() => setCancelSubArtisanId(a.id)}
+                                      data-testid={`button-cancel-sub-${a.id}`}
+                                    >
+                                      Annuler
+                                    </Button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </Card>
+
                     <Card className="border-none shadow-sm overflow-hidden bg-white">
                       <div className="p-5 border-b border-gray-50 flex items-center justify-between gap-4 flex-wrap">
                         <CardTitle className="text-base font-serif">Détail par artisan</CardTitle>
@@ -3204,6 +3540,42 @@ export default function AdminDashboard() {
                   </>
                 );
               })()}
+
+              {/* ===== CANCEL SUBSCRIPTION DIALOG ===== */}
+              <Dialog open={!!cancelSubArtisanId} onOpenChange={open => !open && setCancelSubArtisanId(null)}>
+                <DialogContent className="max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle className="font-serif text-red-700">Annuler l'abonnement Pro</DialogTitle>
+                  </DialogHeader>
+                  <p className="text-sm text-gray-600 py-2">
+                    Cette action annulera immédiatement l'abonnement Pro de cet artisan et le rétrogadera en plan Starter. L'action est irréversible.
+                  </p>
+                  <DialogFooter>
+                    <Button variant="outline" size="sm" onClick={() => setCancelSubArtisanId(null)}>Annuler</Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      disabled={cancelSubPending}
+                      onClick={async () => {
+                        if (!cancelSubArtisanId) return;
+                        setCancelSubPending(true);
+                        try {
+                          await apiFetch(`/api/admin/subscription/cancel/${cancelSubArtisanId}`, { method: "POST" });
+                          queryClient.invalidateQueries({ queryKey: ["/api/admin/artisans"] });
+                          toast({ title: "Abonnement annulé", description: "L'artisan a été rétrogadé en plan Starter." });
+                          setCancelSubArtisanId(null);
+                        } catch {
+                          toast({ title: "Erreur", description: "Impossible d'annuler l'abonnement", variant: "destructive" });
+                        } finally {
+                          setCancelSubPending(false);
+                        }
+                      }}
+                    >
+                      {cancelSubPending ? "En cours..." : "Confirmer l'annulation"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
 
               {/* ===== COMMANDES GROUPÉES ===== */}
               {activeTab === "events" && (

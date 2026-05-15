@@ -1844,6 +1844,8 @@ export async function registerRoutes(
           joinDate: null,
           subscriptionPlan: t.subscriptionPlan || "Starter",
           paymentStatus: (t as any).paymentStatus || "En attente",
+          subscriptionCurrentPeriodEnd: (t as any).subscriptionCurrentPeriodEnd || null,
+          stripeSubscriptionId: (t as any).stripeSubscriptionId || null,
           createdAt: t.createdAt || new Date(),
         }));
 
@@ -2394,6 +2396,26 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error deleting review:", error);
       res.status(500).json({ error: "Failed to delete review" });
+    }
+  });
+
+  // Admin: edit project (bypass ownership check)
+  app.patch("/api/admin/projects/:id", requireAdmin, async (req, res) => {
+    try {
+      const { status, amount, adminNotes } = req.body;
+      const updates: Record<string, any> = {};
+      if (status !== undefined) updates.status = status;
+      if (amount !== undefined) updates.amount = parseFloat(amount) || null;
+      if (adminNotes !== undefined) updates.adminNotes = adminNotes;
+      if (Object.keys(updates).length === 0) return res.status(400).json({ error: "No fields to update" });
+      await pool.query(
+        `UPDATE projects SET ${Object.keys(updates).map(k => `\`${k.replace(/([A-Z])/g, '_$1').toLowerCase()}\` = ?`).join(", ")} WHERE id = ?`,
+        [...Object.values(updates), req.params.id]
+      );
+      res.json({ success: true });
+    } catch (error) {
+      console.error("admin project edit error:", error);
+      res.status(500).json({ error: "Failed to update project" });
     }
   });
 

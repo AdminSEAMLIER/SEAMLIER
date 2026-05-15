@@ -537,5 +537,65 @@ export function registerStripeRoutes(app: Express) {
     }
   });
 
+  // ── Admin: remboursement d'un projet ─────────────────────────────────────
+  app.post("/api/admin/refund/:projectId", async (req: any, res: Response) => {
+    if (!stripe) return res.status(500).json({ error: "Stripe non configuré" });
+    const user = req.user as any;
+    if (!user || user.role !== "admin") return res.status(403).json({ error: "Accès refusé" });
+    try {
+      const { projectId } = req.params;
+      const [rows] = await pool.query(
+        `SELECT stripe_payment_intent_id, amount, payment_status FROM projects WHERE id = ? LIMIT 1`,
+        [projectId]
+      ) as any[];
+      const project = Array.isArray(rows) ? rows[0] : rows;
+      if (!project) return res.status(404).json({ error: "Projet introuvable" });
+      if (!project.stripe_payment_intent_id) return res.status(400).json({ error: "Aucun paiement Stripe associé" });
+
+      const refund = await stripe.refunds.create({
+        payment_intent: project.stripe_payment_intent_id,
+      });
+
+      await pool.query(
+        `UPDATE projects SET payment_status = 'refunded' WHERE id = ?`,
+        [projectId]
+      );
+
+      console.log(`[Admin] Remboursement ${refund.id} pour projet ${projectId}`);
+      res.json({ success: true, refundId: refund.id, status: refund.status });
+    } catch (err: any) {
+      console.error("[Admin refund error]", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ── Admin: annulation abonnement Pro d'un artisan ─────────────────────────
+  app.post("/api/admin/subscription/cancel/:tailorId", async (req: any, res: Response) => {
+    if (!stripe) return res.status(500).json({ error: "Stripe non configuré" });
+    const user = req.user as any;
+    if (!user || user.role !== "admin") return res.status(403).json({ error: "Accès refusé" });
+    try {
+      const { tailorId } = req.params;
+      const realId = tailorId.startsWith("reg-") ? tailorId.slice(4) : tailorId;
+      const tailor = await storage.getTailor(realId) as any;
+      if (!tailor) return res.status(404).json({ error: "Artisan introuvable" });
+
+      if (tailor.stripeSubscriptionId) {
+        await stripe.subscriptions.cancel(tailor.stripeSubscriptionId);
+        console.log(`[Admin] Abonnement ${tailor.stripeSubscriptionId} annulé immédiatement (admin)`);
+      }
+
+      await pool.query(
+        `UPDATE tailors SET subscription_plan = 'Starter', stripe_subscription_id = NULL, subscription_current_period_end = NULL WHERE id = ?`,
+        [realId]
+      );
+
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error("[Admin subscription cancel error]", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   console.log("[Stripe] Routes enregistrées ✅");
 }
