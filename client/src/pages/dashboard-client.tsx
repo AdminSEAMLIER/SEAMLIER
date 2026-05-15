@@ -60,6 +60,10 @@ export default function DashboardClient() {
     queryKey: ["/api/client/events"],
   });
 
+  const { data: organizedEvents = [] } = useQuery<any[]>({
+    queryKey: ["/api/client/events/organized"],
+  });
+
   const measurementsOutdated = (() => {
     if (!measurements?.updatedAt) return false;
     const sixMonthsAgo = new Date();
@@ -259,7 +263,54 @@ export default function DashboardClient() {
           </div>
         )}
 
-        {/* Événements collectifs */}
+        {/* Événements que j'organise */}
+        {organizedEvents.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-serif text-xl text-[#601B28] flex items-center gap-2">
+                <PartyPopper className="h-5 w-5" />
+                Mes événements organisés
+              </h2>
+              <Link href="/evenement/creer">
+                <button className="text-[#601B28] text-sm font-medium flex items-center gap-1 hover:underline">
+                  + Créer <ChevronRight className="h-4 w-4" />
+                </button>
+              </Link>
+            </div>
+            <div className="space-y-2">
+              {organizedEvents.map((ev: any) => (
+                <Link key={ev.id} href={`/evenement/${ev.id}`} data-testid={`link-org-event-${ev.id}`}>
+                  <div className="bg-white rounded-xl border border-[#601B28]/20 shadow-sm px-4 py-3 flex items-center gap-3 hover:border-[#601B28]/40 hover:shadow-md transition-all cursor-pointer">
+                    <div className="w-9 h-9 rounded-lg bg-[#601B28] flex items-center justify-center shrink-0">
+                      <PartyPopper className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{ev.name}</p>
+                      <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+                        <Calendar className="h-3 w-3" />
+                        <span>{new Date(ev.event_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}</span>
+                        <Users className="h-3 w-3 ml-1" />
+                        <span>{ev.participant_count} participant{ev.participant_count > 1 ? "s" : ""}</span>
+                      </div>
+                    </div>
+                    <span className={`text-xs font-medium shrink-0 px-2 py-0.5 rounded-full ${
+                      ev.status === "active" ? "bg-green-100 text-green-700" :
+                      ev.status === "pending_tailor_approval" ? "bg-amber-100 text-amber-700" :
+                      ev.status === "rejected" ? "bg-red-100 text-red-700" :
+                      "bg-gray-100 text-gray-600"
+                    }`}>
+                      {ev.status === "active" ? "Actif" :
+                       ev.status === "pending_tailor_approval" ? "En attente" :
+                       ev.status === "rejected" ? "Refusé" : ev.status}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Événements collectifs (rejoints) */}
         {clientEvents.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
@@ -299,8 +350,8 @@ export default function DashboardClient() {
           </div>
         )}
 
-        {/* Créer un événement CTA (si aucun) */}
-        {clientEvents.length === 0 && (
+        {/* Créer un événement CTA (si aucun des deux) */}
+        {clientEvents.length === 0 && organizedEvents.length === 0 && (
           <div className="mb-8">
             <Link href="/evenement/creer">
               <div className="bg-gradient-to-r from-[#601B28]/5 to-[#601B28]/10 border border-[#601B28]/20 rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:from-[#601B28]/10 hover:to-[#601B28]/15 transition-colors">

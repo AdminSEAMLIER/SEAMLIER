@@ -2741,6 +2741,8 @@ export async function registerRoutes(
         `INSERT IGNORE INTO event_participants (id, event_id, user_id, project_id) VALUES (?, ?, ?, ?)`,
         [participantId, event.id, userId, projectId]
       );
+      // Notify organizer
+      sendPushNotification(event.organizer_id, `Nouveau participant pour ${event.name}`, "Un nouveau membre vient de rejoindre votre événement.", `/evenement/${event.id}`).catch(() => {});
       res.status(201).json({ success: true, eventId: event.id, projectId });
     } catch (error) {
       console.error("Failed to join event:", error);
@@ -2778,6 +2780,8 @@ export async function registerRoutes(
         `INSERT IGNORE INTO event_participants (id, event_id, user_id, project_id) VALUES (?, ?, ?, ?)`,
         [participantId, event.id, userId, projectId]
       );
+      // Notify organizer
+      sendPushNotification(event.organizer_id, `Nouveau participant pour ${event.name}`, "Un nouveau membre vient de rejoindre votre événement.", `/evenement/${event.id}`).catch(() => {});
       res.status(201).json({ success: true, eventId: event.id, projectId });
     } catch (error) {
       console.error("Failed to confirm event payment:", error);
@@ -2850,6 +2854,29 @@ export async function registerRoutes(
   });
 
   // Client: list joined events
+  // Events organized by this user (organizer_id = userId)
+  app.get("/api/client/events/organized", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const [rows] = await pool.query(`
+        SELECT e.*,
+          tu.first_name as tailor_first_name, tu.last_name as tailor_last_name,
+          tu.profile_image_url as tailor_avatar,
+          (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participant_count
+        FROM events e
+        JOIN tailors t ON t.id = e.tailor_id
+        JOIN users tu ON tu.id = t.user_id
+        WHERE e.organizer_id = ?
+        ORDER BY e.event_date ASC
+      `, [userId]) as any[];
+      res.json(rows);
+    } catch (error) {
+      console.error("Failed to get organized events:", error);
+      res.status(500).json({ error: "Failed to get organized events" });
+    }
+  });
+
+  // Events the user has joined as participant
   app.get("/api/client/events", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
