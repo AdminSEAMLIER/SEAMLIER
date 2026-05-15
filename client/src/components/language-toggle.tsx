@@ -11,10 +11,10 @@ export function LanguageToggle() {
   };
 
   return (
-    <div className="flex items-center gap-0.5 text-sm font-medium">
+    <div className="flex items-center gap-0 text-xs sm:text-sm font-medium">
       <button
         onClick={() => toggleLanguage('fr')}
-        className={`px-2 py-1 rounded transition-colors ${currentLang === 'fr' ? 'text-[#601B28] font-bold' : 'text-gray-400 hover:text-gray-600'}`}
+        className={`px-1 sm:px-2 py-1 rounded transition-colors ${currentLang === 'fr' ? 'text-[#601B28] font-bold' : 'text-gray-400 hover:text-gray-600'}`}
         data-testid="button-lang-fr"
       >
         FR
@@ -22,7 +22,7 @@ export function LanguageToggle() {
       <span className="text-gray-300 select-none">|</span>
       <button
         onClick={() => toggleLanguage('en')}
-        className={`px-2 py-1 rounded transition-colors ${currentLang === 'en' ? 'text-[#601B28] font-bold' : 'text-gray-400 hover:text-gray-600'}`}
+        className={`px-1 sm:px-2 py-1 rounded transition-colors ${currentLang === 'en' ? 'text-[#601B28] font-bold' : 'text-gray-400 hover:text-gray-600'}`}
         data-testid="button-lang-en"
       >
         EN
