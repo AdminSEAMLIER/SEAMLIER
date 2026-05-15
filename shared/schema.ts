@@ -54,6 +54,10 @@ export const tailors = mysqlTable("tailors", {
   ibanRib: text("iban_rib"),
   dossierStatus: varchar("dossier_status", { length: 20 }).default("pending"),
   dossierRejectionReason: text("dossier_rejection_reason"),
+  languages: json("languages").$type<string[]>(),
+  priceMin: float("price_min"),
+  priceMax: float("price_max"),
+  referralCode: varchar("referral_code", { length: 16 }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

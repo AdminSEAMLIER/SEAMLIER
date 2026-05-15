@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { storage } from "./storage";
 import { pool } from "./db";
 import { sendPaymentConfirmationEmail, sendAdminChargebackAlertEmail, sendSubscriptionPaymentFailedEmail, sendArtisanPaymentReceivedEmail } from "./email";
+import { sendPushNotification } from "./push";
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
 export const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || '';
@@ -46,7 +47,7 @@ export function registerStripeRoutes(app: Express) {
           console.log(`[Stripe] Projet ${projectId} → paymentStatus = paid`);
           try {
             const [rows] = await pool.query(`
-              SELECT p.title, p.amount_total, p.amount_artisan, t.subscription_plan,
+              SELECT p.title, p.amount_total, p.amount_artisan, p.client_id, t.subscription_plan, t.user_id AS tailor_user_id,
                      uc.email AS client_email, uc.first_name AS client_first, uc.last_name AS client_last,
                      ut.email AS tailor_email, ut.first_name AS tailor_first, ut.last_name AS tailor_last
               FROM projects p
@@ -75,7 +76,11 @@ export function registerStripeRoutes(app: Express) {
                     : Math.round(grossAmount * (1 - FRAIS) * (1 - COMM) * 100) / 100;
                 sendArtisanPaymentReceivedEmail(r.tailor_email, tailorName, clientName, r.title || "Commande", artisanAmount)
                   .catch(err => console.error("[Stripe] Artisan payment email failed:", err));
+                // Push to artisan: paiement reçu
+                if (r.tailor_user_id) sendPushNotification(r.tailor_user_id, "Paiement reçu !", `${clientName} a payé pour "${r.title || "Commande"}"`, "/atelier").catch(() => {});
               }
+              // Push to client: paiement confirmé
+              if (r.client_id) sendPushNotification(r.client_id, "Paiement confirmé", `Votre paiement pour "${r.title || "Commande"}" a bien été reçu.`, "/mes-projets").catch(() => {});
             }
           } catch (emailErr) {
             console.error("[Stripe] Failed to fetch project for payment email:", emailErr);

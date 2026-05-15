@@ -30,7 +30,10 @@ import {
   Heart,
   Camera,
   Euro,
-  X
+  X,
+  Briefcase,
+  Languages,
+  FolderOpen,
 } from "lucide-react";
 import type { TailorWithUser, PortfolioWithTailor, ReviewWithUser } from "@shared/schema";
 
@@ -135,6 +138,19 @@ export default function CouturierProfile() {
     queryKey: ["/api/tailors", tailorId, "reviews"],
     enabled: !!tailorId,
   });
+
+  const { data: workingHours } = useQuery<any[]>({
+    queryKey: ["/api/tailors", tailorId, "working-hours"],
+    queryFn: async () => {
+      const res = await fetch(`/api/tailors/${tailorId}/working-hours`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!tailorId,
+  });
+
+  const DAY_LABELS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+  const openDays = (workingHours || []).filter((h: any) => !h.is_closed && h.start_time);
 
   if (tailorLoading) {
     return (
@@ -266,10 +282,43 @@ export default function CouturierProfile() {
           )}
 
           {tailor.bio && (
-            <p className="text-muted-foreground leading-relaxed mb-6">
+            <p className="text-muted-foreground leading-relaxed mb-4">
               {tailor.bio}
             </p>
           )}
+
+          <div className="flex flex-wrap gap-x-6 gap-y-2 mb-4 text-sm text-muted-foreground">
+            {(tailor as any).experience != null && (
+              <div className="flex items-center gap-1.5">
+                <Briefcase className="h-4 w-4 shrink-0" />
+                <span>{(tailor as any).experience} an{(tailor as any).experience > 1 ? "s" : ""} d'expérience</span>
+              </div>
+            )}
+            {tailor.portfolioCount != null && tailor.portfolioCount > 0 && (
+              <div className="flex items-center gap-1.5">
+                <FolderOpen className="h-4 w-4 shrink-0" />
+                <span>{tailor.portfolioCount} réalisation{tailor.portfolioCount > 1 ? "s" : ""}</span>
+              </div>
+            )}
+            {Array.isArray((tailor as any).languages) && (tailor as any).languages.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <Languages className="h-4 w-4 shrink-0" />
+                <span>{(tailor as any).languages.join(", ")}</span>
+              </div>
+            )}
+            {((tailor as any).priceMin != null || (tailor as any).priceMax != null) && (
+              <div className="flex items-center gap-1.5">
+                <Euro className="h-4 w-4 shrink-0" />
+                <span>
+                  {(tailor as any).priceMin != null && (tailor as any).priceMax != null
+                    ? `${(tailor as any).priceMin} € – ${(tailor as any).priceMax} €`
+                    : (tailor as any).priceMin != null
+                    ? `À partir de ${(tailor as any).priceMin} €`
+                    : `Jusqu'à ${(tailor as any).priceMax} €`}
+                </span>
+              </div>
+            )}
+          </div>
 
           <div className="bg-muted border border-border rounded-lg p-4">
             <div className="flex flex-col gap-2">
@@ -302,12 +351,15 @@ export default function CouturierProfile() {
         </Card>
 
         <Tabs defaultValue="portfolio" className="mt-6">
-          <TabsList className="w-full grid grid-cols-2 bg-transparent border-b border-border rounded-none h-auto p-0">
+          <TabsList className="w-full grid grid-cols-3 bg-transparent border-b border-border rounded-none h-auto p-0">
             <TabsTrigger value="portfolio" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none bg-transparent py-3 text-sm">
               {t('tailorProfile.portfolio')}
             </TabsTrigger>
             <TabsTrigger value="avis" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none bg-transparent py-3 text-sm">
               {t('tailorProfile.reviewsTab')}
+            </TabsTrigger>
+            <TabsTrigger value="apropos" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none bg-transparent py-3 text-sm">
+              À propos
             </TabsTrigger>
           </TabsList>
 
@@ -347,6 +399,82 @@ export default function CouturierProfile() {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 {t('tailorProfile.noReviews')}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="apropos" className="mt-4 space-y-5">
+            {(tailor as any).bio && (
+              <div>
+                <h3 className="font-semibold text-sm text-foreground mb-2">Bio</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line">{(tailor as any).bio}</p>
+              </div>
+            )}
+
+            {(tailor as any).experience != null && (
+              <div className="flex items-center gap-3">
+                <Briefcase className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-sm">{(tailor as any).experience} an{(tailor as any).experience > 1 ? "s" : ""} d'expérience</span>
+              </div>
+            )}
+
+            {Array.isArray((tailor as any).languages) && (tailor as any).languages.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-sm text-foreground mb-2 flex items-center gap-2">
+                  <Languages className="h-4 w-4" /> Langues parlées
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {(tailor as any).languages.map((lang: string) => (
+                    <Badge key={lang} variant="secondary" className="bg-[#f8f5f5] text-[#601B28] border border-[#601B28]/20">{lang}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {tailor.specialties && tailor.specialties.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-sm text-foreground mb-2">Spécialités</h3>
+                <div className="flex flex-wrap gap-2">
+                  {tailor.specialties.map((s) => (
+                    <Badge key={s} variant="secondary" className="bg-[#f8f5f5] text-[#601B28] border border-[#601B28]/20">{s}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {((tailor as any).priceMin != null || (tailor as any).priceMax != null) && (
+              <div className="flex items-center gap-3">
+                <Euro className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-sm">
+                  Tarif indicatif :{" "}
+                  {(tailor as any).priceMin != null && (tailor as any).priceMax != null
+                    ? `${(tailor as any).priceMin} € – ${(tailor as any).priceMax} €`
+                    : (tailor as any).priceMin != null
+                    ? `À partir de ${(tailor as any).priceMin} €`
+                    : `Jusqu'à ${(tailor as any).priceMax} €`}
+                </span>
+              </div>
+            )}
+
+            {openDays.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-sm text-foreground mb-2 flex items-center gap-2">
+                  <Clock className="h-4 w-4" /> Disponibilités
+                </h3>
+                <div className="space-y-1.5">
+                  {openDays.map((h: any) => (
+                    <div key={h.day_of_week} className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground w-12">{DAY_LABELS[h.day_of_week]}</span>
+                      <span className="font-medium">{h.start_time} – {h.end_time}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!(tailor as any).bio && (tailor as any).experience == null && !(Array.isArray((tailor as any).languages) && (tailor as any).languages.length) && !tailor.specialties?.length && openDays.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground text-sm">
+                Aucune information supplémentaire disponible.
               </div>
             )}
           </TabsContent>

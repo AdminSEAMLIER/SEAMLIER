@@ -12,6 +12,7 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
@@ -64,6 +65,7 @@ import DashboardClient from "@/pages/dashboard-client";
 import EvenementCreer from "@/pages/evenement-creer";
 import EvenementRejoindre from "@/pages/evenement-rejoindre";
 import EvenementDetail from "@/pages/evenement-detail";
+import ProParrainage from "@/pages/pro-parrainage";
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -195,10 +197,17 @@ function MagazineDetailRoute() {
   return <MagazineDetailPublic />;
 }
 
+function PushActivator() {
+  const { isAuthenticated } = useAuth();
+  usePushNotifications(isAuthenticated);
+  return null;
+}
+
 function Router() {
   return (
     <>
     <ScrollToTop />
+    <PushActivator />
     <Switch>
       {/* Public routes */}
       <Route path="/" component={HomeRoute} />
@@ -386,6 +395,12 @@ function Router() {
       <Route path="/pro-profil">
         <ProtectedRoute>
           <ProLayout><ProProfil /></ProLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/pro-parrainage">
+        <ProtectedRoute>
+          <ProLayout><ProParrainage /></ProLayout>
         </ProtectedRoute>
       </Route>
 

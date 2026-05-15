@@ -208,4 +208,46 @@ export async function ensureTables() {
   } catch (err) {
     console.warn("[DB] disputes table:", (err as any)?.message);
   }
+
+  // push_subscriptions table
+  try {
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        id VARCHAR(36) PRIMARY KEY,
+        user_id VARCHAR(36) NOT NULL,
+        endpoint TEXT NOT NULL,
+        p256dh TEXT NOT NULL,
+        auth TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_push_user (user_id)
+      )
+    `);
+    console.log("[DB] push_subscriptions table ensured ✅");
+  } catch (err) {
+    console.warn("[DB] push_subscriptions table:", (err as any)?.message);
+  }
+
+  // referrals table
+  try {
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS referrals (
+        id VARCHAR(36) PRIMARY KEY,
+        referrer_tailor_id VARCHAR(36) NOT NULL,
+        referred_email VARCHAR(255) NOT NULL,
+        status VARCHAR(20) DEFAULT 'pending',
+        token VARCHAR(64) NOT NULL UNIQUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_referral_tailor (referrer_tailor_id)
+      )
+    `);
+    console.log("[DB] referrals table ensured ✅");
+  } catch (err) {
+    console.warn("[DB] referrals table:", (err as any)?.message);
+  }
+
+  // tailors: extra profile fields
+  await addColumnIfMissing("tailors", "languages", "JSON NULL");
+  await addColumnIfMissing("tailors", "price_min", "FLOAT NULL");
+  await addColumnIfMissing("tailors", "price_max", "FLOAT NULL");
+  await addColumnIfMissing("tailors", "referral_code", "VARCHAR(16) NULL");
 }

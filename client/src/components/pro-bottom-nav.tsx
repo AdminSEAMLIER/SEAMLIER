@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { Home, FileText, FolderKanban, MessageSquare, BarChart2, User, FolderOpen } from "lucide-react";
+import { Home, FileText, FolderKanban, MessageSquare, BarChart2, User, FolderOpen, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
@@ -24,6 +24,7 @@ export function ProBottomNav() {
     { icon: MessageSquare, labelKey: "nav.messaging", href: "/messagerie", isMessages: true },
     { icon: BarChart2, labelKey: "nav.stats", href: "/pro-statistiques" },
     { icon: FolderOpen, labelKey: "nav.dossier", href: "/pro-dossier" },
+    { icon: Users, labelKey: "nav.referral", href: "/pro-parrainage" },
     { icon: User, labelKey: "nav.profile", href: "/pro-profil" },
   ];
 

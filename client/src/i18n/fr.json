@@ -47,7 +47,8 @@
     "schedule": "Horaires",
     "stats": "Statistiques",
     "marketplace": "Boutique",
-    "dossier": "Mon dossier"
+    "dossier": "Mon dossier",
+    "referral": "Parrainer"
   },
   "pro": {
     "welcome": "Bienvenue sur votre espace",

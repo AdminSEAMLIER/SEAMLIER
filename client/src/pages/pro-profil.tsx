@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, TrendingUp, Star, Settings, FileText, FolderKanban, Loader2, Briefcase, ImageIcon, XCircle, Clock } from "lucide-react";
+import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, TrendingUp, Star, Settings, FileText, FolderKanban, Loader2, Briefcase, ImageIcon, XCircle, Clock, BookOpen, Languages, Euro } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +30,14 @@ export default function ProProfil() {
     location: "",
     profileImageUrl: "",
   });
+  const [isEditingPro, setIsEditingPro] = useState(false);
+  const [proProfil, setProProfil] = useState({
+    bio: "",
+    experience: "",
+    languages: "",
+    priceMin: "",
+    priceMax: "",
+  });
 
   const { data: tailorProfile } = useQuery<any>({
     queryKey: ['/api/user/me/tailor'],
@@ -51,6 +60,15 @@ export default function ProProfil() {
 
   useEffect(() => {
     if (tailorProfile?.coverImageUrl) setBannerUrl(tailorProfile.coverImageUrl);
+    if (tailorProfile) {
+      setProProfil({
+        bio: tailorProfile.bio || "",
+        experience: tailorProfile.experience != null ? String(tailorProfile.experience) : "",
+        languages: Array.isArray(tailorProfile.languages) ? tailorProfile.languages.join(", ") : (tailorProfile.languages || ""),
+        priceMin: tailorProfile.priceMin != null ? String(tailorProfile.priceMin) : "",
+        priceMax: tailorProfile.priceMax != null ? String(tailorProfile.priceMax) : "",
+      });
+    }
   }, [tailorProfile]);
 
   useEffect(() => {
@@ -153,6 +171,27 @@ export default function ProProfil() {
       toast({ title: "Bannière mise à jour" });
     },
     onError: () => toast({ title: "Erreur", description: "Impossible de sauvegarder la bannière", variant: "destructive" }),
+  });
+
+  const proSaveMutation = useMutation({
+    mutationFn: async () => {
+      const langs = proProfil.languages
+        ? proProfil.languages.split(",").map((l) => l.trim()).filter(Boolean)
+        : [];
+      return apiRequest("PATCH", "/api/user/me/tailor", {
+        bio: proProfil.bio || null,
+        experience: proProfil.experience ? parseInt(proProfil.experience) : null,
+        languages: langs.length ? langs : null,
+        priceMin: proProfil.priceMin ? parseFloat(proProfil.priceMin) : null,
+        priceMax: proProfil.priceMax ? parseFloat(proProfil.priceMax) : null,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/me/tailor"] });
+      setIsEditingPro(false);
+      toast({ title: "Profil public mis à jour" });
+    },
+    onError: () => toast({ title: "Erreur", description: "Impossible de sauvegarder", variant: "destructive" }),
   });
 
   const handleBannerChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -508,6 +547,134 @@ export default function ProProfil() {
                     <Save className="h-4 w-4 mr-2" />
                   )}
                   {t('profile.save')}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border border-gray-100 bg-white shadow-sm mb-6">
+          <CardHeader className="flex flex-row items-center justify-between gap-2">
+            <CardTitle className="text-lg text-[#601B28]">Profil public</CardTitle>
+            {!isEditingPro && (
+              <Button variant="ghost" size="sm" onClick={() => setIsEditingPro(true)} className="text-gray-500">
+                <Edit2 className="h-4 w-4 mr-2" />
+                Modifier
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent className="bg-white space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <BookOpen className="h-5 w-5 text-gray-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <Label className="text-gray-500 text-sm">Bio</Label>
+                {isEditingPro ? (
+                  <Textarea
+                    value={proProfil.bio}
+                    onChange={(e) => setProProfil({ ...proProfil, bio: e.target.value })}
+                    placeholder="Décrivez votre parcours, votre style et votre savoir-faire…"
+                    className="mt-1 min-h-[90px]"
+                  />
+                ) : (
+                  <p className="text-gray-700 text-sm mt-0.5 whitespace-pre-line">{proProfil.bio || "—"}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
+                <Briefcase className="h-5 w-5 text-gray-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <Label className="text-gray-500 text-sm">Années d'expérience</Label>
+                {isEditingPro ? (
+                  <Input
+                    type="number"
+                    min="0"
+                    max="60"
+                    value={proProfil.experience}
+                    onChange={(e) => setProProfil({ ...proProfil, experience: e.target.value })}
+                    placeholder="Ex: 10"
+                    className="mt-1"
+                  />
+                ) : (
+                  <p className="text-gray-700 text-sm mt-0.5">
+                    {proProfil.experience ? `${proProfil.experience} an${parseInt(proProfil.experience) > 1 ? "s" : ""}` : "—"}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
+                <Languages className="h-5 w-5 text-gray-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <Label className="text-gray-500 text-sm">Langues parlées</Label>
+                {isEditingPro ? (
+                  <Input
+                    value={proProfil.languages}
+                    onChange={(e) => setProProfil({ ...proProfil, languages: e.target.value })}
+                    placeholder="Ex: Français, Anglais, Arabe"
+                    className="mt-1"
+                  />
+                ) : (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {proProfil.languages
+                      ? proProfil.languages.split(",").map((l) => l.trim()).filter(Boolean).map((lang) => (
+                          <Badge key={lang} variant="secondary" className="bg-[#f8f5f5] text-[#601B28] border border-[#601B28]/20 text-xs">{lang}</Badge>
+                        ))
+                      : <span className="text-gray-700 text-sm">—</span>}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
+                <Euro className="h-5 w-5 text-gray-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <Label className="text-gray-500 text-sm">Tarif indicatif (€)</Label>
+                {isEditingPro ? (
+                  <div className="flex gap-2 mt-1">
+                    <Input
+                      type="number"
+                      min="0"
+                      value={proProfil.priceMin}
+                      onChange={(e) => setProProfil({ ...proProfil, priceMin: e.target.value })}
+                      placeholder="Min"
+                    />
+                    <Input
+                      type="number"
+                      min="0"
+                      value={proProfil.priceMax}
+                      onChange={(e) => setProProfil({ ...proProfil, priceMax: e.target.value })}
+                      placeholder="Max"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-gray-700 text-sm mt-0.5">
+                    {proProfil.priceMin || proProfil.priceMax
+                      ? `${proProfil.priceMin || "?"} € – ${proProfil.priceMax || "?"} €`
+                      : "—"}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {isEditingPro && (
+              <div className="flex gap-3 pt-2">
+                <Button variant="outline" className="flex-1" onClick={() => setIsEditingPro(false)}>Annuler</Button>
+                <Button
+                  className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
+                  onClick={() => proSaveMutation.mutate()}
+                  disabled={proSaveMutation.isPending}
+                >
+                  {proSaveMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                  Enregistrer
                 </Button>
               </div>
             )}

@@ -26,9 +26,11 @@ import {
   sendQuoteReadyEmail,
   sendQuoteAcceptedByClientEmail,
   sendArtisanPaymentReceivedEmail,
+  sendReferralInviteEmail,
 } from "./email";
 import { sendSms } from "./sms";
 import { getIO } from "./socketio";
+import { sendPushNotification, saveSubscription, deleteSubscription } from "./push";
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
@@ -398,8 +400,8 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Tailor profile not found" });
       }
       
-      const { bio, specialties, experience, coverImageUrl } = req.body;
-      const updated = await storage.updateTailor(tailor.id, { bio, specialties, experience, coverImageUrl });
+      const { bio, specialties, experience, coverImageUrl, languages, priceMin, priceMax } = req.body;
+      const updated = await storage.updateTailor(tailor.id, { bio, specialties, experience, coverImageUrl, languages, priceMin, priceMax });
       res.json(updated);
     } catch (error) {
       console.error("Failed to update tailor profile:", error);
@@ -573,6 +575,11 @@ export async function registerRoutes(
               const preview = (req.body.content || "").slice(0, 100);
               sendNewMessageEmail(recipEmail, recipName, senderName, preview).catch(() => {});
             }
+            // Push notification to recipient
+            if (row.recip_uid) {
+              const preview = (req.body.content || "").slice(0, 80);
+              sendPushNotification(row.recip_uid, `Nouveau message de ${senderName}`, preview, "/messages").catch(() => {});
+            }
             // Update sender's last_active_at
             await pool.query(`UPDATE users SET last_active_at = NOW() WHERE id = ?`, [userId]).catch(() => {});
           }
@@ -583,6 +590,34 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to send message:", error);
       res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+
+  // ── Push Notifications ────────────────────────────────────────────────────
+  app.get("/api/push/vapid-public-key", (_req, res) => {
+    res.json({ publicKey: process.env.VAPID_PUBLIC_KEY || "" });
+  });
+
+  app.post("/api/push/subscribe", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const { endpoint, keys } = req.body;
+      if (!endpoint || !keys?.p256dh || !keys?.auth) return res.status(400).json({ error: "Subscription invalide" });
+      await saveSubscription(userId, { endpoint, keys });
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to save subscription" });
+    }
+  });
+
+  app.delete("/api/push/unsubscribe", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const { endpoint } = req.body;
+      if (endpoint) await deleteSubscription(userId, endpoint);
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to delete subscription" });
     }
   });
 
@@ -1059,6 +1094,10 @@ export async function registerRoutes(
           const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim() || "Un client";
           const tailorName = `${ta.first_name || ""} ${ta.last_name || ""}`.trim();
           sendNewProjectRequestEmail(ta.email, tailorName, clientName, project.title || "Nouvelle commande", project.description ?? null, project.requestedPrice ?? null).catch(() => {});
+          // Push to artisan
+          const [tailorUserRows] = await pool.query(`SELECT user_id FROM tailors WHERE id = ?`, [project.tailorId]) as any[];
+          const tailorUserId = Array.isArray(tailorUserRows) && tailorUserRows[0]?.user_id;
+          if (tailorUserId) sendPushNotification(tailorUserId, `Nouvelle demande de ${clientName}`, project.title || "Demande de devis", "/gestion-demandes").catch(() => {});
         }
       } catch (emailErr) {
         console.error("[PROJECT EMAIL]", emailErr);
@@ -1151,6 +1190,12 @@ export async function registerRoutes(
             const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim();
             sendQuoteAcceptedByClientEmail(ta.email, tailorName, clientName, project.title || "votre projet", project.amount ?? null).catch(() => {});
           }
+          // Push to artisan: devis accepté
+          const [tailorUserIdRows] = await pool.query(`SELECT user_id FROM tailors WHERE id = ?`, [project.tailorId]) as any[];
+          const tuId = Array.isArray(tailorUserIdRows) && tailorUserIdRows[0]?.user_id;
+          if (tuId) sendPushNotification(tuId, "Devis accepté !", `${project.title || "Votre devis"} a été accepté par le client.`, "/atelier").catch(() => {});
+          // Push to client: devis accepté, paiement disponible
+          if (project.clientId) sendPushNotification(project.clientId, "Devis validé", `Vous pouvez maintenant procéder au paiement.`, "/mes-projets").catch(() => {});
         } catch (emailErr) {
           console.error("[QUOTE ACCEPTED EMAIL]", emailErr);
         }
@@ -1318,8 +1363,14 @@ export async function registerRoutes(
           // Client-created appointment: send dedicated "new booking request" email to artisan
           if (!tailor) {
             sendNewAppointmentRequestEmail(ta.email, tailorName, clientName, type || "consultation", scheduledAt).catch(() => {});
+            // Push to artisan: nouveau RDV
+            const [tUserRows] = await pool.query(`SELECT user_id FROM tailors WHERE id = ?`, [tailorId]) as any[];
+            const tUid = Array.isArray(tUserRows) && tUserRows[0]?.user_id;
+            if (tUid) sendPushNotification(tUid, `Nouveau RDV de ${clientName}`, `${type || "Consultation"} — ${new Date(scheduledAt).toLocaleDateString("fr-FR")}`, "/pro-planning").catch(() => {});
           } else {
             sendAppointmentConfirmationEmail(ta.email, tailorName, scheduledAt, type || "consultation", clientName).catch(() => {});
+            // Push to client: RDV confirmé par l'artisan
+            sendPushNotification(clientId, "Rendez-vous programmé", `${type || "Consultation"} le ${new Date(scheduledAt).toLocaleDateString("fr-FR")}`, "/mes-projets").catch(() => {});
           }
           sendAppointmentConfirmationEmail(cl.email, clientName, scheduledAt, type || "consultation", tailorName).catch(() => {});
         }
@@ -3630,6 +3681,71 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to delete account:", error);
       res.status(500).json({ error: "Failed to delete account" });
+    }
+  });
+
+  // ── PARRAINAGE ARTISAN ──────────────────────────────────────────────────────
+
+  app.post("/api/referrals", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Réservé aux artisans" });
+
+      const { email } = req.body;
+      if (!email || typeof email !== "string") return res.status(400).json({ error: "Email requis" });
+
+      // Check if this email already referred by this tailor
+      const [existing] = await pool.query(
+        "SELECT id FROM referrals WHERE referrer_tailor_id = ? AND referred_email = ?",
+        [tailor.id, email.toLowerCase()]
+      ) as any[];
+      if ((existing as any[]).length > 0) {
+        return res.status(409).json({ error: "Cet email a déjà été invité" });
+      }
+
+      const token = randomUUID().replace(/-/g, "").slice(0, 32);
+      const id = randomUUID();
+      await pool.query(
+        "INSERT INTO referrals (id, referrer_tailor_id, referred_email, status, token) VALUES (?, ?, ?, 'pending', ?)",
+        [id, tailor.id, email.toLowerCase(), token]
+      );
+
+      // Ensure referral_code exists for this tailor
+      if (!(tailor as any).referralCode) {
+        const code = (tailor.id.replace(/-/g, "").slice(0, 8)).toUpperCase();
+        await pool.query("UPDATE tailors SET referral_code = ? WHERE id = ?", [code, tailor.id]);
+      }
+
+      // Get tailor's user info for the email
+      const [userRows] = await pool.query("SELECT first_name, last_name FROM users WHERE id = ?", [userId]) as any[];
+      const u = (userRows as any[])[0];
+      const referrerName = u ? `${u.first_name || ""} ${u.last_name || ""}`.trim() : "Un artisan SEAMLIER";
+
+      await sendReferralInviteEmail(email.toLowerCase(), referrerName, token);
+
+      res.json({ success: true, id, token });
+    } catch (err) {
+      console.error("referral POST error:", err);
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  });
+
+  app.get("/api/referrals/mine", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Réservé aux artisans" });
+
+      const [rows] = await pool.query(
+        "SELECT id, referred_email, status, created_at FROM referrals WHERE referrer_tailor_id = ? ORDER BY created_at DESC",
+        [tailor.id]
+      ) as any[];
+
+      res.json({ referrals: rows, referralCode: (tailor as any).referralCode || null });
+    } catch (err) {
+      console.error("referral GET error:", err);
+      res.status(500).json({ error: "Erreur serveur" });
     }
   });
 

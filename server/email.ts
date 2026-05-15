@@ -941,3 +941,29 @@ export async function sendDossierReceivedEmail(email: string, name: string): Pro
   `);
   return sendEmail(email, "Nous avons bien reçu votre document — SEAMLIER", html);
 }
+
+export async function sendReferralInviteEmail(
+  referredEmail: string,
+  referrerName: string,
+  referralToken: string
+): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const inviteUrl = `${appUrl}/inscription/professionnel?ref=${referralToken}`;
+  const html = emailWrapper("Invitation à rejoindre SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Vous êtes invité(e) !</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 16px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour,</p>
+    <p style="margin:0 0 16px;color:#4b5563;font-size:15px;line-height:1.7">
+      <strong style="color:#1f2937">${referrerName}</strong> vous invite à rejoindre <strong style="color:#722F37">SEAMLIER</strong>, la plateforme qui connecte les couturiers professionnels avec leurs clients.
+    </p>
+    <p style="margin:0 0 24px;color:#4b5563;font-size:15px;line-height:1.7">
+      Créez votre profil artisan gratuitement et développez votre activité en ligne.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${inviteUrl}" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Rejoindre SEAMLIER</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(referredEmail, `${referrerName} vous invite sur SEAMLIER`, html);
+}
