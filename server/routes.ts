@@ -2269,6 +2269,52 @@ export async function registerRoutes(
     }
   });
 
+  // Admin: payments with commission breakdown
+  app.get("/api/admin/payments", requireAdmin, async (req, res) => {
+    try {
+      const [rows] = await pool.query(`
+        SELECT
+          p.id, p.title, p.amount, p.amount_total, p.amount_artisan,
+          p.payment_status, p.stripe_payment_intent_id, p.stripe_transfer_id,
+          p.client_confirmed, p.created_at,
+          CONCAT(cu.first_name, ' ', cu.last_name) AS client_name,
+          CONCAT(tu.first_name, ' ', tu.last_name) AS tailor_name,
+          cu.email AS client_email,
+          tu.email AS tailor_email
+        FROM projects p
+        INNER JOIN users cu ON p.client_id = cu.id
+        INNER JOIN tailors t ON p.tailor_id = t.id
+        INNER JOIN users tu ON t.user_id = tu.id
+        WHERE p.amount IS NOT NULL AND p.amount > 0
+        ORDER BY p.created_at DESC
+        LIMIT 500
+      `) as any[];
+      if (!Array.isArray(rows)) return res.json([]);
+      res.json((rows as any[]).map((r: any) => {
+        const amount = parseFloat(r.amount) || 0;
+        const commission = Math.round(amount * 10) / 100;
+        const artisanAmount = Math.round(amount * 90) / 100;
+        return {
+          id: r.id,
+          title: r.title || "—",
+          client: r.client_name || "—",
+          tailor: r.tailor_name || "—",
+          amountClient: amount,
+          commission,
+          amountArtisan: artisanAmount,
+          paymentStatus: r.payment_status || "pending",
+          stripePaymentIntentId: r.stripe_payment_intent_id || null,
+          stripeTransferId: r.stripe_transfer_id || null,
+          clientConfirmed: !!r.client_confirmed,
+          createdAt: r.created_at ? new Date(r.created_at).toLocaleDateString("fr-FR") : "—",
+        };
+      }));
+    } catch (error) {
+      console.error("admin payments error:", error);
+      res.status(500).json({ error: "Failed to fetch payments" });
+    }
+  });
+
   // Admin: all appointments
   app.get("/api/admin/all-appointments", requireAdmin, async (req, res) => {
     try {

@@ -135,9 +135,15 @@ export default function MesProjets() {
     onError: () => toast({ title: "Erreur", variant: "destructive" }),
   });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "in_progress": return <Badge className="bg-blue-100 text-blue-700 border-none">{isFr ? "En cours" : "In progress"}</Badge>;
+  const getStatusBadge = (project: ProjectWithTailor) => {
+    const paymentStatus = (project as any).paymentStatus ?? "";
+    const isPaid = ["paid", "client_confirmed", "transferred"].includes(paymentStatus);
+    switch (project.status) {
+      case "in_progress":
+        if (!isPaid && project.amount && project.amount > 0) {
+          return <Badge className="bg-amber-100 text-amber-800 border-none font-semibold">{isFr ? "À payer" : "Payment due"}</Badge>;
+        }
+        return <Badge className="bg-blue-100 text-blue-700 border-none">{isFr ? "En cours" : "In progress"}</Badge>;
       case "completed": return <Badge className="bg-green-100 text-green-700 border-none">{isFr ? "Terminé" : "Completed"}</Badge>;
       case "pending": return <Badge className="bg-gray-100 text-gray-700 border-none">{isFr ? "En attente de devis" : "Awaiting quote"}</Badge>;
       case "quoted": return <Badge className="bg-orange-100 text-orange-700 border-none">{isFr ? "Devis reçu — à valider" : "Quote received"}</Badge>;
@@ -218,6 +224,9 @@ export default function MesProjets() {
             const isQuoted = project.status === "quoted";
             const isInProgress = project.status === "in_progress";
             const isCompleted = project.status === "completed";
+            const paymentStatus = (project as any).paymentStatus ?? "";
+            const isPaid = ["paid", "client_confirmed", "transferred"].includes(paymentStatus);
+            const needsPayment = isInProgress && project.amount && project.amount > 0 && !isPaid;
 
             return (
               <Card
@@ -230,7 +239,7 @@ export default function MesProjets() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h3 className="font-semibold text-[#601B28]">{project.title}</h3>
-                        {getStatusBadge(project.status)}
+                        {getStatusBadge(project)}
                       </div>
                       {tailorName && (
                         <p className="text-sm text-gray-500">
@@ -275,6 +284,22 @@ export default function MesProjets() {
                           {isFr ? "Refuser" : "Decline"}
                         </Button>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Section paiement prioritaire */}
+                  {needsPayment && (
+                    <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-sm font-semibold text-amber-800 mb-1">
+                        {isFr ? "Devis accepté — règlement en attente" : "Quote accepted — payment pending"}
+                      </p>
+                      <p className="text-2xl font-bold text-amber-700 mb-3">{project.amount}€</p>
+                      <PaymentButton
+                        projectId={project.id}
+                        prixConfection={project.amount!}
+                        planArtisan={project.tailor?.subscriptionPlan ?? "starter"}
+                        label={isFr ? "Payer maintenant" : "Pay now"}
+                      />
                     </div>
                   )}
 
@@ -372,15 +397,7 @@ export default function MesProjets() {
                       <Calendar className="h-4 w-4" />
                       {isFr ? "RDV" : "Book"}
                     </Button>
-                    {isInProgress && project.amount && project.amount > 0 &&
-                      !["paid", "client_confirmed", "transferred"].includes((project as any).paymentStatus ?? "") && (
-                      <PaymentButton
-                        projectId={project.id}
-                        prixConfection={project.amount}
-                        planArtisan={project.tailor?.subscriptionPlan ?? "starter"}
-                        label={isFr ? "Payer le devis" : "Pay quote"}
-                      />
-                    )}
+                    {/* Payment button shown in the prominent section above when needsPayment */}
                     {isCompleted && (() => {
                       const isPaid = ["paid", "client_confirmed", "transferred"].includes((project as any).paymentStatus ?? "");
                       if (!isPaid) return (

@@ -1045,7 +1045,9 @@ class DatabaseStorage implements IStorage {
       description: r.description || r.title || "—",
       date: r.created_at ? new Date(r.created_at).toLocaleDateString("fr-FR") : "—",
       amount: r.amount ? `${r.amount}€` : "—",
+      rawAmount: r.amount ? parseFloat(r.amount) : 0,
       status: (r.status === "completed") ? "Libéré" : "Bloqué",
+      rawStatus: r.status || "pending",
       paymentStatus: r.payment_status || null,
       clientConfirmed: !!r.client_confirmed,
     }));

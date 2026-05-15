@@ -11,25 +11,22 @@ export function LanguageToggle() {
   };
 
   return (
-    <div className="flex items-center gap-1">
-      <Button
-        variant="ghost"
-        size="sm"
+    <div className="flex items-center gap-0.5 text-sm font-medium">
+      <button
         onClick={() => toggleLanguage('fr')}
-        className={`px-2 ${currentLang === 'fr' ? 'opacity-100' : 'opacity-50'}`}
+        className={`px-2 py-1 rounded transition-colors ${currentLang === 'fr' ? 'text-[#601B28] font-bold' : 'text-gray-400 hover:text-gray-600'}`}
         data-testid="button-lang-fr"
       >
-        <span className="text-lg">🇫🇷</span>
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
+        FR
+      </button>
+      <span className="text-gray-300 select-none">|</span>
+      <button
         onClick={() => toggleLanguage('en')}
-        className={`px-2 ${currentLang === 'en' ? 'opacity-100' : 'opacity-50'}`}
+        className={`px-2 py-1 rounded transition-colors ${currentLang === 'en' ? 'text-[#601B28] font-bold' : 'text-gray-400 hover:text-gray-600'}`}
         data-testid="button-lang-en"
       >
-        <span className="text-lg">🇬🇧</span>
-      </Button>
+        EN
+      </button>
     </div>
   );
 }

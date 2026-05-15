@@ -895,6 +895,24 @@ export default function AdminDashboard() {
   const verifiedArtisans = artisans.filter(a => a.status === "Vérifié").length;
   const unreadMessages = adminConversations.reduce((sum: number, c: any) => sum + (c.unreadCount || 0), 0);
 
+  const { data: adminPayments = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/payments"],
+    enabled: isAuthenticated,
+    refetchInterval: 60000,
+  });
+
+  const [paymentsSearch, setPaymentsSearch] = useState("");
+  const [paymentsStatusFilter, setPaymentsStatusFilter] = useState("all");
+
+  const projectsInProgress = rawProjects.filter((p: any) => (p as any).rawStatus === "in_progress").length;
+  const projectsPending = rawProjects.filter((p: any) => (p as any).rawStatus === "pending");
+  const totalCommissions = adminPayments
+    .filter((p: any) => ["paid", "client_confirmed", "transferred"].includes(p.paymentStatus))
+    .reduce((sum: number, p: any) => sum + (p.commission || 0), 0);
+  const pendingArtisans = artisans.filter(a => a.status === "En attente").length;
+
+  const [pendingQuotesSearch, setPendingQuotesSearch] = useState("");
+
   const filteredProjects = useMemo(() => projects.filter(p =>
     p.client.toLowerCase().includes(projectSearch.toLowerCase()) ||
     p.artisan.toLowerCase().includes(projectSearch.toLowerCase())
@@ -968,8 +986,11 @@ export default function AdminDashboard() {
     { label: "Dashboard", icon: LayoutDashboard, id: "overview" },
     { label: "Inscrits", icon: User, id: "users" },
     { label: "Artisans", icon: Users, id: "artisans" },
+    { label: "Dossiers pros", icon: FolderOpen, id: "dossiers" },
     { label: "Demandes", icon: Clock, id: "requests" },
+    { label: "Devis en cours", icon: FileText, id: "pending-quotes" },
     { label: "Projets", icon: ShoppingBag, id: "projects" },
+    { label: "Paiements", icon: Euro, id: "payments" },
     { label: "Planning", icon: Calendar, id: "planning" },
     { label: "Abonnements", icon: CreditCard, id: "subscriptions" },
     { label: "Messagerie", icon: MessageSquare, id: "messaging" },
@@ -977,7 +998,6 @@ export default function AdminDashboard() {
     { label: "Avis", icon: Star, id: "reviews" },
     { label: "Commandes groupées", icon: Users, id: "events" },
     { label: "Magazine", icon: FileText, id: "magazine" },
-    { label: "Dossiers pros", icon: FolderOpen, id: "dossiers" },
     { label: "Litiges", icon: Flag, id: "litiges" },
   ];
 
@@ -1070,43 +1090,78 @@ export default function AdminDashboard() {
                     <p className="text-gray-500 mt-1 text-sm">Vue globale de la plateforme SEAMLiER</p>
                   </div>
 
-                  {/* Bloc revenus & activité */}
-                  {globalStats && (
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                      {[
-                        { label: "CA ce mois", value: `${globalStats.monthRevenue?.toFixed(0) ?? 0} €`, icon: TrendingUp, bg: "bg-green-50", color: "text-green-600" },
-                        { label: "CA total", value: `${globalStats.totalRevenue?.toFixed(0) ?? 0} €`, icon: Euro, bg: "bg-[#601B28]/5", color: "text-[#601B28]" },
-                        { label: "Projets terminés", value: globalStats.totalProjectsCompleted ?? 0, icon: CheckCircle, bg: "bg-blue-50", color: "text-blue-600" },
-                        { label: "Panier moyen", value: `${globalStats.avgProjectValue?.toFixed(0) ?? 0} €`, icon: BarChart3, bg: "bg-amber-50", color: "text-amber-600" },
-                      ].map(s => (
-                        <Card key={s.label} className="border-none shadow-sm">
-                          <CardContent className="p-4">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${s.bg}`}>
-                              <s.icon size={16} className={s.color} />
-                            </div>
-                            <p className="text-xs text-gray-500 font-medium">{s.label}</p>
-                            <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
-                          </CardContent>
-                        </Card>
-                      ))}
+                  {/* Notifications admin */}
+                  {(pendingArtisans > 0 || adminPayments.filter((p: any) => p.paymentStatus === "failed").length > 0) && (
+                    <div className="space-y-2">
+                      {pendingArtisans > 0 && (
+                        <button
+                          className="w-full flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-left hover:bg-amber-100 transition-colors"
+                          onClick={() => setActiveTab("dossiers")}
+                          data-testid="notif-pending-artisans"
+                        >
+                          <Bell size={16} className="text-amber-600 shrink-0" />
+                          <span className="text-sm text-amber-800 font-medium">
+                            {pendingArtisans} artisan{pendingArtisans > 1 ? "s" : ""} en attente de validation de dossier
+                          </span>
+                          <ChevronRight size={14} className="ml-auto text-amber-500" />
+                        </button>
+                      )}
+                      {adminPayments.filter((p: any) => p.paymentStatus === "failed").length > 0 && (
+                        <button
+                          className="w-full flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-lg text-left hover:bg-red-100 transition-colors"
+                          onClick={() => setActiveTab("payments")}
+                          data-testid="notif-failed-payments"
+                        >
+                          <Bell size={16} className="text-red-600 shrink-0" />
+                          <span className="text-sm text-red-800 font-medium">
+                            {adminPayments.filter((p: any) => p.paymentStatus === "failed").length} paiement(s) en échec
+                          </span>
+                          <ChevronRight size={14} className="ml-auto text-red-500" />
+                        </button>
+                      )}
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-                    {stats.map((stat) => (
-                      <Card key={stat.label} className="border-none shadow-sm hover-elevate cursor-pointer" onClick={() => setActiveTab(stat.tab)} data-testid={`card-stat-${stat.label.replace(/\s/g, "-").toLowerCase()}`}>
-                        <CardContent className="p-5">
-                          <div className="flex justify-between items-start">
-                            <div className={cn("p-2 rounded-lg", stat.bg)}>
-                              <stat.icon size={18} className={stat.color} />
-                            </div>
+                  {/* KPIs principaux */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[
+                      { label: "CA total", value: `${globalStats?.totalRevenue?.toFixed(0) ?? 0} €`, icon: Euro, bg: "bg-[#601B28]/5", color: "text-[#601B28]" },
+                      { label: "Commissions perçues (10%)", value: `${totalCommissions.toFixed(0)} €`, icon: TrendingUp, bg: "bg-green-50", color: "text-green-600" },
+                      { label: "CA ce mois", value: `${globalStats?.monthRevenue?.toFixed(0) ?? 0} €`, icon: BarChart3, bg: "bg-blue-50", color: "text-blue-600" },
+                      { label: "Panier moyen", value: `${globalStats?.avgProjectValue?.toFixed(0) ?? 0} €`, icon: BarChart3, bg: "bg-amber-50", color: "text-amber-600" },
+                    ].map(s => (
+                      <Card key={s.label} className="border-none shadow-sm">
+                        <CardContent className="p-4">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${s.bg}`}>
+                            <s.icon size={16} className={s.color} />
                           </div>
-                          <p className="text-sm font-medium text-gray-500 mt-3">{stat.label}</p>
-                          <p className="text-2xl lg:text-3xl font-bold text-gray-900 mt-1">{stat.val}</p>
+                          <p className="text-xs text-gray-500 font-medium">{s.label}</p>
+                          <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
                         </CardContent>
                       </Card>
                     ))}
                   </div>
+
+                  {/* KPIs activité */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[
+                      { label: "Clients inscrits", value: globalStats?.activeClientsCount ?? dbUsers.filter((u: any) => u.role === "client").length, icon: User, bg: "bg-purple-50", color: "text-purple-600", tab: "users" },
+                      { label: "Artisans actifs", value: globalStats?.activeArtisansCount ?? verifiedArtisans, icon: Users, bg: "bg-amber-50", color: "text-amber-600", tab: "artisans" },
+                      { label: "Projets en cours", value: projectsInProgress, icon: ShoppingBag, bg: "bg-blue-50", color: "text-blue-600", tab: "projects" },
+                      { label: "Projets terminés", value: globalStats?.totalProjectsCompleted ?? 0, icon: CheckCircle, bg: "bg-green-50", color: "text-green-600", tab: "projects" },
+                    ].map(s => (
+                      <Card key={s.label} className="border-none shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab(s.tab)}>
+                        <CardContent className="p-4">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${s.bg}`}>
+                            <s.icon size={16} className={s.color} />
+                          </div>
+                          <p className="text-xs text-gray-500 font-medium">{s.label}</p>
+                          <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
                   <div className="grid lg:grid-cols-2 gap-6">
                     <Card className="border-none shadow-sm">
                       <CardContent className="p-5">
@@ -1218,6 +1273,191 @@ export default function AdminDashboard() {
                   </Card>
                 </>
               )}
+
+              {/* ===== DEVIS EN COURS ===== */}
+              {activeTab === "pending-quotes" && (
+                <>
+                  <div>
+                    <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900">Devis en cours</h1>
+                    <p className="text-gray-500 mt-1 text-sm">Projets en attente de réponse artisan</p>
+                  </div>
+                  <Card className="border-none shadow-sm overflow-hidden bg-white">
+                    <div className="p-5 border-b border-gray-50 flex items-center gap-3 flex-wrap">
+                      <Badge className="bg-yellow-50 text-yellow-700 border-none px-3 py-1">{projectsPending.length} en attente</Badge>
+                      <div className="ml-auto relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                        <Input
+                          placeholder="Rechercher..."
+                          value={pendingQuotesSearch}
+                          onChange={e => setPendingQuotesSearch(e.target.value)}
+                          className="pl-10 w-64 h-9 text-sm"
+                        />
+                      </div>
+                    </div>
+                    {projectsPending.length === 0 ? (
+                      <div className="p-12 text-center text-gray-400">
+                        <CheckCircle className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                        <p className="text-sm">Aucun devis en attente</p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                            <tr>
+                              <th className="px-4 py-3 text-left">Projet</th>
+                              <th className="px-4 py-3 text-left">Client</th>
+                              <th className="px-4 py-3 text-left">Artisan</th>
+                              <th className="px-4 py-3 text-left">Montant estimé</th>
+                              <th className="px-4 py-3 text-left">Date</th>
+                              <th className="px-4 py-3 text-left">Contacter</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-50">
+                            {projectsPending
+                              .filter((p: any) => {
+                                if (!pendingQuotesSearch) return true;
+                                const q = pendingQuotesSearch.toLowerCase();
+                                return (p.client || "").toLowerCase().includes(q) || (p.artisan || "").toLowerCase().includes(q) || (p.description || "").toLowerCase().includes(q);
+                              })
+                              .map((p: any) => (
+                              <tr key={p.id} className="hover:bg-gray-50/50 transition-colors">
+                                <td className="px-4 py-3 font-medium text-gray-900 max-w-[180px] truncate">{p.description}</td>
+                                <td className="px-4 py-3 text-gray-600">{p.client}</td>
+                                <td className="px-4 py-3 text-gray-600">{p.artisan}</td>
+                                <td className="px-4 py-3 text-[#601B28] font-semibold">{p.amount}</td>
+                                <td className="px-4 py-3 text-gray-400 text-xs">{p.date}</td>
+                                <td className="px-4 py-3">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs gap-1 text-[#601B28] border-[#601B28]/30"
+                                    onClick={() => setActiveTab("messaging")}
+                                  >
+                                    <MessageSquare size={12} />
+                                    Message
+                                  </Button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </Card>
+                </>
+              )}
+
+              {/* ===== PAIEMENTS ===== */}
+              {activeTab === "payments" && (() => {
+                const filteredPayments = adminPayments.filter((p: any) => {
+                  if (paymentsStatusFilter !== "all" && p.paymentStatus !== paymentsStatusFilter) return false;
+                  if (!paymentsSearch) return true;
+                  const q = paymentsSearch.toLowerCase();
+                  return (p.client || "").toLowerCase().includes(q) || (p.tailor || "").toLowerCase().includes(q) || (p.title || "").toLowerCase().includes(q);
+                });
+                const totalCA = filteredPayments.reduce((s: number, p: any) => s + (p.amountClient || 0), 0);
+                const totalComm = filteredPayments.filter((p: any) => ["paid","client_confirmed","transferred"].includes(p.paymentStatus)).reduce((s: number, p: any) => s + (p.commission || 0), 0);
+                const statusLabel: Record<string, string> = {
+                  paid: "Payé", client_confirmed: "Confirmé", transferred: "Transféré",
+                  pending: "En attente", failed: "Échoué",
+                };
+                const statusColor: Record<string, string> = {
+                  paid: "bg-yellow-100 text-yellow-700",
+                  client_confirmed: "bg-blue-100 text-blue-700",
+                  transferred: "bg-green-100 text-green-700",
+                  pending: "bg-gray-100 text-gray-600",
+                  failed: "bg-red-100 text-red-700",
+                };
+                return (
+                  <>
+                    <div>
+                      <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900">Paiements</h1>
+                      <p className="text-gray-500 mt-1 text-sm">Transactions et commissions SEAMLiER (10%)</p>
+                    </div>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      {[
+                        { label: "CA total filtré", value: `${totalCA.toFixed(0)} €`, bg: "bg-[#601B28]/5", color: "text-[#601B28]", icon: Euro },
+                        { label: "Commissions perçues", value: `${totalComm.toFixed(0)} €`, bg: "bg-green-50", color: "text-green-600", icon: TrendingUp },
+                        { label: "Transactions payées", value: filteredPayments.filter((p: any) => ["paid","client_confirmed","transferred"].includes(p.paymentStatus)).length, bg: "bg-blue-50", color: "text-blue-600", icon: CheckCircle },
+                        { label: "En attente", value: filteredPayments.filter((p: any) => p.paymentStatus === "pending").length, bg: "bg-amber-50", color: "text-amber-600", icon: Clock },
+                      ].map(s => (
+                        <Card key={s.label} className="border-none shadow-sm">
+                          <CardContent className="p-4">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${s.bg}`}>
+                              <s.icon size={16} className={s.color} />
+                            </div>
+                            <p className="text-xs text-gray-500 font-medium">{s.label}</p>
+                            <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                    <Card className="border-none shadow-sm overflow-hidden bg-white">
+                      <div className="p-5 border-b border-gray-50 flex flex-wrap items-center gap-3">
+                        <div className="flex gap-1 flex-wrap">
+                          {[
+                            { val: "all", label: "Tous" },
+                            { val: "paid", label: "Payé" },
+                            { val: "client_confirmed", label: "Confirmé" },
+                            { val: "transferred", label: "Transféré" },
+                            { val: "pending", label: "En attente" },
+                            { val: "failed", label: "Échoué" },
+                          ].map(f => (
+                            <button
+                              key={f.val}
+                              onClick={() => setPaymentsStatusFilter(f.val)}
+                              className={cn("px-3 py-1 text-xs rounded-full border transition-colors", paymentsStatusFilter === f.val ? "bg-[#601B28] text-white border-[#601B28]" : "border-gray-200 text-gray-600 hover:bg-gray-50")}
+                            >
+                              {f.label}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="ml-auto relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                          <Input placeholder="Rechercher..." value={paymentsSearch} onChange={e => setPaymentsSearch(e.target.value)} className="pl-10 w-64 h-9 text-sm" />
+                        </div>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm" data-testid="table-payments">
+                          <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                            <tr>
+                              <th className="px-4 py-3 text-left">Projet</th>
+                              <th className="px-4 py-3 text-left">Client</th>
+                              <th className="px-4 py-3 text-left">Artisan</th>
+                              <th className="px-4 py-3 text-right">Montant client</th>
+                              <th className="px-4 py-3 text-right">Commission (10%)</th>
+                              <th className="px-4 py-3 text-right">Montant artisan</th>
+                              <th className="px-4 py-3 text-center">Statut Stripe</th>
+                              <th className="px-4 py-3 text-left">Date</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-50">
+                            {filteredPayments.map((p: any) => (
+                              <tr key={p.id} className="hover:bg-gray-50/50 transition-colors" data-testid={`row-payment-${p.id}`}>
+                                <td className="px-4 py-3 font-medium text-gray-900 max-w-[140px] truncate">{p.title}</td>
+                                <td className="px-4 py-3 text-gray-600 max-w-[120px] truncate">{p.client}</td>
+                                <td className="px-4 py-3 text-gray-600 max-w-[120px] truncate">{p.tailor}</td>
+                                <td className="px-4 py-3 text-right font-semibold text-gray-900">{p.amountClient.toFixed(2)} €</td>
+                                <td className="px-4 py-3 text-right font-bold text-green-600">{p.commission.toFixed(2)} €</td>
+                                <td className="px-4 py-3 text-right text-[#601B28] font-semibold">{p.amountArtisan.toFixed(2)} €</td>
+                                <td className="px-4 py-3 text-center">
+                                  <Badge className={cn("text-[10px] border-none", statusColor[p.paymentStatus] || "bg-gray-100 text-gray-600")}>
+                                    {statusLabel[p.paymentStatus] || p.paymentStatus}
+                                  </Badge>
+                                </td>
+                                <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{p.createdAt}</td>
+                              </tr>
+                            ))}
+                            {filteredPayments.length === 0 && (
+                              <tr><td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-400">Aucun paiement trouvé</td></tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </Card>
+                  </>
+                );
+              })()}
 
               {/* ===== PROJECTS ===== */}
               {activeTab === "projects" && (
@@ -2168,6 +2408,16 @@ export default function AdminDashboard() {
                                           data-testid={`button-toggle-${u.id}`}
                                         >
                                           {u.emailVerified ? "Désactiver" : "Activer"}
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 px-2 text-xs text-[#601B28] hover:text-[#601B28] hover:bg-[#601B28]/5"
+                                          onClick={() => setActiveTab("messaging")}
+                                          data-testid={`button-contact-user-${u.id}`}
+                                          title={`Contacter ${u.firstName}`}
+                                        >
+                                          <MessageSquare className="h-3.5 w-3.5" />
                                         </Button>
                                         <Button
                                           variant="ghost"

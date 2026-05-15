@@ -263,9 +263,12 @@ export default function ProDossier() {
                           {/* Infos fichier uploadé */}
                           {url && fileInfo && (
                             <div className="mt-2 space-y-1">
-                              <div className="flex items-center gap-1.5">
-                                <CheckCircle2 className="h-3.5 w-3.5 text-green-600 shrink-0" />
-                                <span className="text-xs text-green-700 font-medium truncate max-w-[220px]">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  Déposé
+                                </span>
+                                <span className="text-xs text-green-700 font-medium truncate max-w-[200px]">
                                   {fileInfo.filename}
                                 </span>
                               </div>
