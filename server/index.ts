@@ -34,6 +34,24 @@ app.use(
 
 app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
+// Serve uploaded files before session/auth middleware — static files need no auth
+// and must not be blocked by a session-store query failure.
+console.log(`[uploads] Serving static files from: ${uploadsDir}`);
+app.use("/uploads", express.static(uploadsDir, { fallthrough: true }));
+// Explicit fallback using sendFile so path resolution is logged and verifiable.
+app.get("/uploads/*", (req, res) => {
+  const relativePath = req.path.replace(/^\/uploads\//, "");
+  const safePath = path.resolve(uploadsDir, relativePath);
+  const rel = path.relative(uploadsDir, safePath);
+  if (rel.startsWith("..") || path.isAbsolute(rel)) {
+    return res.status(403).send("Forbidden");
+  }
+  console.log(`[uploads] sendFile fallback: ${safePath}`);
+  res.sendFile(safePath, (err) => {
+    if (err) res.status(404).send("Not found");
+  });
+});
+
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -74,9 +92,6 @@ app.use((req, res, next) => {
 (async () => {
   await ensureTables();
   await setupAuth(app);
-
-  // Serve uploaded files statically
-  app.use("/uploads", express.static(uploadsDir));
 
   await registerRoutes(httpServer, app);
 
