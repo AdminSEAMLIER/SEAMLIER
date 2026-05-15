@@ -7,6 +7,7 @@ import { ensureTables, pool } from "./db";
 import path from "path";
 import fs from "fs";
 import { schedule } from "node-cron";
+import { initSocketIO } from "./socketio";
 import { generateMonthlyInvoice } from "./invoice";
 import { generateAnnualFiscalPdf } from "./fiscal";
 import { sendMonthlyInvoiceEmail, sendKbisExpiryReminderEmail, sendAdminKbisAlertEmail, sendAnnualFiscalRecapEmail, sendAdminFiscalAlertEmail } from "./email";
@@ -14,6 +15,7 @@ import { uploadsDir } from "./upload";
 
 const app = express();
 const httpServer = createServer(app);
+initSocketIO(httpServer);
 
 const projectRoot = process.cwd();
 

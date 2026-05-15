@@ -163,7 +163,7 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
           <div className="grid grid-cols-3 gap-2 md:gap-8 text-center">
             {features.map((feature) => (
               <div key={feature}>
-                <p className="text-gray-800 text-sm md:text-base lg:text-lg font-medium leading-tight">{feature}</p>
+                <p className="text-gray-800 text-xs sm:text-sm md:text-base lg:text-lg font-medium leading-tight break-words">{feature}</p>
               </div>
             ))}
           </div>

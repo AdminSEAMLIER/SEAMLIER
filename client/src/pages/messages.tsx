@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { renderMessageContent } from "@/lib/message-renderer";
 import type { ConversationWithParticipant, MessageWithSender } from "@shared/schema";
+import { io as socketIO } from "socket.io-client";
 
 export default function Messages() {
   const { user } = useAuth();
@@ -22,9 +23,13 @@ export default function Messages() {
   const searchStr = useSearch();
   const tailorParam = new URLSearchParams(searchStr).get("tailor");
 
+  const socketRef = useRef<ReturnType<typeof socketIO> | null>(null);
+  const [socketConnected, setSocketConnected] = useState(false);
+
   const { data: conversations, isLoading: conversationsLoading } = useQuery<ConversationWithParticipant[]>({
     queryKey: ["/api/conversations"],
-    refetchInterval: 5000,
+    // Fallback polling — reduced to 30s when socket is active
+    refetchInterval: socketConnected ? 30000 : 5000,
   });
 
   const { data: messages, isLoading: messagesLoading } = useQuery<MessageWithSender[]>({
@@ -35,8 +40,41 @@ export default function Messages() {
       if (!res.ok) throw new Error("Failed to fetch messages");
       return res.json();
     },
-    refetchInterval: 3000,
+    // Fallback polling — reduced to 30s when socket is active
+    refetchInterval: socketConnected ? 30000 : 3000,
   });
+
+  // Socket.io — persistent connection
+  useEffect(() => {
+    const socket = socketIO({ path: "/socket.io", withCredentials: true });
+    socketRef.current = socket;
+    socket.on("connect", () => setSocketConnected(true));
+    socket.on("disconnect", () => setSocketConnected(false));
+    socket.on("connect_error", () => setSocketConnected(false));
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, []);
+
+  // Socket.io — join/leave conversation room and listen for new messages
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket || !selectedConversationId) return;
+    socket.emit("join_conversation", selectedConversationId);
+    const handleNewMessage = (message: MessageWithSender) => {
+      queryClient.setQueryData<MessageWithSender[]>(
+        ["/api/messages", selectedConversationId],
+        (old = []) => old.find(m => m.id === message.id) ? old : [...old, message]
+      );
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+    };
+    socket.on("new_message", handleNewMessage);
+    return () => {
+      socket.emit("leave_conversation", selectedConversationId);
+      socket.off("new_message", handleNewMessage);
+    };
+  }, [selectedConversationId, socketConnected]);
 
   useEffect(() => {
     if (!user?.id) return;

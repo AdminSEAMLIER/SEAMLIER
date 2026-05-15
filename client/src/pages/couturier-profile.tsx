@@ -216,13 +216,13 @@ export default function CouturierProfile() {
             </AvatarFallback>
           </Avatar>
 
-          <div className="flex-1 pt-4">
+          <div className="flex-1 min-w-0 pt-4">
             <div className="flex items-center gap-2">
-              <h1 className="font-serif text-2xl lg:text-3xl text-foreground">
+              <h1 className="font-serif text-xl lg:text-3xl text-foreground break-words min-w-0">
                 {tailorName}
               </h1>
               {tailor.isVerified && (
-                <BadgeCheck className="h-6 w-6 text-primary" fill="currentColor" />
+                <BadgeCheck className="h-6 w-6 text-primary shrink-0" fill="currentColor" />
               )}
             </div>
           </div>

@@ -28,6 +28,7 @@ import {
   sendArtisanPaymentReceivedEmail,
 } from "./email";
 import { sendSms } from "./sms";
+import { getIO } from "./socketio";
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
@@ -538,6 +539,12 @@ export async function registerRoutes(
         senderId: userId,
       });
       res.status(201).json(message);
+
+      // Broadcast to conversation room via Socket.io
+      const io = getIO();
+      if (io && message.conversationId) {
+        io.to(message.conversationId).emit("new_message", message);
+      }
 
       // Trigger email notification in background (non-blocking)
       try {
