@@ -52,6 +52,15 @@ export async function ensureTables() {
   await addColumnIfMissing("tailors", "rating", "FLOAT NOT NULL DEFAULT 0");
   await addColumnIfMissing("tailors", "review_count", "INT NOT NULL DEFAULT 0");
 
+  // tailors: dossier fields (added after initial deployment)
+  await addColumnIfMissing("tailors", "kbis_url", "TEXT NULL");
+  await addColumnIfMissing("tailors", "kbis_expiry_date", "DATE NULL");
+  await addColumnIfMissing("tailors", "id_card_url", "TEXT NULL");
+  await addColumnIfMissing("tailors", "rc_pro_url", "TEXT NULL");
+  await addColumnIfMissing("tailors", "iban_rib", "TEXT NULL");
+  await addColumnIfMissing("tailors", "dossier_status", "VARCHAR(20) NOT NULL DEFAULT 'pending'");
+  await addColumnIfMissing("tailors", "dossier_rejection_reason", "TEXT NULL");
+
   // users: CGV acceptance + last activity
   await addColumnIfMissing("users", "cgv_accepted", "TINYINT(1) NOT NULL DEFAULT 0");
   await addColumnIfMissing("users", "cgv_accepted_at", "TIMESTAMP NULL");

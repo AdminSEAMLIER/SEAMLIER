@@ -148,7 +148,9 @@ export async function registerRoutes(
     } catch (error: any) { res.status(500).json({ error: error.message }); }
   });
 
-  app.get("/api/tailors/:id", async (req, res) => {
+  // UUID-only constraint prevents this wildcard from shadowing keyword routes like
+  // /api/tailors/projects or /api/tailors/portfolio registered later in this file.
+  app.get("/api/tailors/:id([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})", async (req, res) => {
     try {
       const tailor = await storage.getTailor(req.params.id);
       if (!tailor) {
