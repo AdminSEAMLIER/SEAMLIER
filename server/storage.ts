@@ -571,8 +571,8 @@ class DatabaseStorage implements IStorage {
   async getProjectsByClient(clientId: string): Promise<ProjectWithTailor[]> {
     const result = await db.select()
       .from(projects)
-      .innerJoin(tailors, eq(projects.tailorId, tailors.id))
-      .innerJoin(users, eq(tailors.userId, users.id))
+      .leftJoin(tailors, eq(projects.tailorId, tailors.id))
+      .leftJoin(users, eq(tailors.userId, users.id))
       .where(eq(projects.clientId, clientId))
       .orderBy(desc(projects.updatedAt));
 
@@ -580,19 +580,19 @@ class DatabaseStorage implements IStorage {
 
     return result.map(row => ({
       ...row.projects,
-      tailor: parseTailorSpecialties(row.tailors),
-      tailorUser: row.users,
+      tailor: row.tailors ? parseTailorSpecialties(row.tailors) : null,
+      tailorUser: row.users ?? null,
     }));
   }
 
   async getProject(id: string): Promise<ProjectWithClient | undefined> {
     const result = await db.select()
       .from(projects)
-      .innerJoin(users, eq(projects.clientId, users.id))
+      .leftJoin(users, eq(projects.clientId, users.id))
       .where(eq(projects.id, id));
 
     if (!result || result.length === 0) return undefined;
-    return { ...result[0].projects, client: result[0].users };
+    return { ...result[0].projects, client: result[0].users ?? null };
   }
 
   async createProject(project: InsertProject): Promise<Project> {

@@ -374,5 +374,5 @@ export type ReviewWithUser = Review & { user: User };
 export type ConversationWithParticipant = Conversation & { otherParticipant: User; unreadCount: number; otherParticipantTailorId?: string | null };
 export type MessageWithSender = Message & { sender: User };
 export type ProjectWithClient = Project & { client: User | null };
-export type ProjectWithTailor = Project & { tailor: Tailor; tailorUser: User };
+export type ProjectWithTailor = Project & { tailor: Tailor | null; tailorUser: User | null };
 export type AppointmentWithClient = Appointment & { client: User };

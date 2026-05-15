@@ -290,7 +290,7 @@ function Router() {
 
       <Route path="/suivi-projet/:id">
         <ProtectedRoute>
-          <SuiviProjet />
+          <ClientLayout><SuiviProjet /></ClientLayout>
         </ProtectedRoute>
       </Route>
 

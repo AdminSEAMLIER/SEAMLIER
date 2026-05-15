@@ -1,4 +1,4 @@
-import { Home, Compass, MessageCircle, User, Ruler, BookOpen } from "lucide-react";
+import { Home, Compass, MessageCircle, User, Ruler, FolderKanban } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -10,7 +10,7 @@ const navItems = [
   { icon: Compass, labelKey: "nav.search", path: "/decouverte" },
   { icon: MessageCircle, labelKey: "nav.messages", path: "/messages", isMessages: true },
   { icon: Ruler, labelKey: "nav.measures", path: "/mesures" },
-  { icon: BookOpen, labelKey: "nav.magazine", path: "/magazine" },
+  { icon: FolderKanban, labelKey: "nav.projects", path: "/mes-projets" },
   { icon: User, labelKey: "nav.profile", path: "/mon-profil" },
 ];
 

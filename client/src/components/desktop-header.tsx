@@ -17,6 +17,7 @@ const particulierNavItems = [
   { icon: Compass, labelKey: "nav.search", path: "/decouverte" },
   { icon: MessageCircle, labelKey: "nav.messages", path: "/messages", isMessages: true },
   { icon: Ruler, labelKey: "nav.measures", path: "/mesures" },
+  { icon: FolderKanban, labelKey: "nav.projects", path: "/mes-projets" },
   { icon: BookOpen, labelKey: "nav.magazine", path: "/magazine" },
   { icon: User, labelKey: "nav.profile", path: "/mon-profil" },
 ];
