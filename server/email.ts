@@ -297,6 +297,41 @@ export async function sendPaymentConfirmationEmail(
   return sendEmail(clientEmail, `Paiement confirmé — ${projectTitle}`, html);
 }
 
+export async function sendNewAppointmentRequestEmail(
+  tailorEmail: string, tailorName: string, clientName: string,
+  appointmentType: string, scheduledAt: Date | string
+): Promise<boolean> {
+  const dt = new Date(scheduledAt);
+  const dateStr = dt.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const timeStr = dt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const html = emailWrapper("Nouveau rendez-vous demandé — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Nouveau rendez-vous demandé</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${tailorName || ""},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      <strong style="color:#1f2937">${clientName}</strong> vient de réserver un rendez-vous avec vous :
+    </p>
+    <div style="background:#f5f3f0;border-radius:8px;padding:20px 24px;margin:0 0 24px">
+      <table style="width:100%">
+        <tr><td style="color:#6b7280;font-size:13px">Type</td><td style="text-align:right;font-weight:600;font-size:13px;color:#1f2937">${appointmentType}</td></tr>
+        <tr><td style="color:#6b7280;font-size:13px;padding-top:8px">Client</td><td style="text-align:right;font-weight:600;font-size:13px;color:#1f2937;padding-top:8px">${clientName}</td></tr>
+        <tr><td style="color:#6b7280;font-size:13px;padding-top:8px">Date</td><td style="text-align:right;font-weight:600;font-size:13px;color:#722F37;padding-top:8px">${dateStr}</td></tr>
+        <tr><td style="color:#6b7280;font-size:13px;padding-top:4px">Heure</td><td style="text-align:right;font-weight:600;font-size:13px;color:#722F37;padding-top:4px">${timeStr}</td></tr>
+      </table>
+    </div>
+    <p style="margin:0 0 24px;color:#4b5563;font-size:14px;line-height:1.7">
+      Connectez-vous pour confirmer ou gérer ce rendez-vous.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/mes-rendez-vous" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Voir le rendez-vous</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(tailorEmail, `Nouveau RDV — ${clientName} le ${dateStr} à ${timeStr}`, html);
+}
+
 export async function sendAppointmentConfirmationEmail(
   toEmail: string, toName: string, scheduledAt: Date | string, appointmentType: string, otherPartyName: string
 ): Promise<boolean> {

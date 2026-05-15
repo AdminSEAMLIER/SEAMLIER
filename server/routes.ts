@@ -15,6 +15,7 @@ import {
   sendReviewRequestEmail,
   sendPaymentConfirmationEmail,
   sendAppointmentConfirmationEmail,
+  sendNewAppointmentRequestEmail,
   sendFabricDepositReminderEmail,
   sendDeadlineWarningEmail,
   sendDossierValidatedEmail,
@@ -1307,8 +1308,13 @@ export async function registerRoutes(
         if (cl && ta) {
           const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim();
           const tailorName = `${ta.first_name || ""} ${ta.last_name || ""}`.trim();
+          // Client-created appointment: send dedicated "new booking request" email to artisan
+          if (!tailor) {
+            sendNewAppointmentRequestEmail(ta.email, tailorName, clientName, type || "consultation", scheduledAt).catch(() => {});
+          } else {
+            sendAppointmentConfirmationEmail(ta.email, tailorName, scheduledAt, type || "consultation", clientName).catch(() => {});
+          }
           sendAppointmentConfirmationEmail(cl.email, clientName, scheduledAt, type || "consultation", tailorName).catch(() => {});
-          sendAppointmentConfirmationEmail(ta.email, tailorName, scheduledAt, type || "consultation", clientName).catch(() => {});
         }
       } catch (emailErr) {
         console.error("[APPT EMAIL]", emailErr);
