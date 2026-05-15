@@ -11,7 +11,7 @@ import { Loader2, Calendar, Users, CheckCircle, Scissors, LogIn, UserPlus, Lock,
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
-const _pubKey = "pk_live_51SvLQMLyrGmm31qYpXRsufTxYiPBDvV6QEqsYqoUKgpssxXZ0IpU3zi02m0O9TYJPrae4r4uMtgN4g7N4OAwoSdb00muMHphx5";
+const _pubKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_live_51SvLQMLyrGmm31qYpXRsufTxYiPBDvV6QEqsYqoUKgpssxXZ0IpU3zi02m0O9TYJPrae4r4uMtgN4g7N4OAwoSdb00muMHphx5";
 const stripePromise = _pubKey ? loadStripe(_pubKey).catch(() => null) : Promise.resolve(null);
 
 // ── Payment form (must be inside <Elements>) ──────────────────────────────
