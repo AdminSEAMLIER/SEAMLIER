@@ -17,6 +17,7 @@ import { ReviewCard, ReviewCardSkeleton } from "@/components/review-card";
 import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
   Star,
@@ -40,8 +41,10 @@ import type { TailorWithUser, PortfolioWithTailor, ReviewWithUser } from "@share
 export default function CouturierProfile() {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   const [, params] = useRoute("/profil-pro/:id");
   const tailorId = params?.id;
+  const [showLoginHint, setShowLoginHint] = useState(false);
 
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingDate, setBookingDate] = useState("");
@@ -323,17 +326,28 @@ export default function CouturierProfile() {
           <div className="bg-muted border border-border rounded-lg p-4">
             <div className="flex flex-col gap-2">
               <div className="flex flex-col sm:flex-row gap-2">
-                <Link href={`/messages?tailor=${tailorId}`} className="flex-1">
-                  <Button className="bg-[#601B28] hover:bg-[#4E1522] text-white w-full" data-testid="button-contact-tailor">
+                {isAuthenticated ? (
+                  <Link href={`/messages?tailor=${tailorId}`} className="flex-1">
+                    <Button className="bg-[#601B28] hover:bg-[#4E1522] text-white w-full" data-testid="button-contact-tailor">
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Envoyer un message
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    className="bg-[#601B28] hover:bg-[#4E1522] text-white flex-1"
+                    data-testid="button-contact-tailor"
+                    onClick={() => setShowLoginHint(true)}
+                  >
                     <MessageCircle className="h-4 w-4 mr-2" />
                     Envoyer un message
                   </Button>
-                </Link>
+                )}
                 <Button
                   variant="outline"
                   className="flex-1 border-primary text-primary"
                   data-testid="button-book-appointment"
-                  onClick={() => setBookingOpen(true)}
+                  onClick={() => isAuthenticated ? setBookingOpen(true) : setShowLoginHint(true)}
                 >
                   <Calendar className="h-4 w-4 mr-2" />
                   Prendre rendez-vous
@@ -342,10 +356,18 @@ export default function CouturierProfile() {
               <Button
                 className="w-full bg-white border border-[#601B28] text-[#601B28] hover:bg-[#601B28]/5"
                 data-testid="button-request-quote"
-                onClick={() => setDevisOpen(true)}
+                onClick={() => isAuthenticated ? setDevisOpen(true) : setShowLoginHint(true)}
               >
                 Demander un devis
               </Button>
+              {showLoginHint && (
+                <p className="text-sm text-muted-foreground text-center mt-1">
+                  Connectez-vous pour contacter cet artisan.{" "}
+                  <Link href={`/connexion?redirect=/profil-pro/${tailorId}`} className="text-[#601B28] underline">
+                    Se connecter
+                  </Link>
+                </p>
+              )}
             </div>
           </div>
         </Card>

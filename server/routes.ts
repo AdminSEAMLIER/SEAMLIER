@@ -1616,7 +1616,7 @@ export async function registerRoutes(
       const newId = require("crypto").randomUUID();
       await pool.query(
         `INSERT INTO reviews (id, tailor_id, user_id, project_id, rating, comment, is_approved)
-         VALUES (?, ?, ?, ?, ?, ?, 0)`,
+         VALUES (?, ?, ?, ?, ?, ?, 1)`,
         [newId, tailorId, userId, projectId || null, rating, comment]
       );
       try { await recalculateTailorRating(tailorId); } catch (e) { console.error("Rating recalc error:", e); }
