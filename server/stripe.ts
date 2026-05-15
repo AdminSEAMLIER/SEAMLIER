@@ -4,9 +4,9 @@ import { storage } from "./storage";
 import { pool } from "./db";
 import { sendPaymentConfirmationEmail, sendAdminChargebackAlertEmail, sendSubscriptionPaymentFailedEmail } from "./email";
 
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-04-10" as any })
-  : null;
+const STRIPE_SECRET_KEY = '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';
+export const STRIPE_PUBLISHABLE_KEY = 'pk_live_51SvLQMLyrGmm31qYpXRsufTxYiPBDvV6QEqsYqoUKgpssxXZ0IpU3zi02m0O9TYJPrae4r4uMtgN4g7N4OAwoSdb00muMHphx5';
+const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2024-04-10" as any });
 const FRAIS = 0.10;
 const COMM = 0.15;
 
@@ -330,7 +330,7 @@ export function registerStripeRoutes(app: Express) {
 
   // ── Création abonnement Premium (Stripe Billing + Elements) ───────────────
   app.post("/api/stripe/subscription/create", async (req: any, res: Response) => {
-    const SK_PREFIX = process.env.STRIPE_SECRET_KEY?.slice(0, 14) || "absent";
+    const SK_PREFIX = STRIPE_SECRET_KEY.slice(0, 14);
     console.log(`[Stripe/sub] ▶ Début — clé: ${SK_PREFIX}...`);
     console.log(`[Stripe/sub] PRICES month=${PRICES.month} year=${PRICES.year}`);
 
