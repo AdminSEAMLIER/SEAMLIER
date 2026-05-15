@@ -4287,6 +4287,8 @@ type Dispute = {
   stripePaymentIntentId: string | null;
   clientEmail: string;
   clientName: string;
+  tailorEmail: string | null;
+  tailorName: string;
   createdAt: string;
   resolvedAt: string | null;
 };
@@ -4354,7 +4356,8 @@ function AdminLitiges() {
                     {statusBadge(d.status)}
                     <span className="text-sm font-semibold text-gray-800 truncate">{d.projectTitle}</span>
                   </div>
-                  <p className="text-xs text-gray-500 mb-1">{d.clientName} · {d.clientEmail}</p>
+                  <p className="text-xs text-gray-500 mb-0.5">Client : {d.clientName} · {d.clientEmail}</p>
+                  <p className="text-xs text-gray-500 mb-1">Artisan : {d.tailorName}{d.tailorEmail ? ` · ${d.tailorEmail}` : ""}</p>
                   <p className="text-sm text-gray-700 line-clamp-2">{d.reason}</p>
                   <p className="text-xs text-gray-400 mt-1">Ouvert le {d.createdAt}{d.amountTotal ? ` · ${Math.round(d.amountTotal / 100)}€` : ""}</p>
                 </div>
@@ -4379,7 +4382,7 @@ function AdminLitiges() {
                     {statusBadge(d.status)}
                     <span className="text-sm font-medium text-gray-700 truncate">{d.projectTitle}</span>
                   </div>
-                  <p className="text-xs text-gray-400">{d.clientName} · résolu le {d.resolvedAt}</p>
+                  <p className="text-xs text-gray-400">Client : {d.clientName} · Artisan : {d.tailorName} · résolu le {d.resolvedAt}</p>
                   {d.adminNote && <p className="text-xs text-gray-500 mt-1 italic">{d.adminNote}</p>}
                   {d.stripeRefundId && <p className="text-xs text-green-600 mt-1">Remboursement Stripe : {d.stripeRefundId}</p>}
                 </div>
@@ -4398,7 +4401,8 @@ function AdminLitiges() {
             <div className="space-y-4">
               <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-1">
                 <p><span className="font-medium">Projet :</span> {selected.projectTitle}</p>
-                <p><span className="font-medium">Client :</span> {selected.clientName}</p>
+                <p><span className="font-medium">Client :</span> {selected.clientName} {selected.clientEmail && <span className="text-gray-400">({selected.clientEmail})</span>}</p>
+                <p><span className="font-medium">Artisan :</span> {selected.tailorName} {selected.tailorEmail && <span className="text-gray-400">({selected.tailorEmail})</span>}</p>
                 {selected.amountTotal && <p><span className="font-medium">Montant :</span> {Math.round(selected.amountTotal / 100)}€</p>}
               </div>
               <div>
@@ -4431,16 +4435,16 @@ function AdminLitiges() {
                 <button
                   onClick={() => resolveMutation.mutate({ action: "reject" })}
                   disabled={resolveMutation.isPending}
-                  className="flex-1 border border-gray-200 text-gray-600 rounded-lg py-2 text-sm hover:bg-gray-50"
+                  className="flex-1 border border-amber-300 text-amber-800 bg-amber-50 rounded-lg py-2 text-sm hover:bg-amber-100 font-medium"
                 >
-                  Rejeter
+                  Résoudre en faveur de l'artisan
                 </button>
                 <button
                   onClick={() => resolveMutation.mutate({ action: "approve" })}
                   disabled={resolveMutation.isPending}
                   className="flex-1 bg-green-600 text-white rounded-lg py-2 text-sm hover:bg-green-700 font-medium"
                 >
-                  {selected.stripePaymentIntentId ? "Approuver + Rembourser" : "Approuver"}
+                  {selected.stripePaymentIntentId ? "Résoudre en faveur du client (rembourser)" : "Résoudre en faveur du client"}
                 </button>
               </div>
             </div>

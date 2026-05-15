@@ -10,7 +10,10 @@ export default defineConfig({
     runtimeErrorOverlay(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.png"],
+      includeAssets: ["favicon.png", "push-handler.js"],
+      workbox: {
+        importScripts: ["/push-handler.js"],
+      },
       manifest: {
         name: "Seamlier",
         short_name: "Seamlier",

@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { FolderKanban, Clock, Euro, User, ChevronRight, Ruler, Calendar, MessageSquare, Phone, Mail, Camera, Image, Users, CheckCircle, Circle, Loader2, Check, X, Plus, Boxes, ExternalLink } from "lucide-react";
+import { FolderKanban, Clock, Euro, User, ChevronRight, Ruler, Calendar, MessageSquare, Phone, Mail, Camera, Image, Users, CheckCircle, Circle, Loader2, Check, X, Plus, Boxes, ExternalLink, Flag } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -402,6 +402,8 @@ export default function ProProjets() {
             </Card>
           ))
         )}
+
+        <ArtisanDisputes />
       </div>
 
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
@@ -670,6 +672,47 @@ export default function ProProjets() {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function ArtisanDisputes() {
+  const { data: disputes = [] } = useQuery<any[]>({
+    queryKey: ["/api/tailors/disputes"],
+  });
+  if (!disputes.length) return null;
+
+  const openDisputes = disputes.filter((d: any) => d.status === "open");
+  if (!openDisputes.length) return null;
+
+  return (
+    <div className="mt-6">
+      <div className="flex items-center gap-2 mb-3">
+        <Flag className="h-4 w-4 text-red-600" />
+        <h2 className="font-semibold text-gray-900 text-sm">
+          Litiges en cours ({openDisputes.length})
+        </h2>
+      </div>
+      <div className="space-y-2">
+        {openDisputes.map((d: any) => (
+          <Card key={d.id} className="border border-red-200 bg-red-50">
+            <CardContent className="p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">{d.projectTitle}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Client : {d.clientName}</p>
+                  <p className="text-sm text-gray-700 mt-1 line-clamp-2">{d.reason}</p>
+                  <p className="text-xs text-gray-400 mt-1">Ouvert le {d.createdAt}</p>
+                </div>
+                <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium">En attente</span>
+              </div>
+              {d.adminNote && (
+                <p className="text-xs text-blue-600 mt-2 bg-blue-50 rounded p-2">Note admin : {d.adminNote}</p>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

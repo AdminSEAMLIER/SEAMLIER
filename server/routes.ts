@@ -863,11 +863,51 @@ export async function registerRoutes(
     try {
       const { id } = req.params;
       const { deadlineRespected } = req.body;
-      await pool.query(
-        "UPDATE projects SET client_confirmed = 1 WHERE id = ?",
-        [id]
-      );
+
+      // Mark client as confirmed
+      await pool.query("UPDATE projects SET client_confirmed = 1 WHERE id = ?", [id]);
       console.log(`[Project] ${id} → clientConfirmed=true, deadlineRespected=${deadlineRespected}`);
+
+      // Auto-trigger Stripe transfer to artisan
+      if (process.env.STRIPE_SECRET_KEY) {
+        try {
+          const [rows] = await pool.query(`
+            SELECT p.stripe_transfer_id, p.amount_artisan, p.stripe_payment_intent_id,
+                   u.stripe_account_id, u.id AS tailor_user_id,
+                   t.id AS tailor_id
+            FROM projects p
+            JOIN tailors t ON t.id = p.tailor_id
+            JOIN users u ON u.id = t.user_id
+            WHERE p.id = ? LIMIT 1
+          `, [id]) as any[];
+          const proj = Array.isArray(rows) && rows[0] ? rows[0] : null;
+
+          if (proj && !proj.stripe_transfer_id && proj.stripe_account_id && proj.amount_artisan > 0) {
+            const StripeLib = (await import("stripe")).default;
+            const stripeClient = new StripeLib(process.env.STRIPE_SECRET_KEY);
+            const transfer = await stripeClient.transfers.create({
+              amount: proj.amount_artisan,
+              currency: "eur",
+              destination: proj.stripe_account_id,
+              description: `SEAMLiER - Virement projet #${id}`,
+            });
+            await pool.query(
+              "UPDATE projects SET stripe_transfer_id = ?, payment_status = 'transferred' WHERE id = ?",
+              [transfer.id, id]
+            );
+            console.log(`[Project] ${id} → transfer ${transfer.id} vers ${proj.stripe_account_id}`);
+
+            // Notify artisan via push
+            if (proj.tailor_user_id) {
+              sendPushNotification(proj.tailor_user_id, "Virement effectué !", "Le client a confirmé la réception. Le virement a été envoyé sur votre compte.", "/atelier").catch(() => {});
+            }
+          }
+        } catch (transferErr) {
+          console.error(`[Project] Transfer auto-release failed for ${id}:`, transferErr);
+          // Non-blocking — client confirmation is still saved
+        }
+      }
+
       res.json({ success: true });
     } catch (error) {
       console.error("Error confirming project:", error);
@@ -3489,10 +3529,13 @@ export async function registerRoutes(
         SELECT d.id, d.project_id, d.reason, d.status, d.admin_note,
                d.stripe_refund_id, d.created_at, d.resolved_at,
                p.title AS project_title, p.stripe_payment_intent_id, p.amount_total,
-               u.email AS client_email, u.first_name AS client_first, u.last_name AS client_last
+               u.email AS client_email, u.first_name AS client_first, u.last_name AS client_last,
+               tu.email AS tailor_email, tu.first_name AS tailor_first, tu.last_name AS tailor_last
         FROM disputes d
         JOIN projects p ON p.id = d.project_id
         JOIN users u ON u.id = d.client_id
+        LEFT JOIN tailors t ON t.id = p.tailor_id
+        LEFT JOIN users tu ON tu.id = t.user_id
         ORDER BY d.created_at DESC
         LIMIT 200
       `) as any[];
@@ -3508,6 +3551,8 @@ export async function registerRoutes(
         stripePaymentIntentId: r.stripe_payment_intent_id || null,
         clientEmail: r.client_email,
         clientName: [r.client_first, r.client_last].filter(Boolean).join(" ") || r.client_email,
+        tailorEmail: r.tailor_email || null,
+        tailorName: [r.tailor_first, r.tailor_last].filter(Boolean).join(" ") || r.tailor_email || "—",
         createdAt: r.created_at ? new Date(r.created_at).toLocaleDateString("fr-FR") : "—",
         resolvedAt: r.resolved_at ? new Date(r.resolved_at).toLocaleDateString("fr-FR") : null,
       }));
@@ -3681,6 +3726,41 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to delete account:", error);
       res.status(500).json({ error: "Failed to delete account" });
+    }
+  });
+
+  // ── Vue artisan : litiges sur ses projets ─────────────────────────────────
+  app.get("/api/tailors/disputes", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Réservé aux artisans" });
+      const [rows] = await pool.query(`
+        SELECT d.id, d.project_id, d.reason, d.status, d.admin_note,
+               d.created_at, d.resolved_at,
+               p.title AS project_title,
+               u.email AS client_email, u.first_name AS client_first, u.last_name AS client_last
+        FROM disputes d
+        JOIN projects p ON p.id = d.project_id AND p.tailor_id = ?
+        JOIN users u ON u.id = d.client_id
+        ORDER BY d.created_at DESC
+        LIMIT 50
+      `, [tailor.id]) as any[];
+      res.json((Array.isArray(rows) ? rows : []).map((r: any) => ({
+        id: r.id,
+        projectId: r.project_id,
+        projectTitle: r.project_title || "—",
+        reason: r.reason,
+        status: r.status,
+        adminNote: r.admin_note || null,
+        clientName: [r.client_first, r.client_last].filter(Boolean).join(" ") || r.client_email,
+        clientEmail: r.client_email,
+        createdAt: r.created_at ? new Date(r.created_at).toLocaleDateString("fr-FR") : "—",
+        resolvedAt: r.resolved_at ? new Date(r.resolved_at).toLocaleDateString("fr-FR") : null,
+      })));
+    } catch (err) {
+      console.error("tailors/disputes error:", err);
+      res.status(500).json({ error: "Erreur serveur" });
     }
   });
 
