@@ -4,8 +4,8 @@ import { storage } from "./storage";
 import { pool } from "./db";
 import { sendPaymentConfirmationEmail, sendAdminChargebackAlertEmail, sendSubscriptionPaymentFailedEmail } from "./email";
 
-const STRIPE_SECRET_KEY = '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';
-export const STRIPE_PUBLISHABLE_KEY = 'pk_live_51SvLQMLyrGmm31qYpXRsufTxYiPBDvV6QEqsYqoUKgpssxXZ0IpU3zi02m0O9TYJPrae4r4uMtgN4g7N4OAwoSdb00muMHphx5';
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
+export const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || '';
 const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2024-04-10" as any });
 const FRAIS = 0.10;
 const COMM = 0.15;
