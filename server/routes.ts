@@ -23,6 +23,8 @@ import {
   sendDossierReceivedEmail,
   sendNewProjectRequestEmail,
   sendQuoteReadyEmail,
+  sendQuoteAcceptedByClientEmail,
+  sendArtisanPaymentReceivedEmail,
 } from "./email";
 import { sendSms } from "./sms";
 
@@ -557,7 +559,7 @@ export async function registerRoutes(
             const recipEmail = row.recip_email;
             const recipName = `${row.recip_first || ""} ${row.recip_last || ""}`.trim();
             const lastActive = row.recip_active ? new Date(row.recip_active) : null;
-            const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
+            const fiveMinsAgo = new Date(Date.now() - 10 * 60 * 1000);
             const isAway = !lastActive || lastActive < fiveMinsAgo;
             if (recipEmail && isAway) {
               const preview = (req.body.content || "").slice(0, 100);
@@ -1048,7 +1050,7 @@ export async function registerRoutes(
         if (cl && ta && ta.email) {
           const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim() || "Un client";
           const tailorName = `${ta.first_name || ""} ${ta.last_name || ""}`.trim();
-          sendNewProjectRequestEmail(ta.email, tailorName, clientName, project.title || "Nouvelle commande").catch(() => {});
+          sendNewProjectRequestEmail(ta.email, tailorName, clientName, project.title || "Nouvelle commande", project.description ?? null, project.requestedPrice ?? null).catch(() => {});
         }
       } catch (emailErr) {
         console.error("[PROJECT EMAIL]", emailErr);
@@ -1116,15 +1118,33 @@ export async function registerRoutes(
           const tailor = await storage.getTailor(project.tailorId);
           if (tailor?.userId && project.clientId) {
             const conv = await storage.getOrCreateConversation(tailor.userId, project.clientId);
-            const garmentLabel = (project as any).clothingType || project.title || "votre commande";
             await storage.createMessage({
               conversationId: conv.id,
               senderId: tailor.userId,
-              content: `🎉 Votre devis a été validé et la confection de ${garmentLabel} démarre ! Prenez dès maintenant votre premier rendez-vous avec moi 👇\n[RDV:/prendre-rdv?tailor=${tailor.userId}]`,
+              content: `Votre devis a été accepté ! Vous pouvez maintenant procéder au paiement et prendre rendez-vous.\n[RDV:/prendre-rdv?tailor=${tailor.userId}]`,
             });
           }
         } catch (msgErr) {
           console.error("Auto-message error on project start:", msgErr);
+        }
+
+        // Email artisan : devis accepté par le client
+        try {
+          const [tailorUserRows] = await pool.query(
+            `SELECT u.email, u.first_name, u.last_name FROM users u JOIN tailors t ON t.user_id = u.id WHERE t.id = ?`, [project.tailorId]
+          ) as any[];
+          const [clientRows] = await pool.query(
+            `SELECT first_name, last_name FROM users WHERE id = ?`, [project.clientId]
+          ) as any[];
+          const ta = (tailorUserRows as any[])[0];
+          const cl = (clientRows as any[])[0];
+          if (ta?.email && cl) {
+            const tailorName = `${ta.first_name || ""} ${ta.last_name || ""}`.trim();
+            const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim();
+            sendQuoteAcceptedByClientEmail(ta.email, tailorName, clientName, project.title || "votre projet", project.amount ?? null).catch(() => {});
+          }
+        } catch (emailErr) {
+          console.error("[QUOTE ACCEPTED EMAIL]", emailErr);
         }
 
         // Génération du contrat PDF

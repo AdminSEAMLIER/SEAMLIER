@@ -140,7 +140,7 @@ app.use((req, res, next) => {
       for (const tailor of tailors) {
         try {
           const tailorName = [tailor.first_name, tailor.last_name].filter(Boolean).join(" ") || tailor.email;
-          const { buffer, totals } = await generateMonthlyInvoice(tailor.tailor_id, tailorName, prevMonth, prevYear);
+          const { buffer, projects, totals } = await generateMonthlyInvoice(tailor.tailor_id, tailorName, prevMonth, prevYear);
 
           if (totals.projectCount === 0) continue; // Ne pas envoyer si aucun projet
 
@@ -151,7 +151,10 @@ app.use((req, res, next) => {
             prevYear,
             buffer,
             totals.projectCount,
-            totals.amountArtisanEur
+            totals.amountArtisanEur,
+            projects,
+            totals.amountTotalEur,
+            totals.commissionEur
           );
           sent++;
         } catch (err) {

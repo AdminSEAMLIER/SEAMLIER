@@ -608,7 +608,10 @@ export async function sendMonthlyInvoiceEmail(
   year: number,
   pdfBuffer: Buffer,
   projectCount: number,
-  netAmountEur: number
+  netAmountEur: number,
+  projects?: { title: string; clientName: string; amountTotalEur: number; commissionEur: number; amountArtisanEur: number }[],
+  grossAmountEur?: number,
+  commissionAmountEur?: number
 ): Promise<boolean> {
   const mailer = getTransporter();
   if (!mailer) {
@@ -618,6 +621,30 @@ export async function sendMonthlyInvoiceEmail(
   const from = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@seamlier.fr";
   const monthLabel = MONTH_NAMES_FR[month] + " " + year;
   const name = tailorName || "Artisan";
+  const fmt = (cents: number) => (cents / 100).toFixed(2) + " €";
+
+  const projectRows = projects && projects.length > 0 ? `
+    <table style="width:100%;border-collapse:collapse;margin:0 0 24px;font-size:13px">
+      <thead>
+        <tr style="background:#f5f3f0">
+          <th style="padding:8px 10px;text-align:left;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Confection</th>
+          <th style="padding:8px 10px;text-align:left;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Client</th>
+          <th style="padding:8px 6px;text-align:right;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Montant</th>
+          <th style="padding:8px 6px;text-align:right;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Commission</th>
+          <th style="padding:8px 10px;text-align:right;color:#722F37;font-weight:600;border-bottom:1px solid #e5e7eb">Net</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${projects.map(p => `
+        <tr style="border-bottom:1px solid #f3f4f6">
+          <td style="padding:8px 10px;color:#1f2937;font-weight:500">${p.title}</td>
+          <td style="padding:8px 10px;color:#4b5563">${p.clientName}</td>
+          <td style="padding:8px 6px;text-align:right;color:#4b5563">${fmt(p.amountTotalEur)}</td>
+          <td style="padding:8px 6px;text-align:right;color:#6b7280">${fmt(p.commissionEur)}</td>
+          <td style="padding:8px 10px;text-align:right;color:#16a34a;font-weight:600">${fmt(p.amountArtisanEur)}</td>
+        </tr>`).join("")}
+      </tbody>
+    </table>` : "";
 
   const html = emailWrapper(`Récapitulatif ${monthLabel} — SEAMLIER`, `
     <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Votre récapitulatif de ${monthLabel}</h2>
@@ -626,19 +653,20 @@ export async function sendMonthlyInvoiceEmail(
     <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
       Veuillez trouver ci-joint votre récapitulatif de facturation pour le mois de <strong style="color:#1f2937">${monthLabel}</strong>.
     </p>
+    ${projectRows}
     <div style="background:#f5f3f0;border-radius:10px;padding:20px 24px;margin:0 0 24px">
-      <p style="margin:0 0 6px;color:#4b5563;font-size:14px">
-        <strong style="color:#1f2937">Confections complétées :</strong> ${projectCount}
-      </p>
-      <p style="margin:0;color:#4b5563;font-size:14px">
-        <strong style="color:#1f2937">Montant net transféré :</strong>
-        <span style="color:#722F37;font-size:16px;font-weight:700"> ${(netAmountEur / 100).toFixed(2)} €</span>
-      </p>
+      <table style="width:100%">
+        <tr><td style="color:#6b7280;font-size:13px">Confections complétées</td><td style="text-align:right;font-weight:600;font-size:13px;color:#1f2937">${projectCount}</td></tr>
+        ${grossAmountEur !== undefined ? `<tr><td style="color:#6b7280;font-size:13px;padding-top:8px">Montant brut</td><td style="text-align:right;font-weight:600;font-size:13px;color:#1f2937;padding-top:8px">${fmt(grossAmountEur)}</td></tr>` : ""}
+        ${commissionAmountEur !== undefined ? `<tr><td style="color:#6b7280;font-size:13px;padding-top:6px">Commission SEAMLIER</td><td style="text-align:right;font-size:13px;color:#6b7280;padding-top:6px">− ${fmt(commissionAmountEur)}</td></tr>` : ""}
+        <tr><td style="color:#6b7280;font-size:13px;padding-top:10px;border-top:1px solid #e5e7eb">Montant net</td><td style="text-align:right;font-weight:700;font-size:16px;color:#722F37;padding-top:10px;border-top:1px solid #e5e7eb">${fmt(netAmountEur)}</td></tr>
+      </table>
     </div>
-    <p style="margin:0;color:#9ca3af;font-size:12px;line-height:1.6">
+    <p style="margin:0 0 8px;color:#9ca3af;font-size:12px;line-height:1.6">
       La facture détaillée (PDF) est jointe à cet email.<br>
       Pour toute question, contactez-nous à <a href="mailto:contact@seamlier.fr" style="color:#722F37">contact@seamlier.fr</a>.
     </p>
+    <p style="margin:0;color:#9ca3af;font-size:11px;font-style:italic">Ce document peut servir de justificatif comptable.</p>
   `);
 
   const filename = `SEAMLIER_facture_${MONTH_NAMES_FR[month]}_${year}.pdf`;
@@ -738,19 +766,30 @@ export async function sendSubscriptionPaymentFailedEmail(
 }
 
 export async function sendNewProjectRequestEmail(
-  tailorEmail: string, tailorName: string, clientName: string, projectTitle: string
+  tailorEmail: string, tailorName: string, clientName: string, projectTitle: string,
+  description?: string | null, budget?: number | null
 ): Promise<boolean> {
   const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const descRow = description ? `
+    <div style="background:#f5f3f0;border-left:3px solid #722F37;padding:14px 18px;margin:0 0 16px;border-radius:0 8px 8px 0">
+      <p style="margin:0;color:#4b5563;font-size:14px;line-height:1.6;font-style:italic">${description}</p>
+    </div>` : "";
+  const budgetRow = budget ? `
+    <p style="margin:0 0 20px;color:#4b5563;font-size:14px;line-height:1.7">
+      Budget indicatif du client : <strong style="color:#722F37">${budget} €</strong>
+    </p>` : "";
   const html = emailWrapper("Nouvelle demande de confection — SEAMLIER", `
     <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Nouvelle demande reçue</h2>
     <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
     <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${tailorName || ""},</p>
-    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+    <p style="margin:0 0 16px;color:#4b5563;font-size:15px;line-height:1.7">
       <strong style="color:#1f2937">${clientName}</strong> vous a adressé une nouvelle demande de confection :
     </p>
-    <div style="background:#f5f3f0;border-left:3px solid #722F37;padding:16px 20px;margin:0 0 28px;border-radius:0 8px 8px 0">
+    <div style="background:#f5f3f0;border-left:3px solid #722F37;padding:16px 20px;margin:0 0 16px;border-radius:0 8px 8px 0">
       <p style="margin:0;color:#1f2937;font-size:15px;font-weight:600">${projectTitle}</p>
     </div>
+    ${descRow}
+    ${budgetRow}
     <p style="margin:0 0 24px;color:#4b5563;font-size:14px;line-height:1.7">
       Connectez-vous pour consulter les détails et établir un devis. Le client attend votre réponse.
     </p>
@@ -761,6 +800,62 @@ export async function sendNewProjectRequestEmail(
     </table>
   `);
   return sendEmail(tailorEmail, `Nouvelle demande de ${clientName} — SEAMLIER`, html);
+}
+
+export async function sendQuoteAcceptedByClientEmail(
+  tailorEmail: string, tailorName: string, clientName: string, projectTitle: string, amount: number | null
+): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const amountStr = amount ? `<strong style="color:#722F37;font-size:16px">${amount} €</strong>` : "le montant convenu";
+  const html = emailWrapper("Devis accepté — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Votre devis a été accepté !</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${tailorName || ""},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      <strong style="color:#1f2937">${clientName}</strong> a accepté votre devis pour le projet <strong>"${projectTitle}"</strong> :
+    </p>
+    <div style="background:#f0fdf4;border-radius:8px;padding:20px 24px;margin:0 0 24px;text-align:center">
+      <p style="margin:0 0 4px;color:#6b7280;font-size:13px">Montant accepté</p>
+      <p style="margin:0">${amountStr}</p>
+    </div>
+    <p style="margin:0 0 24px;color:#4b5563;font-size:14px;line-height:1.7">
+      Le client va procéder au paiement. La confection peut démarrer dès réception du paiement.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/dashboard-pro" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Voir mon espace</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(tailorEmail, `Devis accepté par ${clientName} — SEAMLIER`, html);
+}
+
+export async function sendArtisanPaymentReceivedEmail(
+  tailorEmail: string, tailorName: string, clientName: string, projectTitle: string, artisanAmount: number
+): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const html = emailWrapper("Paiement reçu — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Paiement reçu pour votre commande</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${tailorName || ""},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      <strong style="color:#1f2937">${clientName}</strong> a réglé la commande <strong>"${projectTitle}"</strong>.
+      Le virement vous sera transféré à la livraison confirmée.
+    </p>
+    <div style="background:#f0fdf4;border-radius:8px;padding:20px 24px;margin:0 0 24px;text-align:center">
+      <p style="margin:0 0 4px;color:#6b7280;font-size:13px">Vous allez recevoir</p>
+      <p style="margin:0;color:#16a34a;font-size:24px;font-weight:700">${artisanAmount.toFixed(2)} €</p>
+    </div>
+    <p style="margin:0 0 24px;color:#4b5563;font-size:14px;line-height:1.7">
+      Vous pouvez maintenant démarrer la confection. Pensez à prendre rendez-vous avec le client pour les étapes suivantes.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/dashboard-pro" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Voir la commande</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(tailorEmail, `Paiement reçu — "${projectTitle}" — SEAMLIER`, html);
 }
 
 export async function sendQuoteReadyEmail(

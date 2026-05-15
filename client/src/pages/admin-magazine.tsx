@@ -3758,24 +3758,31 @@ function AdminDossiers() {
                         : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 flex-wrap">
                         {[
                           { url: d.kbisUrl, label: "Kbis" },
                           { url: d.idCardUrl, label: "ID" },
                           { url: d.rcProUrl, label: "RC" },
-                          { url: d.ibanRib, label: "RIB" },
-                        ].map(({ url, label }) => (
-                          <span
-                            key={label}
-                            className={cn(
-                              "text-[10px] px-1.5 py-0.5 rounded font-medium",
-                              url ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"
-                            )}
-                            title={url || undefined}
-                          >
-                            {label}
-                          </span>
-                        ))}
+                          { url: d.ibanRib?.startsWith("/") || d.ibanRib?.startsWith("http") ? d.ibanRib : null, label: "RIB" },
+                        ].map(({ url, label }) =>
+                          url ? (
+                            <a
+                              key={label}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors inline-flex items-center gap-0.5"
+                              title={`Voir ${label}`}
+                              onClick={e => e.stopPropagation()}
+                            >
+                              {label} <ExternalLink className="h-2.5 w-2.5" />
+                            </a>
+                          ) : (
+                            <span key={label} className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-gray-100 text-gray-400">
+                              {label}
+                            </span>
+                          )
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3">{statusBadge(d.dossierStatus)}</td>

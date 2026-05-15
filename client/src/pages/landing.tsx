@@ -107,43 +107,56 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
       </header>
       )}
 
-      <section className="relative py-20 lg:py-28 px-4 md:px-8 overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1537274942065-eda9d00a6293?w=1920&h=800&fit=crop')" }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
-        <div className="relative w-full max-w-4xl mx-auto text-center px-2">
-          <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl text-white mb-6 leading-tight">
-            {t('landing.heroTitle')}
-          </h1>
-          <p className="text-white/90 text-base lg:text-xl mb-10 max-w-2xl mx-auto px-2">
-            {t('landing.heroSubtitle')}
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xl mx-auto">
-            <div className="relative flex-1">
-              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <Input
-                placeholder={t('landing.searchPlaceholder')}
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="pl-12 h-14 text-base border-0 bg-white shadow-lg w-full"
-                data-testid="input-location"
-              />
-            </div>
-            <Button 
-              size="lg" 
-              className="h-14 px-6 bg-[#601B28] hover:bg-[#4E1522] text-white shadow-lg w-full sm:w-auto" 
-              data-testid="button-search-hero"
-              onClick={handleSearch}
-            >
-              <Search className="h-5 w-5 mr-2" />
-              {t('landing.searchButton')}
-            </Button>
+      {/* Desktop: 2-column above-fold — magazine left, hero right */}
+      <div className="lg:flex lg:min-h-[560px]">
+        {/* Left column: Magazine (desktop only) */}
+        <div className="hidden lg:flex lg:w-[42%] flex-col bg-[#faf9f7] border-r border-gray-100 overflow-y-auto py-10 px-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-serif text-2xl text-[#601B28]">Le Magazine</h2>
+            <Link href="/magazine"><Button variant="ghost" size="sm" className="text-[#601B28] hover:text-[#4E1522] text-sm">Voir tous →</Button></Link>
           </div>
+          <MagazinePreview />
         </div>
-      </section>
+
+        {/* Right column: Hero */}
+        <section className="relative py-20 lg:py-0 lg:flex lg:items-center px-4 md:px-8 overflow-hidden lg:flex-1">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1537274942065-eda9d00a6293?w=1920&h=800&fit=crop')" }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
+          <div className="relative w-full max-w-4xl mx-auto text-center px-2 lg:py-20">
+            <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl text-white mb-6 leading-tight">
+              {t('landing.heroTitle')}
+            </h1>
+            <p className="text-white/90 text-base lg:text-xl mb-10 max-w-2xl mx-auto px-2">
+              {t('landing.heroSubtitle')}
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xl mx-auto">
+              <div className="relative flex-1">
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Input
+                  placeholder={t('landing.searchPlaceholder')}
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="pl-12 h-14 text-base border-0 bg-white shadow-lg w-full"
+                  data-testid="input-location"
+                />
+              </div>
+              <Button
+                size="lg"
+                className="h-14 px-6 bg-[#601B28] hover:bg-[#4E1522] text-white shadow-lg w-full sm:w-auto"
+                data-testid="button-search-hero"
+                onClick={handleSearch}
+              >
+                <Search className="h-5 w-5 mr-2" />
+                {t('landing.searchButton')}
+              </Button>
+            </div>
+          </div>
+        </section>
+      </div>
 
       <section className="py-8 md:py-12 px-4 md:px-8 border-y border-gray-100 bg-white">
         <div className="w-full max-w-7xl mx-auto">
@@ -282,7 +295,8 @@ export default function Landing({ embedded }: { embedded?: boolean } = {}) {
         </div>
       </section>
       )}
-      <section className="py-16 px-4 md:px-8 bg-[#faf9f7]">
+      {/* Mobile: Magazine section (hidden on desktop since it's in the left column) */}
+      <section className="lg:hidden py-16 px-4 md:px-8 bg-[#faf9f7]">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-[#601B28]" style={{fontFamily:"Playfair Display,serif"}}>Le Magazine</h2>

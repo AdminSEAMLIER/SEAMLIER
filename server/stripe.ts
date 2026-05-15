@@ -2,7 +2,7 @@ import type { Express, Response } from "express";
 import Stripe from "stripe";
 import { storage } from "./storage";
 import { pool } from "./db";
-import { sendPaymentConfirmationEmail, sendAdminChargebackAlertEmail, sendSubscriptionPaymentFailedEmail } from "./email";
+import { sendPaymentConfirmationEmail, sendAdminChargebackAlertEmail, sendSubscriptionPaymentFailedEmail, sendArtisanPaymentReceivedEmail } from "./email";
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
 export const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || '';
@@ -46,9 +46,9 @@ export function registerStripeRoutes(app: Express) {
           console.log(`[Stripe] Projet ${projectId} → paymentStatus = paid`);
           try {
             const [rows] = await pool.query(`
-              SELECT p.title, p.amount_total,
+              SELECT p.title, p.amount_total, p.amount_artisan, t.subscription_plan,
                      uc.email AS client_email, uc.first_name AS client_first, uc.last_name AS client_last,
-                     ut.first_name AS tailor_first, ut.last_name AS tailor_last
+                     ut.email AS tailor_email, ut.first_name AS tailor_first, ut.last_name AS tailor_last
               FROM projects p
               JOIN users uc ON uc.id = p.client_id
               JOIN tailors t ON t.id = p.tailor_id
@@ -61,8 +61,21 @@ export function registerStripeRoutes(app: Express) {
               const clientName = [r.client_first, r.client_last].filter(Boolean).join(" ") || r.client_email;
               const tailorName = [r.tailor_first, r.tailor_last].filter(Boolean).join(" ") || "votre artisan";
               const amount = r.amount_total ? Math.round(r.amount_total) / 100 : 0;
+              // Email confirmation to client
               sendPaymentConfirmationEmail(r.client_email, clientName, tailorName, r.title || "Commande", amount)
                 .catch(err => console.error("[Stripe] Payment confirmation email failed:", err));
+              // Email notification to artisan
+              if (r.tailor_email) {
+                const isPro = (r.subscription_plan || "").toLowerCase() === "pro";
+                const grossAmount = r.amount_total ? Math.round(r.amount_total) / 100 : 0;
+                const artisanAmount = r.amount_artisan
+                  ? Math.round(r.amount_artisan) / 100
+                  : isPro
+                    ? Math.round(grossAmount * (1 - FRAIS) * 100) / 100
+                    : Math.round(grossAmount * (1 - FRAIS) * (1 - COMM) * 100) / 100;
+                sendArtisanPaymentReceivedEmail(r.tailor_email, tailorName, clientName, r.title || "Commande", artisanAmount)
+                  .catch(err => console.error("[Stripe] Artisan payment email failed:", err));
+              }
             }
           } catch (emailErr) {
             console.error("[Stripe] Failed to fetch project for payment email:", emailErr);
