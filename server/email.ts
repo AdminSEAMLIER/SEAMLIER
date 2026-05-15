@@ -150,6 +150,7 @@ export async function sendVerificationEmail(
 </body>
 </html>`;
 
+  console.log(`[EMAIL] Attempting: "Verification" → ${email}`);
   try {
     await mailer.sendMail({
       from: `"SEAMLIER" <${from}>`,
@@ -157,7 +158,7 @@ export async function sendVerificationEmail(
       subject: "Confirmez votre email - SEAMLIER",
       html,
     });
-    console.log(`Verification email sent to ${email}`);
+    console.log(`[EMAIL] Sent OK: "Verification" → ${email}`);
     return true;
   } catch (error) {
     console.error(`Failed to send verification email to ${email}:`, error);
@@ -192,13 +193,28 @@ async function sendEmail(to: string, subject: string, html: string): Promise<boo
   const mailer = getTransporter();
   if (!mailer) { console.log(`[EMAIL DISABLED] ${subject} → ${to}`); return false; }
   const from = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@seamlier.fr";
+  console.log(`[EMAIL] Attempting: "${subject}" → ${to}`);
   try {
     await mailer.sendMail({ from: `"SEAMLIER" <${from}>`, to, subject, html });
-    console.log(`[EMAIL] ${subject} → ${to}`);
+    console.log(`[EMAIL] Sent OK: "${subject}" → ${to}`);
     return true;
   } catch (err) {
     console.error(`[EMAIL] Failed to send "${subject}" to ${to}:`, err);
     return false;
+  }
+}
+
+export async function verifySmtpConnection(): Promise<void> {
+  const mailer = getTransporter();
+  if (!mailer) {
+    console.log("[SMTP] No transporter configured — email sending disabled (set EMAIL_PASSWORD or SMTP_PASS).");
+    return;
+  }
+  try {
+    await (mailer as any).verify();
+    console.log(`[SMTP] Connection OK — host=${process.env.SMTP_HOST || "mail.seamlier.fr"} user=${process.env.SMTP_USER || "contact@seamlier.fr"}`);
+  } catch (err) {
+    console.error("[SMTP] Connection FAILED:", err);
   }
 }
 
@@ -428,9 +444,10 @@ export async function sendPasswordResetEmail(email: string, token: string, first
   </table>
 </body>
 </html>`;
+  console.log(`[EMAIL] Attempting: "Password reset" → ${email}`);
   try {
     await mailer.sendMail({ from: `"SEAMLIER" <${from}>`, to: email, subject: "Réinitialisation de votre mot de passe - SEAMLIER", html });
-    console.log(`Password reset email sent to ${email}`);
+    console.log(`[EMAIL] Sent OK: "Password reset" → ${email}`);
     return true;
   } catch (error) {
     console.error(`Failed to send password reset email to ${email}:`, error);
@@ -592,6 +609,7 @@ export async function sendAnnualFiscalRecapEmail(
       Ce document est à conserver 10 ans à des fins fiscales.
     </p>
   `);
+  console.log(`[EMAIL] Attempting: "Annual fiscal recap ${year}" → ${email}`);
   try {
     await mailer.sendMail({
       from: `"SEAMLIER" <${from}>`,
@@ -604,7 +622,7 @@ export async function sendAnnualFiscalRecapEmail(
         contentType: "application/pdf",
       }],
     });
-    console.log(`[EMAIL] Annual fiscal recap sent to ${email} (${year})`);
+    console.log(`[EMAIL] Sent OK: "Annual fiscal recap ${year}" → ${email}`);
     return true;
   } catch (err) {
     console.error(`[EMAIL] Failed to send annual fiscal recap to ${email}:`, err);
@@ -705,6 +723,7 @@ export async function sendMonthlyInvoiceEmail(
   `);
 
   const filename = `SEAMLIER_facture_${MONTH_NAMES_FR[month]}_${year}.pdf`;
+  console.log(`[EMAIL] Attempting: "Monthly invoice ${monthLabel}" → ${tailorEmail}`);
   try {
     await mailer.sendMail({
       from: `"SEAMLIER" <${from}>`,
@@ -713,7 +732,7 @@ export async function sendMonthlyInvoiceEmail(
       html,
       attachments: [{ filename, content: pdfBuffer, contentType: "application/pdf" }],
     });
-    console.log(`[EMAIL] Monthly invoice sent to ${tailorEmail} (${monthLabel})`);
+    console.log(`[EMAIL] Sent OK: "Monthly invoice ${monthLabel}" → ${tailorEmail}`);
     return true;
   } catch (err) {
     console.error(`[EMAIL] Failed to send monthly invoice to ${tailorEmail}:`, err);
@@ -835,6 +854,34 @@ export async function sendNewProjectRequestEmail(
     </table>
   `);
   return sendEmail(tailorEmail, `Nouvelle demande de ${clientName} — SEAMLIER`, html);
+}
+
+export async function sendQuoteAcceptedClientConfirmationEmail(
+  clientEmail: string, clientName: string, tailorName: string, projectTitle: string, amount: number | null
+): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const amountStr = amount ? `<strong style="color:#722F37;font-size:16px">${amount} €</strong>` : "le montant convenu";
+  const html = emailWrapper("Devis accepté — SEAMLIER", `
+    <h2 style="margin:0 0 8px;color:#1f2937;font-family:Georgia,serif;font-size:20px;font-weight:400">Vous avez accepté le devis !</h2>
+    <div style="width:28px;height:2px;background-color:#722F37;margin:0 0 20px"></div>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7">Bonjour ${clientName || ""},</p>
+    <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7">
+      Vous avez accepté le devis de <strong style="color:#1f2937">${tailorName}</strong> pour le projet <strong>"${projectTitle}"</strong> :
+    </p>
+    <div style="background:#f0fdf4;border-radius:8px;padding:20px 24px;margin:0 0 24px;text-align:center">
+      <p style="margin:0 0 4px;color:#6b7280;font-size:13px">Montant accepté</p>
+      <p style="margin:0">${amountStr}</p>
+    </div>
+    <p style="margin:0 0 24px;color:#4b5563;font-size:14px;line-height:1.7">
+      Vous pouvez maintenant procéder au paiement sécurisé pour lancer la confection.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+      <tr><td style="background-color:#722F37;border-radius:8px">
+        <a href="${appUrl}/mes-projets" style="display:inline-block;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;text-decoration:none">Procéder au paiement</a>
+      </td></tr>
+    </table>
+  `);
+  return sendEmail(clientEmail, `Devis accepté — "${projectTitle}" — SEAMLIER`, html);
 }
 
 export async function sendQuoteAcceptedByClientEmail(

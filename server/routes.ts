@@ -25,6 +25,7 @@ import {
   sendNewProjectRequestEmail,
   sendQuoteReadyEmail,
   sendQuoteAcceptedByClientEmail,
+  sendQuoteAcceptedClientConfirmationEmail,
   sendArtisanPaymentReceivedEmail,
   sendReferralInviteEmail,
 } from "./email";
@@ -1221,14 +1222,19 @@ export async function registerRoutes(
             `SELECT u.email, u.first_name, u.last_name FROM users u JOIN tailors t ON t.user_id = u.id WHERE t.id = ?`, [project.tailorId]
           ) as any[];
           const [clientRows] = await pool.query(
-            `SELECT first_name, last_name FROM users WHERE id = ?`, [project.clientId]
+            `SELECT email, first_name, last_name FROM users WHERE id = ?`, [project.clientId]
           ) as any[];
           const ta = (tailorUserRows as any[])[0];
           const cl = (clientRows as any[])[0];
           if (ta?.email && cl) {
             const tailorName = `${ta.first_name || ""} ${ta.last_name || ""}`.trim();
             const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim();
+            // Artisan : son devis a été accepté
             sendQuoteAcceptedByClientEmail(ta.email, tailorName, clientName, project.title || "votre projet", project.amount ?? null).catch(() => {});
+            // Client : confirmation de l'acceptation du devis avec montant
+            if (cl.email) {
+              sendQuoteAcceptedClientConfirmationEmail(cl.email, clientName, tailorName, project.title || "votre projet", project.amount ?? null).catch(() => {});
+            }
           }
           // Push to artisan: devis accepté
           const [tailorUserIdRows] = await pool.query(`SELECT user_id FROM tailors WHERE id = ?`, [project.tailorId]) as any[];
