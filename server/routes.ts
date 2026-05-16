@@ -730,9 +730,9 @@ export async function registerRoutes(
       const firstOfNextMonth = toMysqlDatetime(new Date(targetYear, targetMonth + 1, 1));
       const isCurrentMonth  = targetYear === now.getFullYear() && targetMonth === now.getMonth();
 
-      // Revenus du mois : projets complétés dans la période
+      // Revenus du mois : montant artisan réel (amount_artisan en centimes → ÷100), fallback sur amount
       const [revenueRows] = await pool.query(
-        `SELECT COALESCE(SUM(amount), 0) as total
+        `SELECT COALESCE(SUM(CASE WHEN amount_artisan > 0 THEN amount_artisan/100 ELSE amount END), 0) as total
          FROM projects
          WHERE tailor_id = ? AND status = 'completed'
            AND updated_at >= ? AND updated_at < ?`,
@@ -788,18 +788,18 @@ export async function registerRoutes(
       const now = new Date();
       const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // CA du mois en cours — amount en euros (prix de confection exact)
+      // CA du mois en cours — montant artisan réel (amount_artisan centimes ÷ 100), fallback sur amount
       const [revenueRows] = await pool.query(
-        `SELECT COALESCE(SUM(amount), 0) as total FROM projects
-         WHERE tailor_id = ? AND status = 'completed' AND updated_at >= ?`,
+        `SELECT COALESCE(SUM(CASE WHEN amount_artisan > 0 THEN amount_artisan/100 ELSE amount END), 0) as total
+         FROM projects WHERE tailor_id = ? AND status = 'completed' AND updated_at >= ?`,
         [tailor.id, firstOfMonth]
       ) as any[];
       const monthlyRevenue = parseFloat(revenueRows?.[0]?.total) || 0;
 
-      // Panier moyen — amount en euros
+      // Panier moyen — montant artisan réel
       const [avgRows] = await pool.query(
-        `SELECT COALESCE(AVG(amount), 0) as avg_val FROM projects
-         WHERE tailor_id = ? AND status = 'completed' AND amount > 0`,
+        `SELECT COALESCE(AVG(CASE WHEN amount_artisan > 0 THEN amount_artisan/100 ELSE amount END), 0) as avg_val
+         FROM projects WHERE tailor_id = ? AND status = 'completed' AND (amount_artisan > 0 OR amount > 0)`,
         [tailor.id]
       ) as any[];
       const averageOrderValue = parseFloat(avgRows?.[0]?.avg_val) || 0;
@@ -823,12 +823,12 @@ export async function registerRoutes(
       const recurringClientRate = totalClients > 0
         ? Math.round((recurringClients / totalClients) * 100) : 0;
 
-      // CA des 6 derniers mois
+      // CA des 6 derniers mois — montant artisan réel
       const sixMonthsAgo = new Date();
       sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
       const [monthlyRows] = await pool.query(
         `SELECT DATE_FORMAT(updated_at, '%Y-%m') as month,
-                COALESCE(SUM(amount), 0) as total
+                COALESCE(SUM(CASE WHEN amount_artisan > 0 THEN amount_artisan/100 ELSE amount END), 0) as total
          FROM projects
          WHERE tailor_id = ? AND status = 'completed' AND updated_at >= ?
          GROUP BY month ORDER BY month ASC`,
@@ -2487,15 +2487,20 @@ export async function registerRoutes(
       `) as any[];
       if (!Array.isArray(rows)) return res.json([]);
       res.json((rows as any[]).map((r: any) => {
-        const amount = parseFloat(r.amount) || 0;
-        const commission = Math.round(amount * 10) / 100;
-        const artisanAmount = Math.round(amount * 90) / 100;
+        // amount_total et amount_artisan sont en centimes ; fallback sur amount (euros) si non renseignés
+        const amountClient = r.amount_total
+          ? Math.round(r.amount_total) / 100
+          : parseFloat(r.amount) || 0;
+        const artisanAmount = r.amount_artisan
+          ? Math.round(r.amount_artisan) / 100
+          : Math.round(amountClient * 0.9 * 100) / 100;
+        const commission = Math.round((amountClient - artisanAmount) * 100) / 100;
         return {
           id: r.id,
           title: r.title || "—",
           client: r.client_name || "—",
           tailor: r.tailor_name || "—",
-          amountClient: amount,
+          amountClient,
           commission,
           amountArtisan: artisanAmount,
           paymentStatus: r.payment_status || "pending",

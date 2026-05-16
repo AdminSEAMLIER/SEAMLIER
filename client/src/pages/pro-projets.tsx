@@ -180,6 +180,13 @@ export default function ProProjets() {
     return "bg-[#601B28]";
   };
 
+  // Montant net artisan (amount_artisan en centimes → euros), fallback sur devis
+  const displayAmountArtisan = (p: ProjectWithClient): string | null => {
+    const art = (p as any).amountArtisan;
+    if (art && art > 0) return (art / 100).toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    return p.amount ? String(p.amount) : null;
+  };
+
   const getCurrentStepLabel = (stepKey: string | null) => {
     const step = FABRICATION_STEPS.find(s => s.key === stepKey);
     return step?.label || "Prise de mesures";
@@ -404,10 +411,10 @@ export default function ProProjets() {
                 </div>
 
                 <div className="flex flex-wrap gap-4 text-sm">
-                  {project.amount && (
+                  {displayAmountArtisan(project) && (
                     <div className="flex items-center gap-1 text-gray-600">
                       <Euro className="h-4 w-4 text-[#601B28]" />
-                      <span>{project.amount}€</span>
+                      <span>{displayAmountArtisan(project)}€</span>
                     </div>
                   )}
                   {project.deadline && (
@@ -457,9 +464,9 @@ export default function ProProjets() {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-4 text-sm text-gray-400">
-                      {project.amount && (
+                      {displayAmountArtisan(project) && (
                         <span className="flex items-center gap-1">
-                          <Euro className="h-3.5 w-3.5" />{project.amount}€
+                          <Euro className="h-3.5 w-3.5" />{displayAmountArtisan(project)}€
                         </span>
                       )}
                       {project.deadline && (
@@ -501,7 +508,7 @@ export default function ProProjets() {
                   </div>
                 </div>
                 <div className="text-right">
-                  {selectedProject.amount && <p className="text-lg font-bold text-[#601B28]">{selectedProject.amount}€</p>}
+                  {displayAmountArtisan(selectedProject) && <p className="text-lg font-bold text-[#601B28]">{displayAmountArtisan(selectedProject)}€</p>}
                   {selectedProject.deadline && <p className="text-sm text-gray-500">{new Date(selectedProject.deadline).toLocaleDateString('fr-FR')}</p>}
                 </div>
               </div>

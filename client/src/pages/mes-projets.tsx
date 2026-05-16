@@ -164,6 +164,13 @@ export default function MesProjets() {
     return "bg-[#601B28]";
   };
 
+  // Montant réellement payé par le client (amountTotal en centimes → euros), fallback sur devis
+  const displayAmountClient = (p: ProjectWithTailor): string | null => {
+    const tot = (p as any).amountTotal;
+    if (tot && tot > 0) return (tot / 100).toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    return p.amount ? String(p.amount) : null;
+  };
+
   const getStepLabel = (step: typeof FABRICATION_STEPS[0]) => isFr ? step.label : step.labelEn;
 
   const getCurrentStepLabel = (stepKey: string | null) => {
@@ -372,10 +379,10 @@ export default function MesProjets() {
                   )}
 
                   <div className="flex flex-wrap gap-4 text-sm mt-4 pt-3 border-t border-gray-100">
-                    {project.amount && (
+                    {displayAmountClient(project) && (
                       <div className="flex items-center gap-1 text-gray-600">
                         <Euro className="h-4 w-4 text-[#601B28]" />
-                        <span>{project.amount}€</span>
+                        <span>{displayAmountClient(project)}€</span>
                       </div>
                     )}
                     {project.deadline && (
@@ -505,9 +512,9 @@ export default function MesProjets() {
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-4 text-sm text-gray-400">
-                        {project.amount && (
+                        {displayAmountClient(project) && (
                           <span className="flex items-center gap-1">
-                            <Euro className="h-3.5 w-3.5" />{project.amount}€
+                            <Euro className="h-3.5 w-3.5" />{displayAmountClient(project)}€
                           </span>
                         )}
                         {project.deadline && (
