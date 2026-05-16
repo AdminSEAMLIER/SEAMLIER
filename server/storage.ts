@@ -573,6 +573,7 @@ class DatabaseStorage implements IStorage {
 
     return result.map(row => ({
       ...row.projects,
+      clientConfirmed: !!row.projects.clientConfirmed,
       client: row.users
     }));
   }
@@ -589,6 +590,7 @@ class DatabaseStorage implements IStorage {
 
     return result.map(row => ({
       ...row.projects,
+      clientConfirmed: !!row.projects.clientConfirmed,
       tailor: row.tailors ? parseTailorSpecialties(row.tailors) : null,
       tailorUser: row.users ?? null,
     }));

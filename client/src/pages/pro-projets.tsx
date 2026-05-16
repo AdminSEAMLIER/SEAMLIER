@@ -187,9 +187,8 @@ export default function ProProjets() {
 
   const activeCount = projects.filter(p => p.status === 'in_progress').length;
   const now = new Date();
-  const completedThisMonth = projects.filter(p => {
-    if (p.status !== 'completed') return false;
-    const d = p.createdAt ? new Date(p.createdAt) : null;
+  const completedThisMonth = doneProjects.filter(p => {
+    const d = (p as any).updatedAt ? new Date((p as any).updatedAt) : null;
     return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
 

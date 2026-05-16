@@ -108,6 +108,9 @@ export async function ensureTables() {
   await addColumnIfMissing("projects", "delivery_date", "DATE NULL");
   await addColumnIfMissing("projects", "event_id", "VARCHAR(36) NULL");
   await addColumnIfMissing("projects", "contract_url", "TEXT NULL");
+  await addColumnIfMissing("projects", "client_confirmed", "TINYINT(1) NOT NULL DEFAULT 0");
+  await addColumnIfMissing("projects", "requested_price", "DECIMAL(10,2) NULL");
+  await addColumnIfMissing("projects", "clothing_type", "VARCHAR(100) NULL");
 
   // projects: widen model_photo_url from TEXT (64KB) to MEDIUMTEXT (16MB) for base64 photos
   try {
