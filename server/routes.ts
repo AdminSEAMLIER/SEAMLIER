@@ -252,7 +252,8 @@ export async function registerRoutes(
   app.get("/api/tailors/:id/reviews", async (req, res) => {
     try {
       const allReviews = await storage.getReviewsByTailor(req.params.id);
-      const reviews = allReviews.filter((r: any) => r.isApproved === 1 || r.is_approved === 1);
+      // Drizzle retourne isApproved en boolean (true/false) — ne pas comparer à 1 avec ===
+      const reviews = allReviews.filter((r: any) => !!r.isApproved || !!r.is_approved);
       res.json(reviews);
     } catch (error) {
       console.error("Failed to fetch reviews:", error);
