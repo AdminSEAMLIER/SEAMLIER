@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import {
   Calendar, MapPin, User, ChevronLeft, ChevronRight,
   Clock, Trash2, MessageSquare, Plus, CheckCircle2,
-  XCircle, AlertCircle,
+  XCircle, AlertCircle, Bell,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -62,11 +62,18 @@ function formatDuration(min: number) {
   return m > 0 ? `${h}h${m}` : `${h}h`;
 }
 
+function formatDateFr(dateStr: string, timeStr?: string) {
+  const d = new Date(dateStr + "T12:00:00");
+  const datePart = d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  return timeStr ? `${datePart} à ${timeStr}` : datePart;
+}
+
 // Couleur point calendrier par statut
 function statusDot(status: string, isPast: boolean) {
   if (isPast || status === "cancelled") return "bg-gray-300";
   if (status === "confirmed") return "bg-green-500";
-  return "bg-orange-400"; // scheduled / pending
+  if (status === "pending") return "bg-orange-400";
+  return "bg-blue-400"; // scheduled (artisan-created)
 }
 
 // Badge statut
@@ -128,6 +135,11 @@ export default function ProPlanning() {
 
   const displayAppointments: DisplayAppointment[] = rawAppointments.map(toDisplay);
 
+  // RDV en attente de validation (toutes dates, non passés)
+  const pendingAppointments = displayAppointments.filter(
+    apt => apt.status === "pending" && !apt.isPast
+  ).sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
+
   // ── Mutations ─────────────────────────────────────────────────────────────
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiRequest("DELETE", `/api/appointments/${id}`),
@@ -146,7 +158,7 @@ export default function ProPlanning() {
       queryClient.invalidateQueries({ queryKey: ["/api/tailors/appointments"] });
       setIsDetailOpen(false);
       const label = status === "confirmed"
-        ? (fr ? "Rendez-vous confirmé" : "Appointment confirmed")
+        ? (fr ? "Rendez-vous confirmé — le client a été notifié" : "Appointment confirmed")
         : (fr ? "Rendez-vous refusé" : "Appointment declined");
       toast({ title: label });
     },
@@ -184,13 +196,10 @@ export default function ProPlanning() {
   const year = viewMonth.getFullYear();
   const month = viewMonth.getMonth();
 
-  // Jours du mois
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0=Sun
-  // Décalage pour commencer lundi (0=Mon … 6=Sun)
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
   const startOffset = (firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1);
 
-  // Index des RDV par date
   const aptsByDate = displayAppointments.reduce<Record<string, DisplayAppointment[]>>((acc, apt) => {
     (acc[apt.date] ??= []).push(apt);
     return acc;
@@ -223,6 +232,11 @@ export default function ProPlanning() {
             <h1 className="font-serif text-3xl lg:text-4xl text-[#601B28]">
               {t("nav.planning")}
             </h1>
+            {pendingAppointments.length > 0 && (
+              <span className="ml-1 flex items-center justify-center w-6 h-6 rounded-full bg-orange-500 text-white text-xs font-bold">
+                {pendingAppointments.length}
+              </span>
+            )}
           </div>
           {/* Légende statuts */}
           <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
@@ -234,6 +248,78 @@ export default function ProPlanning() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 lg:px-6 py-6 space-y-6">
+
+        {/* ── Section RDV en attente de confirmation ── */}
+        {pendingAppointments.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Bell className="h-4 w-4 text-orange-600" />
+              <h3 className="font-semibold text-orange-800 text-sm">
+                {pendingAppointments.length === 1
+                  ? "1 rendez-vous en attente de votre confirmation"
+                  : `${pendingAppointments.length} rendez-vous en attente de votre confirmation`}
+              </h3>
+            </div>
+            <div className="space-y-3">
+              {pendingAppointments.map(apt => (
+                <div
+                  key={apt.id}
+                  className="rounded-xl border-2 border-orange-300 bg-orange-50 p-4"
+                  data-testid={`pending-card-${apt.id}`}
+                >
+                  {/* Infos RDV */}
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="flex-shrink-0 text-center min-w-[52px] bg-white rounded-lg py-1.5 px-1 border border-orange-200">
+                      <p className="text-base font-bold text-[#601B28] leading-none">{apt.time}</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">{formatDuration(apt.durationMin)}</p>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                        <Badge className={`${getTypeColor(apt.typeKey)} border-none text-xs`}>
+                          {getTypeLabel(apt.typeKey, fr)}
+                        </Badge>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900 flex items-center gap-1">
+                        <User className="h-3.5 w-3.5 text-gray-400" />
+                        {apt.client}
+                      </p>
+                      <p className="text-xs text-orange-700 font-medium mt-0.5">
+                        {formatDateFr(apt.date, apt.time)}
+                      </p>
+                      {apt.notes && (
+                        <p className="text-xs text-gray-500 italic mt-0.5">"{apt.notes}"</p>
+                      )}
+                    </div>
+                  </div>
+                  {/* Boutons inline */}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold gap-1.5 h-9"
+                      disabled={statusMutation.isPending}
+                      onClick={() => statusMutation.mutate({ id: apt.id, status: "confirmed" })}
+                      data-testid={`button-confirm-pending-${apt.id}`}
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      Confirmer le RDV
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 border-red-300 bg-white text-red-600 hover:bg-red-50 font-semibold gap-1.5 h-9"
+                      disabled={statusMutation.isPending}
+                      onClick={() => statusMutation.mutate({ id: apt.id, status: "cancelled" })}
+                      data-testid={`button-decline-pending-${apt.id}`}
+                    >
+                      <XCircle className="h-4 w-4" />
+                      Refuser
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Calendrier mensuel ── */}
         <Card className="border border-gray-100 bg-white shadow-sm">
@@ -258,17 +344,16 @@ export default function ProPlanning() {
 
             {/* Grille jours */}
             <div className="grid grid-cols-7 gap-px">
-              {/* Cases vides avant le 1er */}
               {Array.from({ length: startOffset }).map((_, i) => (
                 <div key={`empty-${i}`} />
               ))}
-              {/* Jours du mois */}
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const day = i + 1;
                 const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
                 const dayApts = aptsByDate[dateStr] ?? [];
                 const isToday = dateStr === todayStr;
                 const isSelected = dateStr === selectedDate;
+                const hasPending = dayApts.some(a => a.status === "pending" && !a.isPast);
 
                 return (
                   <button
@@ -277,6 +362,8 @@ export default function ProPlanning() {
                     className={`relative rounded-lg p-1.5 text-center transition-colors min-h-[44px] flex flex-col items-center justify-start ${
                       isSelected
                         ? "bg-[#601B28] text-white"
+                        : hasPending
+                        ? "bg-orange-50 border border-orange-200 text-gray-800 font-semibold"
                         : isToday
                         ? "bg-[#601B28]/10 text-[#601B28] font-semibold"
                         : "hover:bg-gray-50 text-gray-700"
@@ -284,7 +371,6 @@ export default function ProPlanning() {
                     data-testid={`button-day-${dateStr}`}
                   >
                     <span className="text-xs font-medium leading-none mb-1">{day}</span>
-                    {/* Points de statut (max 3) */}
                     {dayApts.length > 0 && (
                       <div className="flex gap-px flex-wrap justify-center">
                         {dayApts.slice(0, 3).map((apt) => (
@@ -354,7 +440,9 @@ export default function ProPlanning() {
                 <Card
                   key={apt.id}
                   className={`border shadow-sm cursor-pointer transition-colors ${
-                    apt.isPast || apt.status === "cancelled"
+                    apt.status === "pending" && !apt.isPast
+                      ? "border-orange-300 bg-orange-50/40 hover:border-orange-400"
+                      : apt.isPast || apt.status === "cancelled"
                       ? "border-gray-100 bg-gray-50/60 opacity-70"
                       : "border-gray-100 bg-white hover:border-[#601B28]/30 hover:shadow-md"
                   }`}
@@ -362,10 +450,14 @@ export default function ProPlanning() {
                   data-testid={`card-appointment-${apt.id}`}
                 >
                   <CardContent className="p-4 bg-transparent">
-                    <div className="flex gap-4">
+                    <div className="flex gap-4 items-center">
+                      {/* Indicateur pending */}
+                      {apt.status === "pending" && !apt.isPast && (
+                        <AlertCircle className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                      )}
                       {/* Heure */}
-                      <div className="text-center min-w-[52px]">
-                        <p className={`text-lg font-bold leading-none ${apt.isPast || apt.status === "cancelled" ? "text-gray-400" : "text-[#601B28]"}`}>
+                      <div className={`text-center min-w-[52px] ${apt.status === "pending" && !apt.isPast ? "" : ""}`}>
+                        <p className={`text-lg font-bold leading-none ${apt.isPast || apt.status === "cancelled" ? "text-gray-400" : apt.status === "pending" ? "text-orange-600" : "text-[#601B28]"}`}>
                           {apt.time}
                         </p>
                         <p className="text-xs text-gray-400 mt-0.5">{formatDuration(apt.durationMin)}</p>
@@ -383,6 +475,11 @@ export default function ProPlanning() {
                           {apt.location && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{apt.location}</span>}
                         </div>
                         {apt.notes && <p className="text-xs text-gray-400 mt-1 italic">"{apt.notes}"</p>}
+                        {apt.status === "pending" && !apt.isPast && (
+                          <p className="text-xs text-orange-600 font-medium mt-1">
+                            Cliquez pour confirmer ou refuser
+                          </p>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -437,12 +534,52 @@ export default function ProPlanning() {
                 </div>
               )}
 
-              {/* Actions confirmation */}
-              {(selectedAppointment.status === "pending" || selectedAppointment.status === "scheduled") && !selectedAppointment.isPast && (
-                <div className="p-3 bg-orange-50 border border-orange-200 rounded-xl">
-                  <p className="text-xs font-semibold text-orange-800 mb-2 flex items-center gap-1.5">
+              {/* ── Bloc validation PENDING ── */}
+              {selectedAppointment.status === "pending" && !selectedAppointment.isPast && (
+                <div className="rounded-xl border-2 border-orange-300 bg-orange-50 p-4 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-bold text-orange-900">
+                        Ce rendez-vous attend votre confirmation
+                      </p>
+                      <p className="text-xs text-orange-700 mt-0.5">
+                        {selectedAppointment.client} a demandé un créneau le{" "}
+                        {formatDateFr(selectedAppointment.date, selectedAppointment.time)}.
+                        Le client sera notifié de votre réponse.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold gap-2 h-10"
+                      disabled={statusMutation.isPending}
+                      onClick={() => statusMutation.mutate({ id: selectedAppointment.id, status: "confirmed" })}
+                      data-testid="button-confirm-appointment"
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      Confirmer le RDV
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-red-300 bg-white text-red-600 hover:bg-red-50 font-semibold gap-2 h-10"
+                      disabled={statusMutation.isPending}
+                      onClick={() => statusMutation.mutate({ id: selectedAppointment.id, status: "cancelled" })}
+                      data-testid="button-decline-appointment"
+                    >
+                      <XCircle className="h-4 w-4" />
+                      Refuser
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Bloc confirmation pour les RDV scheduled (créés par l'artisan) */}
+              {selectedAppointment.status === "scheduled" && !selectedAppointment.isPast && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                  <p className="text-xs font-semibold text-blue-800 mb-2 flex items-center gap-1.5">
                     <AlertCircle className="h-3.5 w-3.5" />
-                    {fr ? "En attente de confirmation" : "Awaiting confirmation"}
+                    {fr ? "En attente de confirmation du client" : "Awaiting client confirmation"}
                   </p>
                   <div className="flex gap-2">
                     <Button
@@ -450,7 +587,7 @@ export default function ProPlanning() {
                       className="flex-1 bg-green-600 hover:bg-green-700 text-white gap-1.5"
                       disabled={statusMutation.isPending}
                       onClick={() => statusMutation.mutate({ id: selectedAppointment.id, status: "confirmed" })}
-                      data-testid="button-confirm-appointment"
+                      data-testid="button-confirm-appointment-scheduled"
                     >
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       {fr ? "Confirmer" : "Confirm"}
@@ -461,10 +598,10 @@ export default function ProPlanning() {
                       className="flex-1 border-red-200 text-red-600 hover:bg-red-50 gap-1.5"
                       disabled={statusMutation.isPending}
                       onClick={() => statusMutation.mutate({ id: selectedAppointment.id, status: "cancelled" })}
-                      data-testid="button-decline-appointment"
+                      data-testid="button-decline-appointment-scheduled"
                     >
                       <XCircle className="h-3.5 w-3.5" />
-                      {fr ? "Refuser" : "Decline"}
+                      {fr ? "Annuler" : "Cancel"}
                     </Button>
                   </div>
                 </div>
