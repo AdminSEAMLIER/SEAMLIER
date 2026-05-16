@@ -55,9 +55,11 @@ function emailWrapper(title: string, bodyHtml: string): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light">
   <title>${title}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f9f6f1;font-family:Georgia,'Times New Roman',serif;-webkit-font-smoothing:antialiased">
+<body style="margin:0;padding:0;background-color:#f9f6f1;font-family:Georgia,'Times New Roman',serif;-webkit-font-smoothing:antialiased;color-scheme:light only">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f9f6f1">
     <tr>
       <td align="center" style="padding:40px 16px">
