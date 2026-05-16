@@ -13,6 +13,8 @@ export default defineConfig({
       includeAssets: ["favicon.png", "push-handler.js"],
       workbox: {
         importScripts: ["/push-handler.js"],
+        navigateFallback: "/index.html",
+        navigateFallbackDenylist: [/^\/api\//],
       },
       manifest: {
         name: "Seamlier",
