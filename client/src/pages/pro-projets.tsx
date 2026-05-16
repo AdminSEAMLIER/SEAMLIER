@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { FolderKanban, Clock, Euro, User, ChevronRight, Ruler, Calendar, MessageSquare, Phone, Mail, Camera, Image, Users, CheckCircle, Circle, Loader2, Check, X, Plus, Boxes, ExternalLink, Flag } from "lucide-react";
+import { FolderKanban, Clock, Euro, User, ChevronRight, ChevronDown, ChevronUp, Ruler, Calendar, MessageSquare, Phone, Mail, Camera, Image, Users, CheckCircle, Circle, Loader2, Check, X, Plus, Boxes, ExternalLink, Flag } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -45,9 +45,14 @@ export default function ProProjets() {
   });
   // Separate event projects from regular projects
   const eventProjects = allProjects.filter(p => p.title?.startsWith("[Événement]"));
-  const projects = allProjects.filter(p =>
+  const allRegular = allProjects.filter(p =>
     p.status !== "pending" && p.status !== "quoted" && !p.title?.startsWith("[Événement]")
   );
+  const isDone = (p: ProjectWithClient) =>
+    p.status === "completed" && !!(p as any).clientConfirmed;
+  const projects = allRegular.filter(p => !isDone(p));
+  const doneProjects = allRegular.filter(p => isDone(p));
+  const [showDone, setShowDone] = useState(false);
 
   // Fetch tailor group events for the overview section
   const { data: tailorEvents = [] } = useQuery<any[]>({
@@ -346,9 +351,24 @@ export default function ProProjets() {
             </CardContent>
           </Card>
         ) : (
-          projects.map((project) => (
-            <Card 
-              key={project.id} 
+          <>
+          {/* ── Section titre si deux sections coexistent ── */}
+          {projects.length > 0 && doneProjects.length > 0 && (
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+              Projets en cours ({projects.length})
+            </p>
+          )}
+          {projects.length === 0 && doneProjects.length > 0 && (
+            <Card className="border border-gray-100 bg-white shadow-sm mb-4">
+              <CardContent className="p-8 bg-white text-center">
+                <CheckCircle className="h-10 w-10 text-green-400 mx-auto mb-3" />
+                <p className="text-gray-500">Aucun projet actif en ce moment.</p>
+              </CardContent>
+            </Card>
+          )}
+          {projects.map((project) => (
+            <Card
+              key={project.id}
               className="border border-gray-100 bg-white shadow-sm mb-4 cursor-pointer hover:border-[#601B28]/30 transition-colors"
               onClick={() => handleOpenProject(project)}
               data-testid={`card-project-${project.id}`}
@@ -377,7 +397,7 @@ export default function ProProjets() {
                     <span className="font-medium">{project.progress || 0}%</span>
                   </div>
                   <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className={`h-full ${getProgressColor(project.progress || 0)} rounded-full transition-all`}
                       style={{ width: `${project.progress || 0}%` }}
                     />
@@ -400,7 +420,62 @@ export default function ProProjets() {
                 </div>
               </CardContent>
             </Card>
-          ))
+          ))}
+
+          {/* ── Section Projets terminés (repliable) ── */}
+          {doneProjects.length > 0 && (
+            <div className="mt-4">
+              <button
+                className="flex items-center gap-2 w-full text-left mb-3"
+                onClick={() => setShowDone(v => !v)}
+                data-testid="button-toggle-done"
+              >
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide flex-1">
+                  Projets terminés ({doneProjects.length})
+                </span>
+                {showDone
+                  ? <ChevronUp className="h-4 w-4 text-gray-400" />
+                  : <ChevronDown className="h-4 w-4 text-gray-400" />}
+              </button>
+              {showDone && doneProjects.map((project) => (
+                <Card
+                  key={project.id}
+                  className="border border-gray-200 bg-gray-50 shadow-none mb-4 opacity-60 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => handleOpenProject(project)}
+                  data-testid={`card-done-project-${project.id}`}
+                >
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between gap-4 mb-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h3 className="font-semibold text-gray-500">{project.title}</h3>
+                          <Badge className="bg-green-100 text-green-700 border-none text-xs">Terminé</Badge>
+                        </div>
+                        <div className="flex items-center gap-1 text-sm text-gray-400">
+                          <User className="h-3 w-3" />
+                          <span>{project.client?.firstName} {project.client?.lastName}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-400">
+                      {project.amount && (
+                        <span className="flex items-center gap-1">
+                          <Euro className="h-3.5 w-3.5" />{project.amount}€
+                        </span>
+                      )}
+                      {project.deadline && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5" />
+                          {new Date(project.deadline).toLocaleDateString("fr-FR")}
+                        </span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+          </>
         )}
 
         <ArtisanDisputes />

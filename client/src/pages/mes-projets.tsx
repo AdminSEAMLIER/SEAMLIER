@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FolderKanban, Clock, Euro, CheckCircle, Circle, Loader2, ArrowLeft, Scissors, MessageSquare, Calendar, Star, X, Eye } from "lucide-react";
+import { FolderKanban, Clock, Euro, CheckCircle, Circle, Loader2, ArrowLeft, Scissors, MessageSquare, Calendar, Star, X, Eye, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,10 +45,16 @@ export default function MesProjets() {
   const [confirmProject, setConfirmProject] = useState<ProjectWithTailor | null>(null);
   const [deadlineRespected, setDeadlineRespected] = useState<boolean | null>(null);
   const [articleReceived, setArticleReceived] = useState<boolean | null>(null);
+  const [showDone, setShowDone] = useState(false);
 
   const { data: projects = [], isLoading } = useQuery<ProjectWithTailor[]>({
     queryKey: ["/api/client/projects"],
   });
+
+  const isDone = (p: ProjectWithTailor) =>
+    p.status === "completed" && !!(p as any).clientConfirmed;
+  const activeProjects = projects.filter(p => !isDone(p));
+  const doneProjects = projects.filter(p => isDone(p));
 
   const acceptQuoteMutation = useMutation({
     mutationFn: (projectId: string) =>
@@ -218,7 +224,22 @@ export default function MesProjets() {
             </CardContent>
           </Card>
         ) : (
-          projects.map((project) => {
+          <>
+          {/* ── Section titre si les deux sections coexistent ── */}
+          {activeProjects.length > 0 && doneProjects.length > 0 && (
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+              {isFr ? `Projets en cours (${activeProjects.length})` : `Active (${activeProjects.length})`}
+            </p>
+          )}
+          {activeProjects.length === 0 && doneProjects.length > 0 && (
+            <Card className="border border-gray-100 bg-white shadow-sm mb-6">
+              <CardContent className="p-8 bg-white text-center">
+                <CheckCircle className="h-10 w-10 text-green-400 mx-auto mb-3" />
+                <p className="text-gray-500">{isFr ? "Aucun projet actif en ce moment." : "No active projects at the moment."}</p>
+              </CardContent>
+            </Card>
+          )}
+          {activeProjects.map((project) => {
             const currentStepIndex = FABRICATION_STEPS.findIndex(s => s.key === (project.currentStep || "prise_mesures"));
             const tailorName = `${project.tailorUser?.firstName || ""} ${project.tailorUser?.lastName || ""}`.trim();
             const isQuoted = project.status === "quoted";
@@ -442,7 +463,67 @@ export default function MesProjets() {
                 </CardContent>
               </Card>
             );
-          })
+          })}
+
+          {/* ── Section Projets terminés (repliable) ── */}
+          {doneProjects.length > 0 && (
+            <div className="mt-6">
+              <button
+                className="flex items-center gap-2 w-full text-left mb-3"
+                onClick={() => setShowDone(v => !v)}
+                data-testid="button-toggle-done"
+              >
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide flex-1">
+                  {isFr ? `Projets terminés (${doneProjects.length})` : `Completed (${doneProjects.length})`}
+                </span>
+                {showDone
+                  ? <ChevronUp className="h-4 w-4 text-gray-400" />
+                  : <ChevronDown className="h-4 w-4 text-gray-400" />}
+              </button>
+              {showDone && doneProjects.map((project) => {
+                const tailorName = `${project.tailorUser?.firstName || ""} ${project.tailorUser?.lastName || ""}`.trim();
+                return (
+                  <Card
+                    key={project.id}
+                    className="border border-gray-200 bg-gray-50 shadow-none mb-4 opacity-60"
+                    data-testid={`card-done-project-${project.id}`}
+                  >
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-4 mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <h3 className="font-semibold text-gray-500">{project.title}</h3>
+                            <Badge className="bg-green-100 text-green-700 border-none text-xs">
+                              {isFr ? "Terminé" : "Completed"}
+                            </Badge>
+                          </div>
+                          {tailorName && (
+                            <p className="text-sm text-gray-400">
+                              {isFr ? "Artisan : " : "Tailor: "}{tailorName}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-4 text-sm text-gray-400">
+                        {project.amount && (
+                          <span className="flex items-center gap-1">
+                            <Euro className="h-3.5 w-3.5" />{project.amount}€
+                          </span>
+                        )}
+                        {project.deadline && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" />
+                            {new Date(project.deadline).toLocaleDateString(isFr ? "fr-FR" : "en-US")}
+                          </span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+          </>
         )}
       </div>
 
