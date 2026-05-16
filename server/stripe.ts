@@ -193,6 +193,11 @@ export function registerStripeRoutes(app: Express) {
     }
   });
 
+  // ── Config publique (clé publiable pour le client) ───────────────────────
+  app.get("/api/stripe/config", (_req, res: Response) => {
+    res.json({ publishableKey: STRIPE_PUBLISHABLE_KEY });
+  });
+
   // ── Onboarding artisan ────────────────────────────────────────────────────
   app.post("/api/stripe/onboarding/start", async (req: any, res: Response) => {
     if (!stripe) return res.status(500).json({ error: "Stripe non configuré" });

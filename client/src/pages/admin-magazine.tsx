@@ -4159,9 +4159,34 @@ function AdminDossiers() {
                     </td>
                     <td className="px-4 py-3">{statusBadge(d.dossierStatus)}</td>
                     <td className="px-4 py-3">
-                      <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => openDossier(d)}>
-                        Instruire
-                      </Button>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {d.dossierStatus === "pending" && (
+                          <>
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white px-2"
+                              disabled={validateMutation.isPending}
+                              onClick={() => validateMutation.mutate({ id: d.id, action: "validate" })}
+                              data-testid={`button-validate-dossier-${d.id}`}
+                            >
+                              ✓ Valider
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs border-red-200 text-red-600 hover:bg-red-50 px-2"
+                              disabled={validateMutation.isPending}
+                              onClick={() => openDossier(d)}
+                              data-testid={`button-reject-dossier-${d.id}`}
+                            >
+                              ✗ Refuser
+                            </Button>
+                          </>
+                        )}
+                        <Button variant="outline" size="sm" className="text-xs h-7 px-2" onClick={() => openDossier(d)}>
+                          Instruire
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}

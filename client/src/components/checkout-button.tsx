@@ -7,8 +7,11 @@ import { CreditCard, CheckCircle, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api-config";
 import { useTranslation } from "react-i18next";
 
-const _pubKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_live_51SvLQMLyrGmm31qYpXRsufTxYiPBDvV6QEqsYqoUKgpssxXZ0IpU3zi02m0O9TYJPrae4r4uMtgN4g7N4OAwoSdb00muMHphx5";
-const stripePromise = _pubKey ? loadStripe(_pubKey).catch(() => null) : Promise.resolve(null);
+// Clé publiable chargée depuis l'API au runtime (évite de hardcoder dans le bundle)
+const stripePromise: Promise<import("@stripe/stripe-js").Stripe | null> = fetch("/api/stripe/config", { credentials: "include" })
+  .then(r => r.json())
+  .then(d => d.publishableKey ? loadStripe(d.publishableKey) : Promise.resolve(null))
+  .catch(() => Promise.resolve(null));
 
 // ── Formulaire interne (doit être dans <Elements>) ─────────────────────────
 interface FormProps {
@@ -133,8 +136,6 @@ export default function PaymentButton({ projectId, prixConfection, planArtisan, 
   const [montants, setMontants] = useState<FormProps["montants"] | null>(null);
   const [paid, setPaid] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-
-  if (!stripePromise) return null;
 
   const openDialog = async () => {
     // Ouvre la dialog immédiatement avec le spinner
