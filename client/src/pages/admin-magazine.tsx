@@ -331,9 +331,12 @@ export default function AdminDashboard() {
 
   const { data: globalStats } = useQuery<{
     totalRevenue: number;
+    totalCommissions: number;
     monthRevenue: number;
-    totalProjectsCompleted: number;
+    monthCommissions: number;
     avgProjectValue: number;
+    totalProjectsPaid: number;
+    totalProjectsCompleted: number;
     starterCount: number;
     proCount: number;
     activeClientsCount: number;
@@ -1140,8 +1143,8 @@ export default function AdminDashboard() {
                   {/* KPIs principaux */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
-                      { label: "CA total", value: `${globalStats?.totalRevenue?.toFixed(0) ?? 0} €`, icon: Euro, bg: "bg-[#601B28]/5", color: "text-[#601B28]" },
-                      { label: "Commissions perçues (10%)", value: `${totalCommissions.toFixed(0)} €`, icon: TrendingUp, bg: "bg-green-50", color: "text-green-600" },
+                      { label: "CA total (payé)", value: `${globalStats?.totalRevenue?.toFixed(0) ?? 0} €`, icon: Euro, bg: "bg-[#601B28]/5", color: "text-[#601B28]" },
+                      { label: "Commissions SEAMLiER", value: `${globalStats?.totalCommissions?.toFixed(0) ?? 0} €`, icon: TrendingUp, bg: "bg-green-50", color: "text-green-600" },
                       { label: "CA ce mois", value: `${globalStats?.monthRevenue?.toFixed(0) ?? 0} €`, icon: BarChart3, bg: "bg-blue-50", color: "text-blue-600" },
                       { label: "Panier moyen", value: `${globalStats?.avgProjectValue?.toFixed(0) ?? 0} €`, icon: BarChart3, bg: "bg-amber-50", color: "text-amber-600" },
                     ].map(s => (

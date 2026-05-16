@@ -1829,22 +1829,48 @@ export async function registerRoutes(
       const now = new Date();
       const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
+      // Filtre strict : paiement Stripe confirmé uniquement
+      const PAID_FILTER = `payment_status = 'paid' AND stripe_payment_intent_id IS NOT NULL AND amount_total > 0`;
+
+      // CA total = SUM(amount_total centimes ÷ 100)
       const [revenueRows] = await pool.query(
-        "SELECT COALESCE(SUM(amount), 0) as total FROM projects WHERE status = 'completed'"
+        `SELECT COALESCE(SUM(amount_total)/100, 0) as total FROM projects WHERE ${PAID_FILTER}`
       ) as any[];
       const totalRevenue = parseFloat(revenueRows?.[0]?.total) || 0;
 
+      // Commissions SEAMLiER = SUM((amount_total - amount_artisan) ÷ 100)
+      const [commRows] = await pool.query(
+        `SELECT COALESCE(SUM(amount_total - amount_artisan)/100, 0) as total FROM projects WHERE ${PAID_FILTER}`
+      ) as any[];
+      const totalCommissions = parseFloat(commRows?.[0]?.total) || 0;
+
+      // CA ce mois (filtré sur updated_at = date de paiement)
       const [monthRevenueRows] = await pool.query(
-        "SELECT COALESCE(SUM(amount), 0) as total FROM projects WHERE status = 'completed' AND created_at >= ?",
+        `SELECT COALESCE(SUM(amount_total)/100, 0) as total FROM projects WHERE ${PAID_FILTER} AND updated_at >= ?`,
         [firstOfMonth]
       ) as any[];
       const monthRevenue = parseFloat(monthRevenueRows?.[0]?.total) || 0;
 
+      // Commissions ce mois
+      const [monthCommRows] = await pool.query(
+        `SELECT COALESCE(SUM(amount_total - amount_artisan)/100, 0) as total FROM projects WHERE ${PAID_FILTER} AND updated_at >= ?`,
+        [firstOfMonth]
+      ) as any[];
+      const monthCommissions = parseFloat(monthCommRows?.[0]?.total) || 0;
+
+      // Panier moyen = AVG(amount_total ÷ 100) des projets payés
       const [avgRows] = await pool.query(
-        "SELECT COALESCE(AVG(amount), 0) as avg_val FROM projects WHERE status = 'completed' AND amount > 0"
+        `SELECT COALESCE(AVG(amount_total)/100, 0) as avg_val FROM projects WHERE ${PAID_FILTER}`
       ) as any[];
       const avgProjectValue = parseFloat(avgRows?.[0]?.avg_val) || 0;
 
+      // Projets payés (pas seulement completed — un projet payé peut encore être en fabrication)
+      const [paidRows] = await pool.query(
+        `SELECT COUNT(*) as cnt FROM projects WHERE ${PAID_FILTER}`
+      ) as any[];
+      const totalProjectsPaid = parseInt(paidRows?.[0]?.cnt) || 0;
+
+      // Projets complétés (pour info)
       const [completedRows] = await pool.query(
         "SELECT COUNT(*) as cnt FROM projects WHERE status = 'completed'"
       ) as any[];
@@ -1872,8 +1898,11 @@ export async function registerRoutes(
 
       res.json({
         totalRevenue,
+        totalCommissions,
         monthRevenue,
+        monthCommissions,
         avgProjectValue,
+        totalProjectsPaid,
         totalProjectsCompleted,
         activeArtisansCount,
         activeClientsCount,
