@@ -105,6 +105,7 @@ export default function PrendreRdv() {
         credentials: "include",
         body: JSON.stringify({
           tailorId: tailorTableId,
+          clientId: user?.id ?? undefined,
           scheduledAt: new Date(`${dateStr}T${selectedSlot}`).toISOString(),
           type: "consultation",
           duration: 30,
