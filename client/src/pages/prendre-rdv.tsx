@@ -109,7 +109,7 @@ export default function PrendreRdv() {
           scheduledAt: new Date(`${dateStr}T${selectedSlot}`).toISOString(),
           type: "consultation",
           duration: 30,
-          status: "scheduled",
+          status: "pending",
         }),
       });
       if (!r.ok) {

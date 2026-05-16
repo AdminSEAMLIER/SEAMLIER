@@ -145,7 +145,7 @@ export async function registerRoutes(
       const [sh, sm] = schedule.start_time.split(':').map(Number);
       const [eh, em] = schedule.end_time.split(':').map(Number);
       const startTotal = sh * 60 + sm, endTotal = eh * 60 + em;
-      const [apptRows] = await pool.query("SELECT scheduled_at, duration FROM appointments WHERE tailor_id = ? AND DATE(scheduled_at) = ? AND status IN ('confirmed','scheduled')", [tailorId, dateStr]) as any[];
+      const [apptRows] = await pool.query("SELECT scheduled_at, duration FROM appointments WHERE tailor_id = ? AND DATE(scheduled_at) = ? AND status IN ('confirmed','scheduled','pending')", [tailorId, dateStr]) as any[];
       const booked = Array.isArray(apptRows) ? apptRows.map((a: any) => { const t = new Date(a.scheduled_at); return { start: t.getHours() * 60 + t.getMinutes(), duration: a.duration || 60 }; }) : [];
       const slots = [];
       for (let m = startTotal; m < endTotal; m += 30) {
@@ -1421,7 +1421,10 @@ export async function registerRoutes(
         clientId = userId;
       }
 
-      const { scheduledAt, type, duration, notes, location, status, projectId } = req.body;
+      const { scheduledAt, type, duration, notes, location, projectId } = req.body;
+      // Client-created appointments start as "pending" (artisan must accept).
+      // Artisan-created appointments are "scheduled" immediately.
+      const initialStatus = tailor ? "scheduled" : "pending";
       const newId = require("crypto").randomUUID();
       await pool.query(
         `INSERT INTO appointments (id, tailor_id, client_id, project_id, type, location, scheduled_at, duration, notes, status)
@@ -1436,7 +1439,7 @@ export async function registerRoutes(
           new Date(scheduledAt),
           duration || 60,
           notes || null,
-          status || "scheduled",
+          initialStatus,
         ]
       );
       const [rows] = await pool.query(`SELECT * FROM appointments WHERE id = ?`, [newId]) as any[];
@@ -1456,19 +1459,17 @@ export async function registerRoutes(
         if (cl && ta) {
           const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim();
           const tailorName = `${ta.first_name || ""} ${ta.last_name || ""}`.trim();
-          // Client-created appointment: send dedicated "new booking request" email to artisan
           if (!tailor) {
+            // Client created → notify artisan to accept/refuse (no confirmation to client yet)
             sendNewAppointmentRequestEmail(ta.email, tailorName, clientName, type || "consultation", scheduledAt).catch(() => {});
-            // Push to artisan: nouveau RDV
             const [tUserRows] = await pool.query(`SELECT user_id FROM tailors WHERE id = ?`, [tailorId]) as any[];
             const tUid = Array.isArray(tUserRows) && tUserRows[0]?.user_id;
             if (tUid) sendPushNotification(tUid, `Nouveau RDV de ${clientName}`, `${type || "Consultation"} — ${new Date(scheduledAt).toLocaleDateString("fr-FR")}`, "/pro-planning").catch(() => {});
           } else {
-            sendAppointmentConfirmationEmail(ta.email, tailorName, scheduledAt, type || "consultation", clientName).catch(() => {});
-            // Push to client: RDV confirmé par l'artisan
-            sendPushNotification(clientId, "Rendez-vous programmé", `${type || "Consultation"} le ${new Date(scheduledAt).toLocaleDateString("fr-FR")}`, "/mes-projets").catch(() => {});
+            // Artisan created → immediately confirmed, notify client
+            sendAppointmentConfirmationEmail(cl.email, clientName, scheduledAt, type || "consultation", tailorName).catch(() => {});
+            sendPushNotification(clientId, "Rendez-vous confirmé", `${type || "Consultation"} le ${new Date(scheduledAt).toLocaleDateString("fr-FR")}`, "/mes-rendez-vous").catch(() => {});
           }
-          sendAppointmentConfirmationEmail(cl.email, clientName, scheduledAt, type || "consultation", tailorName).catch(() => {});
         }
       } catch (emailErr) {
         console.error("[APPT EMAIL]", emailErr);
@@ -1499,23 +1500,36 @@ export async function registerRoutes(
 
       if (req.body.status === "confirmed") {
         try {
+          const isArtisanConfirming = callerId !== appointment.clientId;
           if (tailor?.userId && appointment.clientId) {
             const conv = await storage.getOrCreateConversation(tailor.userId, appointment.clientId);
-            const isClientConfirming = callerId === appointment.clientId;
-            if (isClientConfirming) {
-              // Client confirme → notifier l'artisan (message envoyé par le client)
+            if (!isArtisanConfirming) {
               await storage.createMessage({
                 conversationId: conv.id,
                 senderId: appointment.clientId,
                 content: `✅ J'ai confirmé notre rendez-vous du ${dateStr} à ${timeStr}. À bientôt !`,
               });
             } else {
-              // Artisan confirme → notifier le client (message envoyé par l'artisan)
               await storage.createMessage({
                 conversationId: conv.id,
                 senderId: tailor.userId,
                 content: `✅ Votre rendez-vous du ${dateStr} à ${timeStr} a été confirmé. À bientôt !`,
               });
+              // Email de confirmation au client
+              const [clientRows] = await pool.query(
+                `SELECT email, first_name, last_name FROM users WHERE id = ?`, [appointment.clientId]
+              ) as any[];
+              const [tailorUserRows] = await pool.query(
+                `SELECT u.first_name, u.last_name FROM users u JOIN tailors t ON t.user_id = u.id WHERE t.id = ?`, [appointment.tailorId]
+              ) as any[];
+              const cl = (clientRows as any[])[0];
+              const ta = (tailorUserRows as any[])[0];
+              if (cl?.email) {
+                const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim();
+                const tailorName = ta ? `${ta.first_name || ""} ${ta.last_name || ""}`.trim() : "votre artisan";
+                sendAppointmentConfirmationEmail(cl.email, clientName, appointment.scheduledAt, appointment.type || "consultation", tailorName).catch(() => {});
+                sendPushNotification(appointment.clientId, "Rendez-vous confirmé !", `${appointment.type || "Consultation"} le ${new Date(appointment.scheduledAt).toLocaleDateString("fr-FR")}`, "/mes-rendez-vous").catch(() => {});
+              }
             }
           }
         } catch (msgErr) {
@@ -3123,7 +3137,7 @@ export async function registerRoutes(
       const [apptRows] = await pool.query(`
         SELECT DATE_FORMAT(scheduled_at, '%H:%i') as time_slot, duration
         FROM appointments
-        WHERE tailor_id = ? AND DATE(scheduled_at) = ? AND status IN ('scheduled','confirmed')
+        WHERE tailor_id = ? AND DATE(scheduled_at) = ? AND status IN ('scheduled','confirmed','pending')
       `, [tailorId, date]) as any[];
       const busySlots = new Set<string>();
       for (const appt of (apptRows as any[])) {

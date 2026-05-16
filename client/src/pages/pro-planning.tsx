@@ -74,7 +74,8 @@ function StatusBadge({ status, isPast }: { status: string; isPast: boolean }) {
   if (isPast) return <Badge className="bg-gray-100 text-gray-400 border-none text-xs">Passé</Badge>;
   if (status === "confirmed") return <Badge className="bg-green-100 text-green-700 border-none text-xs">Confirmé</Badge>;
   if (status === "cancelled") return <Badge className="bg-gray-100 text-gray-500 border-none text-xs">Annulé</Badge>;
-  return <Badge className="bg-orange-100 text-orange-700 border-none text-xs">En attente</Badge>;
+  if (status === "pending") return <Badge className="bg-orange-100 text-orange-700 border-none text-xs">En attente</Badge>;
+  return <Badge className="bg-blue-100 text-blue-700 border-none text-xs">Planifié</Badge>;
 }
 
 function getTypeLabel(typeKey: string, fr: boolean) {
@@ -437,7 +438,7 @@ export default function ProPlanning() {
               )}
 
               {/* Actions confirmation */}
-              {selectedAppointment.status === "scheduled" && !selectedAppointment.isPast && (
+              {(selectedAppointment.status === "pending" || selectedAppointment.status === "scheduled") && !selectedAppointment.isPast && (
                 <div className="p-3 bg-orange-50 border border-orange-200 rounded-xl">
                   <p className="text-xs font-semibold text-orange-800 mb-2 flex items-center gap-1.5">
                     <AlertCircle className="h-3.5 w-3.5" />
