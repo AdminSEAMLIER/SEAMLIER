@@ -10,7 +10,7 @@ import { schedule } from "node-cron";
 import { initSocketIO } from "./socketio";
 import { generateMonthlyInvoice } from "./invoice";
 import { generateAnnualFiscalPdf } from "./fiscal";
-import { sendMonthlyInvoiceEmail, sendKbisExpiryReminderEmail, sendAdminKbisAlertEmail, sendAnnualFiscalRecapEmail, sendAdminFiscalAlertEmail, verifySmtpConnection } from "./email";
+import { sendMonthlyInvoiceEmail, sendKbisExpiryReminderEmail, sendAdminKbisAlertEmail, sendAnnualFiscalRecapEmail, sendAdminFiscalAlertEmail } from "./email";
 import { uploadsDir } from "./upload";
 
 const app = express();
@@ -93,7 +93,6 @@ app.use((req, res, next) => {
 
 (async () => {
   await ensureTables();
-  verifySmtpConnection(); // non-blocking SMTP diagnostic at startup
   await setupAuth(app);
 
   await registerRoutes(httpServer, app);
