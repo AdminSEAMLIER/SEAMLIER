@@ -61,6 +61,38 @@ export async function registerRoutes(
   // Stripe routes registered first — must come before any catch-all middleware
   registerStripeRoutes(app);
 
+  // Email verification — registered immediately after Stripe, before all other routes,
+  // to guarantee it is never shadowed by an uncaught error in a later route block.
+  app.get("/api/verify-email", async (req, res) => {
+    try {
+      const { token } = req.query;
+      if (!token || typeof token !== "string") {
+        return res.status(400).send(renderVerificationPage(false, "Token manquant."));
+      }
+      const userRaw = await storage.getUserByVerificationToken(token);
+      if (!userRaw) {
+        return res.status(400).send(renderVerificationPage(false, "Lien invalide ou expiré."));
+      }
+      if (userRaw.verificationExpires && new Date(userRaw.verificationExpires) < new Date()) {
+        return res.status(400).send(renderVerificationPage(false, "Ce lien a expiré. Veuillez vous réinscrire."));
+      }
+      await storage.updateUser(userRaw.id, {
+        emailVerified: true,
+        verificationToken: null,
+        verificationExpires: null,
+      } as any);
+      if (userRaw.email) {
+        sendWelcomeEmail(userRaw.email, userRaw.firstName ?? null).catch(err =>
+          console.error("[Welcome email] Failed:", err)
+        );
+      }
+      return res.send(renderVerificationPage(true, "Votre email a été vérifié avec succès ! Vous pouvez maintenant vous connecter."));
+    } catch (error) {
+      console.error("Email verification error:", error);
+      return res.status(500).send(renderVerificationPage(false, "Erreur serveur."));
+    }
+  });
+
   // ===== Professional Plan Routes =====
 
   app.get("/api/professionnel/plan", requireAuth, async (req, res) => {
@@ -2513,37 +2545,6 @@ export async function registerRoutes(
     } catch (error) {
       console.error("admin project edit error:", error);
       res.status(500).json({ error: "Failed to update project" });
-    }
-  });
-
-  // Email verification
-  app.get("/api/verify-email", async (req, res) => {
-    try {
-      const { token } = req.query;
-      if (!token || typeof token !== "string") {
-        return res.status(400).send(renderVerificationPage(false, "Token manquant."));
-      }
-      const userRaw = await storage.getUserByVerificationToken(token);
-      if (!userRaw) {
-        return res.status(400).send(renderVerificationPage(false, "Lien invalide ou expiré."));
-      }
-      if (userRaw.verificationExpires && new Date(userRaw.verificationExpires) < new Date()) {
-        return res.status(400).send(renderVerificationPage(false, "Ce lien a expiré. Veuillez vous réinscrire."));
-      }
-      await storage.updateUser(userRaw.id, {
-        emailVerified: true,
-        verificationToken: null,
-        verificationExpires: null,
-      } as any);
-      if (userRaw.email) {
-        sendWelcomeEmail(userRaw.email, userRaw.firstName ?? null).catch(err =>
-          console.error("[Welcome email] Failed:", err)
-        );
-      }
-      return res.send(renderVerificationPage(true, "Votre email a été vérifié avec succès ! Vous pouvez maintenant vous connecter."));
-    } catch (error) {
-      console.error("Email verification error:", error);
-      return res.status(500).send(renderVerificationPage(false, "Erreur serveur."));
     }
   });
 
