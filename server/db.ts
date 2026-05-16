@@ -109,6 +109,17 @@ export async function ensureTables() {
   await addColumnIfMissing("projects", "event_id", "VARCHAR(36) NULL");
   await addColumnIfMissing("projects", "contract_url", "TEXT NULL");
 
+  // projects: widen model_photo_url from TEXT (64KB) to MEDIUMTEXT (16MB) for base64 photos
+  try {
+    await pool.execute(`ALTER TABLE projects MODIFY COLUMN model_photo_url MEDIUMTEXT NULL`);
+    console.log("[DB] projects.model_photo_url widened to MEDIUMTEXT ✅");
+  } catch (err: any) {
+    // Idempotent: ignore if already MEDIUMTEXT or column doesn't exist
+    if (!err?.message?.includes("MEDIUMTEXT")) {
+      console.warn("[DB] model_photo_url ALTER:", err?.message);
+    }
+  }
+
   // events: add new columns if table already existed
   await addColumnIfMissing("events", "registration_deadline", "DATE NULL");
   await addColumnIfMissing("events", "status", "VARCHAR(30) NOT NULL DEFAULT 'pending_tailor_approval'");

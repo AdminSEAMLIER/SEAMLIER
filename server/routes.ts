@@ -1112,10 +1112,17 @@ export async function registerRoutes(
         if (!req.body.clientId) {
           return res.status(400).json({ error: "clientId is required" });
         }
-        const project = await storage.createProject({
-          ...req.body,
-          tailorId: tailor.id,
-        });
+        let project: any;
+        try {
+          project = await storage.createProject({ ...req.body, tailorId: tailor.id });
+        } catch (photoErr: any) {
+          if ((photoErr?.message?.includes("Data too long") || photoErr?.code === "ER_DATA_TOO_LONG") && req.body.modelPhotoUrl) {
+            console.warn("[PROJECT] modelPhotoUrl too large, retrying without photo");
+            project = await storage.createProject({ ...req.body, tailorId: tailor.id, modelPhotoUrl: null });
+          } else {
+            throw photoErr;
+          }
+        }
         return res.status(201).json(project);
       }
 
@@ -1139,7 +1146,7 @@ export async function registerRoutes(
         artisanDate.setDate(artisanDate.getDate() - 3);
         artisanDeadline = artisanDate.toISOString().slice(0, 10);
       }
-      const project = await storage.createProject({
+      const projectPayload = {
         ...req.body,
         clientId: userId,
         status: "pending",
@@ -1150,7 +1157,18 @@ export async function registerRoutes(
         isUrgent,
         ...(requestedPrice !== undefined ? { requestedPrice } : {}),
         ...(amount !== undefined ? { amount } : {}),
-      });
+      };
+      let project: any;
+      try {
+        project = await storage.createProject(projectPayload);
+      } catch (photoErr: any) {
+        if ((photoErr?.message?.includes("Data too long") || photoErr?.code === "ER_DATA_TOO_LONG") && req.body.modelPhotoUrl) {
+          console.warn("[PROJECT] modelPhotoUrl too large, retrying without photo");
+          project = await storage.createProject({ ...projectPayload, modelPhotoUrl: null });
+        } else {
+          throw photoErr;
+        }
+      }
       res.status(201).json(project);
 
       // Notify artisan of new project request
