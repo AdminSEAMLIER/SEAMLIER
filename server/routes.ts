@@ -3336,11 +3336,13 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/professionnel/dossier/upload/:docType", requireAuth, (req: any, res) => {
-    uploadDoc(req, res, async (err) => {
-      if (err) {
-        return res.status(400).json({ error: err.message });
-      }
+  app.post("/api/professionnel/dossier/upload/:docType", requireAuth, (req: any, res, next) => {
+    try {
+      uploadDoc(req, res, async (err) => {
+        if (err) {
+          console.error('[UPLOAD DOC]', err);
+          return res.status(400).json({ error: err.message });
+        }
       if (!req.file) {
         return res.status(400).json({ error: "Aucun fichier fourni" });
       }
@@ -3391,6 +3393,9 @@ export async function registerRoutes(
         res.status(500).json({ error: "Failed to upload document" });
       }
     });
+    } catch (syncErr) {
+      next(syncErr);
+    }
   });
 
   // ── Notifications ──────────────────────────────────────────────────────────

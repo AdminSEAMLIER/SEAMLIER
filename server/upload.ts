@@ -24,6 +24,7 @@ for (const dir of [uploadsDir, docsDir, contractsDir, portfolioDir]) {
 
 const docStorage = multer.diskStorage({
   destination: (_req, _file, cb) => {
+    fs.mkdirSync(docsDir, { recursive: true });
     cb(null, docsDir);
   },
   filename: (_req, file, cb) => {
