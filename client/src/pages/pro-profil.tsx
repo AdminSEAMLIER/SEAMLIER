@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, TrendingUp, Star, Settings, FileText, FolderKanban, Loader2, Briefcase, ImageIcon, XCircle, Clock, BookOpen, Languages, Euro } from "lucide-react";
@@ -31,42 +31,17 @@ function ProInfoSection() {
   const [insurerPolicy, setInsurerPolicy] = useState("");
   const [rcProCertified, setRcProCertified] = useState<boolean | null>(null);
 
-  // Sync state once dossier data arrives
-  const [synced, setSynced] = useState(false);
-  if (dossier && !synced) {
+  // Sync form fields when server data arrives
+  useEffect(() => {
+    if (!dossier) return;
     setSiret(dossier.siret || "");
     setIban(dossier.ibanRib || "");
     setInsurerName(dossier.insurerName || "");
     setInsurerPolicy(dossier.insurerPolicy || "");
     setRcProCertified(dossier.rcProCertified ?? null);
-    setSynced(true);
-  }
+  }, [dossier]);
 
-  const mutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/professionnel/dossier", {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ siret, iban, insurerName, insurerPolicy, rcProCertified }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Erreur lors de l'enregistrement");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/professionnel/dossier"] });
-      toast({ title: "Informations enregistrées", description: "Vos informations professionnelles ont été mises à jour." });
-    },
-    onError: (e: any) => {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const save = useCallback(async () => {
     const siretClean = siret.replace(/\s/g, "");
     if (!/^\d{14}$/.test(siretClean)) {
       toast({ title: "SIRET invalide", description: "Le SIRET doit contenir exactement 14 chiffres.", variant: "destructive" });
@@ -76,13 +51,33 @@ function ProInfoSection() {
       toast({ title: "IBAN requis", description: "Veuillez saisir votre IBAN.", variant: "destructive" });
       return;
     }
-    mutation.mutate();
+    try {
+      const res = await fetch("/api/professionnel/dossier", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ siret: siretClean, iban: iban.trim(), insurerName, insurerPolicy, rcProCertified }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((data as any).error || "Erreur lors de l'enregistrement");
+      queryClient.invalidateQueries({ queryKey: ["/api/professionnel/dossier"] });
+      toast({ title: "Informations enregistrées", description: "Vos informations professionnelles ont été mises à jour." });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    }
+  }, [siret, iban, insurerName, insurerPolicy, rcProCertified, toast]);
+
+  const [saving, setSaving] = useState(false);
+  const handleSave = async () => {
+    setSaving(true);
+    await save();
+    setSaving(false);
   };
 
   return (
     <div className="rounded-xl border border-gray-100 shadow-sm bg-white p-6 space-y-5">
       <h2 className="font-semibold text-gray-900 text-base">Informations professionnelles</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             SIRET <span className="text-red-500">*</span>
@@ -94,7 +89,6 @@ function ProInfoSection() {
             placeholder="14 chiffres"
             maxLength={17}
             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#601B28]/30 font-mono"
-            required
           />
           <p className="text-xs text-gray-400 mt-1">Numéro à 14 chiffres de votre entreprise.</p>
         </div>
@@ -109,7 +103,6 @@ function ProInfoSection() {
             onChange={e => setIban(e.target.value)}
             placeholder="FR76 3000 6000 0112 3456 7890 189"
             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#601B28]/30 font-mono"
-            required
           />
         </div>
 
@@ -164,13 +157,14 @@ function ProInfoSection() {
         </div>
 
         <button
-          type="submit"
-          disabled={mutation.isPending}
+          type="button"
+          disabled={saving}
+          onClick={handleSave}
           className="w-full py-2.5 px-4 bg-[#601B28] text-white text-sm font-medium rounded-lg hover:bg-[#7a2234] disabled:opacity-60 transition-colors"
         >
-          {mutation.isPending ? "Enregistrement…" : "Enregistrer"}
+          {saving ? "Enregistrement…" : "Enregistrer"}
         </button>
-      </form>
+      </div>
     </div>
   );
 }
