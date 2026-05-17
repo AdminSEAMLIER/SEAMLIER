@@ -28,6 +28,7 @@ import {
   sendQuoteAcceptedClientConfirmationEmail,
   sendArtisanPaymentReceivedEmail,
   sendReferralInviteEmail,
+  sendAdminDocUploadNotif,
 } from "./email";
 import { sendSms } from "./sms";
 import { getIO } from "./socketio";
@@ -3448,6 +3449,9 @@ export async function registerRoutes(
           sendDossierReceivedEmail(userRow.email, userName).catch(err =>
             console.error("[Dossier received email] Failed:", err)
           );
+          sendAdminDocUploadNotif(userName, docType, fileUrl).catch((adminErr) =>
+            console.error("[Admin doc notif email] Failed:", adminErr)
+          );
         }
 
         res.json({ url: fileUrl });
@@ -3461,7 +3465,40 @@ export async function registerRoutes(
     }
   });
 
-  // ── Notifications ──────────────────────────────────────────────────────────
+    app.delete("/api/professionnel/dossier/document/:docType", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      if ((req.user as any)?.role !== "tailor") {
+        return res.status(403).json({ error: "Réservé aux professionnels" });
+      }
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+
+      const { docType } = req.params;
+      const validDocTypes: Record<string, string> = {
+        kbis: "kbis_url",
+        idCard: "id_card_url",
+        rcPro: "rc_pro_url",
+        ibanRib: "iban_rib",
+      };
+      if (!validDocTypes[docType]) {
+        return res.status(400).json({ error: "Type de document invalide" });
+      }
+
+      const field = validDocTypes[docType];
+      await pool.query(
+        `UPDATE tailors SET ${field} = NULL WHERE id = ?`,
+        [tailor.id]
+      );
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to delete document:", error);
+      res.status(500).json({ error: "Failed to delete document" });
+    }
+  });
+
+// ── Notifications ──────────────────────────────────────────────────────────
 
   app.get("/api/notifications", requireAuth, async (req: any, res) => {
     try {

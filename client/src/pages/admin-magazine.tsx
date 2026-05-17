@@ -550,6 +550,10 @@ export default function AdminDashboard() {
     queryKey: ["/api/admin/artisans"],
     enabled: isAuthenticated,
   });
+  const { data: tailorDossiers = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/tailors/dossiers"],
+    enabled: isAuthenticated,
+  });
   const couturiers: CouturierData[] = rawArtisans.map((a: any) => ({
     id: a.id,
     name: `${a.firstName || ""} ${a.lastName || ""}`.trim(),
@@ -906,6 +910,12 @@ export default function AdminDashboard() {
   };
 
   const dossierArtisan = artisans.find(a => a.id === artisanDossierId);
+  const dossierTailorId = artisanDossierId?.startsWith("reg-")
+    ? artisanDossierId.replace("reg-", "")
+    : artisanDossierId ?? null;
+  const dossierDocs = (tailorDossiers as any[]).find(
+    (d: any) => String(d.id) === dossierTailorId
+  );
 
   const totalRevenue = projects.filter(p => p.status === "Libéré").reduce((sum, p) => sum + parseInt(p.amount.replace(/[^\d]/g, "")), 0);
   const pendingProjects = projects.filter(p => p.status === "Bloqué").length;
@@ -3058,6 +3068,30 @@ export default function AdminDashboard() {
                                   <span className="text-xs text-gray-500">Spécialité</span>
                                   <span className="text-sm font-semibold text-gray-900" data-testid="text-artisan-specialty">{dossierArtisan.specialty}</span>
                                 </div>
+                              </div>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-1">
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3">Documents Dossier</p>
+                              <div className="space-y-2">
+                                {[
+                                  { label: "Kbis", url: dossierDocs?.kbisUrl },
+                                  { label: "Pièce d'identité", url: dossierDocs?.idCardUrl },
+                                  { label: "RC Pro", url: dossierDocs?.rcProUrl },
+                                  { label: "IBAN / RIB", url: dossierDocs?.ibanRib },
+                                ].map(({ label, url }) => (
+                                  <div key={label} className="flex items-center justify-between py-1 border-b border-gray-100">
+                                    <span className="text-xs text-gray-500">{label}</span>
+                                    {url ? (
+                                      <a href={url} target="_blank" rel="noopener noreferrer"
+                                        className="text-xs text-[#601B28] underline truncate max-w-[180px]">
+                                        {url.split("/").pop()}
+                                      </a>
+                                    ) : (
+                                      <span className="text-xs text-gray-400 italic">Non déposé</span>
+                                    )}
+                                  </div>
+                                ))}
                               </div>
                             </div>
 

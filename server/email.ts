@@ -745,22 +745,44 @@ export async function sendReferralInviteEmail(
 ): Promise<boolean> {
   const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
   const inviteUrl = `${appUrl}/inscription/professionnel?ref=${referralToken}`;
-
   const html = emailWrapper("Invitation SEAMLIER", `
-    <h2 style="margin:0 0 6px;color:#1f2937;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:400;letter-spacing:1px">
-      VOUS ÊTES INVITÉ, <span style="color:#722F37">ARTISAN</span>
-    </h2>
+    <p style="font-size:16px;text-align:center;color:#333;margin:0 0 8px">
+      ${highlight(referrerName)} vous invite à rejoindre ${highlight("SEAMLIER")}.
+    </p>
+    <p style="font-size:14px;text-align:center;color:#4b5563;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-style:italic;margin:0 0 20px">
+      La plateforme qui connecte les couturières professionnelles avec leurs clients en France.
+    </p>
     ${divider()}
-    <p style="margin:0 0 16px;color:#4b5563;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.7">
-      ${highlight(referrerName)} vous invite à rejoindre ${highlight("SEAMLIER")}, la plateforme qui connecte les couturiers professionnels avec leurs clients.
+    <p style="font-size:15px;font-weight:600;color:#601B28;text-align:center;margin:20px 0 10px">Pourquoi rejoindre SEAMLiER ?</p>
+    <ul style="color:#333;font-size:14px;line-height:1.9;padding-left:24px;margin:0 0 20px">
+      <li>✅ Profil artisan <strong>100 % gratuit</strong></li>
+      <li>✅ Recevez des <strong>commandes en ligne</strong> directement</li>
+      <li>✅ <strong>Paiement sécurisé</strong> garanti</li>
+    </ul>
+    ${divider()}
+    <p style="font-size:14px;font-weight:700;color:#601B28;text-align:center;background:#fff8f0;border:1px solid #f0d0a0;border-radius:8px;padding:14px 20px;margin:20px 0">
+      🎁 Offre spéciale : 1 mois de plan Premium GRATUIT si vous rejoignez et recevez votre première commande.
     </p>
-    <p style="margin:0 0 0;color:#4b5563;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.7">
-      Créez votre profil artisan gratuitement et développez votre activité en ligne.
-    </p>
-    ${ctaButton(inviteUrl, "REJOINDRE SEAMLIER")}
+    ${ctaButton(inviteUrl, "REJOINDRE SEAMLIER GRATUITEMENT")}
   `);
-
   return sendEmail(referredEmail, `${referrerName} vous invite sur SEAMLIER`, html);
+}
+
+export async function sendAdminDocUploadNotif(
+  artisanName: string, docType: string, fileUrl: string
+): Promise<boolean> {
+  const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const fullUrl = `${appUrl}${fileUrl}`;
+  const html = emailWrapper("Nouveau document reçu", `
+    <h2 style="text-align:center;color:#601B28;margin:0 0 20px">Nouveau document déposé</h2>
+    ${infoBox([
+      { label: "Artisan", value: artisanName },
+      { label: "Type de document", value: docType },
+      { label: "Lien", value: `<a href="${fullUrl}" style="color:#722F37;word-break:break-all">${fullUrl}</a>` },
+    ])}
+    ${ctaButton('https://www.seamlier.fr/admin', 'VOIR LE TABLEAU DE BORD ADMIN')}
+  `);
+  return sendEmail('admin@seamlier.fr', 'Nouveau document : ' + artisanName + ' — ' + docType, html);
 }
 
 // ── Emails with PDF attachments (use Resend attachments) ──────────────────────

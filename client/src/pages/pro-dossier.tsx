@@ -16,6 +16,7 @@ import {
   CreditCard,
   User,
   Building2,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -122,6 +123,7 @@ function StatusBadge({ status, reason }: { status: DossierData["dossierStatus"];
 export default function ProDossier() {
   const { toast } = useToast();
   const [uploading, setUploading] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const { data: dossier, isLoading } = useQuery<DossierData>({
@@ -148,6 +150,27 @@ export default function ProDossier() {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
     } finally {
       setUploading(null);
+    }
+  }
+
+  async function handleDelete(docType: string) {
+    if (!confirm("Supprimer ce document définitivement ?")) return;
+    setDeleting(docType);
+    try {
+      const res = await fetch(`/api/professionnel/dossier/document/${docType}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Erreur suppression" }));
+        throw new Error(err.error || "Erreur suppression");
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/professionnel/dossier"] });
+      toast({ title: "Document supprimé", description: "Le document a été retiré de votre dossier." });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    } finally {
+      setDeleting(null);
     }
   }
 
@@ -228,6 +251,7 @@ export default function ProDossier() {
               {DOC_TYPES.map((doc) => {
                 const url = dossier?.[doc.urlKey] as string | null;
                 const isUploading = uploading === doc.docType;
+                const isDeleting = deleting === doc.docType;
                 const Icon = doc.icon;
                 const fileInfo = getFileInfo(url);
 
@@ -268,9 +292,14 @@ export default function ProDossier() {
                                   <CheckCircle2 className="h-3 w-3" />
                                   Déposé
                                 </span>
-                                <span className="text-xs text-green-700 font-medium truncate max-w-[200px]">
+                                <a
+                                  href={url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-green-700 font-medium truncate max-w-[200px] hover:underline"
+                                >
                                   {fileInfo.filename}
-                                </span>
+                                </a>
                               </div>
                               {fileInfo.uploadedAt && (
                                 <p className="text-xs text-gray-400 pl-5">
@@ -304,7 +333,7 @@ export default function ProDossier() {
                           )}
                         </div>
 
-                        <div className="shrink-0">
+                        <div className="shrink-0 flex flex-col items-end gap-1.5">
                           <input
                             type="file"
                             accept=".pdf,.jpg,.jpeg,.png"
@@ -319,7 +348,7 @@ export default function ProDossier() {
                           <Button
                             variant="outline"
                             size="sm"
-                            disabled={isUploading}
+                            disabled={isUploading || isDeleting}
                             className="h-8 text-xs border-[#601B28]/30 text-[#601B28]"
                             onClick={() => fileInputRefs.current[doc.docType]?.click()}
                           >
@@ -330,6 +359,22 @@ export default function ProDossier() {
                             )}
                             {url ? "Remplacer" : "Déposer"}
                           </Button>
+                          {url && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={isDeleting || isUploading}
+                              className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => handleDelete(doc.docType)}
+                            >
+                              {isDeleting ? (
+                                <div className="w-3 h-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin mr-1" />
+                              ) : (
+                                <Trash2 className="h-3.5 w-3.5 mr-1" />
+                              )}
+                              Supprimer
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardContent>
