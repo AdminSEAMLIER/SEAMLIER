@@ -29,7 +29,7 @@ function ProInfoSection() {
   const [iban, setIban] = useState("");
   const [insurerName, setInsurerName] = useState("");
   const [insurerPolicy, setInsurerPolicy] = useState("");
-  const [rcProCertified, setRcProCertified] = useState(false);
+  const [rcProCertified, setRcProCertified] = useState<boolean | null>(null);
 
   // Sync state once dossier data arrives
   const [synced, setSynced] = useState(false);
@@ -38,7 +38,7 @@ function ProInfoSection() {
     setIban(dossier.ibanRib || "");
     setInsurerName(dossier.insurerName || "");
     setInsurerPolicy(dossier.insurerPolicy || "");
-    setRcProCertified(!!dossier.rcProCertified);
+    setRcProCertified(dossier.rcProCertified ?? null);
     setSynced(true);
   }
 
@@ -135,20 +135,33 @@ function ProInfoSection() {
           />
         </div>
 
-        {insurerName.trim() && (
-          <div className="flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-lg p-3">
-            <input
-              id="rc-pro-certified"
-              type="checkbox"
-              checked={rcProCertified}
-              onChange={e => setRcProCertified(e.target.checked)}
-              className="mt-0.5 w-4 h-4 accent-[#601B28] shrink-0"
-            />
-            <label htmlFor="rc-pro-certified" className="text-sm text-gray-700 leading-snug cursor-pointer">
-              Je certifie sur l'honneur être titulaire d'une assurance RC Pro en cours de validité.
+        <div>
+          <p className="block text-sm font-medium text-gray-700 mb-2">
+            Avez-vous une assurance RC Pro ?
+          </p>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="rc-pro"
+                checked={rcProCertified === true}
+                onChange={() => setRcProCertified(true)}
+                className="w-4 h-4 accent-[#601B28]"
+              />
+              <span className="text-sm text-gray-700">Oui</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="rc-pro"
+                checked={rcProCertified === false}
+                onChange={() => setRcProCertified(false)}
+                className="w-4 h-4 accent-[#601B28]"
+              />
+              <span className="text-sm text-gray-700">Non</span>
             </label>
           </div>
-        )}
+        </div>
 
         <button
           type="submit"

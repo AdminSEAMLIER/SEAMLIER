@@ -427,11 +427,6 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/pro-dossier">
-        <ProtectedRoute>
-        </ProtectedRoute>
-      </Route>
-
       {/* Admin routes */}
       <Route path="/admin/dashboard">
         <AdminRoute><AdminDashboard /></AdminRoute>

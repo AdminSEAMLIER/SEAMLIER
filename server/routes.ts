@@ -3393,6 +3393,9 @@ export async function registerRoutes(
         ibanRib: row.iban_rib || null,
         dossierStatus: row.dossier_status || "pending",
         dossierRejectionReason: row.dossier_rejection_reason || null,
+        insurerName: row.insurer_name || null,
+        insurerPolicy: row.insurer_policy || null,
+        rcProCertified: row.rc_pro_certified != null ? !!row.rc_pro_certified : null,
       });
     } catch (error) {
       console.error("Failed to fetch dossier:", error);
@@ -3537,9 +3540,15 @@ export async function registerRoutes(
       }
 
       res.json({ success: true });
-    } catch (error) {
-      console.error("Failed to update pro info:", error);
-      res.status(500).json({ error: "Erreur lors de la sauvegarde" });
+    } catch (error: any) {
+      console.error("Failed to update pro info:", {
+        message: error?.message,
+        code: error?.code,
+        sqlMessage: error?.sqlMessage,
+        errno: error?.errno,
+        stack: error?.stack?.split("\n").slice(0, 4).join("\n"),
+      });
+      res.status(500).json({ error: "Erreur lors de la sauvegarde", detail: error?.message });
     }
   });
 
