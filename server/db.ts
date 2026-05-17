@@ -264,4 +264,27 @@ export async function ensureTables() {
   await addColumnIfMissing("tailors", "price_min", "FLOAT NULL");
   await addColumnIfMissing("tailors", "price_max", "FLOAT NULL");
   await addColumnIfMissing("tailors", "referral_code", "VARCHAR(16) NULL");
+  await addColumnIfMissing("tailors", "insurer_name", "VARCHAR(255) DEFAULT NULL");
+  await addColumnIfMissing("tailors", "insurer_policy", "VARCHAR(255) DEFAULT NULL");
+  await addColumnIfMissing("tailors", "rc_pro_certified", "TINYINT(1) NOT NULL DEFAULT 0");
 }
+
+// ── Column migrations (idempotent) ─────────────────────────────────────────
+async function ensureColumns(): Promise<void> {
+  const cols = [
+    ["tailors", "insurer_name", "VARCHAR(255) DEFAULT NULL"],
+    ["tailors", "insurer_policy", "VARCHAR(255) DEFAULT NULL"],
+    ["tailors", "rc_pro_certified", "TINYINT(1) NOT NULL DEFAULT 0"],
+  ] as const;
+  for (const [table, col, def] of cols) {
+    const [rows] = await pool.query(
+      `SELECT COUNT(*) as cnt FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
+      [table, col]
+    ) as any[];
+    if ((rows as any[])[0]?.cnt === 0) {
+      await pool.query(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`);
+      console.log(`[DB] Added column ${table}.${col}`);
+    }
+  }
+}
+ensureColumns().catch(err => console.error("[DB] Migration error:", err));

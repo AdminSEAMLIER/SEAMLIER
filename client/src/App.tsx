@@ -58,7 +58,6 @@ import ProNotifications from "@/pages/pro-notifications";
 import ProSetup from "@/pages/pro-setup";
 import ProStatistiques from "@/pages/pro-statistiques";
 import ProHoraires from "@/pages/pro-horaires";
-import ProDossier from "@/pages/pro-dossier";
 import MesProjets from "@/pages/mes-projets";
 import MesRendezVous from "@/pages/mes-rendez-vous";
 import DashboardClient from "@/pages/dashboard-client";
@@ -430,7 +429,6 @@ function Router() {
 
       <Route path="/pro-dossier">
         <ProtectedRoute>
-          <ProLayout><ProDossier /></ProLayout>
         </ProtectedRoute>
       </Route>
 

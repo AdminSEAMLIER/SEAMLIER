@@ -14,6 +14,154 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 
+
+function ProInfoSection() {
+  const { toast } = useToast();
+  const { data: dossier } = useQuery<{
+    siret?: string | null;
+    ibanRib?: string | null;
+    insurerName?: string | null;
+    insurerPolicy?: string | null;
+    rcProCertified?: boolean | null;
+  }>({ queryKey: ["/api/professionnel/dossier"] });
+
+  const [siret, setSiret] = useState("");
+  const [iban, setIban] = useState("");
+  const [insurerName, setInsurerName] = useState("");
+  const [insurerPolicy, setInsurerPolicy] = useState("");
+  const [rcProCertified, setRcProCertified] = useState(false);
+
+  // Sync state once dossier data arrives
+  const [synced, setSynced] = useState(false);
+  if (dossier && !synced) {
+    setSiret(dossier.siret || "");
+    setIban(dossier.ibanRib || "");
+    setInsurerName(dossier.insurerName || "");
+    setInsurerPolicy(dossier.insurerPolicy || "");
+    setRcProCertified(!!dossier.rcProCertified);
+    setSynced(true);
+  }
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/professionnel/dossier", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ siret, iban, insurerName, insurerPolicy, rcProCertified }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Erreur lors de l'enregistrement");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/professionnel/dossier"] });
+      toast({ title: "Informations enregistrées", description: "Vos informations professionnelles ont été mises à jour." });
+    },
+    onError: (e: any) => {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const siretClean = siret.replace(/\s/g, "");
+    if (!/^\d{14}$/.test(siretClean)) {
+      toast({ title: "SIRET invalide", description: "Le SIRET doit contenir exactement 14 chiffres.", variant: "destructive" });
+      return;
+    }
+    if (!iban.trim()) {
+      toast({ title: "IBAN requis", description: "Veuillez saisir votre IBAN.", variant: "destructive" });
+      return;
+    }
+    mutation.mutate();
+  };
+
+  return (
+    <div className="rounded-xl border border-gray-100 shadow-sm bg-white p-6 space-y-5">
+      <h2 className="font-semibold text-gray-900 text-base">Informations professionnelles</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            SIRET <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            value={siret}
+            onChange={e => setSiret(e.target.value)}
+            placeholder="14 chiffres"
+            maxLength={17}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#601B28]/30 font-mono"
+            required
+          />
+          <p className="text-xs text-gray-400 mt-1">Numéro à 14 chiffres de votre entreprise.</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            IBAN <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            value={iban}
+            onChange={e => setIban(e.target.value)}
+            placeholder="FR76 3000 6000 0112 3456 7890 189"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#601B28]/30 font-mono"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Assureur RC Pro</label>
+          <input
+            type="text"
+            value={insurerName}
+            onChange={e => setInsurerName(e.target.value)}
+            placeholder="Ex : AXA, Allianz, MAIF"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#601B28]/30"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Numéro de police</label>
+          <input
+            type="text"
+            value={insurerPolicy}
+            onChange={e => setInsurerPolicy(e.target.value)}
+            placeholder="Ex : POL-2024-001234"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#601B28]/30"
+          />
+        </div>
+
+        {insurerName.trim() && (
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-lg p-3">
+            <input
+              id="rc-pro-certified"
+              type="checkbox"
+              checked={rcProCertified}
+              onChange={e => setRcProCertified(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-[#601B28] shrink-0"
+            />
+            <label htmlFor="rc-pro-certified" className="text-sm text-gray-700 leading-snug cursor-pointer">
+              Je certifie sur l'honneur être titulaire d'une assurance RC Pro en cours de validité.
+            </label>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={mutation.isPending}
+          className="w-full py-2.5 px-4 bg-[#601B28] text-white text-sm font-medium rounded-lg hover:bg-[#7a2234] disabled:opacity-60 transition-colors"
+        >
+          {mutation.isPending ? "Enregistrement…" : "Enregistrer"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export default function ProProfil() {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -419,6 +567,9 @@ export default function ProProfil() {
             </div>
           </CardContent>
         </Card>
+      {/* ── Informations professionnelles ────────────────────── */}
+      <ProInfoSection />
+
 
         <Card className="border border-gray-100 bg-white shadow-sm mb-6">
           <CardHeader className="flex flex-row items-center justify-between gap-2">

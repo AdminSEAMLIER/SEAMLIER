@@ -3072,26 +3072,23 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="bg-gray-50 rounded-lg p-4 space-y-1">
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3">Documents Dossier</p>
+                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3">Déclaration professionnelle</p>
                               <div className="space-y-2">
                                 {[
-                                  { label: "Kbis", url: dossierDocs?.kbisUrl },
-                                  { label: "Pièce d'identité", url: dossierDocs?.idCardUrl },
-                                  { label: "RC Pro", url: dossierDocs?.rcProUrl },
-                                  { label: "IBAN / RIB", url: dossierDocs?.ibanRib },
-                                ].map(({ label, url }) => (
+                                  { label: "SIRET", value: dossierArtisan?.siret },
+                                  { label: "IBAN", value: dossierArtisan?.iban },
+                                  { label: "Assureur RC Pro", value: dossierDocs?.insurerName },
+                                  { label: "N° de police", value: dossierDocs?.insurerPolicy },
+                                  { label: "RC Pro certifiée", value: dossierDocs?.rcProCertified ? "✅ Oui" : dossierDocs?.insurerName ? "Non" : undefined },
+                                ].filter(item => item.value).map(({ label, value }) => (
                                   <div key={label} className="flex items-center justify-between py-1 border-b border-gray-100">
                                     <span className="text-xs text-gray-500">{label}</span>
-                                    {url ? (
-                                      <a href={url} target="_blank" rel="noopener noreferrer"
-                                        className="text-xs text-[#601B28] underline truncate max-w-[180px]">
-                                        {url.split("/").pop()}
-                                      </a>
-                                    ) : (
-                                      <span className="text-xs text-gray-400 italic">Non déposé</span>
-                                    )}
+                                    <span className="text-xs font-medium text-gray-900 truncate max-w-[180px]">{value}</span>
                                   </div>
                                 ))}
+                                {!dossierArtisan?.siret && !dossierArtisan?.iban && (
+                                  <p className="text-xs text-gray-400 italic">Aucune information déposée</p>
+                                )}
                               </div>
                             </div>
 

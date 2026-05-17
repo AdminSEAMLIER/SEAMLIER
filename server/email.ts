@@ -787,6 +787,32 @@ export async function sendAdminDocUploadNotif(
 
 // ── Emails with PDF attachments (use Resend attachments) ──────────────────────
 
+
+export async function sendAdminProInfoEmail(
+  artisanName: string, siret: string, iban: string,
+  insurerName?: string, insurerPolicy?: string, rcProCertified?: boolean
+): Promise<boolean> {
+  const rows: { label: string; value: string; accent?: boolean }[] = [
+    { label: "Artisan", value: artisanName, accent: true },
+    { label: "SIRET", value: siret },
+    { label: "IBAN", value: iban },
+  ];
+  if (insurerName) rows.push({ label: "Assureur RC Pro", value: insurerName });
+  if (insurerPolicy) rows.push({ label: "N° de police", value: insurerPolicy });
+  rows.push({ label: "RC Pro certifiée", value: rcProCertified ? "✅ Oui" : "Non" });
+
+  const html = emailWrapper("Infos pro soumises", `
+    <h2 style="text-align:center;color:#601B28;margin:0 0 20px">Nouvelles informations professionnelles</h2>
+    ${infoBox(rows)}
+    ${ctaButton("https://www.seamlier.fr/admin", "VOIR DANS L'ADMIN")}
+  `);
+  return sendEmail(
+    "admin@seamlier.fr",
+    "Infos pro soumises : " + artisanName,
+    html
+  );
+}
+
 export async function sendMonthlyInvoiceEmail(
   tailorEmail: string, tailorName: string,
   month: number, year: number, pdfBuffer: Buffer,

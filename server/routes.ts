@@ -29,6 +29,7 @@ import {
   sendArtisanPaymentReceivedEmail,
   sendReferralInviteEmail,
   sendAdminDocUploadNotif,
+  sendAdminProInfoEmail,
 } from "./email";
 import { sendSms } from "./sms";
 import { getIO } from "./socketio";
@@ -3495,6 +3496,50 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to delete document:", error);
       res.status(500).json({ error: "Failed to delete document" });
+    }
+  });
+
+  app.patch("/api/professionnel/dossier", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      if ((req.user as any)?.role !== "tailor") {
+        return res.status(403).json({ error: "Réservé aux professionnels" });
+      }
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+
+      const { siret, iban, insurerName, insurerPolicy, rcProCertified } = req.body;
+
+      if (!siret || !/^\d{14}$/.test(siret.replace(/\s/g, ""))) {
+        return res.status(400).json({ error: "SIRET invalide (14 chiffres requis)" });
+      }
+      if (!iban || !iban.trim()) {
+        return res.status(400).json({ error: "IBAN requis" });
+      }
+
+      const siretClean = siret.replace(/\s/g, "");
+
+      await pool.query(
+        `UPDATE tailors SET siret = ?, iban_rib = ?, insurer_name = ?, insurer_policy = ?, rc_pro_certified = ?, dossier_status = 'pending' WHERE id = ?`,
+        [siretClean, iban.trim(), insurerName || null, insurerPolicy || null, rcProCertified ? 1 : 0, tailor.id]
+      );
+
+      // Notify admin
+      const [userRows] = await pool.query(
+        "SELECT email, first_name, last_name FROM users WHERE id = ?",
+        [userId]
+      ) as any[];
+      const userRow = Array.isArray(userRows) && userRows[0] ? userRows[0] : null;
+      if (userRow) {
+        const userName = [userRow.first_name, userRow.last_name].filter(Boolean).join(" ") || userRow.email;
+        sendAdminProInfoEmail(userName, siretClean, iban.trim(), insurerName, insurerPolicy, !!rcProCertified)
+          .catch(err => console.error("[Pro info email] Failed:", err));
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to update pro info:", error);
+      res.status(500).json({ error: "Erreur lors de la sauvegarde" });
     }
   });
 

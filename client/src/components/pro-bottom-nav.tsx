@@ -23,7 +23,6 @@ export function ProBottomNav() {
     { icon: FolderKanban, labelKey: "nav.projects", href: "/atelier" },
     { icon: MessageSquare, labelKey: "nav.messaging", href: "/messagerie", isMessages: true },
     { icon: BarChart2, labelKey: "nav.stats", href: "/pro-statistiques" },
-    { icon: FolderOpen, labelKey: "nav.dossier", href: "/pro-dossier" },
     { icon: User, labelKey: "nav.profile", href: "/pro-profil" },
   ];
 
