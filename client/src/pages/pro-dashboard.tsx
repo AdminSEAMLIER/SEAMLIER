@@ -6,6 +6,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ import {
   QrCode,
   Copy,
   ExternalLink,
+  Users,
 } from "lucide-react";
 
 const MONTH_NAMES_FR = [
@@ -54,6 +56,7 @@ export default function ProDashboard() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showConfirmStep, setShowConfirmStep] = useState(false);
   const [showQrDialog, setShowQrDialog] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
 
   const now = new Date();
   const [statsMonth, setStatsMonth] = useState(now.getMonth()); // 0-indexed
@@ -84,6 +87,22 @@ export default function ProDashboard() {
 
   const { data: planData } = useQuery<{ tailorId: string; subscriptionPlan: string }>({
     queryKey: ["/api/professionnel/plan"],
+  });
+
+  const { data: referralData } = useQuery<{ referrals: any[]; referralCode: string | null }>({
+    queryKey: ["/api/referrals/mine"],
+  });
+
+  const inviteMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/referrals", { email: inviteEmail }),
+    onSuccess: () => {
+      toast({ title: "Invitation envoyée !", description: `Un email a été envoyé à ${inviteEmail}.` });
+      setInviteEmail("");
+      queryClient.invalidateQueries({ queryKey: ["/api/referrals/mine"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Erreur", description: err?.message || "Impossible d'envoyer l'invitation.", variant: "destructive" });
+    },
   });
 
   const searchString = useSearch();
@@ -601,6 +620,51 @@ export default function ProDashboard() {
             </CardContent>
           </Card>
         )}
+
+        <Card className="border border-gray-100 bg-white shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Inviter une collègue
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                type="email"
+                placeholder="collègue@example.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && inviteEmail) inviteMutation.mutate(); }}
+                className="flex-1"
+              />
+              <Button
+                size="sm"
+                className="bg-[#601B28] hover:bg-[#4E1522] text-white shrink-0"
+                onClick={() => inviteMutation.mutate()}
+                disabled={inviteMutation.isPending || !inviteEmail}
+              >
+                {inviteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Inviter"}
+              </Button>
+            </div>
+            {referralData?.referrals && referralData.referrals.length > 0 && (
+              <div className="space-y-1.5">
+                {referralData.referrals.slice(0, 5).map((r: any) => (
+                  <div key={r.id} className="flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-gray-50 border border-gray-100 text-sm">
+                    <span className="text-gray-700 truncate">{r.referred_email}</span>
+                    <Badge className={`text-xs border shrink-0 ml-2 ${
+                      r.status === "rewarded" ? "bg-[#f8f5f5] text-[#601B28] border-[#601B28]/20" :
+                      r.status === "joined" ? "bg-green-100 text-green-800 border-green-200" :
+                      "bg-yellow-100 text-yellow-800 border-yellow-200"
+                    }`}>
+                      {r.status === "rewarded" ? "Récompensé" : r.status === "joined" ? "Inscrit" : "Invité"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <Dialog open={showQrDialog} onOpenChange={setShowQrDialog}>

@@ -12,7 +12,8 @@ const docsDir = path.join(uploadsDir, "docs");
 const contractsDir = path.join(uploadsDir, "contracts");
 const portfolioDir = path.join(uploadsDir, "portfolio");
 
-// Create all required directories at startup — fail loudly if the volume is not mounted.
+// Create all required directories at startup.
+console.log(`[upload] uploadsDir = ${uploadsDir}`);
 for (const dir of [uploadsDir, docsDir, contractsDir, portfolioDir]) {
   try {
     fs.mkdirSync(dir, { recursive: true });
@@ -22,10 +23,23 @@ for (const dir of [uploadsDir, docsDir, contractsDir, portfolioDir]) {
   }
 }
 
+// Defense-in-depth: re-check directory exists right before multer writes.
+function ensureDir(dir: string): void {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    console.log(`[upload] Created missing directory at write time: ${dir}`);
+  }
+}
+
 const docStorage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    fs.mkdirSync(docsDir, { recursive: true });
-    cb(null, docsDir);
+    try {
+      ensureDir(docsDir);
+      cb(null, docsDir);
+    } catch (err: any) {
+      console.error(`[upload] destination error for docs: ${err.message}`);
+      cb(err, "");
+    }
   },
   filename: (_req, file, cb) => {
     const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -35,7 +49,13 @@ const docStorage = multer.diskStorage({
 
 const portfolioStorage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    cb(null, portfolioDir);
+    try {
+      ensureDir(portfolioDir);
+      cb(null, portfolioDir);
+    } catch (err: any) {
+      console.error(`[upload] destination error for portfolio: ${err.message}`);
+      cb(err, "");
+    }
   },
   filename: (_req, file, cb) => {
     const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");

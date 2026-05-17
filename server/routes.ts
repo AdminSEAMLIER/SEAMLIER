@@ -655,6 +655,68 @@ export async function registerRoutes(
     }
   });
 
+  // ── PARRAINAGE ARTISAN ──────────────────────────────────────────────────────
+
+  app.post("/api/referrals", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Réservé aux artisans" });
+
+      const { email } = req.body;
+      if (!email || typeof email !== "string") return res.status(400).json({ error: "Email requis" });
+
+      const [existing] = await pool.query(
+        "SELECT id FROM referrals WHERE referrer_tailor_id = ? AND referred_email = ?",
+        [tailor.id, email.toLowerCase()]
+      ) as any[];
+      if ((existing as any[]).length > 0) {
+        return res.status(409).json({ error: "Cet email a déjà été invité" });
+      }
+
+      const token = randomUUID().replace(/-/g, "").slice(0, 32);
+      const id = randomUUID();
+      await pool.query(
+        "INSERT INTO referrals (id, referrer_tailor_id, referred_email, status, token) VALUES (?, ?, ?, 'pending', ?)",
+        [id, tailor.id, email.toLowerCase(), token]
+      );
+
+      if (!(tailor as any).referralCode) {
+        const code = (tailor.id.replace(/-/g, "").slice(0, 8)).toUpperCase();
+        await pool.query("UPDATE tailors SET referral_code = ? WHERE id = ?", [code, tailor.id]);
+      }
+
+      const [userRows] = await pool.query("SELECT first_name, last_name FROM users WHERE id = ?", [userId]) as any[];
+      const u = (userRows as any[])[0];
+      const referrerName = u ? `${u.first_name || ""} ${u.last_name || ""}`.trim() : "Un artisan SEAMLIER";
+
+      await sendReferralInviteEmail(email.toLowerCase(), referrerName, token);
+
+      res.json({ success: true, id, token });
+    } catch (err) {
+      console.error("referral POST error:", err);
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  });
+
+  app.get("/api/referrals/mine", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Réservé aux artisans" });
+
+      const [rows] = await pool.query(
+        "SELECT id, referred_email, status, created_at FROM referrals WHERE referrer_tailor_id = ? ORDER BY created_at DESC",
+        [tailor.id]
+      ) as any[];
+
+      res.json({ referrals: rows, referralCode: (tailor as any).referralCode || null });
+    } catch (err) {
+      console.error("referral GET error:", err);
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  });
+
   // Protected routes - Projects (for tailors)
   app.get("/api/projects", requireAuth, async (req: any, res) => {
     try {
@@ -3867,71 +3929,6 @@ export async function registerRoutes(
       })));
     } catch (err) {
       console.error("tailors/disputes error:", err);
-      res.status(500).json({ error: "Erreur serveur" });
-    }
-  });
-
-  // ── PARRAINAGE ARTISAN ──────────────────────────────────────────────────────
-
-  app.post("/api/referrals", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const tailor = await storage.getTailorByUserId(userId);
-      if (!tailor) return res.status(403).json({ error: "Réservé aux artisans" });
-
-      const { email } = req.body;
-      if (!email || typeof email !== "string") return res.status(400).json({ error: "Email requis" });
-
-      // Check if this email already referred by this tailor
-      const [existing] = await pool.query(
-        "SELECT id FROM referrals WHERE referrer_tailor_id = ? AND referred_email = ?",
-        [tailor.id, email.toLowerCase()]
-      ) as any[];
-      if ((existing as any[]).length > 0) {
-        return res.status(409).json({ error: "Cet email a déjà été invité" });
-      }
-
-      const token = randomUUID().replace(/-/g, "").slice(0, 32);
-      const id = randomUUID();
-      await pool.query(
-        "INSERT INTO referrals (id, referrer_tailor_id, referred_email, status, token) VALUES (?, ?, ?, 'pending', ?)",
-        [id, tailor.id, email.toLowerCase(), token]
-      );
-
-      // Ensure referral_code exists for this tailor
-      if (!(tailor as any).referralCode) {
-        const code = (tailor.id.replace(/-/g, "").slice(0, 8)).toUpperCase();
-        await pool.query("UPDATE tailors SET referral_code = ? WHERE id = ?", [code, tailor.id]);
-      }
-
-      // Get tailor's user info for the email
-      const [userRows] = await pool.query("SELECT first_name, last_name FROM users WHERE id = ?", [userId]) as any[];
-      const u = (userRows as any[])[0];
-      const referrerName = u ? `${u.first_name || ""} ${u.last_name || ""}`.trim() : "Un artisan SEAMLIER";
-
-      await sendReferralInviteEmail(email.toLowerCase(), referrerName, token);
-
-      res.json({ success: true, id, token });
-    } catch (err) {
-      console.error("referral POST error:", err);
-      res.status(500).json({ error: "Erreur serveur" });
-    }
-  });
-
-  app.get("/api/referrals/mine", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const tailor = await storage.getTailorByUserId(userId);
-      if (!tailor) return res.status(403).json({ error: "Réservé aux artisans" });
-
-      const [rows] = await pool.query(
-        "SELECT id, referred_email, status, created_at FROM referrals WHERE referrer_tailor_id = ? ORDER BY created_at DESC",
-        [tailor.id]
-      ) as any[];
-
-      res.json({ referrals: rows, referralCode: (tailor as any).referralCode || null });
-    } catch (err) {
-      console.error("referral GET error:", err);
       res.status(500).json({ error: "Erreur serveur" });
     }
   });
