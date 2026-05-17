@@ -1928,9 +1928,9 @@ export async function registerRoutes(
           tu.first_name as tailor_first_name, tu.last_name as tailor_last_name,
           (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participant_count
         FROM events e
-        JOIN users ou ON ou.id = e.organizer_id
+        JOIN users ou ON ou.id COLLATE utf8mb4_unicode_ci = e.organizer_id COLLATE utf8mb4_unicode_ci
         JOIN tailors t ON t.id = e.tailor_id
-        JOIN users tu ON tu.id = t.user_id
+        JOIN users tu ON tu.id COLLATE utf8mb4_unicode_ci = t.user_id COLLATE utf8mb4_unicode_ci
         ORDER BY e.created_at DESC
       `) as any[];
       res.json(rows);
@@ -3337,6 +3337,7 @@ export async function registerRoutes(
   });
 
   app.post("/api/professionnel/dossier/upload/:docType", requireAuth, (req: any, res, next) => {
+    console.log('[UPLOAD DOC] route hit', req.params.docType, 'user', req.authUserId);
     try {
       uploadDoc(req, res, async (err) => {
         if (err) {
