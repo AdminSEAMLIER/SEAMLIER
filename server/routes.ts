@@ -5,35 +5,20 @@ import path from "path";
 import { storage } from "./storage";
 import { db, pool } from "./db";
 import { eq } from "drizzle-orm";
-import { tailors, users, insertEventSchema } from "../shared/schema";
-import { randomUUID } from "crypto";
-import { uploadDoc, uploadPortfolio, uploadsDir } from "./upload";
-import { generateProjectContract } from "./contract";
+import { tailors, users, pushSubscriptions, favorites } from "../shared/schema";
+import { saveSubscription, sendPushToUser } from "./webpush";
 import {
   sendNewMessageEmail,
   sendDeliveryEmail,
   sendReviewRequestEmail,
   sendPaymentConfirmationEmail,
   sendAppointmentConfirmationEmail,
-  sendNewAppointmentRequestEmail,
   sendFabricDepositReminderEmail,
   sendDeadlineWarningEmail,
-  sendDossierValidatedEmail,
-  sendDossierRejectedEmail,
-  sendWelcomeEmail,
-  sendDossierReceivedEmail,
-  sendNewProjectRequestEmail,
-  sendQuoteReadyEmail,
-  sendQuoteAcceptedByClientEmail,
-  sendQuoteAcceptedClientConfirmationEmail,
-  sendArtisanPaymentReceivedEmail,
-  sendReferralInviteEmail,
-  sendAdminDocUploadNotif,
-  sendAdminProInfoEmail,
+  sendReferralEmail,
+  sendDisputeEmail,
+  sendDossierStatusEmail,
 } from "./email";
-import { sendSms } from "./sms";
-import { getIO } from "./socketio";
-import { sendPushNotification, saveSubscription, deleteSubscription } from "./push";
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
@@ -60,39 +45,10 @@ export async function registerRoutes(
   app: Express
 ): Promise<any> {
 
-  // Stripe routes registered first — must come before any catch-all middleware
-  registerStripeRoutes(app);
-
-  // Email verification — registered immediately after Stripe, before all other routes,
-  // to guarantee it is never shadowed by an uncaught error in a later route block.
-  app.get("/api/verify-email", async (req, res) => {
-    try {
-      const { token } = req.query;
-      if (!token || typeof token !== "string") {
-        return res.status(400).send(renderVerificationPage(false, "Token manquant."));
-      }
-      const userRaw = await storage.getUserByVerificationToken(token);
-      if (!userRaw) {
-        return res.status(400).send(renderVerificationPage(false, "Lien invalide ou expiré."));
-      }
-      if (userRaw.verificationExpires && new Date(userRaw.verificationExpires) < new Date()) {
-        return res.status(400).send(renderVerificationPage(false, "Ce lien a expiré. Veuillez vous réinscrire."));
-      }
-      await storage.updateUser(userRaw.id, {
-        emailVerified: true,
-        verificationToken: null,
-        verificationExpires: null,
-      } as any);
-      if (userRaw.email) {
-        sendWelcomeEmail(userRaw.email, userRaw.firstName ?? null).catch(err =>
-          console.error("[Welcome email] Failed:", err)
-        );
-      }
-      return res.send(renderVerificationPage(true, "Votre email a été vérifié avec succès ! Vous pouvez maintenant vous connecter."));
-    } catch (error) {
-      console.error("Email verification error:", error);
-      return res.status(500).send(renderVerificationPage(false, "Erreur serveur."));
-    }
+  // ===== Temporary download route =====
+  app.get("/download/dist-bundle", (req, res) => {
+    const filePath = path.resolve(process.cwd(), "dist/index.cjs");
+    res.download(filePath, "index.cjs");
   });
 
   // ===== Professional Plan Routes =====
@@ -115,6 +71,10 @@ export async function registerRoutes(
       console.error("Error fetching plan:", error);
       res.status(500).json({ message: "Erreur serveur" });
     }
+  });
+
+  app.post("/api/professionnel/upgrade", requireAuth, (_req, res) => {
+    res.status(403).json({ error: "Paiement requis — utilisez /api/stripe/subscription/create" });
   });
 
   // Public routes - Tailors
@@ -147,7 +107,7 @@ export async function registerRoutes(
       const [sh, sm] = schedule.start_time.split(':').map(Number);
       const [eh, em] = schedule.end_time.split(':').map(Number);
       const startTotal = sh * 60 + sm, endTotal = eh * 60 + em;
-      const [apptRows] = await pool.query("SELECT scheduled_at, duration FROM appointments WHERE tailor_id = ? AND DATE(scheduled_at) = ? AND status IN ('confirmed','scheduled','pending')", [tailorId, dateStr]) as any[];
+      const [apptRows] = await pool.query("SELECT scheduled_at, duration FROM appointments WHERE tailor_id = ? AND DATE(scheduled_at) = ? AND status IN ('confirmed','scheduled')", [tailorId, dateStr]) as any[];
       const booked = Array.isArray(apptRows) ? apptRows.map((a: any) => { const t = new Date(a.scheduled_at); return { start: t.getHours() * 60 + t.getMinutes(), duration: a.duration || 60 }; }) : [];
       const slots = [];
       for (let m = startTotal; m < endTotal; m += 30) {
@@ -189,9 +149,7 @@ export async function registerRoutes(
     } catch (error: any) { res.status(500).json({ error: error.message }); }
   });
 
-  // UUID-only constraint prevents this wildcard from shadowing keyword routes like
-  // /api/tailors/projects or /api/tailors/portfolio registered later in this file.
-  app.get("/api/tailors/:id([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})", async (req, res) => {
+  app.get("/api/tailors/:id", async (req, res) => {
     try {
       const tailor = await storage.getTailor(req.params.id);
       if (!tailor) {
@@ -208,7 +166,7 @@ export async function registerRoutes(
   app.get("/api/tailor-by-user/:userId", async (req, res) => {
     try {
       const [rows] = await pool.query(`
-        SELECT t.*, u.first_name, u.last_name, u.profile_image_url, u.location
+        SELECT t.*, u.first_name, u.last_name, u.profile_image_url, u.email, u.location
         FROM tailors t
         JOIN users u ON u.id = t.user_id
         WHERE t.user_id = ?
@@ -222,6 +180,7 @@ export async function registerRoutes(
           firstName: row.first_name,
           lastName: row.last_name,
           profileImageUrl: row.profile_image_url,
+          email: row.email,
           location: row.location,
         },
       });
@@ -254,8 +213,7 @@ export async function registerRoutes(
   app.get("/api/tailors/:id/reviews", async (req, res) => {
     try {
       const allReviews = await storage.getReviewsByTailor(req.params.id);
-      // Drizzle retourne isApproved en boolean (true/false) — ne pas comparer à 1 avec ===
-      const reviews = allReviews.filter((r: any) => !!r.isApproved || !!r.is_approved);
+      const reviews = allReviews.filter((r: any) => r.isApproved === 1 || r.is_approved === 1);
       res.json(reviews);
     } catch (error) {
       console.error("Failed to fetch reviews:", error);
@@ -376,6 +334,24 @@ export async function registerRoutes(
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
+      if (location) {
+        try {
+          const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)},France&format=json&limit=1`, {
+            headers: { 'User-Agent': 'Seamlier/1.0 contact@seamlier.fr' }
+          });
+          const geoData = await geoRes.json();
+          if (geoData && geoData.length > 0) {
+            const lat = parseFloat(geoData[0].lat);
+            const lon = parseFloat(geoData[0].lon);
+            const tailor = await storage.getTailorByUserId(userId);
+            if (tailor) {
+              await storage.updateTailor(tailor.id, { latitude: lat, longitude: lon });
+            }
+          }
+        } catch (geoErr) {
+          console.error('Geocoding error:', geoErr);
+        }
+      }
       res.json(user);
     } catch (error) {
       console.error("Failed to update user:", error);
@@ -436,8 +412,8 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Tailor profile not found" });
       }
       
-      const { bio, specialties, experience, coverImageUrl, languages, priceMin, priceMax } = req.body;
-      const updated = await storage.updateTailor(tailor.id, { bio, specialties, experience, coverImageUrl, languages, priceMin, priceMax });
+      const { bio, specialties, experience, coverImageUrl } = req.body;
+      const updated = await storage.updateTailor(tailor.id, { bio, specialties, experience, coverImageUrl });
       res.json(updated);
     } catch (error) {
       console.error("Failed to update tailor profile:", error);
@@ -578,12 +554,6 @@ export async function registerRoutes(
       });
       res.status(201).json(message);
 
-      // Broadcast to conversation room via Socket.io
-      const io = getIO();
-      if (io && message.conversationId) {
-        io.to(message.conversationId).emit("new_message", message);
-      }
-
       // Trigger email notification in background (non-blocking)
       try {
         const conversationId = req.body.conversationId;
@@ -605,16 +575,12 @@ export async function registerRoutes(
             const recipEmail = row.recip_email;
             const recipName = `${row.recip_first || ""} ${row.recip_last || ""}`.trim();
             const lastActive = row.recip_active ? new Date(row.recip_active) : null;
-            const fiveMinsAgo = new Date(Date.now() - 10 * 60 * 1000);
+            const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
             const isAway = !lastActive || lastActive < fiveMinsAgo;
             if (recipEmail && isAway) {
               const preview = (req.body.content || "").slice(0, 100);
               sendNewMessageEmail(recipEmail, recipName, senderName, preview).catch(() => {});
-            }
-            // Push notification to recipient
-            if (row.recip_uid) {
-              const preview = (req.body.content || "").slice(0, 80);
-              sendPushNotification(row.recip_uid, `Nouveau message de ${senderName}`, preview, "/messages").catch(() => {});
+            sendPushToUser(row.recip_uid, { title: "Nouveau message de " + senderName, body: (req.body.content || "").slice(0, 80), url: "/messages" }).catch(() => {});
             }
             // Update sender's last_active_at
             await pool.query(`UPDATE users SET last_active_at = NOW() WHERE id = ?`, [userId]).catch(() => {});
@@ -626,96 +592,6 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to send message:", error);
       res.status(500).json({ error: "Failed to send message" });
-    }
-  });
-
-  // ── Push Notifications ────────────────────────────────────────────────────
-  app.get("/api/push/vapid-public-key", (_req, res) => {
-    res.json({ publicKey: process.env.VAPID_PUBLIC_KEY || "" });
-  });
-
-  app.post("/api/push/subscribe", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const { endpoint, keys } = req.body;
-      if (!endpoint || !keys?.p256dh || !keys?.auth) return res.status(400).json({ error: "Subscription invalide" });
-      await saveSubscription(userId, { endpoint, keys });
-      res.json({ success: true });
-    } catch (err) {
-      res.status(500).json({ error: "Failed to save subscription" });
-    }
-  });
-
-  app.delete("/api/push/unsubscribe", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const { endpoint } = req.body;
-      if (endpoint) await deleteSubscription(userId, endpoint);
-      res.json({ success: true });
-    } catch (err) {
-      res.status(500).json({ error: "Failed to delete subscription" });
-    }
-  });
-
-  // ── PARRAINAGE ARTISAN ──────────────────────────────────────────────────────
-
-  app.post("/api/referrals", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const tailor = await storage.getTailorByUserId(userId);
-      if (!tailor) return res.status(403).json({ error: "Réservé aux artisans" });
-
-      const { email } = req.body;
-      if (!email || typeof email !== "string") return res.status(400).json({ error: "Email requis" });
-
-      const [existing] = await pool.query(
-        "SELECT id FROM referrals WHERE referrer_tailor_id = ? AND referred_email = ?",
-        [tailor.id, email.toLowerCase()]
-      ) as any[];
-      if ((existing as any[]).length > 0) {
-        return res.status(409).json({ error: "Cet email a déjà été invité" });
-      }
-
-      const token = randomUUID().replace(/-/g, "").slice(0, 32);
-      const id = randomUUID();
-      await pool.query(
-        "INSERT INTO referrals (id, referrer_tailor_id, referred_email, status, token) VALUES (?, ?, ?, 'pending', ?)",
-        [id, tailor.id, email.toLowerCase(), token]
-      );
-
-      if (!(tailor as any).referralCode) {
-        const code = (tailor.id.replace(/-/g, "").slice(0, 8)).toUpperCase();
-        await pool.query("UPDATE tailors SET referral_code = ? WHERE id = ?", [code, tailor.id]);
-      }
-
-      const [userRows] = await pool.query("SELECT first_name, last_name FROM users WHERE id = ?", [userId]) as any[];
-      const u = (userRows as any[])[0];
-      const referrerName = u ? `${u.first_name || ""} ${u.last_name || ""}`.trim() : "Un artisan SEAMLIER";
-
-      await sendReferralInviteEmail(email.toLowerCase(), referrerName, token);
-
-      res.json({ success: true, id, token });
-    } catch (err) {
-      console.error("referral POST error:", err);
-      res.status(500).json({ error: "Erreur serveur" });
-    }
-  });
-
-  app.get("/api/referrals/mine", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const tailor = await storage.getTailorByUserId(userId);
-      if (!tailor) return res.status(403).json({ error: "Réservé aux artisans" });
-
-      const [rows] = await pool.query(
-        "SELECT id, referred_email, status, created_at FROM referrals WHERE referrer_tailor_id = ? ORDER BY created_at DESC",
-        [tailor.id]
-      ) as any[];
-
-      res.json({ referrals: rows, referralCode: (tailor as any).referralCode || null });
-    } catch (err) {
-      console.error("referral GET error:", err);
-      res.status(500).json({ error: "Erreur serveur" });
     }
   });
 
@@ -780,61 +656,36 @@ export async function registerRoutes(
       if (!tailor) return res.status(403).json({ error: "Not a tailor" });
 
       const now = new Date();
-      const rawMonth = req.query.month;
-      const rawYear  = req.query.year;
-      const targetYear  = rawYear  !== undefined ? parseInt(rawYear  as string, 10) : now.getFullYear();
-      const targetMonth = rawMonth !== undefined ? parseInt(rawMonth as string, 10) : now.getMonth();
+      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // Serialize Date bounds as MySQL DATETIME strings (YYYY-MM-DD HH:MM:SS)
-      const toMysqlDatetime = (d: Date): string => {
-        const pad = (n: number) => String(n).padStart(2, "0");
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-      };
-
-      const firstOfMonth    = toMysqlDatetime(new Date(targetYear, targetMonth, 1));
-      const firstOfNextMonth = toMysqlDatetime(new Date(targetYear, targetMonth + 1, 1));
-      const isCurrentMonth  = targetYear === now.getFullYear() && targetMonth === now.getMonth();
-
-      // Revenus du mois : montant artisan réel (amount_artisan en centimes → ÷100), fallback sur amount
+      // Revenus du mois : somme de amount (en euros, prix de confection) pour les projets complétés ce mois
       const [revenueRows] = await pool.query(
-        `SELECT COALESCE(SUM(CASE WHEN amount_artisan > 0 THEN amount_artisan/100 ELSE amount END), 0) as total
+        `SELECT COALESCE(SUM(amount), 0) as total
          FROM projects
          WHERE tailor_id = ? AND status = 'completed'
-           AND updated_at >= ? AND updated_at < ?`,
-        [tailor.id, firstOfMonth, firstOfNextMonth]
+         AND updated_at >= ?`,
+        [tailor.id, firstOfMonth]
       ) as any[];
       const monthlyRevenue = Array.isArray(revenueRows) && revenueRows[0]
         ? parseFloat(revenueRows[0].total) || 0 : 0;
 
-      // Projets actifs : tous les in_progress pour le mois courant,
-      // ou projets créés dans la période pour les mois historiques
-      let activeProjects = 0;
-      if (isCurrentMonth) {
-        const [activeRows] = await pool.query(
-          "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND status = 'in_progress'",
-          [tailor.id]
-        ) as any[];
-        activeProjects = Array.isArray(activeRows) && activeRows[0]
-          ? parseInt(activeRows[0].cnt) || 0 : 0;
-      } else {
-        const [activeRows] = await pool.query(
-          "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND created_at >= ? AND created_at < ?",
-          [tailor.id, firstOfMonth, firstOfNextMonth]
-        ) as any[];
-        activeProjects = Array.isArray(activeRows) && activeRows[0]
-          ? parseInt(activeRows[0].cnt) || 0 : 0;
-      }
+      // Projets en cours (status = in_progress)
+      const [activeRows] = await pool.query(
+        "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND status = 'in_progress'",
+        [tailor.id]
+      ) as any[];
+      const activeProjects = Array.isArray(activeRows) && activeRows[0]
+        ? parseInt(activeRows[0].cnt) || 0 : 0;
 
-      // Nouvelles demandes : créées dans la période
+      // Nouvelles demandes (status = pending ou new)
       const [requestRows] = await pool.query(
-        `SELECT COUNT(*) as cnt FROM projects
-         WHERE tailor_id = ? AND status IN ('pending','new')
-           AND created_at >= ? AND created_at < ?`,
-        [tailor.id, firstOfMonth, firstOfNextMonth]
+        "SELECT COUNT(*) as cnt FROM projects WHERE tailor_id = ? AND status IN ('pending','new')",
+        [tailor.id]
       ) as any[];
       const newRequests = Array.isArray(requestRows) && requestRows[0]
         ? parseInt(requestRows[0].cnt) || 0 : 0;
 
+      // Note moyenne : champ rating de la table tailors
       const averageRating = tailor.rating || 0;
 
       res.json({ monthlyRevenue, activeProjects, newRequests, averageRating });
@@ -853,18 +704,18 @@ export async function registerRoutes(
       const now = new Date();
       const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // CA du mois en cours — montant artisan réel (amount_artisan centimes ÷ 100), fallback sur amount
+      // CA du mois en cours — amount en euros (prix de confection exact)
       const [revenueRows] = await pool.query(
-        `SELECT COALESCE(SUM(CASE WHEN amount_artisan > 0 THEN amount_artisan/100 ELSE amount END), 0) as total
-         FROM projects WHERE tailor_id = ? AND status = 'completed' AND updated_at >= ?`,
+        `SELECT COALESCE(SUM(amount), 0) as total FROM projects
+         WHERE tailor_id = ? AND status = 'completed' AND updated_at >= ?`,
         [tailor.id, firstOfMonth]
       ) as any[];
       const monthlyRevenue = parseFloat(revenueRows?.[0]?.total) || 0;
 
-      // Panier moyen — montant artisan réel
+      // Panier moyen — amount en euros
       const [avgRows] = await pool.query(
-        `SELECT COALESCE(AVG(CASE WHEN amount_artisan > 0 THEN amount_artisan/100 ELSE amount END), 0) as avg_val
-         FROM projects WHERE tailor_id = ? AND status = 'completed' AND (amount_artisan > 0 OR amount > 0)`,
+        `SELECT COALESCE(AVG(amount), 0) as avg_val FROM projects
+         WHERE tailor_id = ? AND status = 'completed' AND amount > 0`,
         [tailor.id]
       ) as any[];
       const averageOrderValue = parseFloat(avgRows?.[0]?.avg_val) || 0;
@@ -888,12 +739,12 @@ export async function registerRoutes(
       const recurringClientRate = totalClients > 0
         ? Math.round((recurringClients / totalClients) * 100) : 0;
 
-      // CA des 6 derniers mois — montant artisan réel
+      // CA des 6 derniers mois
       const sixMonthsAgo = new Date();
       sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
       const [monthlyRows] = await pool.query(
         `SELECT DATE_FORMAT(updated_at, '%Y-%m') as month,
-                COALESCE(SUM(CASE WHEN amount_artisan > 0 THEN amount_artisan/100 ELSE amount END), 0) as total
+                COALESCE(SUM(amount), 0) as total
          FROM projects
          WHERE tailor_id = ? AND status = 'completed' AND updated_at >= ?
          GROUP BY month ORDER BY month ASC`,
@@ -961,51 +812,11 @@ export async function registerRoutes(
     try {
       const { id } = req.params;
       const { deadlineRespected } = req.body;
-
-      // Mark client as confirmed
-      await pool.query("UPDATE projects SET client_confirmed = 1 WHERE id = ?", [id]);
+      await pool.query(
+        "UPDATE projects SET client_confirmed = 1 WHERE id = ?",
+        [id]
+      );
       console.log(`[Project] ${id} → clientConfirmed=true, deadlineRespected=${deadlineRespected}`);
-
-      // Auto-trigger Stripe transfer to artisan
-      if (process.env.STRIPE_SECRET_KEY) {
-        try {
-          const [rows] = await pool.query(`
-            SELECT p.stripe_transfer_id, p.amount_artisan, p.stripe_payment_intent_id,
-                   u.stripe_account_id, u.id AS tailor_user_id,
-                   t.id AS tailor_id
-            FROM projects p
-            JOIN tailors t ON t.id = p.tailor_id
-            JOIN users u ON u.id = t.user_id
-            WHERE p.id = ? LIMIT 1
-          `, [id]) as any[];
-          const proj = Array.isArray(rows) && rows[0] ? rows[0] : null;
-
-          if (proj && !proj.stripe_transfer_id && proj.stripe_account_id && proj.amount_artisan > 0) {
-            const StripeLib = (await import("stripe")).default;
-            const stripeClient = new StripeLib(process.env.STRIPE_SECRET_KEY);
-            const transfer = await stripeClient.transfers.create({
-              amount: proj.amount_artisan,
-              currency: "eur",
-              destination: proj.stripe_account_id,
-              description: `SEAMLiER - Virement projet #${id}`,
-            });
-            await pool.query(
-              "UPDATE projects SET stripe_transfer_id = ?, payment_status = 'transferred' WHERE id = ?",
-              [transfer.id, id]
-            );
-            console.log(`[Project] ${id} → transfer ${transfer.id} vers ${proj.stripe_account_id}`);
-
-            // Notify artisan via push
-            if (proj.tailor_user_id) {
-              sendPushNotification(proj.tailor_user_id, "Virement effectué !", "Le client a confirmé la réception. Le virement a été envoyé sur votre compte.", "/atelier").catch(() => {});
-            }
-          }
-        } catch (transferErr) {
-          console.error(`[Project] Transfer auto-release failed for ${id}:`, transferErr);
-          // Non-blocking — client confirmation is still saved
-        }
-      }
-
       res.json({ success: true });
     } catch (error) {
       console.error("Error confirming project:", error);
@@ -1174,20 +985,10 @@ export async function registerRoutes(
           const monthlyCount = Array.isArray(countRows) && countRows[0] ? Number(countRows[0].cnt) : 0;
           if (monthlyCount >= 10) return res.status(403).json({ error: "Limite mensuelle atteinte" });
         }
-        if (!req.body.clientId) {
-          return res.status(400).json({ error: "clientId is required" });
-        }
-        let project: any;
-        try {
-          project = await storage.createProject({ ...req.body, tailorId: tailor.id });
-        } catch (photoErr: any) {
-          if ((photoErr?.message?.includes("Data too long") || photoErr?.code === "ER_DATA_TOO_LONG") && req.body.modelPhotoUrl) {
-            console.warn("[PROJECT] modelPhotoUrl too large, retrying without photo");
-            project = await storage.createProject({ ...req.body, tailorId: tailor.id, modelPhotoUrl: null });
-          } else {
-            throw photoErr;
-          }
-        }
+        const project = await storage.createProject({
+          ...req.body,
+          tailorId: tailor.id,
+        });
         return res.status(201).json(project);
       }
 
@@ -1211,7 +1012,7 @@ export async function registerRoutes(
         artisanDate.setDate(artisanDate.getDate() - 3);
         artisanDeadline = artisanDate.toISOString().slice(0, 10);
       }
-      const projectPayload = {
+      const project = await storage.createProject({
         ...req.body,
         clientId: userId,
         status: "pending",
@@ -1222,42 +1023,8 @@ export async function registerRoutes(
         isUrgent,
         ...(requestedPrice !== undefined ? { requestedPrice } : {}),
         ...(amount !== undefined ? { amount } : {}),
-      };
-      let project: any;
-      try {
-        project = await storage.createProject(projectPayload);
-      } catch (photoErr: any) {
-        if ((photoErr?.message?.includes("Data too long") || photoErr?.code === "ER_DATA_TOO_LONG") && req.body.modelPhotoUrl) {
-          console.warn("[PROJECT] modelPhotoUrl too large, retrying without photo");
-          project = await storage.createProject({ ...projectPayload, modelPhotoUrl: null });
-        } else {
-          throw photoErr;
-        }
-      }
+      });
       res.status(201).json(project);
-
-      // Notify artisan of new project request
-      try {
-        const [clientRows] = await pool.query(
-          `SELECT first_name, last_name FROM users WHERE id = ?`, [userId]
-        ) as any[];
-        const [tailorRows] = await pool.query(
-          `SELECT u.email, u.first_name, u.last_name FROM users u JOIN tailors t ON t.user_id = u.id WHERE t.id = ?`, [project.tailorId]
-        ) as any[];
-        const cl = (clientRows as any[])[0];
-        const ta = (tailorRows as any[])[0];
-        if (cl && ta && ta.email) {
-          const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim() || "Un client";
-          const tailorName = `${ta.first_name || ""} ${ta.last_name || ""}`.trim();
-          sendNewProjectRequestEmail(ta.email, tailorName, clientName, project.title || "Nouvelle commande", project.description ?? null, project.requestedPrice ?? null).catch(() => {});
-          // Push to artisan
-          const [tailorUserRows] = await pool.query(`SELECT user_id FROM tailors WHERE id = ?`, [project.tailorId]) as any[];
-          const tailorUserId = Array.isArray(tailorUserRows) && tailorUserRows[0]?.user_id;
-          if (tailorUserId) sendPushNotification(tailorUserId, `Nouvelle demande de ${clientName}`, project.title || "Demande de devis", "/gestion-demandes").catch(() => {});
-        }
-      } catch (emailErr) {
-        console.error("[PROJECT EMAIL]", emailErr);
-      }
     } catch (error) {
       console.error("Failed to create project:", error);
       res.status(500).json({ error: "Failed to create project" });
@@ -1293,86 +1060,23 @@ export async function registerRoutes(
         } catch (msgErr) {
           console.error("Auto-message error on quote:", msgErr);
         }
-
-        // Email client : devis prêt
-        try {
-          const tailor = await storage.getTailor(project.tailorId);
-          const [clientRows] = await pool.query(
-            `SELECT email, first_name, last_name FROM users WHERE id = ?`, [project.clientId]
-          ) as any[];
-          const [tailorUserRows] = await pool.query(
-            `SELECT u.first_name, u.last_name FROM users u JOIN tailors t ON t.user_id = u.id WHERE t.id = ?`, [project.tailorId]
-          ) as any[];
-          const cl = (clientRows as any[])[0];
-          const ta = (tailorUserRows as any[])[0];
-          if (cl?.email && ta) {
-            const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim();
-            const tailorName = `${ta.first_name || ""} ${ta.last_name || ""}`.trim();
-            sendQuoteReadyEmail(cl.email, clientName, tailorName, project.title || "votre projet", project.amount ?? null).catch(() => {});
-          }
-        } catch (emailErr) {
-          console.error("[QUOTE EMAIL]", emailErr);
-        }
       }
 
-      // Auto-message + contrat quand la confection commence (status → "in_progress")
+      // Auto-message quand la confection commence (status → "in_progress")
       if (req.body.status === "in_progress" && prevProject?.status !== "in_progress") {
         try {
           const tailor = await storage.getTailor(project.tailorId);
           if (tailor?.userId && project.clientId) {
             const conv = await storage.getOrCreateConversation(tailor.userId, project.clientId);
+            const garmentLabel = (project as any).clothingType || project.title || "votre commande";
             await storage.createMessage({
               conversationId: conv.id,
               senderId: tailor.userId,
-              content: `Votre devis a été accepté ! Vous pouvez maintenant procéder au paiement et prendre rendez-vous.\n[RDV:/prendre-rdv?tailor=${tailor.userId}]`,
+              content: `🎉 Votre devis a été validé et la confection de ${garmentLabel} démarre ! Prenez dès maintenant votre premier rendez-vous avec moi 👇\n[RDV:/prendre-rdv?tailor=${tailor.userId}]`,
             });
           }
         } catch (msgErr) {
           console.error("Auto-message error on project start:", msgErr);
-        }
-
-        // Email artisan : devis accepté par le client
-        try {
-          const [tailorUserRows] = await pool.query(
-            `SELECT u.email, u.first_name, u.last_name FROM users u JOIN tailors t ON t.user_id = u.id WHERE t.id = ?`, [project.tailorId]
-          ) as any[];
-          const [clientRows] = await pool.query(
-            `SELECT email, first_name, last_name FROM users WHERE id = ?`, [project.clientId]
-          ) as any[];
-          const ta = (tailorUserRows as any[])[0];
-          const cl = (clientRows as any[])[0];
-          if (ta?.email && cl) {
-            const tailorName = `${ta.first_name || ""} ${ta.last_name || ""}`.trim();
-            const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim();
-            // Artisan : son devis a été accepté
-            sendQuoteAcceptedByClientEmail(ta.email, tailorName, clientName, project.title || "votre projet", project.amount ?? null).catch(() => {});
-            // Client : confirmation de l'acceptation du devis avec montant
-            if (cl.email) {
-              sendQuoteAcceptedClientConfirmationEmail(cl.email, clientName, tailorName, project.title || "votre projet", project.amount ?? null).catch(() => {});
-            }
-          }
-          // Push to artisan: devis accepté
-          const [tailorUserIdRows] = await pool.query(`SELECT user_id FROM tailors WHERE id = ?`, [project.tailorId]) as any[];
-          const tuId = Array.isArray(tailorUserIdRows) && tailorUserIdRows[0]?.user_id;
-          if (tuId) sendPushNotification(tuId, "Devis accepté !", `${project.title || "Votre devis"} a été accepté par le client.`, "/atelier").catch(() => {});
-          // Push to client: devis accepté, paiement disponible
-          if (project.clientId) sendPushNotification(project.clientId, "Devis validé", `Vous pouvez maintenant procéder au paiement.`, "/mes-projets").catch(() => {});
-        } catch (emailErr) {
-          console.error("[QUOTE ACCEPTED EMAIL]", emailErr);
-        }
-
-        // Génération du contrat PDF
-        try {
-          const tailor = await storage.getTailor(project.tailorId);
-          const tailorUser = tailor ? await storage.getUser(tailor.userId) : null;
-          const clientUser = await storage.getUser(project.clientId);
-          const contractUrl = await generateProjectContract(project, tailorUser, clientUser);
-          await pool.query(
-            "UPDATE projects SET contract_url = ? WHERE id = ?",
-            [contractUrl, project.id]
-          );
-        } catch (contractErr) {
-          console.error("Contract generation error:", contractErr);
         }
       }
       res.json(project);
@@ -1486,10 +1190,7 @@ export async function registerRoutes(
         clientId = userId;
       }
 
-      const { scheduledAt, type, duration, notes, location, projectId } = req.body;
-      // Client-created appointments start as "pending" (artisan must accept).
-      // Artisan-created appointments are "scheduled" immediately.
-      const initialStatus = tailor ? "scheduled" : "pending";
+      const { scheduledAt, type, duration, notes, location, status, projectId } = req.body;
       const newId = require("crypto").randomUUID();
       await pool.query(
         `INSERT INTO appointments (id, tailor_id, client_id, project_id, type, location, scheduled_at, duration, notes, status)
@@ -1504,7 +1205,7 @@ export async function registerRoutes(
           new Date(scheduledAt),
           duration || 60,
           notes || null,
-          initialStatus,
+          status || "scheduled",
         ]
       );
       const [rows] = await pool.query(`SELECT * FROM appointments WHERE id = ?`, [newId]) as any[];
@@ -1524,17 +1225,10 @@ export async function registerRoutes(
         if (cl && ta) {
           const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim();
           const tailorName = `${ta.first_name || ""} ${ta.last_name || ""}`.trim();
-          if (!tailor) {
-            // Client created → notify artisan to accept/refuse (no confirmation to client yet)
-            sendNewAppointmentRequestEmail(ta.email, tailorName, clientName, type || "consultation", scheduledAt).catch(() => {});
-            const [tUserRows] = await pool.query(`SELECT user_id FROM tailors WHERE id = ?`, [tailorId]) as any[];
-            const tUid = Array.isArray(tUserRows) && tUserRows[0]?.user_id;
-            if (tUid) sendPushNotification(tUid, `Nouveau RDV de ${clientName}`, `${type || "Consultation"} — ${new Date(scheduledAt).toLocaleDateString("fr-FR")}`, "/pro-planning").catch(() => {});
-          } else {
-            // Artisan created → immediately confirmed, notify client
-            sendAppointmentConfirmationEmail(cl.email, clientName, scheduledAt, type || "consultation", tailorName).catch(() => {});
-            sendPushNotification(clientId, "Rendez-vous confirmé", `${type || "Consultation"} le ${new Date(scheduledAt).toLocaleDateString("fr-FR")}`, "/mes-rendez-vous").catch(() => {});
-          }
+          sendAppointmentConfirmationEmail(cl.email, clientName, scheduledAt, type || "consultation", tailorName).catch(() => {});
+          sendAppointmentConfirmationEmail(ta.email, tailorName, scheduledAt, type || "consultation", clientName).catch(() => {});
+          sendPushToUser(clientId, { title: "RDV confirme", body: "Votre RDV avec " + tailorName + " est confirme.", url: "/appointments" }).catch(() => {});
+          sendPushToUser(ta.id || "", { title: "Nouveau RDV", body: "Nouveau RDV avec " + clientName + ".", url: "/pro/appointments" }).catch(() => {});
         }
       } catch (emailErr) {
         console.error("[APPT EMAIL]", emailErr);
@@ -1565,36 +1259,23 @@ export async function registerRoutes(
 
       if (req.body.status === "confirmed") {
         try {
-          const isArtisanConfirming = callerId !== appointment.clientId;
           if (tailor?.userId && appointment.clientId) {
             const conv = await storage.getOrCreateConversation(tailor.userId, appointment.clientId);
-            if (!isArtisanConfirming) {
+            const isClientConfirming = callerId === appointment.clientId;
+            if (isClientConfirming) {
+              // Client confirme → notifier l'artisan (message envoyé par le client)
               await storage.createMessage({
                 conversationId: conv.id,
                 senderId: appointment.clientId,
                 content: `✅ J'ai confirmé notre rendez-vous du ${dateStr} à ${timeStr}. À bientôt !`,
               });
             } else {
+              // Artisan confirme → notifier le client (message envoyé par l'artisan)
               await storage.createMessage({
                 conversationId: conv.id,
                 senderId: tailor.userId,
                 content: `✅ Votre rendez-vous du ${dateStr} à ${timeStr} a été confirmé. À bientôt !`,
               });
-              // Email de confirmation au client
-              const [clientRows] = await pool.query(
-                `SELECT email, first_name, last_name FROM users WHERE id = ?`, [appointment.clientId]
-              ) as any[];
-              const [tailorUserRows] = await pool.query(
-                `SELECT u.first_name, u.last_name FROM users u JOIN tailors t ON t.user_id = u.id WHERE t.id = ?`, [appointment.tailorId]
-              ) as any[];
-              const cl = (clientRows as any[])[0];
-              const ta = (tailorUserRows as any[])[0];
-              if (cl?.email) {
-                const clientName = `${cl.first_name || ""} ${cl.last_name || ""}`.trim();
-                const tailorName = ta ? `${ta.first_name || ""} ${ta.last_name || ""}`.trim() : "votre artisan";
-                sendAppointmentConfirmationEmail(cl.email, clientName, appointment.scheduledAt, appointment.type || "consultation", tailorName).catch(() => {});
-                sendPushNotification(appointment.clientId, "Rendez-vous confirmé !", `${appointment.type || "Consultation"} le ${new Date(appointment.scheduledAt).toLocaleDateString("fr-FR")}`, "/mes-rendez-vous").catch(() => {});
-              }
             }
           }
         } catch (msgErr) {
@@ -1671,37 +1352,25 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/tailors/portfolio", requireAuth, (req: any, res, next) => {
-    uploadPortfolio(req, res, async (err) => {
-      if (err) {
-        return res.status(400).json({ error: err.message || "Erreur d'upload" });
+  app.post("/api/portfolio", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) {
+        return res.status(403).json({ error: "Not a tailor" });
       }
-      try {
-        const userId = req.authUserId;
-        const tailor = await storage.getTailorByUserId(userId);
-        if (!tailor) {
-          return res.status(403).json({ error: "Not a tailor" });
-        }
-        if (!req.file) {
-          return res.status(400).json({ error: "Image requise" });
-        }
-        const imageUrl = `/uploads/portfolio/${req.file.filename}`;
-        const item = await storage.createPortfolioItem({
-          tailorId: tailor.id,
-          imageUrl,
-          title: req.body.title || "Sans titre",
-          category: req.body.category || null,
-          description: req.body.description || null,
-        });
-        res.status(201).json(item);
-      } catch (error) {
-        console.error("Failed to add portfolio item:", error);
-        res.status(500).json({ error: "Failed to add portfolio item" });
-      }
-    });
+      const item = await storage.createPortfolioItem({
+        ...req.body,
+        tailorId: tailor.id,
+      });
+      res.status(201).json(item);
+    } catch (error) {
+      console.error("Failed to add portfolio item:", error);
+      res.status(500).json({ error: "Failed to add portfolio item" });
+    }
   });
 
-  app.delete("/api/tailors/portfolio/:id", requireAuth, async (req: any, res) => {
+  app.delete("/api/portfolio/:id", requireAuth, async (req: any, res) => {
     try {
       await storage.deletePortfolioItem(req.params.id);
       res.status(204).send();
@@ -1751,7 +1420,7 @@ export async function registerRoutes(
       const newId = require("crypto").randomUUID();
       await pool.query(
         `INSERT INTO reviews (id, tailor_id, user_id, project_id, rating, comment, is_approved)
-         VALUES (?, ?, ?, ?, ?, ?, 1)`,
+         VALUES (?, ?, ?, ?, ?, ?, 0)`,
         [newId, tailorId, userId, projectId || null, rating, comment]
       );
       try { await recalculateTailorRating(tailorId); } catch (e) { console.error("Rating recalc error:", e); }
@@ -1865,6 +1534,152 @@ export async function registerRoutes(
     }
   });
 
+  // ── Dossier professionnel ──────────────────────────────────────
+  app.get("/api/professionnel/dossier", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const [rows] = await pool.query(
+        `SELECT siret, dossier_status, kbis_url, kbis_expiry, id_doc_url, rc_pro_url, rib_url
+         FROM tailors WHERE id = ?`,
+        [tailor.id]
+      ) as any[];
+      const row = (rows as any[])[0] || {};
+      res.json({
+        siret: row.siret || null,
+        dossierStatus: row.dossier_status || "pending",
+        kbisUrl: row.kbis_url ? "[uploaded]" : null,
+        kbisExpiry: row.kbis_expiry || null,
+        idDocUrl: row.id_doc_url ? "[uploaded]" : null,
+        rcProUrl: row.rc_pro_url ? "[uploaded]" : null,
+        ribUrl: row.rib_url ? "[uploaded]" : null,
+      });
+    } catch (error) {
+      console.error("Failed to get dossier:", error);
+      res.status(500).json({ error: "Failed to get dossier" });
+    }
+  });
+
+  app.post("/api/professionnel/dossier", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const { field, value } = req.body;
+      const allowed = ["siret", "iban", "kbis_url", "kbis_expiry", "id_doc_url", "rc_pro_url", "rib_url"];
+      if (!allowed.includes(field)) return res.status(400).json({ error: "Invalid field" });
+      await pool.query(`UPDATE tailors SET \`${field}\` = ? WHERE id = ?`, [value, tailor.id]);
+      // Reset to pending if a document was uploaded
+      if (["kbis_url", "id_doc_url", "rc_pro_url", "rib_url"].includes(field)) {
+        await pool.query(`UPDATE tailors SET dossier_status = 'pending' WHERE id = ? AND dossier_status = 'expired'`, [tailor.id]);
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to update dossier:", error);
+      res.status(500).json({ error: "Failed to update dossier" });
+    }
+  });
+
+  // ─── Parrainage ──────────────────────────────────────────────────────────
+  app.post("/api/pro/referral", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const user = await storage.getUser(userId);
+      const { email } = req.body;
+      if (!email || !/\S+@\S+\.\S+/.test(email)) return res.status(400).json({ error: "Email invalide" });
+      const referrerName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Un artisan SEAMLIER";
+      sendReferralEmail(email, referrerName).catch(() => {});
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to send referral" });
+    }
+  });
+
+  // ─── Litige admin ────────────────────────────────────────────────────────
+  app.post("/api/admin/projects/:id/dispute", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const [rows] = await pool.query(
+        `SELECT p.*, 
+          c.email as client_email, c.first_name as client_first_name, c.last_name as client_last_name,
+          u.email as tailor_email, u.first_name as tailor_first_name, u.last_name as tailor_last_name
+         FROM projects p
+         LEFT JOIN users c ON p.client_id = c.id
+         LEFT JOIN tailors t ON p.tailor_id = t.id
+         LEFT JOIN users u ON t.user_id = u.id
+         WHERE p.id = ?`,
+        [id]
+      ) as any[];
+      const project = (rows as any[])[0];
+      if (!project) return res.status(404).json({ error: "Project not found" });
+      await pool.query(`UPDATE projects SET status = 'dispute' WHERE id = ?`, [id]);
+      const title = project.title || `Projet #${id.slice(0, 6)}`;
+      if (project.client_email) {
+        sendDisputeEmail(project.client_email, `${project.client_first_name} ${project.client_last_name}`, title, id, true).catch(() => {});
+      }
+      if (project.tailor_email) {
+        sendDisputeEmail(project.tailor_email, `${project.tailor_first_name} ${project.tailor_last_name}`, title, id, false).catch(() => {});
+      }
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ─── Admin Dossiers Pro ──────────────────────────────────────────────────
+  app.get("/api/admin/artisan-dossiers", requireAdmin, async (req, res) => {
+    try {
+      const [rows] = await pool.query(
+        `SELECT t.id, t.siret, t.dossier_status, t.iban,
+          t.kbis_url IS NOT NULL as has_kbis, t.kbis_expiry,
+          t.id_doc_url IS NOT NULL as has_id_doc,
+          t.rc_pro_url IS NOT NULL as has_rc_pro,
+          t.rib_url IS NOT NULL as has_rib,
+          u.email, u.first_name, u.last_name
+         FROM tailors t
+         LEFT JOIN users u ON t.user_id = u.id
+         ORDER BY t.created_at DESC`
+      ) as any[];
+      res.json(Array.isArray(rows) ? rows : []);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/artisan-dossiers/:id/validate", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { action, reason } = req.body;
+      const status = action === "validate" ? "validated" : "rejected";
+      await pool.query(`UPDATE tailors SET dossier_status = ? WHERE id = ?`, [status, id]);
+      const [rows] = await pool.query(
+        `SELECT u.email, u.first_name, u.last_name FROM tailors t LEFT JOIN users u ON t.user_id = u.id WHERE t.id = ?`,
+        [id]
+      ) as any[];
+      const user = (rows as any[])[0];
+      if (user?.email) {
+        sendDossierStatusEmail(user.email, `${user.first_name || ""} ${user.last_name || ""}`.trim(), status, reason).catch(() => {});
+      }
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ─── Maintenance status (public) ─────────────────────────────────────────
+  app.get("/api/maintenance-status", async (req, res) => {
+    try {
+      const settings = await storage.getAdminSettings();
+      const maintenanceSetting = settings.find((s: any) => s.key === "maintenanceMode");
+      res.json({ active: maintenanceSetting?.value === "true" });
+    } catch {
+      res.json({ active: false });
+    }
+  });
+
   // Admin routes - Dashboard stats
   app.get("/api/admin/stats", requireAdmin, async (req, res) => {
     try {
@@ -1893,48 +1708,22 @@ export async function registerRoutes(
       const now = new Date();
       const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // Filtre strict : paiement Stripe confirmé uniquement
-      const PAID_FILTER = `payment_status = 'paid' AND stripe_payment_intent_id IS NOT NULL AND amount_total > 0`;
-
-      // CA total = SUM(amount_total centimes ÷ 100)
       const [revenueRows] = await pool.query(
-        `SELECT COALESCE(SUM(amount_total)/100, 0) as total FROM projects WHERE ${PAID_FILTER}`
+        "SELECT COALESCE(SUM(amount), 0) as total FROM projects WHERE status = 'completed'"
       ) as any[];
       const totalRevenue = parseFloat(revenueRows?.[0]?.total) || 0;
 
-      // Commissions SEAMLiER = SUM((amount_total - amount_artisan) ÷ 100)
-      const [commRows] = await pool.query(
-        `SELECT COALESCE(SUM(amount_total - amount_artisan)/100, 0) as total FROM projects WHERE ${PAID_FILTER}`
-      ) as any[];
-      const totalCommissions = parseFloat(commRows?.[0]?.total) || 0;
-
-      // CA ce mois (filtré sur updated_at = date de paiement)
       const [monthRevenueRows] = await pool.query(
-        `SELECT COALESCE(SUM(amount_total)/100, 0) as total FROM projects WHERE ${PAID_FILTER} AND updated_at >= ?`,
+        "SELECT COALESCE(SUM(amount), 0) as total FROM projects WHERE status = 'completed' AND created_at >= ?",
         [firstOfMonth]
       ) as any[];
       const monthRevenue = parseFloat(monthRevenueRows?.[0]?.total) || 0;
 
-      // Commissions ce mois
-      const [monthCommRows] = await pool.query(
-        `SELECT COALESCE(SUM(amount_total - amount_artisan)/100, 0) as total FROM projects WHERE ${PAID_FILTER} AND updated_at >= ?`,
-        [firstOfMonth]
-      ) as any[];
-      const monthCommissions = parseFloat(monthCommRows?.[0]?.total) || 0;
-
-      // Panier moyen = AVG(amount_total ÷ 100) des projets payés
       const [avgRows] = await pool.query(
-        `SELECT COALESCE(AVG(amount_total)/100, 0) as avg_val FROM projects WHERE ${PAID_FILTER}`
+        "SELECT COALESCE(AVG(amount), 0) as avg_val FROM projects WHERE status = 'completed' AND amount > 0"
       ) as any[];
       const avgProjectValue = parseFloat(avgRows?.[0]?.avg_val) || 0;
 
-      // Projets payés (pas seulement completed — un projet payé peut encore être en fabrication)
-      const [paidRows] = await pool.query(
-        `SELECT COUNT(*) as cnt FROM projects WHERE ${PAID_FILTER}`
-      ) as any[];
-      const totalProjectsPaid = parseInt(paidRows?.[0]?.cnt) || 0;
-
-      // Projets complétés (pour info)
       const [completedRows] = await pool.query(
         "SELECT COUNT(*) as cnt FROM projects WHERE status = 'completed'"
       ) as any[];
@@ -1962,11 +1751,8 @@ export async function registerRoutes(
 
       res.json({
         totalRevenue,
-        totalCommissions,
         monthRevenue,
-        monthCommissions,
         avgProjectValue,
-        totalProjectsPaid,
         totalProjectsCompleted,
         activeArtisansCount,
         activeClientsCount,
@@ -1990,11 +1776,12 @@ export async function registerRoutes(
         SELECT e.*,
           ou.first_name as organizer_first_name, ou.last_name as organizer_last_name, ou.email as organizer_email,
           tu.first_name as tailor_first_name, tu.last_name as tailor_last_name,
-          (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participant_count
+          (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participant_count,
+          (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id AND payment_status = 'paid') as paid_count
         FROM events e
-        JOIN users ou ON ou.id COLLATE utf8mb4_unicode_ci = e.organizer_id COLLATE utf8mb4_unicode_ci
+        JOIN users ou ON ou.id = e.organizer_id
         JOIN tailors t ON t.id = e.tailor_id
-        JOIN users tu ON tu.id COLLATE utf8mb4_unicode_ci = t.user_id COLLATE utf8mb4_unicode_ci
+        JOIN users tu ON tu.id = t.user_id
         ORDER BY e.created_at DESC
       `) as any[];
       res.json(rows);
@@ -2004,14 +1791,41 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/events/:id/participants", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const [rows] = await pool.query(`
+        SELECT ep.id, ep.user_id, ep.project_id, ep.joined_at, ep.payment_status, ep.payment_intent_id,
+          u.first_name, u.last_name, u.email
+        FROM event_participants ep
+        JOIN users u ON u.id = ep.user_id
+        WHERE ep.event_id = ?
+        ORDER BY ep.joined_at ASC
+      `, [id]) as any[];
+      res.json(rows);
+    } catch (error) {
+      console.error("Error fetching event participants:", error);
+      res.status(500).json({ error: "Failed to fetch participants" });
+    }
+  });
+
+  app.post("/api/admin/events/:id/release", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await pool.query(`UPDATE events SET payment_released = 1 WHERE id = ?`, [id]);
+      console.log(`[Admin] Commande groupée ${id} → payment_released`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error releasing event payment:", error);
+      res.status(500).json({ error: "Failed to release" });
+    }
+  });
+
   // Admin routes - Users listing
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
     try {
-      const limit = Math.min(parseInt(String(req.query.limit ?? "200")), 500);
-      const offset = Math.max(parseInt(String(req.query.offset ?? "0")), 0);
       const allUsers = await storage.getAllUsers();
-      const page = allUsers.slice(offset, offset + limit);
-      res.json(page);
+      res.json(allUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ error: "Failed to fetch users" });
@@ -2063,20 +1877,6 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/admin/users/:id/notes", requireAdmin, async (req, res) => {
-    try {
-      const { adminNotes } = req.body;
-      await pool.query(
-        "UPDATE users SET admin_notes = ? WHERE id = ?",
-        [adminNotes ?? null, req.params.id]
-      );
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error updating admin notes:", error);
-      res.status(500).json({ error: "Failed to update notes" });
-    }
-  });
-
   app.get("/api/admin/artisans", requireAdmin, async (req, res) => {
     try {
       const manualArtisans = await storage.getAdminArtisans();
@@ -2113,8 +1913,6 @@ export async function registerRoutes(
           joinDate: null,
           subscriptionPlan: t.subscriptionPlan || "Starter",
           paymentStatus: (t as any).paymentStatus || "En attente",
-          subscriptionCurrentPeriodEnd: (t as any).subscriptionCurrentPeriodEnd || null,
-          stripeSubscriptionId: (t as any).stripeSubscriptionId || null,
           createdAt: t.createdAt || new Date(),
         }));
 
@@ -2162,9 +1960,7 @@ export async function registerRoutes(
           const existingUser = await storage.getUserByEmail(b.email);
           if (!existingUser) {
             const bcrypt = await import("bcrypt");
-            const defaultPwd = process.env.DEFAULT_TAILOR_PASSWORD;
-            if (!defaultPwd) throw new Error("DEFAULT_TAILOR_PASSWORD env var manquante");
-            const tempPassword = await bcrypt.hash(defaultPwd, 12);
+            const tempPassword = await bcrypt.hash(process.env.DEFAULT_TAILOR_PASSWORD || "Seamlier2026!", 12);
             const newUser = await storage.createUser({
               email: b.email,
               password: tempPassword,
@@ -2398,20 +2194,6 @@ export async function registerRoutes(
     }
   });
 
-  // Admin: open/get conversation with a specific user (for contacting client or artisan from admin panel)
-  app.post("/api/admin/contact/:userId", requireAdmin, async (req: any, res) => {
-    try {
-      const adminId = (req as any).authUserId;
-      const targetUserId = req.params.userId;
-      if (adminId === targetUserId) return res.status(400).json({ error: "Cannot contact yourself" });
-      const conversation = await storage.getOrCreateConversation(adminId, targetUserId);
-      res.json(conversation);
-    } catch (error) {
-      console.error("admin contact error:", error);
-      res.status(500).json({ error: "Failed to create conversation" });
-    }
-  });
-
   app.delete("/api/admin/conversations", requireAdmin, async (req, res) => {
     try {
       await storage.deleteAllConversations();
@@ -2577,9 +2359,7 @@ export async function registerRoutes(
   // Admin: all projects
   app.get("/api/admin/all-projects", requireAdmin, async (req, res) => {
     try {
-      const limit = Math.min(parseInt(String(req.query.limit ?? "200")), 500);
-      const offset = Math.max(parseInt(String(req.query.offset ?? "0")), 0);
-      const data = await storage.getAllProjectsForAdmin(limit, offset);
+      const data = await storage.getAllProjectsForAdmin();
       res.json(data);
     } catch (error) {
       console.error("admin all-projects error:", error);
@@ -2587,63 +2367,10 @@ export async function registerRoutes(
     }
   });
 
-  // Admin: payments with commission breakdown
-  app.get("/api/admin/payments", requireAdmin, async (req, res) => {
-    try {
-      const [rows] = await pool.query(`
-        SELECT
-          p.id, p.title, p.amount, p.amount_total, p.amount_artisan,
-          p.payment_status, p.stripe_payment_intent_id, p.stripe_transfer_id,
-          p.client_confirmed, p.created_at,
-          CONCAT(cu.first_name, ' ', cu.last_name) AS client_name,
-          CONCAT(tu.first_name, ' ', tu.last_name) AS tailor_name,
-          cu.email AS client_email,
-          tu.email AS tailor_email
-        FROM projects p
-        INNER JOIN users cu ON p.client_id = cu.id
-        INNER JOIN tailors t ON p.tailor_id = t.id
-        INNER JOIN users tu ON t.user_id = tu.id
-        WHERE p.amount IS NOT NULL AND p.amount > 0
-        ORDER BY p.created_at DESC
-        LIMIT 500
-      `) as any[];
-      if (!Array.isArray(rows)) return res.json([]);
-      res.json((rows as any[]).map((r: any) => {
-        // amount_total et amount_artisan sont en centimes ; fallback sur amount (euros) si non renseignés
-        const amountClient = r.amount_total
-          ? Math.round(r.amount_total) / 100
-          : parseFloat(r.amount) || 0;
-        const artisanAmount = r.amount_artisan
-          ? Math.round(r.amount_artisan) / 100
-          : Math.round(amountClient * 0.9 * 100) / 100;
-        const commission = Math.round((amountClient - artisanAmount) * 100) / 100;
-        return {
-          id: r.id,
-          title: r.title || "—",
-          client: r.client_name || "—",
-          tailor: r.tailor_name || "—",
-          amountClient,
-          commission,
-          amountArtisan: artisanAmount,
-          paymentStatus: r.payment_status || "pending",
-          stripePaymentIntentId: r.stripe_payment_intent_id || null,
-          stripeTransferId: r.stripe_transfer_id || null,
-          clientConfirmed: !!r.client_confirmed,
-          createdAt: r.created_at ? new Date(r.created_at).toLocaleDateString("fr-FR") : "—",
-        };
-      }));
-    } catch (error) {
-      console.error("admin payments error:", error);
-      res.status(500).json({ error: "Failed to fetch payments" });
-    }
-  });
-
   // Admin: all appointments
   app.get("/api/admin/all-appointments", requireAdmin, async (req, res) => {
     try {
-      const limit = Math.min(parseInt(String(req.query.limit ?? "200")), 500);
-      const offset = Math.max(parseInt(String(req.query.offset ?? "0")), 0);
-      const data = await storage.getAllAppointmentsForAdmin(limit, offset);
+      const data = await storage.getAllAppointmentsForAdmin();
       res.json(data);
     } catch (error) {
       console.error("admin all-appointments error:", error);
@@ -2654,9 +2381,7 @@ export async function registerRoutes(
   // Admin - Measurements
   app.get("/api/admin/measures", requireAdmin, async (req, res) => {
     try {
-      const limit = Math.min(parseInt(String(req.query.limit ?? "200")), 500);
-      const offset = Math.max(parseInt(String(req.query.offset ?? "0")), 0);
-      const data = await storage.getAllMeasurementsForAdmin(limit, offset);
+      const data = await storage.getAllMeasurementsForAdmin();
       res.json(data);
     } catch (error) {
       console.error("Error fetching admin measures:", error);
@@ -2667,9 +2392,7 @@ export async function registerRoutes(
   // Admin - Reviews
   app.get("/api/admin/reviews", requireAdmin, async (req, res) => {
     try {
-      const limit = Math.min(parseInt(String(req.query.limit ?? "200")), 500);
-      const offset = Math.max(parseInt(String(req.query.offset ?? "0")), 0);
-      const data = await storage.getAllReviewsForAdmin(limit, offset);
+      const data = await storage.getAllReviewsForAdmin();
       res.json(data);
     } catch (error) {
       console.error("Error fetching admin reviews:", error);
@@ -2687,23 +2410,29 @@ export async function registerRoutes(
     }
   });
 
-  // Admin: edit project (bypass ownership check)
-  app.patch("/api/admin/projects/:id", requireAdmin, async (req, res) => {
+  // Email verification
+  app.get("/api/verify-email", async (req, res) => {
     try {
-      const { status, amount, adminNotes } = req.body;
-      const updates: Record<string, any> = {};
-      if (status !== undefined) updates.status = status;
-      if (amount !== undefined) updates.amount = parseFloat(amount) || null;
-      if (adminNotes !== undefined) updates.adminNotes = adminNotes;
-      if (Object.keys(updates).length === 0) return res.status(400).json({ error: "No fields to update" });
-      await pool.query(
-        `UPDATE projects SET ${Object.keys(updates).map(k => `\`${k.replace(/([A-Z])/g, '_$1').toLowerCase()}\` = ?`).join(", ")} WHERE id = ?`,
-        [...Object.values(updates), req.params.id]
-      );
-      res.json({ success: true });
+      const { token } = req.query;
+      if (!token || typeof token !== "string") {
+        return res.status(400).send(renderVerificationPage(false, "Token manquant."));
+      }
+      const userRaw = await storage.getUserByVerificationToken(token);
+      if (!userRaw) {
+        return res.status(400).send(renderVerificationPage(false, "Lien invalide ou expiré."));
+      }
+      if (userRaw.verificationExpires && new Date(userRaw.verificationExpires) < new Date()) {
+        return res.status(400).send(renderVerificationPage(false, "Ce lien a expiré. Veuillez vous réinscrire."));
+      }
+      await storage.updateUser(userRaw.id, {
+        emailVerified: true,
+        verificationToken: null,
+        verificationExpires: null,
+      } as any);
+      return res.send(renderVerificationPage(true, "Votre email a été vérifié avec succès ! Vous pouvez maintenant vous connecter."));
     } catch (error) {
-      console.error("admin project edit error:", error);
-      res.status(500).json({ error: "Failed to update project" });
+      console.error("Email verification error:", error);
+      return res.status(500).send(renderVerificationPage(false, "Erreur serveur."));
     }
   });
 
@@ -2750,20 +2479,6 @@ export async function registerRoutes(
       const { name, eventDate, tailorId, description, registrationDeadline, maxParticipants, pricePerPerson, priceGroup, deliveryDate, inspirationPhotos } = req.body;
       if (!name || !eventDate || !tailorId) {
         return res.status(400).json({ error: "name, eventDate et tailorId sont requis" });
-      }
-      // Zod validation
-      const parsed = insertEventSchema.safeParse({
-        name, eventDate, tailorId, organizerId: userId, inviteCode: "PLACEHOLDER", validationCode: "0000",
-        description: description || undefined,
-        registrationDeadline: registrationDeadline || undefined,
-        status: "pending_tailor_approval",
-        maxParticipants: maxParticipants || undefined,
-        pricePerPerson: pricePerPerson || undefined,
-        priceGroup: priceGroup || undefined,
-        deliveryDate: deliveryDate || undefined,
-      });
-      if (!parsed.success) {
-        return res.status(400).json({ error: "Données invalides", details: parsed.error.flatten() });
       }
       let inviteCode = generateInviteCode();
       const [existing] = await pool.query(`SELECT id FROM events WHERE invite_code = ?`, [inviteCode]) as any[];
@@ -2828,9 +2543,7 @@ export async function registerRoutes(
         WHERE e.invite_code = ?
       `, [req.params.inviteCode.toUpperCase()]) as any[];
       if (!(rows as any[]).length) return res.status(404).json({ error: "Événement introuvable" });
-      const event = (rows as any[])[0];
-      delete event.validation_code;
-      res.json(event);
+      res.json((rows as any[])[0]);
     } catch (error) {
       console.error("Failed to get event:", error);
       res.status(500).json({ error: "Failed to get event" });
@@ -2860,40 +2573,6 @@ export async function registerRoutes(
         `SELECT id FROM event_participants WHERE event_id = ? AND user_id = ?`, [event.id, userId]
       ) as any[];
       if ((existing as any[]).length > 0) return res.json({ alreadyJoined: true, eventId: event.id });
-      // Check registration deadline
-      if (event.registration_deadline) {
-        const deadline = new Date(event.registration_deadline);
-        deadline.setHours(23, 59, 59, 999);
-        if (new Date() > deadline) {
-          return res.status(403).json({ error: "Les inscriptions sont fermées — la date limite est dépassée." });
-        }
-      }
-      // Check max participants
-      if (event.max_participants) {
-        const [countRows] = await pool.query(
-          `SELECT COUNT(*) as cnt FROM event_participants WHERE event_id = ?`, [event.id]
-        ) as any[];
-        const currentCount = (countRows as any[])[0]?.cnt ?? 0;
-        if (currentCount >= event.max_participants) {
-          return res.status(403).json({ error: "Cet événement est complet." });
-        }
-      }
-      // Stripe payment if pricePerPerson > 0
-      if (event.price_per_person && event.price_per_person > 0 && process.env.STRIPE_SECRET_KEY) {
-        const StripeLib = (await import("stripe")).default;
-        const stripe = new StripeLib(process.env.STRIPE_SECRET_KEY);
-        const pi = await stripe.paymentIntents.create({
-          amount: Math.round(event.price_per_person * 100),
-          currency: "eur",
-          metadata: {
-            eventId: event.id,
-            userId,
-            inviteCode: req.params.inviteCode.toUpperCase(),
-          },
-          description: `SEAMLiER — Événement ${event.name}`,
-        });
-        return res.json({ needsPayment: true, clientSecret: pi.client_secret, eventId: event.id, amount: event.price_per_person });
-      }
       // Create a project linked to the event (in_progress so it appears in artisan's project list)
       const projectId = require("crypto").randomUUID();
       await pool.query(
@@ -2907,51 +2586,10 @@ export async function registerRoutes(
         `INSERT IGNORE INTO event_participants (id, event_id, user_id, project_id) VALUES (?, ?, ?, ?)`,
         [participantId, event.id, userId, projectId]
       );
-      // Notify organizer
-      sendPushNotification(event.organizer_id, `Nouveau participant pour ${event.name}`, "Un nouveau membre vient de rejoindre votre événement.", `/evenement/${event.id}`).catch(() => {});
       res.status(201).json({ success: true, eventId: event.id, projectId });
     } catch (error) {
       console.error("Failed to join event:", error);
       res.status(500).json({ error: "Failed to join event" });
-    }
-  });
-
-  // Confirm payment and complete event join
-  app.post("/api/events/join/:inviteCode/confirm-payment", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const { paymentIntentId } = req.body;
-      if (!paymentIntentId) return res.status(400).json({ error: "paymentIntentId requis" });
-      if (!process.env.STRIPE_SECRET_KEY) return res.status(500).json({ error: "Stripe non configuré" });
-      const StripeLib = (await import("stripe")).default;
-      const stripe = new StripeLib(process.env.STRIPE_SECRET_KEY);
-      const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
-      if (pi.status !== "succeeded") return res.status(402).json({ error: "Paiement non confirmé" });
-      const eventId = pi.metadata?.eventId;
-      if (!eventId) return res.status(400).json({ error: "Métadonnées manquantes" });
-      const [evRows] = await pool.query(`SELECT * FROM events WHERE id = ?`, [eventId]) as any[];
-      if (!(evRows as any[]).length) return res.status(404).json({ error: "Événement introuvable" });
-      const event = (evRows as any[])[0];
-      // Check if already joined (idempotent)
-      const [existing] = await pool.query(`SELECT id, project_id FROM event_participants WHERE event_id = ? AND user_id = ?`, [event.id, userId]) as any[];
-      if ((existing as any[]).length > 0) return res.json({ alreadyJoined: true, eventId: event.id, projectId: (existing as any[])[0]?.project_id });
-      const projectId = require("crypto").randomUUID();
-      await pool.query(
-        `INSERT INTO projects (id, tailor_id, client_id, title, status, progress, current_step, delivery_date, event_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'in_progress', 0, 'prise_mesures', ?, ?, NOW(), NOW())`,
-        [projectId, event.tailor_id, userId, `[Événement] ${event.name}`, event.delivery_date || null, event.id]
-      );
-      const participantId = require("crypto").randomUUID();
-      await pool.query(
-        `INSERT IGNORE INTO event_participants (id, event_id, user_id, project_id) VALUES (?, ?, ?, ?)`,
-        [participantId, event.id, userId, projectId]
-      );
-      // Notify organizer
-      sendPushNotification(event.organizer_id, `Nouveau participant pour ${event.name}`, "Un nouveau membre vient de rejoindre votre événement.", `/evenement/${event.id}`).catch(() => {});
-      res.status(201).json({ success: true, eventId: event.id, projectId });
-    } catch (error) {
-      console.error("Failed to confirm event payment:", error);
-      res.status(500).json({ error: "Failed to confirm payment" });
     }
   });
 
@@ -3020,29 +2658,6 @@ export async function registerRoutes(
   });
 
   // Client: list joined events
-  // Events organized by this user (organizer_id = userId)
-  app.get("/api/client/events/organized", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const [rows] = await pool.query(`
-        SELECT e.*,
-          tu.first_name as tailor_first_name, tu.last_name as tailor_last_name,
-          tu.profile_image_url as tailor_avatar,
-          (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participant_count
-        FROM events e
-        JOIN tailors t ON t.id = e.tailor_id
-        JOIN users tu ON tu.id = t.user_id
-        WHERE e.organizer_id = ?
-        ORDER BY e.event_date ASC
-      `, [userId]) as any[];
-      res.json(rows);
-    } catch (error) {
-      console.error("Failed to get organized events:", error);
-      res.status(500).json({ error: "Failed to get organized events" });
-    }
-  });
-
-  // Events the user has joined as participant
   app.get("/api/client/events", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
@@ -3127,10 +2742,73 @@ export async function registerRoutes(
     }
   });
 
+  // ── Event: group chat messages ─────────────────────────────────────────────
+  app.get("/api/events/:id/messages", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const eventId = req.params.id;
+      // Vérifier que l'user est participant ou artisan de l'événement
+      const [access] = await pool.query(
+        `SELECT 1 FROM event_participants WHERE event_id = ? AND user_id = ?
+         UNION
+         SELECT 1 FROM events e JOIN tailors t ON t.id = e.tailor_id WHERE e.id = ? AND t.user_id = ?`,
+        [eventId, userId, eventId, userId]
+      ) as any[];
+      if (!(access as any[]).length) return res.status(403).json({ error: "Unauthorized" });
+      const [messages] = await pool.query(
+        `SELECT em.*, u.first_name, u.last_name, u.profile_image_url
+         FROM event_messages em
+         JOIN users u ON u.id = em.sender_id
+         WHERE em.event_id = ?
+         ORDER BY em.created_at ASC`,
+        [eventId]
+      ) as any[];
+      res.json(messages);
+    } catch (error) {
+      console.error("Failed to get event messages:", error);
+      res.status(500).json({ error: "Failed to get messages" });
+    }
+  });
+
+  app.post("/api/events/:id/messages", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const eventId = req.params.id;
+      const { content } = req.body;
+      if (!content?.trim()) return res.status(400).json({ error: "Message vide" });
+      // Vérifier accès
+      const [access] = await pool.query(
+        `SELECT 1 FROM event_participants WHERE event_id = ? AND user_id = ?
+         UNION
+         SELECT 1 FROM events e JOIN tailors t ON t.id = e.tailor_id WHERE e.id = ? AND t.user_id = ?`,
+        [eventId, userId, eventId, userId]
+      ) as any[];
+      if (!(access as any[]).length) return res.status(403).json({ error: "Unauthorized" });
+      const msgId = crypto.randomUUID();
+      await pool.query(
+        `INSERT INTO event_messages (id, event_id, sender_id, content) VALUES (?, ?, ?, ?)`,
+        [msgId, eventId, userId, content.trim()]
+      );
+      // Récupérer le message avec infos user
+      const [rows] = await pool.query(
+        `SELECT em.*, u.first_name, u.last_name, u.profile_image_url
+         FROM event_messages em
+         JOIN users u ON u.id = em.sender_id
+         WHERE em.id = ?`,
+        [msgId]
+      ) as any[];
+      res.json((rows as any[])[0]);
+    } catch (error) {
+      console.error("Failed to post event message:", error);
+      res.status(500).json({ error: "Failed to post message" });
+    }
+  });
   // ── Event: approve / reject (tailor only) ─────────────────────────────────
   app.patch("/api/events/:id/approve", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
+
+
       const tailor = await storage.getTailorByUserId(userId);
       if (!tailor) return res.status(403).json({ error: "Not a tailor" });
       const [evRows] = await pool.query(`SELECT * FROM events WHERE id = ?`, [req.params.id]) as any[];
@@ -3176,27 +2854,6 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to reject event:", error);
       res.status(500).json({ error: "Failed to reject event" });
-    }
-  });
-
-  // Delete event
-  app.delete("/api/events/:id", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const [evRows] = await pool.query(`SELECT * FROM events WHERE id = ?`, [req.params.id]) as any[];
-      if (!(evRows as any[]).length) return res.status(404).json({ error: "Événement introuvable" });
-      const event = (evRows as any[])[0];
-      const [userRows] = await pool.query(`SELECT role FROM users WHERE id = ?`, [userId]) as any[];
-      const role = (userRows as any[])[0]?.role;
-      if (event.organizer_id !== userId && role !== "admin") {
-        return res.status(403).json({ error: "Non autorisé" });
-      }
-      await pool.query(`DELETE FROM event_participants WHERE event_id = ?`, [event.id]);
-      await pool.query(`DELETE FROM events WHERE id = ?`, [event.id]);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Failed to delete event:", error);
-      res.status(500).json({ error: "Failed to delete event" });
     }
   });
 
@@ -3264,7 +2921,7 @@ export async function registerRoutes(
       const [apptRows] = await pool.query(`
         SELECT DATE_FORMAT(scheduled_at, '%H:%i') as time_slot, duration
         FROM appointments
-        WHERE tailor_id = ? AND DATE(scheduled_at) = ? AND status IN ('scheduled','confirmed','pending')
+        WHERE tailor_id = ? AND DATE(scheduled_at) = ? AND status IN ('scheduled','confirmed')
       `, [tailorId, date]) as any[];
       const busySlots = new Set<string>();
       for (const appt of (apptRows as any[])) {
@@ -3390,939 +3047,38 @@ export async function registerRoutes(
 
   // ─── Closed days for a month (for calendar UI) ─────────────────────────────
 
-  // ── Helper: create notification ───────────────────────────────────────────
-  async function createNotification(userId: string, type: string, title: string, message: string) {
-    const id = randomUUID();
-    await pool.query(
-      "INSERT INTO notifications (id, user_id, type, title, message) VALUES (?, ?, ?, ?, ?)",
-      [id, userId, type, title, message]
-    );
-  }
-
-  // ── Feature 1: Pro Dossier Routes ─────────────────────────────────────────
-
-  app.get("/api/professionnel/dossier", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const tailor = await storage.getTailorByUserId(userId);
-      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
-
-      const [rows] = await pool.query(
-        `SELECT * FROM tailors WHERE id = ?`,
-        [tailor.id]
-      ) as any[];
-      const row = Array.isArray(rows) && rows[0] ? rows[0] : {};
-      res.json({
-        siret: row.siret || null,
-        kbisUrl: row.kbis_url || null,
-        kbisExpiryDate: row.kbis_expiry_date || null,
-        idCardUrl: row.id_card_url || null,
-        rcProUrl: row.rc_pro_url || null,
-        ibanRib: row.iban_rib || null,
-        dossierStatus: row.dossier_status || "pending",
-        dossierRejectionReason: row.dossier_rejection_reason || null,
-        insurerName: row.insurer_name || null,
-        insurerPolicy: row.insurer_policy || null,
-        rcProCertified: row.rc_pro_certified != null ? !!row.rc_pro_certified : null,
-      });
-    } catch (error) {
-      console.error("Failed to fetch dossier:", error);
-      res.status(500).json({ error: "Failed to fetch dossier" });
-    }
-  });
-
-  app.post("/api/professionnel/dossier/upload/:docType", requireAuth, (req: any, res, next) => {
-    console.log('[UPLOAD DOC] route hit', req.params.docType, 'user', req.authUserId);
-    try {
-      uploadDoc(req, res, async (err) => {
-        if (err) {
-          console.error('[UPLOAD DOC]', err);
-          return res.status(400).json({ error: err.message });
-        }
-      if (!req.file) {
-        return res.status(400).json({ error: "Aucun fichier fourni" });
-      }
-
-      try {
-        const userId = req.authUserId;
-        if ((req.user as any)?.role !== "tailor") {
-          return res.status(403).json({ error: "Réservé aux professionnels" });
-        }
-        const tailor = await storage.getTailorByUserId(userId);
-        if (!tailor) return res.status(403).json({ error: "Not a tailor" });
-
-        const { docType } = req.params;
-        const fileUrl = `/uploads/docs/${req.file.filename}`;
-
-        const validDocTypes: Record<string, string> = {
-          kbis: "kbis_url",
-          idCard: "id_card_url",
-          rcPro: "rc_pro_url",
-          ibanRib: "iban_rib",
-        };
-
-        if (!validDocTypes[docType]) {
-          return res.status(400).json({ error: "Type de document invalide" });
-        }
-
-        const field = validDocTypes[docType];
-        await pool.query(
-          `UPDATE tailors SET ${field} = ?, dossier_status = 'pending' WHERE id = ?`,
-          [fileUrl, tailor.id]
-        );
-
-        const [userRows] = await pool.query(
-          "SELECT email, first_name, last_name FROM users WHERE id = ?",
-          [userId]
-        ) as any[];
-        const userRow = Array.isArray(userRows) && userRows[0] ? userRows[0] : null;
-        if (userRow) {
-          const userName = [userRow.first_name, userRow.last_name].filter(Boolean).join(" ") || userRow.email;
-          sendDossierReceivedEmail(userRow.email, userName).catch(err =>
-            console.error("[Dossier received email] Failed:", err)
-          );
-          sendAdminDocUploadNotif(userName, docType, fileUrl).catch((adminErr) =>
-            console.error("[Admin doc notif email] Failed:", adminErr)
-          );
-        }
-
-        res.json({ url: fileUrl });
-      } catch (error) {
-        console.error("Failed to upload document:", error);
-        res.status(500).json({ error: "Failed to upload document" });
-      }
-    });
-    } catch (syncErr) {
-      next(syncErr);
-    }
-  });
-
-    app.delete("/api/professionnel/dossier/document/:docType", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      if ((req.user as any)?.role !== "tailor") {
-        return res.status(403).json({ error: "Réservé aux professionnels" });
-      }
-      const tailor = await storage.getTailorByUserId(userId);
-      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
-
-      const { docType } = req.params;
-      const validDocTypes: Record<string, string> = {
-        kbis: "kbis_url",
-        idCard: "id_card_url",
-        rcPro: "rc_pro_url",
-        ibanRib: "iban_rib",
-      };
-      if (!validDocTypes[docType]) {
-        return res.status(400).json({ error: "Type de document invalide" });
-      }
-
-      const field = validDocTypes[docType];
-      await pool.query(
-        `UPDATE tailors SET ${field} = NULL WHERE id = ?`,
-        [tailor.id]
-      );
-
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Failed to delete document:", error);
-      res.status(500).json({ error: "Failed to delete document" });
-    }
-  });
-
-  app.patch("/api/professionnel/dossier", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      if ((req.user as any)?.role !== "tailor") {
-        return res.status(403).json({ error: "Réservé aux professionnels" });
-      }
-      const tailor = await storage.getTailorByUserId(userId);
-      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
-
-      const { siret, iban, insurerName, insurerPolicy, rcProCertified } = req.body;
-
-      if (!siret || !/^\d{14}$/.test(siret.replace(/[^0-9]/g, ""))) {
-        return res.status(400).json({ error: "SIRET invalide (14 chiffres requis)" });
-      }
-      if (!iban || !iban.trim()) {
-        return res.status(400).json({ error: "IBAN requis" });
-      }
-
-      const siretClean = siret.replace(/[^0-9]/g, "");
-
-      await pool.query(
-        `UPDATE tailors SET siret = ?, iban_rib = ?, insurer_name = ?, insurer_policy = ?, rc_pro_certified = ?, dossier_status = 'pending' WHERE id = ?`,
-        [siretClean, iban.trim(), insurerName || null, insurerPolicy || null, rcProCertified ? 1 : 0, tailor.id]
-      );
-
-      // Notify admin
-      const [userRows] = await pool.query(
-        "SELECT email, first_name, last_name FROM users WHERE id = ?",
-        [userId]
-      ) as any[];
-      const userRow = Array.isArray(userRows) && userRows[0] ? userRows[0] : null;
-      if (userRow) {
-        const userName = [userRow.first_name, userRow.last_name].filter(Boolean).join(" ") || userRow.email;
-        sendAdminProInfoEmail(userName, siretClean, iban.trim(), insurerName, insurerPolicy, !!rcProCertified)
-          .catch(err => console.error("[Pro info email] Failed:", err));
-      }
-
-      res.json({ success: true });
-    } catch (error: any) {
-      console.error("Failed to update pro info:", {
-        message: error?.message,
-        code: error?.code,
-        sqlMessage: error?.sqlMessage,
-        errno: error?.errno,
-        stack: error?.stack?.split("\n").slice(0, 4).join("\n"),
-      });
-      res.status(500).json({ error: "Erreur lors de la sauvegarde", detail: error?.message });
-    }
-  });
-
-
-  // ── Pro Info (déclaration professionnelle) ─────────────────────────────────
-
-  app.get("/api/professionnel/pro-info", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const tailor = await storage.getTailorByUserId(userId);
-      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
-      const [rows] = await pool.query(
-        "SELECT * FROM pro_info WHERE tailor_id = ?",
-        [tailor.id]
-      ) as any[];
-      const row = Array.isArray(rows) && rows[0] ? rows[0] : null;
-      if (!row) return res.json(null);
-      res.json({
-        id: row.id,
-        siret: row.siret || null,
-        iban: row.iban || null,
-        insurerName: row.insurer_name || null,
-        insurerPolicy: row.insurer_policy || null,
-        rcProCertified: row.rc_pro_certified != null ? !!row.rc_pro_certified : null,
-        status: row.status || "pending",
-      });
-    } catch (error: any) {
-      console.error("[GET pro-info] error:", error?.message);
-      res.status(500).json({ error: "Erreur serveur" });
-    }
-  });
-
-  app.post("/api/professionnel/pro-info", requireAuth, async (req: any, res) => {
-    console.log("[POST /api/professionnel/pro-info] hit — user:", (req as any).authUserId);
-    try {
-      const userId = req.authUserId;
-      if ((req.user as any)?.role !== "tailor") {
-        return res.status(403).json({ error: "Réservé aux professionnels" });
-      }
-      const tailor = await storage.getTailorByUserId(userId);
-      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
-
-      const { siret, iban, insurerName, insurerPolicy, rcProCertified } = req.body;
-      console.log("[POST pro-info] body:", { siret, iban: iban ? "***" : null, insurerName, rcProCertified });
-
-      if (!siret || !/^\d{14}$/.test(siret.replace(/[^0-9]/g, ""))) {
-        return res.status(400).json({ error: "SIRET invalide (14 chiffres requis)" });
-      }
-      if (!iban || !iban.trim()) {
-        return res.status(400).json({ error: "IBAN requis" });
-      }
-
-      const siretClean = siret.replace(/[^0-9]/g, "");
-
-      await pool.query(
-        `INSERT INTO pro_info (tailor_id, siret, iban, insurer_name, insurer_policy, rc_pro_certified, status, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW())
-         ON DUPLICATE KEY UPDATE
-           siret = VALUES(siret),
-           iban = VALUES(iban),
-           insurer_name = VALUES(insurer_name),
-           insurer_policy = VALUES(insurer_policy),
-           rc_pro_certified = VALUES(rc_pro_certified),
-           status = 'pending',
-           updated_at = NOW()`,
-        [tailor.id, siretClean, iban.trim(), insurerName || null, insurerPolicy || null, rcProCertified ? 1 : 0]
-      );
-
-      const [userRows] = await pool.query(
-        "SELECT email, first_name, last_name FROM users WHERE id = ?",
-        [userId]
-      ) as any[];
-      const userRow = Array.isArray(userRows) && userRows[0] ? userRows[0] : null;
-      if (userRow) {
-        const userName = [userRow.first_name, userRow.last_name].filter(Boolean).join(" ") || userRow.email;
-        sendAdminProInfoEmail(userName, siretClean, iban.trim(), insurerName, insurerPolicy, !!rcProCertified)
-          .catch((err: any) => console.error("[Pro info email] Failed:", err));
-      }
-
-      console.log("[POST pro-info] success — tailor:", tailor.id);
-      res.json({ success: true });
-    } catch (error: any) {
-      console.error("[POST pro-info] error:", {
-        message: error?.message,
-        code: error?.code,
-        sqlMessage: error?.sqlMessage,
-        errno: error?.errno,
-      });
-      res.status(500).json({ error: "Erreur lors de l'enregistrement", detail: error?.message });
-    }
-  });
-
-  app.get("/api/admin/pro-info", requireAuth, async (req: any, res) => {
-    try {
-      if ((req.user as any)?.role !== "admin") {
-        return res.status(403).json({ error: "Admin only" });
-      }
-      const [rows] = await pool.query(`
-        SELECT pi.id, pi.siret, pi.iban, pi.insurer_name, pi.insurer_policy,
-               pi.rc_pro_certified, pi.status, pi.created_at, pi.updated_at,
-               u.email, u.first_name, u.last_name, t.shop_name, t.id AS tailor_id
-        FROM pro_info pi
-        JOIN tailors t ON t.id = pi.tailor_id
-        JOIN users u ON u.id = t.user_id
-        ORDER BY pi.updated_at DESC
-      `) as any[];
-      res.json(Array.isArray(rows) ? rows : []);
-    } catch (error: any) {
-      console.error("[GET admin/pro-info] error:", error?.message);
-      res.status(500).json({ error: "Erreur serveur" });
-    }
-  });
-
-  app.patch("/api/admin/pro-info/:id", requireAuth, async (req: any, res) => {
-    try {
-      if ((req.user as any)?.role !== "admin") {
-        return res.status(403).json({ error: "Admin only" });
-      }
-      const { id } = req.params;
-      const { status } = req.body;
-      if (!["pending", "validated", "rejected"].includes(status)) {
-        return res.status(400).json({ error: "Statut invalide" });
-      }
-      await pool.query(
-        "UPDATE pro_info SET status = ?, updated_at = NOW() WHERE id = ?",
-        [status, id]
-      );
-      res.json({ success: true });
-    } catch (error: any) {
-      console.error("[PATCH admin/pro-info] error:", error?.message);
-      res.status(500).json({ error: "Erreur serveur" });
-    }
-  });
-
-
-  // ── Parrainage ──────────────────────────────────────────────────────────────
-  app.post("/api/professionnel/referral/invite", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const tailor = await storage.getTailorByUserId(userId);
-      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
-
-      const { email: invitedEmail } = req.body;
-      if (!invitedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(invitedEmail)) {
-        return res.status(400).json({ error: "Adresse email invalide" });
-      }
-      const normalizedEmail = invitedEmail.trim().toLowerCase();
-
-      // Block duplicate invites
-      const [existing] = await pool.query(
-        "SELECT id FROM referral_invites WHERE referrer_tailor_id = ? AND invited_email = ?",
-        [tailor.id, normalizedEmail]
-      ) as any[];
-      if (Array.isArray(existing) && existing.length > 0) {
-        return res.status(409).json({ error: "Une invitation a déjà été envoyée à cette adresse" });
-      }
-
-      // Get or generate referral code
-      let referralCode = (tailor as any).referral_code as string | undefined;
-      if (!referralCode) {
-        referralCode = `REF${tailor.id}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-        await pool.query("UPDATE tailors SET referral_code = ? WHERE id = ?", [referralCode, tailor.id]);
-      }
-
-      // Get artisan display name
-      const [userRows] = await pool.query(
-        "SELECT first_name, last_name FROM users WHERE id = ?", [userId]
-      ) as any[];
-      const ur = Array.isArray(userRows) && userRows[0] ? userRows[0] : null;
-      const artisanName = ur
-        ? [ur.first_name, ur.last_name].filter(Boolean).join(" ")
-        : "Un artisan SEAMLiER";
-
-      const referralLink = `https://seamlier.fr/inscription?ref=${referralCode}`;
-
-      await sendReferralInviteEmail(artisanName, normalizedEmail, referralLink);
-
-      await pool.query(
-        "INSERT INTO referral_invites (referrer_tailor_id, invited_email, referral_code) VALUES (?, ?, ?)",
-        [tailor.id, normalizedEmail, referralCode]
-      );
-
-      res.json({ success: true, referralCode, invitedEmail: normalizedEmail });
-    } catch (err: any) {
-      console.error("[POST referral/invite]", err?.message, err?.sqlMessage);
-      res.status(500).json({ error: "Erreur lors de l'envoi", detail: err?.message });
-    }
-  });
-
-  app.get("/api/professionnel/referral/stats", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const tailor = await storage.getTailorByUserId(userId);
-      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
-
-      const [rows] = await pool.query(
-        `SELECT invited_email, status, sent_at
-         FROM referral_invites WHERE referrer_tailor_id = ? ORDER BY sent_at DESC`,
-        [tailor.id]
-      ) as any[];
-      const invites = Array.isArray(rows) ? rows : [];
-
-      const code = (tailor as any).referral_code as string | null;
-      res.json({
-        referralCode: code || null,
-        referralLink: code ? `https://seamlier.fr/inscription?ref=${code}` : null,
-        totalInvites: invites.length,
-        registered: invites.filter((i: any) => i.status === "registered").length,
-        invites: invites.map((i: any) => ({
-          email: i.invited_email,
-          status: i.status,
-          sentAt: i.sent_at,
-        })),
-      });
-    } catch (err: any) {
-      console.error("[GET referral/stats]", err?.message);
-      res.status(500).json({ error: "Erreur serveur" });
-    }
-  });
-
-  app.get("/api/admin/referrals", requireAuth, async (req: any, res) => {
-    try {
-      const [rows] = await pool.query(
-        `SELECT ri.id, ri.invited_email, ri.status, ri.sent_at, ri.referral_code,
-                t.id AS tailor_id,
-                u.first_name, u.last_name, u.email AS referrer_email
-         FROM referral_invites ri
-         JOIN tailors t ON t.id = ri.referrer_tailor_id
-         JOIN users u ON u.id = t.user_id
-         ORDER BY ri.sent_at DESC LIMIT 500`
-      ) as any[];
-      res.json(Array.isArray(rows) ? rows : []);
-    } catch (err: any) {
-      console.error("[GET admin/referrals]", err?.message);
-      res.status(500).json({ error: "Erreur serveur" });
-    }
-  });
-
-// ── Notifications ──────────────────────────────────────────────────────────
-
-  app.get("/api/notifications", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const [rows] = await pool.query(
-        `SELECT id, user_id, type, title, message, is_read, created_at
-         FROM notifications WHERE user_id = ?
-         ORDER BY is_read ASC, created_at DESC
-         LIMIT 50`,
-        [userId]
-      ) as any[];
-      const notifs = Array.isArray(rows) ? rows : [];
-      res.json(notifs.map((n: any) => ({
-        id: n.id,
-        userId: n.user_id,
-        type: n.type,
-        title: n.title,
-        message: n.message,
-        isRead: !!n.is_read,
-        createdAt: n.created_at,
-      })));
-    } catch (error) {
-      console.error("Failed to fetch notifications:", error);
-      res.status(500).json({ error: "Failed to fetch notifications" });
-    }
-  });
-
-  app.patch("/api/notifications/:id/read", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      await pool.query(
-        "UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?",
-        [req.params.id, userId]
-      );
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Failed to mark notification as read:", error);
-      res.status(500).json({ error: "Failed to mark as read" });
-    }
-  });
-
-  app.patch("/api/notifications/read-all", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      await pool.query(
-        "UPDATE notifications SET is_read = 1 WHERE user_id = ?",
-        [userId]
-      );
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Failed to mark all notifications as read:", error);
-      res.status(500).json({ error: "Failed to mark all as read" });
-    }
-  });
-
-  // ── Feature 2: Admin Dossier Validation ───────────────────────────────────
-
-  app.get("/api/admin/dossiers", requireAdmin, async (_req, res) => {
-    try {
-      const [rows] = await pool.query(
-        `SELECT t.id, t.siret, t.kbis_url, t.kbis_expiry_date, t.id_card_url,
-                t.rc_pro_url, t.iban_rib, t.dossier_status, t.dossier_rejection_reason,
-                u.email, u.first_name, u.last_name, u.phone
-         FROM tailors t
-         INNER JOIN users u ON t.user_id = u.id
-         ORDER BY t.created_at DESC`
-      ) as any[];
-      const tailorList = Array.isArray(rows) ? rows : [];
-      res.json(tailorList.map((t: any) => ({
-        id: t.id,
-        siret: t.siret,
-        kbisUrl: t.kbis_url,
-        kbisExpiryDate: t.kbis_expiry_date,
-        idCardUrl: t.id_card_url,
-        rcProUrl: t.rc_pro_url,
-        ibanRib: t.iban_rib,
-        dossierStatus: t.dossier_status || "pending",
-        dossierRejectionReason: t.dossier_rejection_reason,
-        email: t.email,
-        firstName: t.first_name,
-        lastName: t.last_name,
-        phone: t.phone,
-      })));
-    } catch (error) {
-      console.error("Failed to fetch dossiers:", error);
-      res.status(500).json({ error: "Failed to fetch dossiers" });
-    }
-  });
-
-  app.patch("/api/admin/dossiers/:tailorId", requireAdmin, async (req, res) => {
-    try {
-      const { tailorId } = req.params;
-      const { siret, kbisExpiryDate, action, rejectionReason } = req.body;
-
-      const [tailorRows] = await pool.query(
-        "SELECT t.id, t.user_id FROM tailors t WHERE t.id = ?",
-        [tailorId]
-      ) as any[];
-      const tailorRow = Array.isArray(tailorRows) && tailorRows[0] ? tailorRows[0] : null;
-      if (!tailorRow) return res.status(404).json({ error: "Tailor not found" });
-
-      const [userRows] = await pool.query(
-        "SELECT id, email, first_name, last_name, phone FROM users WHERE id = ?",
-        [tailorRow.user_id]
-      ) as any[];
-      const userRow = Array.isArray(userRows) && userRows[0] ? userRows[0] : null;
-      if (!userRow) return res.status(404).json({ error: "User not found" });
-
-      const userName = [userRow.first_name, userRow.last_name].filter(Boolean).join(" ") || userRow.email;
-
-      if (action === "validate") {
-        if (siret && kbisExpiryDate) {
-          await pool.query(
-            "UPDATE tailors SET dossier_status = 'validated', siret = ?, kbis_expiry_date = ?, is_verified = 1 WHERE id = ?",
-            [siret, kbisExpiryDate, tailorId]
-          );
-        } else if (siret) {
-          await pool.query(
-            "UPDATE tailors SET dossier_status = 'validated', siret = ?, is_verified = 1 WHERE id = ?",
-            [siret, tailorId]
-          );
-        } else if (kbisExpiryDate) {
-          await pool.query(
-            "UPDATE tailors SET dossier_status = 'validated', kbis_expiry_date = ?, is_verified = 1 WHERE id = ?",
-            [kbisExpiryDate, tailorId]
-          );
-        } else {
-          await pool.query(
-            "UPDATE tailors SET dossier_status = 'validated', is_verified = 1 WHERE id = ?",
-            [tailorId]
-          );
-        }
-
-        // Bug #2 fix: effacer toute raison de rejet précédente lors d'une validation
-        await pool.query(
-          "UPDATE tailors SET dossier_rejection_reason = NULL WHERE id = ?",
-          [tailorId]
-        );
-
-        // Bug #3 fix: logger si l'envoi échoue
-        const emailValidated = await sendDossierValidatedEmail(userRow.email, userName);
-        if (!emailValidated) console.error(`[DOSSIER] Email validation non envoyé à ${userRow.email}`);
-
-        await createNotification(
-          tailorRow.user_id,
-          "dossier_validated",
-          "Dossier validé",
-          "Votre dossier professionnel a été validé par SEAMLIER."
-        );
-
-        if (userRow.phone) {
-          const smsValidated = await sendSms(userRow.phone, `SEAMLIER : Votre dossier professionnel a été validé. Félicitations ${userName} !`);
-          if (!smsValidated) console.error(`[DOSSIER] SMS validation non envoyé à ${userRow.phone}`);
-        }
-      } else if (action === "reject") {
-        // Bug #1 fix: réinitialiser is_verified lors d'un rejet
-        await pool.query(
-          "UPDATE tailors SET dossier_status = 'rejected', dossier_rejection_reason = ?, is_verified = 0 WHERE id = ?",
-          [rejectionReason || null, tailorId]
-        );
-
-        // Bug #3 fix: logger si l'envoi échoue
-        const emailRejected = await sendDossierRejectedEmail(userRow.email, userName, rejectionReason || "");
-        if (!emailRejected) console.error(`[DOSSIER] Email rejet non envoyé à ${userRow.email}`);
-
-        await createNotification(
-          tailorRow.user_id,
-          "dossier_rejected",
-          "Dossier à compléter",
-          `Votre dossier n'a pas pu être validé : ${rejectionReason || "Documents manquants ou illisibles."}`
-        );
-
-        if (userRow.phone) {
-          const smsRejected = await sendSms(userRow.phone, `SEAMLIER : Votre dossier requiert des corrections. Connectez-vous pour plus d'informations.`);
-          if (!smsRejected) console.error(`[DOSSIER] SMS rejet non envoyé à ${userRow.phone}`);
-        }
-      } else {
-        return res.status(400).json({ error: "Action invalide. Utilisez 'validate' ou 'reject'." });
-      }
-
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Failed to update dossier:", error);
-      res.status(500).json({ error: "Failed to update dossier" });
-    }
-  });
-
-  // ── Litiges ────────────────────────────────────────────────────────────────
-
-
-  app.post("/api/admin/disputes", requireAdmin, async (req: any, res) => {
-    try {
-      const { projectId, reason } = req.body;
-      if (!projectId || !reason?.trim()) {
-        return res.status(400).json({ error: "projectId et reason requis" });
-      }
-      const [projectRows] = await pool.query(
-        "SELECT id, client_id FROM projects WHERE id = ?", [projectId]
-      ) as any[];
-      const project = Array.isArray(projectRows) && projectRows[0] ? projectRows[0] : null;
-      if (!project) return res.status(404).json({ error: "Projet introuvable" });
-      const [existing] = await pool.query(
-        "SELECT id FROM disputes WHERE project_id = ? AND status = 'open'", [projectId]
-      ) as any[];
-      if (Array.isArray(existing) && existing.length > 0) {
-        return res.status(409).json({ error: "Un litige est déjà ouvert pour ce projet" });
-      }
-      const id = crypto.randomUUID();
-      await pool.query(
-        "INSERT INTO disputes (id, project_id, client_id, reason, status) VALUES (?, ?, ?, ?, 'open')",
-        [id, projectId, project.client_id, reason.trim()]
-      );
-      await createNotification(project.client_id, "dispute_opened", "Litige ouvert",
-        "L'équipe SEAMLiER a ouvert un litige sur votre projet.");
-      res.status(201).json({ id });
-    } catch (error) {
-      console.error("admin dispute error:", error);
-      res.status(500).json({ error: "Failed to open dispute" });
-    }
-  });
-  app.post("/api/disputes", requireAuth, async (req: any, res) => {
-    try {
-      const clientId = req.authUserId;
-      const { projectId, reason } = req.body;
-      if (!projectId || !reason?.trim()) {
-        return res.status(400).json({ error: "projectId et reason requis" });
-      }
-      const [projectRows] = await pool.query(
-        "SELECT id, client_id FROM projects WHERE id = ?",
-        [projectId]
-      ) as any[];
-      const project = Array.isArray(projectRows) && projectRows[0] ? projectRows[0] : null;
-      if (!project) return res.status(404).json({ error: "Projet introuvable" });
-      if (project.client_id !== clientId) return res.status(403).json({ error: "Non autorisé" });
-
-      const [existing] = await pool.query(
-        "SELECT id FROM disputes WHERE project_id = ? AND client_id = ? AND status = 'open'",
-        [projectId, clientId]
-      ) as any[];
-      if (Array.isArray(existing) && existing.length > 0) {
-        return res.status(409).json({ error: "Un litige est déjà ouvert pour ce projet" });
-      }
-
-      const id = crypto.randomUUID();
-      await pool.query(
-        "INSERT INTO disputes (id, project_id, client_id, reason, status) VALUES (?, ?, ?, ?, 'open')",
-        [id, projectId, clientId, reason.trim()]
-      );
-      await createNotification(
-        clientId,
-        "dispute_opened",
-        "Litige signalé",
-        "Votre signalement a bien été enregistré. L'équipe SEAMLIER vous répondra sous 48h."
-      );
-      res.status(201).json({ id });
-    } catch (error) {
-      console.error("Failed to open dispute:", error);
-      res.status(500).json({ error: "Failed to open dispute" });
-    }
-  });
-
-  app.get("/api/admin/disputes", requireAdmin, async (_req, res) => {
-    try {
-      const [rows] = await pool.query(`
-        SELECT d.id, d.project_id, d.reason, d.status, d.admin_note,
-               d.stripe_refund_id, d.created_at, d.resolved_at,
-               p.title AS project_title, p.stripe_payment_intent_id, p.amount_total,
-               u.email AS client_email, u.first_name AS client_first, u.last_name AS client_last,
-               tu.email AS tailor_email, tu.first_name AS tailor_first, tu.last_name AS tailor_last
-        FROM disputes d
-        JOIN projects p ON p.id = d.project_id
-        JOIN users u ON u.id = d.client_id
-        LEFT JOIN tailors t ON t.id = p.tailor_id
-        LEFT JOIN users tu ON tu.id = t.user_id
-        ORDER BY d.created_at DESC
-        LIMIT 200
-      `) as any[];
-      const disputes = (Array.isArray(rows) ? rows : []).map((r: any) => ({
-        id: r.id,
-        projectId: r.project_id,
-        projectTitle: r.project_title || "—",
-        reason: r.reason,
-        status: r.status,
-        adminNote: r.admin_note || null,
-        stripeRefundId: r.stripe_refund_id || null,
-        amountTotal: r.amount_total,
-        stripePaymentIntentId: r.stripe_payment_intent_id || null,
-        clientEmail: r.client_email,
-        clientName: [r.client_first, r.client_last].filter(Boolean).join(" ") || r.client_email,
-        tailorEmail: r.tailor_email || null,
-        tailorName: [r.tailor_first, r.tailor_last].filter(Boolean).join(" ") || r.tailor_email || "—",
-        createdAt: r.created_at ? new Date(r.created_at).toLocaleDateString("fr-FR") : "—",
-        resolvedAt: r.resolved_at ? new Date(r.resolved_at).toLocaleDateString("fr-FR") : null,
-      }));
-      res.json(disputes);
-    } catch (error) {
-      console.error("Failed to fetch disputes:", error);
-      res.status(500).json({ error: "Failed to fetch disputes" });
-    }
-  });
-
-  app.patch("/api/admin/disputes/:id", requireAdmin, async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { action, adminNote, refundAmount } = req.body;
-      if (!["approve", "reject"].includes(action)) {
-        return res.status(400).json({ error: "Action invalide. Utilisez 'approve' ou 'reject'." });
-      }
-
-      const [disputeRows] = await pool.query(
-        "SELECT d.*, p.stripe_payment_intent_id, p.amount_total, u.email, u.first_name, u.last_name FROM disputes d JOIN projects p ON p.id = d.project_id JOIN users u ON u.id = d.client_id WHERE d.id = ?",
-        [id]
-      ) as any[];
-      const dispute = Array.isArray(disputeRows) && disputeRows[0] ? disputeRows[0] : null;
-      if (!dispute) return res.status(404).json({ error: "Litige introuvable" });
-      if (dispute.status !== "open") return res.status(409).json({ error: "Ce litige est déjà résolu" });
-
-      let stripeRefundId: string | null = null;
-
-      if (action === "approve" && dispute.stripe_payment_intent_id) {
-        try {
-          const stripe = process.env.STRIPE_SECRET_KEY
-            ? new (await import("stripe")).default(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-04-10" as any })
-            : null;
-          if (stripe) {
-            const amountCents = refundAmount
-              ? Math.round(refundAmount * 100)
-              : (dispute.amount_total ?? undefined);
-            const refund = await stripe.refunds.create({
-              payment_intent: dispute.stripe_payment_intent_id,
-              ...(amountCents ? { amount: amountCents } : {}),
-            });
-            stripeRefundId = refund.id;
-          }
-        } catch (stripeErr) {
-          console.error("[Dispute] Stripe refund failed:", stripeErr);
-        }
-      }
-
-      await pool.query(
-        `UPDATE disputes SET status = ?, admin_note = ?, stripe_refund_id = ?, resolved_at = NOW() WHERE id = ?`,
-        [action === "approve" ? "approved" : "rejected", adminNote || null, stripeRefundId, id]
-      );
-
-      const clientName = [dispute.first_name, dispute.last_name].filter(Boolean).join(" ") || dispute.email;
-      if (action === "approve") {
-        await createNotification(
-          dispute.client_id,
-          "dispute_approved",
-          "Litige résolu — Remboursement en cours",
-          `Votre litige a été approuvé. ${stripeRefundId ? "Le remboursement a été initié." : "Notre équipe vous contactera pour le remboursement."}`
-        );
-      } else {
-        await createNotification(
-          dispute.client_id,
-          "dispute_rejected",
-          "Litige clôturé",
-          adminNote || "Votre litige a été examiné et clôturé par notre équipe."
-        );
-      }
-
-      res.json({ success: true, stripeRefundId });
-    } catch (error) {
-      console.error("Failed to resolve dispute:", error);
-      res.status(500).json({ error: "Failed to resolve dispute" });
-    }
-  });
-
-  // ── Feature 6: RGPD Routes ─────────────────────────────────────────────────
-
-  app.get("/api/user/export-data", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-
-      const [userRows] = await pool.query(
-        "SELECT id, email, first_name, last_name, phone, role, location, created_at FROM users WHERE id = ?",
-        [userId]
-      ) as any[];
-      const user = Array.isArray(userRows) && userRows[0] ? userRows[0] : null;
-
-      const [measureRows] = await pool.query(
-        "SELECT * FROM measurements WHERE user_id = ?",
-        [userId]
-      ) as any[];
-
-      const [projectRows] = await pool.query(
-        `SELECT id, title, description, clothing_type, status, current_step, created_at, updated_at
-         FROM projects WHERE client_id = ?`,
-        [userId]
-      ) as any[];
-
-      const [appointmentRows] = await pool.query(
-        "SELECT id, type, scheduled_at, status, notes FROM appointments WHERE client_id = ?",
-        [userId]
-      ) as any[];
-
-      const [reviewRows] = await pool.query(
-        "SELECT id, rating, comment, created_at FROM reviews WHERE user_id = ?",
-        [userId]
-      ) as any[];
-
-      const [convRows] = await pool.query(
-        `SELECT c.id, c.last_message_preview, c.last_message_at
-         FROM conversations c
-         WHERE c.participant1_id = ? OR c.participant2_id = ?`,
-        [userId, userId]
-      ) as any[];
-
-      const convIds = (Array.isArray(convRows) ? convRows : []).map((c: any) => c.id);
-      let messageRows: any[] = [];
-      if (convIds.length > 0) {
-        const placeholders = convIds.map(() => "?").join(",");
-        const [msgRows] = await pool.query(
-          `SELECT id, content, sent_at FROM messages WHERE sender_id = ? AND conversation_id IN (${placeholders})`,
-          [userId, ...convIds]
-        ) as any[];
-        messageRows = Array.isArray(msgRows) ? msgRows : [];
-      }
-
-      res.json({
-        exportedAt: new Date().toISOString(),
-        user,
-        measurements: Array.isArray(measureRows) ? measureRows : [],
-        projects: Array.isArray(projectRows) ? projectRows : [],
-        appointments: Array.isArray(appointmentRows) ? appointmentRows : [],
-        reviews: Array.isArray(reviewRows) ? reviewRows : [],
-        messages: messageRows,
-      });
-    } catch (error) {
-      console.error("Failed to export user data:", error);
-      res.status(500).json({ error: "Failed to export data" });
-    }
-  });
-
-  app.delete("/api/user/account", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-
-      await pool.query(
-        `UPDATE users SET
-          email = CONCAT('deleted_', SUBSTRING(id, 1, 8), '@seamlier.fr'),
-          first_name = 'Utilisateur',
-          last_name = 'Supprimé',
-          phone = NULL,
-          profile_image_url = NULL,
-          password = '<anonymized>'
-         WHERE id = ?`,
-        [userId]
-      );
-
-      await pool.query(
-        "DELETE FROM user_preferences WHERE user_id = ?",
-        [userId]
-      );
-
-      // Destroy session
-      if (req.session) {
-        req.session.destroy(() => {});
-      }
-
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Failed to delete account:", error);
-      res.status(500).json({ error: "Failed to delete account" });
-    }
-  });
-
-  // ── Vue artisan : litiges sur ses projets ─────────────────────────────────
-  app.get("/api/tailors/disputes", requireAuth, async (req: any, res) => {
-    try {
-      const userId = req.authUserId;
-      const tailor = await storage.getTailorByUserId(userId);
-      if (!tailor) return res.status(403).json({ error: "Réservé aux artisans" });
-      const [rows] = await pool.query(`
-        SELECT d.id, d.project_id, d.reason, d.status, d.admin_note,
-               d.created_at, d.resolved_at,
-               p.title AS project_title,
-               u.email AS client_email, u.first_name AS client_first, u.last_name AS client_last
-        FROM disputes d
-        JOIN projects p ON p.id = d.project_id AND p.tailor_id = ?
-        JOIN users u ON u.id = d.client_id
-        ORDER BY d.created_at DESC
-        LIMIT 50
-      `, [tailor.id]) as any[];
-      res.json((Array.isArray(rows) ? rows : []).map((r: any) => ({
-        id: r.id,
-        projectId: r.project_id,
-        projectTitle: r.project_title || "—",
-        reason: r.reason,
-        status: r.status,
-        adminNote: r.admin_note || null,
-        clientName: [r.client_first, r.client_last].filter(Boolean).join(" ") || r.client_email,
-        clientEmail: r.client_email,
-        createdAt: r.created_at ? new Date(r.created_at).toLocaleDateString("fr-FR") : "—",
-        resolvedAt: r.resolved_at ? new Date(r.resolved_at).toLocaleDateString("fr-FR") : null,
-      })));
-    } catch (err) {
-      console.error("tailors/disputes error:", err);
-      res.status(500).json({ error: "Erreur serveur" });
-    }
-  });
-
   return httpServer;
 }
 
 function renderVerificationPage(success: boolean, message: string): string {
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vérification Email - SEAMLIER</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Inter,sans-serif;background:#faf9f7;display:flex;align-items:center;justify-content:center;min-height:100vh}.card{background:#fff;border-radius:16px;padding:48px;max-width:420px;width:90%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}.icon{width:64px;height:64px;border-radius:50%;margin:0 auto 24px;display:flex;align-items:center;justify-content:center;font-size:28px}.success{background:#dcfce7;color:#16a34a}.error{background:#fee2e2;color:#dc2626}h1{font-family:'Playfair Display',serif;color:#722F37;font-size:24px;margin-bottom:12px}p{color:#6b7280;line-height:1.6;margin-bottom:24px}a{display:inline-block;background:#722F37;color:#fff;text-decoration:none;padding:12px 32px;border-radius:8px;font-weight:600;transition:background .2s}a:hover{background:#5a252c}</style></head><body><div class="card"><div class="icon ${success ? 'success' : 'error'}">${success ? '✓' : '✕'}</div><h1>${success ? 'Email vérifié !' : 'Erreur de vérification'}</h1><p>${message}</p><a href="/connexion">Se connecter</a></div></body></html>`;
 }
+
+  app.get("/api/favorites", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const favs = await db.select().from(favorites).where(eq(favorites.userId, userId));
+      res.json(favs);
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
+  });
+  app.post("/api/favorites/:tailorId", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailorId = req.params.tailorId;
+      const { v4: uuidv4 } = require("uuid");
+      await db.insert(favorites).values({ id: uuidv4(), userId, tailorId }).onDuplicateKeyUpdate({ set: { userId } });
+      res.json({ ok: true });
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
+  });
+  app.delete("/api/favorites/:tailorId", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailorId = req.params.tailorId;
+      const { and } = require("drizzle-orm");
+      await db.delete(favorites).where(and(eq(favorites.userId, userId), eq(favorites.tailorId, tailorId)));
+      res.json({ ok: true });
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
+  });
+
+  registerStripeRoutes(app);
 }
-// Dim 17 mai 2026 22:33:19 CEST
