@@ -11,7 +11,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { renderMessageContent } from "@/lib/message-renderer";
 import type { ConversationWithParticipant, MessageWithSender } from "@shared/schema";
-import { io as socketIO } from "socket.io-client";
 
 export default function Messages() {
   const { user } = useAuth();
@@ -23,13 +22,9 @@ export default function Messages() {
   const searchStr = useSearch();
   const tailorParam = new URLSearchParams(searchStr).get("tailor");
 
-  const socketRef = useRef<ReturnType<typeof socketIO> | null>(null);
-  const [socketConnected, setSocketConnected] = useState(false);
-
   const { data: conversations, isLoading: conversationsLoading } = useQuery<ConversationWithParticipant[]>({
     queryKey: ["/api/conversations"],
-    // Fallback polling — reduced to 30s when socket is active
-    refetchInterval: socketConnected ? 30000 : 5000,
+    refetchInterval: 5000,
   });
 
   const { data: messages, isLoading: messagesLoading } = useQuery<MessageWithSender[]>({
@@ -40,41 +35,8 @@ export default function Messages() {
       if (!res.ok) throw new Error("Failed to fetch messages");
       return res.json();
     },
-    // Fallback polling — reduced to 30s when socket is active
-    refetchInterval: socketConnected ? 30000 : 3000,
+    refetchInterval: 3000,
   });
-
-  // Socket.io — persistent connection
-  useEffect(() => {
-    const socket = socketIO({ path: "/socket.io", withCredentials: true });
-    socketRef.current = socket;
-    socket.on("connect", () => setSocketConnected(true));
-    socket.on("disconnect", () => setSocketConnected(false));
-    socket.on("connect_error", () => setSocketConnected(false));
-    return () => {
-      socket.disconnect();
-      socketRef.current = null;
-    };
-  }, []);
-
-  // Socket.io — join/leave conversation room and listen for new messages
-  useEffect(() => {
-    const socket = socketRef.current;
-    if (!socket || !selectedConversationId) return;
-    socket.emit("join_conversation", selectedConversationId);
-    const handleNewMessage = (message: MessageWithSender) => {
-      queryClient.setQueryData<MessageWithSender[]>(
-        ["/api/messages", selectedConversationId],
-        (old = []) => old.find(m => m.id === message.id) ? old : [...old, message]
-      );
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-    };
-    socket.on("new_message", handleNewMessage);
-    return () => {
-      socket.emit("leave_conversation", selectedConversationId);
-      socket.off("new_message", handleNewMessage);
-    };
-  }, [selectedConversationId, socketConnected]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -94,17 +56,20 @@ export default function Messages() {
       .catch(() => {});
   }, [tailorParam, user?.id]);
 
+  // Mark as read immediately when conversation is selected (badge disappears instantly)
+  useEffect(() => {
+    if (!selectedConversationId || !user?.id) return;
+    apiRequest("PATCH", `/api/messages/${selectedConversationId}/read`, {})
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/conversations/unread-count"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      })
+      .catch(() => {});
+  }, [selectedConversationId]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    if (selectedConversationId && user?.id) {
-      apiRequest("PATCH", `/api/messages/${selectedConversationId}/read`, {})
-        .then(() => {
-          queryClient.invalidateQueries({ queryKey: ["/api/conversations/unread-count"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-        })
-        .catch(() => {});
-    }
-  }, [messages, selectedConversationId]);
+  }, [messages]);
 
   const selectedConversation = conversations?.find(c => c.id === selectedConversationId);
 
@@ -186,26 +151,7 @@ export default function Messages() {
                 {conversations.map((conversation) => (
                   <button
                     key={conversation.id}
-                    onClick={() => {
-                      setSelectedConversationId(conversation.id);
-                      if (conversation.unreadCount > 0) {
-                        // Optimistic: zero out badge instantly
-                        queryClient.setQueryData<ConversationWithParticipant[]>(
-                          ["/api/conversations"],
-                          (old) => old?.map(c => c.id === conversation.id ? { ...c, unreadCount: 0 } : c) ?? []
-                        );
-                        queryClient.setQueryData<{ count: number }>(
-                          ["/api/conversations/unread-count"],
-                          (old) => ({ count: Math.max(0, (old?.count || 0) - (conversation.unreadCount || 0)) })
-                        );
-                        apiRequest("PATCH", `/api/messages/${conversation.id}/read`, {})
-                          .then(() => {
-                            queryClient.invalidateQueries({ queryKey: ["/api/conversations/unread-count"] });
-                            queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-                          })
-                          .catch(() => {});
-                      }
-                    }}
+                    onClick={() => setSelectedConversationId(conversation.id)}
                     className={cn(
                       "w-full flex items-center gap-3 p-4 hover-elevate transition-colors text-left border-b border-border",
                       selectedConversationId === conversation.id && "bg-white"
@@ -327,15 +273,20 @@ export default function Messages() {
                           data-testid={`message-${message.id}`}
                         >
                           <div className="text-sm">{renderMessageContent(message.content, isSent)}</div>
-                          <p className={cn(
-                            "text-[10px] mt-1",
-                            isSent ? "text-white/70" : "text-muted-foreground"
-                          )}>
-                            {message.sentAt ? new Date(message.sentAt).toLocaleTimeString('fr-FR', { 
-                              hour: '2-digit', 
-                              minute: '2-digit' 
-                            }) : ""}
-                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <p className={cn(
+                              "text-[10px]",
+                              isSent ? "text-white/70" : "text-muted-foreground"
+                            )}>
+                              {message.sentAt ? new Date(message.sentAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ""}
+                            </p>
+                            {isSent && message.isRead === false && (
+                              <span className="w-2 h-2 rounded-full bg-white/50 inline-block" title="Non lu" />
+                            )}
+                            {isSent && message.isRead === true && (
+                              <span className="w-2 h-2 rounded-full bg-blue-300 inline-block" title="Lu" />
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
