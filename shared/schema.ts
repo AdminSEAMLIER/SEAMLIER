@@ -1,4 +1,4 @@
-import { mysqlTable, text, varchar, int, boolean, float, timestamp, json, bigint, date, uniqueIndex } from "drizzle-orm/mysql-core";
+import { mysqlTable, text, varchar, int, boolean, float, timestamp, json, bigint, date } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -30,7 +30,6 @@ export const users = mysqlTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
   stripeAccountId: varchar("stripe_account_id", { length: 255 }),
   stripeOnboarded: boolean("stripe_onboarded").default(false),
-  adminNotes: text("admin_notes"),
 });
 export const tailors = mysqlTable("tailors", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -47,18 +46,8 @@ export const tailors = mysqlTable("tailors", {
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
   stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
   subscriptionCurrentPeriodEnd: bigint("subscription_current_period_end", { mode: "number" }),
-  siret: varchar("siret", { length: 20 }),
-  kbisUrl: text("kbis_url"),
-  kbisExpiryDate: date("kbis_expiry_date"),
-  idCardUrl: text("id_card_url"),
-  rcProUrl: text("rc_pro_url"),
-  ibanRib: text("iban_rib"),
-  dossierStatus: varchar("dossier_status", { length: 20 }).default("pending"),
-  dossierRejectionReason: text("dossier_rejection_reason"),
-  languages: json("languages").$type<string[]>(),
-  priceMin: float("price_min"),
-  priceMax: float("price_max"),
-  referralCode: varchar("referral_code", { length: 16 }),
+  latitude: float("latitude"),
+  longitude: float("longitude"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -91,7 +80,6 @@ export const reviews = mysqlTable("reviews", {
   userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id),
   rating: int("rating").notNull(),
   comment: text("comment"),
-  isApproved: boolean("is_approved").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -156,23 +144,8 @@ export const projects = mysqlTable("projects", {
   isUrgent: boolean("is_urgent").default(false),
   fabricDepositDate: date("fabric_deposit_date"),
   fabricDepositReminderSent: boolean("fabric_deposit_reminder_sent").default(false),
-  deliveryDate: date("delivery_date"),
-  eventId: varchar("event_id", { length: 36 }),
-  contractUrl: text("contract_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const disputes = mysqlTable("disputes", {
-  id: varchar("id", { length: 36 }).primaryKey(),
-  projectId: varchar("project_id", { length: 36 }).notNull(),
-  clientId: varchar("client_id", { length: 36 }).notNull(),
-  reason: text("reason").notNull(),
-  status: varchar("status", { length: 20 }).default("open"),
-  adminNote: text("admin_note"),
-  stripeRefundId: varchar("stripe_refund_id", { length: 255 }),
-  createdAt: timestamp("created_at").defaultNow(),
-  resolvedAt: timestamp("resolved_at"),
 });
 
 export const appointments = mysqlTable("appointments", {
@@ -261,14 +234,6 @@ export const events = mysqlTable("events", {
   organizerId: varchar("organizer_id", { length: 36 }).notNull().references(() => users.id),
   inviteCode: varchar("invite_code", { length: 10 }).notNull().unique(),
   description: text("description"),
-  validationCode: varchar("validation_code", { length: 10 }),
-  registrationDeadline: date("registration_deadline"),
-  status: varchar("status", { length: 50 }).default("pending_tailor_approval"),
-  maxParticipants: int("max_participants"),
-  pricePerPerson: float("price_per_person"),
-  priceGroup: float("price_group"),
-  deliveryDate: date("delivery_date"),
-  inspirationPhotos: json("inspiration_photos").$type<string[]>(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -287,33 +252,12 @@ export const adminSettings = mysqlTable("admin_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const notifications = mysqlTable("notifications", {
-  id: varchar("id", { length: 36 }).primaryKey(),
-  userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id),
-  type: varchar("type", { length: 50 }).notNull(),
-  title: varchar("title", { length: 255 }).notNull(),
-  message: text("message"),
-  isRead: boolean("is_read").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const tailorWorkingHours = mysqlTable("tailor_working_hours", {
-  id: varchar("id", { length: 36 }).primaryKey(),
-  tailorId: varchar("tailor_id", { length: 36 }).notNull().references(() => tailors.id),
-  dayOfWeek: int("day_of_week").notNull(),
-  startTime: varchar("start_time", { length: 10 }),
-  endTime: varchar("end_time", { length: 10 }),
-  isClosed: boolean("is_closed").default(false),
-}, (t) => ({
-  tailorDayUnique: uniqueIndex("tailor_working_hours_tailor_day_unique").on(t.tailorId, t.dayOfWeek),
-}));
-
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertTailorSchema = createInsertSchema(tailors).omit({ id: true, createdAt: true });
 export const insertPortfolioItemSchema = createInsertSchema(portfolioItems).omit({ id: true, createdAt: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true });
-export const insertReviewSchema = createInsertSchema(reviews).omit({ id: true, createdAt: true, isApproved: true });
+export const insertReviewSchema = createInsertSchema(reviews).omit({ id: true, createdAt: true });
 export const insertConversationSchema = createInsertSchema(conversations).omit({ id: true, createdAt: true });
 export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, sentAt: true });
 export const insertMeasurementsSchema = createInsertSchema(measurements).omit({ id: true, updatedAt: true });
@@ -324,8 +268,6 @@ export const insertUserPreferencesSchema = createInsertSchema(userPreferences).o
 export const insertMagazineArticleSchema = createInsertSchema(magazineArticles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertAdminSettingSchema = createInsertSchema(adminSettings).omit({ id: true, updatedAt: true });
 export const insertTailorClientDataSchema = createInsertSchema(tailorClientData).omit({ id: true, updatedAt: true });
-export const insertTailorWorkingHoursSchema = createInsertSchema(tailorWorkingHours).omit({ id: true });
-export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
 export const insertEventSchema = createInsertSchema(events).omit({ id: true, createdAt: true });
 export const insertEventParticipantSchema = createInsertSchema(eventParticipants).omit({ id: true, joinedAt: true });
 
@@ -361,10 +303,6 @@ export type InsertAdminSetting = z.infer<typeof insertAdminSettingSchema>;
 export type AdminSetting = typeof adminSettings.$inferSelect;
 export type InsertTailorClientData = z.infer<typeof insertTailorClientDataSchema>;
 export type TailorClientData = typeof tailorClientData.$inferSelect;
-export type InsertTailorWorkingHours = z.infer<typeof insertTailorWorkingHoursSchema>;
-export type TailorWorkingHours = typeof tailorWorkingHours.$inferSelect;
-export type InsertNotification = z.infer<typeof insertNotificationSchema>;
-export type Notification = typeof notifications.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type Event = typeof events.$inferSelect;
 export type InsertEventParticipant = z.infer<typeof insertEventParticipantSchema>;
@@ -378,6 +316,24 @@ export type ProductWithTailor = Product & { tailor: TailorWithUser };
 export type ReviewWithUser = Review & { user: User };
 export type ConversationWithParticipant = Conversation & { otherParticipant: User; unreadCount: number; otherParticipantTailorId?: string | null };
 export type MessageWithSender = Message & { sender: User };
-export type ProjectWithClient = Project & { client: User | null };
-export type ProjectWithTailor = Project & { tailor: Tailor | null; tailorUser: User | null };
+export type ProjectWithClient = Project & { client: User };
+export type ProjectWithTailor = Project & { tailor: Tailor; tailorUser: User };
 export type AppointmentWithClient = Appointment & { client: User };
+
+export const pushSubscriptions = mysqlTable("push_subscriptions", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+
+export const favorites = mysqlTable("favorites", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  tailorId: varchar("tailor_id", { length: 36 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+export type Favorite = typeof favorites.$inferSelect;
