@@ -2,35 +2,12 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
-import { VitePWA } from "vite-plugin-pwa";
+
 
 export default defineConfig({
   plugins: [
     react(),
     runtimeErrorOverlay(),
-    VitePWA({
-      disable: true,
-      registerType: "autoUpdate",
-      includeAssets: ["favicon.png", "push-handler.js"],
-      workbox: {
-        importScripts: ["/push-handler.js"],
-        navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/api\//],
-      },
-      manifest: {
-        name: "Seamlier",
-        short_name: "Seamlier",
-        description: "Trouvez les meilleurs couturiers de votre région",
-        theme_color: "#601B28",
-        background_color: "#ffffff",
-        display: "standalone",
-        start_url: "/",
-        icons: [
-          { src: "/favicon.png", sizes: "192x192", type: "image/png" },
-          { src: "/favicon.png", sizes: "512x512", type: "image/png" }
-        ]
-      }
-    }),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [
