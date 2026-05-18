@@ -233,8 +233,10 @@ export const events = mysqlTable("events", {
   eventDate: date("event_date").notNull(),
   tailorId: varchar("tailor_id", { length: 36 }).notNull().references(() => tailors.id),
   organizerId: varchar("organizer_id", { length: 36 }).notNull().references(() => users.id),
-  inviteCode: varchar("invite_code", { length: 10 }).notNull().unique(),
+  inviteCode: varchar("invite_code", { length: 20 }).notNull().unique(),
   description: text("description"),
+  registrationDeadline: date("registration_deadline"),
+  deliveryDate: date("delivery_date"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -269,7 +271,12 @@ export const insertUserPreferencesSchema = createInsertSchema(userPreferences).o
 export const insertMagazineArticleSchema = createInsertSchema(magazineArticles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertAdminSettingSchema = createInsertSchema(adminSettings).omit({ id: true, updatedAt: true });
 export const insertTailorClientDataSchema = createInsertSchema(tailorClientData).omit({ id: true, updatedAt: true });
-export const insertEventSchema = createInsertSchema(events).omit({ id: true, createdAt: true });
+export const insertEventSchema = createInsertSchema(events, {
+  eventDate: z.string().min(1),
+  registrationDeadline: z.string().optional().nullable(),
+  deliveryDate: z.string().optional().nullable(),
+  inviteCode: z.string().max(20),
+}).omit({ id: true, createdAt: true });
 export const insertEventParticipantSchema = createInsertSchema(eventParticipants).omit({ id: true, joinedAt: true });
 
 // Types
