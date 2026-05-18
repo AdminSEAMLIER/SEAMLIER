@@ -9,6 +9,7 @@ export default defineConfig({
     react(),
     runtimeErrorOverlay(),
     VitePWA({
+      disable: process.env.RAILWAY_ENVIRONMENT !== undefined,
       registerType: "autoUpdate",
       includeAssets: ["favicon.png", "push-handler.js"],
       workbox: {
