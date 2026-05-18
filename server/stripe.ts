@@ -1,13 +1,10 @@
 import type { Express, Response } from "express";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { pool } from "./db";
-import { sendPaymentConfirmationEmail, sendAdminChargebackAlertEmail, sendSubscriptionPaymentFailedEmail, sendArtisanPaymentReceivedEmail } from "./email";
-import { sendPushNotification } from "./push";
 
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
-export const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || '';
-const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2024-04-10" as any });
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-04-10" as any })
+  : null;
 const FRAIS = 0.10;
 const COMM = 0.15;
 
@@ -42,58 +39,34 @@ export function registerStripeRoutes(app: Express) {
       if (event.type === "payment_intent.succeeded") {
         const pi = event.data.object as Stripe.PaymentIntent;
         const projectId = pi.metadata?.projectId;
+        const epId = pi.metadata?.eventParticipantId;
         if (projectId) {
           await storage.updateProject(projectId, { paymentStatus: "paid" } as any);
           console.log(`[Stripe] Projet ${projectId} → paymentStatus = paid`);
-          try {
-            const [rows] = await pool.query(`
-              SELECT p.title, p.amount_total, p.amount_artisan, p.client_id, t.subscription_plan, t.user_id AS tailor_user_id,
-                     uc.email AS client_email, uc.first_name AS client_first, uc.last_name AS client_last,
-                     ut.email AS tailor_email, ut.first_name AS tailor_first, ut.last_name AS tailor_last
-              FROM projects p
-              JOIN users uc ON uc.id = p.client_id
-              JOIN tailors t ON t.id = p.tailor_id
-              JOIN users ut ON ut.id = t.user_id
-              WHERE p.id = ?
-              LIMIT 1
-            `, [projectId]) as any[];
-            const r = Array.isArray(rows) && rows[0] ? rows[0] : null;
-            if (r) {
-              const clientName = [r.client_first, r.client_last].filter(Boolean).join(" ") || r.client_email;
-              const tailorName = [r.tailor_first, r.tailor_last].filter(Boolean).join(" ") || "votre artisan";
-              const amount = r.amount_total ? Math.round(r.amount_total) / 100 : 0;
-              // Email confirmation to client
-              sendPaymentConfirmationEmail(r.client_email, clientName, tailorName, r.title || "Commande", amount)
-                .catch(err => console.error("[Stripe] Payment confirmation email failed:", err));
-              // Email notification to artisan
-              if (r.tailor_email) {
-                const isPro = (r.subscription_plan || "").toLowerCase() === "pro";
-                const grossAmount = r.amount_total ? Math.round(r.amount_total) / 100 : 0;
-                const artisanAmount = r.amount_artisan
-                  ? Math.round(r.amount_artisan) / 100
-                  : isPro
-                    ? Math.round(grossAmount * (1 - FRAIS) * 100) / 100
-                    : Math.round(grossAmount * (1 - FRAIS) * (1 - COMM) * 100) / 100;
-                sendArtisanPaymentReceivedEmail(r.tailor_email, tailorName, clientName, r.title || "Commande", artisanAmount)
-                  .catch(err => console.error("[Stripe] Artisan payment email failed:", err));
-                // Push to artisan: paiement reçu
-                if (r.tailor_user_id) sendPushNotification(r.tailor_user_id, "Paiement reçu !", `${clientName} a payé pour "${r.title || "Commande"}"`, "/atelier").catch(() => {});
-              }
-              // Push to client: paiement confirmé
-              if (r.client_id) sendPushNotification(r.client_id, "Paiement confirmé", `Votre paiement pour "${r.title || "Commande"}" a bien été reçu.`, "/mes-projets").catch(() => {});
-            }
-          } catch (emailErr) {
-            console.error("[Stripe] Failed to fetch project for payment email:", emailErr);
-          }
+        }
+        if (epId) {
+          const { pool } = await import("./db");
+          await pool.query(
+            `UPDATE event_participants SET payment_status = 'paid' WHERE id = ?`, [epId]
+          );
+          console.log(`[Stripe] EventParticipant ${epId} → payment_status = paid`);
         }
       }
 
       if (event.type === "payment_intent.payment_failed") {
         const pi = event.data.object as Stripe.PaymentIntent;
         const projectId = pi.metadata?.projectId;
+        const epId = pi.metadata?.eventParticipantId;
         if (projectId) {
           await storage.updateProject(projectId, { paymentStatus: "failed" } as any);
           console.log(`[Stripe] Projet ${projectId} → paymentStatus = failed`);
+        }
+        if (epId) {
+          const { pool } = await import("./db");
+          await pool.query(
+            `UPDATE event_participants SET payment_status = 'failed' WHERE id = ?`, [epId]
+          );
+          console.log(`[Stripe] EventParticipant ${epId} → payment_status = failed`);
         }
       }
 
@@ -124,78 +97,11 @@ export function registerStripeRoutes(app: Express) {
         }
       }
 
-      // Fix #4 — Chargeback Stripe → alerte email admin
-      if (event.type === "charge.dispute.created") {
-        const dispute = event.data.object as Stripe.Dispute;
-        const chargeId = typeof dispute.charge === "string" ? dispute.charge : (dispute.charge as any)?.id;
-        const amount = dispute.amount / 100;
-        const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER || "contact@seamlier.fr";
-
-        let projectInfo = "";
-        try {
-          if (chargeId) {
-            const charge = await stripe.charges.retrieve(chargeId);
-            const piId = typeof charge.payment_intent === "string" ? charge.payment_intent : (charge.payment_intent as any)?.id;
-            if (piId) {
-              const [projRows] = await pool.query(
-                "SELECT id, title FROM projects WHERE stripe_payment_intent_id = ? LIMIT 1",
-                [piId]
-              ) as any[];
-              const proj = Array.isArray(projRows) && projRows[0] ? projRows[0] : null;
-              if (proj) projectInfo = ` le projet #${proj.id} — "${proj.title}"`;
-            }
-          }
-        } catch { /* non bloquant */ }
-
-        sendAdminChargebackAlertEmail(
-          adminEmail, chargeId || "inconnu", amount,
-          (dispute as any).evidence?.customer_email_address || "inconnu",
-          dispute.reason || "non précisé",
-          projectInfo
-        ).catch(() => {});
-        console.log(`[Stripe] Chargeback reçu — charge ${chargeId} — ${amount}€ — raison: ${dispute.reason}`);
-      }
-
-      // Fix #6 — Paiement abonnement échoué → email dunning artisan
-      if (event.type === "invoice.payment_failed") {
-        const invoice = event.data.object as Stripe.Invoice;
-        const customerId = typeof invoice.customer === "string" ? invoice.customer : (invoice.customer as any)?.id;
-        if (customerId) {
-          try {
-            const [rows] = await pool.query(`
-              SELECT t.id AS tailor_id, u.email, u.first_name, u.last_name
-              FROM tailors t
-              JOIN users u ON u.id = t.user_id
-              WHERE t.stripe_customer_id = ?
-              LIMIT 1
-            `, [customerId]) as any[];
-            const r = Array.isArray(rows) && rows[0] ? rows[0] : null;
-            if (r?.email) {
-              const name = [r.first_name, r.last_name].filter(Boolean).join(" ") || r.email;
-              const amount = invoice.amount_due ? invoice.amount_due / 100 : null;
-              const nextRetryTs = (invoice as any).next_payment_attempt;
-              const nextRetry = nextRetryTs
-                ? new Date(nextRetryTs * 1000).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
-                : null;
-              sendSubscriptionPaymentFailedEmail(r.email, name, amount, nextRetry).catch(() => {});
-              console.log(`[Stripe] Paiement abonnement échoué — artisan ${r.tailor_id} (${r.email})`);
-            }
-          } catch (err) {
-            console.error("[Stripe] invoice.payment_failed handler error:", err);
-          }
-        }
-      }
-
       res.json({ received: true });
     } catch (err: any) {
       console.error("[Stripe webhook error]", err.message);
       res.status(400).send(`Webhook Error: ${err.message}`);
     }
-  });
-
-  // ── Config publique (clé publiable pour le client) ───────────────────────
-  app.get("/api/stripe/config", (_req, res: Response) => {
-    res.json({ publishableKey: STRIPE_PUBLISHABLE_KEY });
   });
 
   // ── Onboarding artisan ────────────────────────────────────────────────────
@@ -231,11 +137,9 @@ export function registerStripeRoutes(app: Express) {
   // ── Création du PaymentIntent (commandes projets) ─────────────────────────
   app.post("/api/stripe/payment/create", async (req: any, res: Response) => {
     if (!stripe) return res.status(500).json({ error: "Stripe non configuré — STRIPE_SECRET_KEY manquante" });
-    const _user = req.user as any;
-    if (!_user) return res.status(401).json({ error: "Non authentifié" });
     try {
       const { projectId, prixConfection, planArtisan } = req.body ?? {};
-      console.log("[Stripe] /payment/create reçu:", { projectId, prixConfection, planArtisan });
+      console.log("[Stripe] /payment/create reçu:", { projectId, prixConfection, planArtisan, body: req.body });
       if (!projectId) return res.status(400).json({ error: "Champ manquant : projectId" });
       if (!prixConfection) return res.status(400).json({ error: "Champ manquant : prixConfection" });
       if (!planArtisan) return res.status(400).json({ error: "Champ manquant : planArtisan" });
@@ -289,6 +193,46 @@ export function registerStripeRoutes(app: Express) {
     } catch (err: any) { res.status(500).json({ error: err.message }); }
   });
 
+  // ── Paiement participant commande groupée ─────────────────────────────────
+  app.post("/api/events/:id/pay", async (req: any, res: Response) => {
+    if (!stripe) return res.status(500).json({ error: "Stripe non configuré" });
+    try {
+      const userId = req.authUserId;
+      if (!userId) return res.status(401).json({ error: "Non authentifié" });
+      const eventId = req.params.id;
+      const [evRows] = await (await import("./db")).pool.query(
+        `SELECT e.*, t.user_id as tailor_user_id FROM events e JOIN tailors t ON t.id = e.tailor_id WHERE e.id = ?`,
+        [eventId]
+      ) as any[];
+      const event = (evRows as any[])[0];
+      if (!event) return res.status(404).json({ error: "Événement introuvable" });
+      if (!event.price_per_person) return res.status(400).json({ error: "Aucun prix par personne défini" });
+      const [epRows] = await (await import("./db")).pool.query(
+        `SELECT * FROM event_participants WHERE event_id = ? AND user_id = ?`,
+        [eventId, userId]
+      ) as any[];
+      const ep = (epRows as any[])[0];
+      if (!ep) return res.status(403).json({ error: "Vous n'êtes pas inscrit à cet événement" });
+      if (ep.payment_status === "paid") return res.json({ alreadyPaid: true });
+      const prix = parseFloat(event.price_per_person);
+      const montants = calc(prix, "starter");
+      const pi = await stripe.paymentIntents.create({
+        amount: montants.centimes.totalClient,
+        currency: "eur",
+        metadata: { eventId, eventParticipantId: ep.id, userId },
+        description: `SEAMLiER - Commande groupée ${event.name}`,
+      });
+      await (await import("./db")).pool.query(
+        `UPDATE event_participants SET payment_intent_id = ?, payment_status = 'awaiting_payment' WHERE id = ?`,
+        [pi.id, ep.id]
+      );
+      res.json({ clientSecret: pi.client_secret, montants: montants.euros });
+    } catch (err: any) {
+      console.error("[Stripe] /events/:id/pay error:", err.message);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Libération admin → virement artisan ──────────────────────────────────
   app.post("/api/stripe/transfer/admin-release/:projectId", async (req: any, res: Response) => {
     if (!stripe) return res.status(500).json({ error: "Stripe non configuré" });
@@ -296,43 +240,7 @@ export function registerStripeRoutes(app: Express) {
     if (!admin || admin.role !== "admin") return res.status(403).json({ error: "Accès refusé" });
     try {
       const { projectId } = req.params;
-
-      // Fix #1 + #2 + #3 : récupérer toutes les données depuis la BDD
-      const [rows] = await pool.query(`
-        SELECT p.stripe_transfer_id, p.client_confirmed, p.amount_artisan,
-               u.stripe_account_id
-        FROM projects p
-        JOIN tailors t ON t.id = p.tailor_id
-        JOIN users u ON u.id = t.user_id
-        WHERE p.id = ?
-        LIMIT 1
-      `, [projectId]) as any[];
-      const project = Array.isArray(rows) && rows[0] ? rows[0] : null;
-      if (!project) return res.status(404).json({ error: "Projet introuvable" });
-
-      // Fix #1 — guard contre le double transfert
-      if (project.stripe_transfer_id) {
-        return res.status(409).json({
-          error: "Un virement a déjà été effectué pour ce projet",
-          transferId: project.stripe_transfer_id,
-        });
-      }
-
-      // Fix #2 — confirmation client obligatoire
-      if (!project.client_confirmed) {
-        return res.status(403).json({ error: "Le client n'a pas encore confirmé la réception de la prestation" });
-      }
-
-      // Fix #3 — stripeAccountId depuis la BDD, pas depuis req.body
-      const stripeAccountIdArtisan = project.stripe_account_id;
-      if (!stripeAccountIdArtisan) {
-        return res.status(400).json({ error: "L'artisan n'a pas finalisé son onboarding Stripe Connect" });
-      }
-
-      const montantArtisanCentimes = req.body.montantArtisanCentimes ?? project.amount_artisan;
-      if (!montantArtisanCentimes || montantArtisanCentimes <= 0) {
-        return res.status(400).json({ error: "Montant artisan invalide ou manquant" });
-      }
+      const { montantArtisanCentimes, stripeAccountIdArtisan } = req.body;
 
       const transfer = await stripe.transfers.create({
         amount: montantArtisanCentimes,
@@ -353,7 +261,7 @@ export function registerStripeRoutes(app: Express) {
 
   // ── Création abonnement Premium (Stripe Billing + Elements) ───────────────
   app.post("/api/stripe/subscription/create", async (req: any, res: Response) => {
-    const SK_PREFIX = STRIPE_SECRET_KEY.slice(0, 14);
+    const SK_PREFIX = process.env.STRIPE_SECRET_KEY?.slice(0, 14) || "absent";
     console.log(`[Stripe/sub] ▶ Début — clé: ${SK_PREFIX}...`);
     console.log(`[Stripe/sub] PRICES month=${PRICES.month} year=${PRICES.year}`);
 
@@ -543,66 +451,6 @@ export function registerStripeRoutes(app: Express) {
         res.status(400).json({ error: "Session invalide ou incomplète" });
       }
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  // ── Admin: remboursement d'un projet ─────────────────────────────────────
-  app.post("/api/admin/refund/:projectId", async (req: any, res: Response) => {
-    if (!stripe) return res.status(500).json({ error: "Stripe non configuré" });
-    const user = req.user as any;
-    if (!user || user.role !== "admin") return res.status(403).json({ error: "Accès refusé" });
-    try {
-      const { projectId } = req.params;
-      const [rows] = await pool.query(
-        `SELECT stripe_payment_intent_id, amount, payment_status FROM projects WHERE id = ? LIMIT 1`,
-        [projectId]
-      ) as any[];
-      const project = Array.isArray(rows) ? rows[0] : rows;
-      if (!project) return res.status(404).json({ error: "Projet introuvable" });
-      if (!project.stripe_payment_intent_id) return res.status(400).json({ error: "Aucun paiement Stripe associé" });
-
-      const refund = await stripe.refunds.create({
-        payment_intent: project.stripe_payment_intent_id,
-      });
-
-      await pool.query(
-        `UPDATE projects SET payment_status = 'refunded' WHERE id = ?`,
-        [projectId]
-      );
-
-      console.log(`[Admin] Remboursement ${refund.id} pour projet ${projectId}`);
-      res.json({ success: true, refundId: refund.id, status: refund.status });
-    } catch (err: any) {
-      console.error("[Admin refund error]", err);
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  // ── Admin: annulation abonnement Pro d'un artisan ─────────────────────────
-  app.post("/api/admin/subscription/cancel/:tailorId", async (req: any, res: Response) => {
-    if (!stripe) return res.status(500).json({ error: "Stripe non configuré" });
-    const user = req.user as any;
-    if (!user || user.role !== "admin") return res.status(403).json({ error: "Accès refusé" });
-    try {
-      const { tailorId } = req.params;
-      const realId = tailorId.startsWith("reg-") ? tailorId.slice(4) : tailorId;
-      const tailor = await storage.getTailor(realId) as any;
-      if (!tailor) return res.status(404).json({ error: "Artisan introuvable" });
-
-      if (tailor.stripeSubscriptionId) {
-        await stripe.subscriptions.cancel(tailor.stripeSubscriptionId);
-        console.log(`[Admin] Abonnement ${tailor.stripeSubscriptionId} annulé immédiatement (admin)`);
-      }
-
-      await pool.query(
-        `UPDATE tailors SET subscription_plan = 'Starter', stripe_subscription_id = NULL, subscription_current_period_end = NULL WHERE id = ?`,
-        [realId]
-      );
-
-      res.json({ success: true });
-    } catch (err: any) {
-      console.error("[Admin subscription cancel error]", err);
       res.status(500).json({ error: err.message });
     }
   });
