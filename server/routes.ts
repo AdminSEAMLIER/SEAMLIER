@@ -3711,6 +3711,110 @@ export async function registerRoutes(
     }
   });
 
+
+  // ── Parrainage ──────────────────────────────────────────────────────────────
+  app.post("/api/professionnel/referral/invite", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+
+      const { email: invitedEmail } = req.body;
+      if (!invitedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(invitedEmail)) {
+        return res.status(400).json({ error: "Adresse email invalide" });
+      }
+      const normalizedEmail = invitedEmail.trim().toLowerCase();
+
+      // Block duplicate invites
+      const [existing] = await pool.query(
+        "SELECT id FROM referral_invites WHERE referrer_tailor_id = ? AND invited_email = ?",
+        [tailor.id, normalizedEmail]
+      ) as any[];
+      if (Array.isArray(existing) && existing.length > 0) {
+        return res.status(409).json({ error: "Une invitation a déjà été envoyée à cette adresse" });
+      }
+
+      // Get or generate referral code
+      let referralCode = (tailor as any).referral_code as string | undefined;
+      if (!referralCode) {
+        referralCode = `REF${tailor.id}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+        await pool.query("UPDATE tailors SET referral_code = ? WHERE id = ?", [referralCode, tailor.id]);
+      }
+
+      // Get artisan display name
+      const [userRows] = await pool.query(
+        "SELECT first_name, last_name FROM users WHERE id = ?", [userId]
+      ) as any[];
+      const ur = Array.isArray(userRows) && userRows[0] ? userRows[0] : null;
+      const artisanName = ur
+        ? [ur.first_name, ur.last_name].filter(Boolean).join(" ")
+        : "Un artisan SEAMLiER";
+
+      const referralLink = `https://seamlier.fr/inscription?ref=${referralCode}`;
+
+      await sendReferralInviteEmail(artisanName, normalizedEmail, referralLink);
+
+      await pool.query(
+        "INSERT INTO referral_invites (referrer_tailor_id, invited_email, referral_code) VALUES (?, ?, ?)",
+        [tailor.id, normalizedEmail, referralCode]
+      );
+
+      res.json({ success: true, referralCode, invitedEmail: normalizedEmail });
+    } catch (err: any) {
+      console.error("[POST referral/invite]", err?.message, err?.sqlMessage);
+      res.status(500).json({ error: "Erreur lors de l'envoi", detail: err?.message });
+    }
+  });
+
+  app.get("/api/professionnel/referral/stats", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+
+      const [rows] = await pool.query(
+        `SELECT invited_email, status, sent_at
+         FROM referral_invites WHERE referrer_tailor_id = ? ORDER BY sent_at DESC`,
+        [tailor.id]
+      ) as any[];
+      const invites = Array.isArray(rows) ? rows : [];
+
+      const code = (tailor as any).referral_code as string | null;
+      res.json({
+        referralCode: code || null,
+        referralLink: code ? `https://seamlier.fr/inscription?ref=${code}` : null,
+        totalInvites: invites.length,
+        registered: invites.filter((i: any) => i.status === "registered").length,
+        invites: invites.map((i: any) => ({
+          email: i.invited_email,
+          status: i.status,
+          sentAt: i.sent_at,
+        })),
+      });
+    } catch (err: any) {
+      console.error("[GET referral/stats]", err?.message);
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  });
+
+  app.get("/api/admin/referrals", requireAuth, async (req: any, res) => {
+    try {
+      const [rows] = await pool.query(
+        `SELECT ri.id, ri.invited_email, ri.status, ri.sent_at, ri.referral_code,
+                t.id AS tailor_id,
+                u.first_name, u.last_name, u.email AS referrer_email
+         FROM referral_invites ri
+         JOIN tailors t ON t.id = ri.referrer_tailor_id
+         JOIN users u ON u.id = t.user_id
+         ORDER BY ri.sent_at DESC LIMIT 500`
+      ) as any[];
+      res.json(Array.isArray(rows) ? rows : []);
+    } catch (err: any) {
+      console.error("[GET admin/referrals]", err?.message);
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  });
+
 // ── Notifications ──────────────────────────────────────────────────────────
 
   app.get("/api/notifications", requireAuth, async (req: any, res) => {

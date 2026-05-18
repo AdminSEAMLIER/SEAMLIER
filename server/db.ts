@@ -61,6 +61,20 @@ export async function ensureTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS referral_invites (
+      id                  INT AUTO_INCREMENT PRIMARY KEY,
+      referrer_tailor_id  INT NOT NULL,
+      invited_email       VARCHAR(255) NOT NULL,
+      referral_code       VARCHAR(50)  DEFAULT NULL,
+      status              ENUM('pending','registered') NOT NULL DEFAULT 'pending',
+      sent_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_referrer_email (referrer_tailor_id, invited_email),
+      INDEX idx_referral_code (referral_code)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
   await addColumnIfMissing("reviews", "is_approved", "TINYINT(1) NOT NULL DEFAULT 1");
   await addColumnIfMissing("reviews", "project_id", "VARCHAR(36) NULL");
 

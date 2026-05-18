@@ -740,14 +740,12 @@ export async function sendAdminChargebackAlertEmail(
   return sendEmail(adminEmail, `[URGENT] Chargeback Stripe — ${amount.toFixed(2)} € — charge ${chargeId}`, html);
 }
 
-export async function sendReferralInviteEmail(
-  referredEmail: string, referrerName: string, referralToken: string
-): Promise<boolean> {
+export async function sendReferralInviteEmail(artisanName: string, invitedEmail: string, referralLink: string): Promise<boolean> {
   const appUrl = process.env.APP_URL || "https://www.seamlier.fr";
-  const inviteUrl = `${appUrl}/inscription/professionnel?ref=${referralToken}`;
+  const inviteUrl = `${appUrl}/inscription/professionnel?ref=${referralLink}`;
   const html = emailWrapper("Invitation SEAMLIER", `
     <p style="font-size:16px;text-align:center;color:#333;margin:0 0 8px">
-      ${highlight(referrerName)} vous invite à rejoindre ${highlight("SEAMLIER")}.
+      ${highlight(artisanName)} vous invite à rejoindre ${highlight("SEAMLIER")}.
     </p>
     <p style="font-size:14px;text-align:center;color:#4b5563;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-style:italic;margin:0 0 20px">
       La plateforme qui connecte les couturières professionnelles avec leurs clients en France.
@@ -765,7 +763,7 @@ export async function sendReferralInviteEmail(
     </p>
     ${ctaButton(inviteUrl, "REJOINDRE SEAMLIER GRATUITEMENT")}
   `);
-  return sendEmail(referredEmail, `${referrerName} vous invite sur SEAMLIER`, html);
+  return sendEmail(invitedEmail, `${artisanName} vous invite sur SEAMLIER`, html);
 }
 
 export async function sendAdminDocUploadNotif(
