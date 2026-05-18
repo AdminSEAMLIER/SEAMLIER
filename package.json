@@ -8,8 +8,7 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
-    "db:push": "drizzle-kit push",
-    "db:migrate": "mysql -u $MYSQL_USER -p$MYSQL_PASSWORD $MYSQL_DATABASE < migrations/001_dossier_contract_notifications.sql"
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -46,8 +45,7 @@
     "@tanstack/react-query": "^5.60.5",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.10",
-    "@types/multer": "^2.1.0",
-    "@types/node-cron": "^3.0.11",
+    "@types/cors": "^2.8.19",
     "@types/uuid": "^10.0.0",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
@@ -57,6 +55,7 @@
     "compression": "^1.8.1",
     "connect-pg-simple": "^10.0.0",
     "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
     "date-fns": "^3.6.0",
     "drizzle-orm": "^0.39.3",
     "drizzle-zod": "^0.7.0",
@@ -71,15 +70,13 @@
     "jspdf": "^4.2.1",
     "lucide-react": "^0.453.0",
     "memorystore": "^1.6.7",
-    "multer": "^2.1.1",
     "mysql2": "^3.17.4",
     "next-themes": "^0.4.6",
-    "node-cron": "^4.2.1",
     "nodemailer": "^8.0.1",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "pg": "^8.18.0",
-    "qrcode.react": "^4.2.0",
+    "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
@@ -88,9 +85,6 @@
     "react-icons": "^5.4.0",
     "react-resizable-panels": "^2.1.7",
     "recharts": "^2.15.2",
-    "resend": "^6.12.3",
-    "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3",
     "stripe": "^20.4.1",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
@@ -123,7 +117,6 @@
     "@types/pg": "^8.16.0",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
-    "@types/web-push": "^3.6.4",
     "@types/ws": "^8.5.13",
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.20",
@@ -135,7 +128,11 @@
     "typescript": "5.6.3",
     "vite": "^7.3.0"
   },
-  "overrides": {},
+  "overrides": {
+    "drizzle-kit": {
+      "@esbuild-kit/esm-loader": "npm:tsx@^4.20.4"
+    }
+  },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
   }
