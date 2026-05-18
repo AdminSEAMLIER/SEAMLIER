@@ -550,8 +550,8 @@ export default function AdminDashboard() {
     queryKey: ["/api/admin/artisans"],
     enabled: isAuthenticated,
   });
-  const { data: tailorDossiers = [] } = useQuery<any[]>({
-    queryKey: ["/api/admin/tailors/dossiers"],
+  const { data: proInfoList = [], refetch: refetchProInfo } = useQuery<any[]>({
+    queryKey: ["/api/admin/pro-info"],
     enabled: isAuthenticated,
   });
   const couturiers: CouturierData[] = rawArtisans.map((a: any) => ({
@@ -913,7 +913,7 @@ export default function AdminDashboard() {
   const dossierTailorId = artisanDossierId?.startsWith("reg-")
     ? artisanDossierId.replace("reg-", "")
     : artisanDossierId ?? null;
-  const dossierDocs = (tailorDossiers as any[]).find(
+  const dossierDocs = ([] as any[]).find(
     (d: any) => String(d.id) === dossierTailorId
   );
 
@@ -3071,26 +3071,39 @@ export default function AdminDashboard() {
                               </div>
                             </div>
 
-                            <div className="bg-gray-50 rounded-lg p-4 space-y-1">
-                              <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3">Déclaration professionnelle</p>
-                              <div className="space-y-2">
-                                {[
-                                  { label: "SIRET", value: dossierArtisan?.siret },
-                                  { label: "IBAN", value: dossierArtisan?.iban },
-                                  { label: "Assureur RC Pro", value: dossierDocs?.insurerName },
-                                  { label: "N° de police", value: dossierDocs?.insurerPolicy },
-                                  { label: "RC Pro certifiée", value: dossierDocs?.rcProCertified ? "✅ Oui" : dossierDocs?.insurerName ? "Non" : undefined },
-                                ].filter(item => item.value).map(({ label, value }) => (
-                                  <div key={label} className="flex items-center justify-between py-1 border-b border-gray-100">
-                                    <span className="text-xs text-gray-500">{label}</span>
-                                    <span className="text-xs font-medium text-gray-900 truncate max-w-[180px]">{value}</span>
-                                  </div>
-                                ))}
-                                {!dossierArtisan?.siret && !dossierArtisan?.iban && (
-                                  <p className="text-xs text-gray-400 italic">Aucune information déposée</p>
-                                )}
-                              </div>
-                            </div>
+                            {/* Pro Info Table */}
+                    <div className="space-y-3">
+                      <h3 className="font-semibold text-sm text-gray-700">Informations professionnelles</h3>
+                      {proInfoList.filter((pi: any) => pi.tailor_id === dossierArtisan?.id).map((pi: any) => (
+                        <div key={pi.id} className="space-y-2 text-sm">
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                            {pi.siret && <><span className="text-gray-500">SIRET</span><span className="font-mono">{pi.siret}</span></>}
+                            {pi.iban && <><span className="text-gray-500">IBAN</span><span className="font-mono text-xs">{pi.iban}</span></>}
+                            {pi.insurer_name && <><span className="text-gray-500">Assureur</span><span>{pi.insurer_name}</span></>}
+                            {pi.insurer_policy && <><span className="text-gray-500">Police</span><span>{pi.insurer_policy}</span></>}
+                            <span className="text-gray-500">RC Pro</span>
+                            <span>{pi.rc_pro_certified ? "Oui" : "Non"}</span>
+                            <span className="text-gray-500">Statut</span>
+                            <span className={pi.status === "validated" ? "text-green-600 font-medium" : pi.status === "rejected" ? "text-red-600" : "text-amber-600"}>
+                              {pi.status === "validated" ? "Validé" : pi.status === "rejected" ? "Refusé" : "En attente"}
+                            </span>
+                          </div>
+                          <div className="flex gap-2 pt-1">
+                            <button
+                              onClick={() => () => {}}
+                              className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                            >Valider</button>
+                            <button
+                              onClick={() => () => {}}
+                              className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+                            >Refuser</button>
+                          </div>
+                        </div>
+                      ))}
+                      {proInfoList.filter((pi: any) => pi.tailor_id === dossierArtisan?.id).length === 0 && (
+                        <p className="text-xs text-gray-400 italic">Aucune déclaration soumise</p>
+                      )}
+                    </div>
 
                             <div className="bg-gray-50 rounded-lg p-4 space-y-1">
                               <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3 flex items-center gap-2">
@@ -4386,6 +4399,17 @@ function AdminLitiges() {
     if (s === "open") return <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium">Ouvert</span>;
     if (s === "approved") return <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-medium">Approuvé</span>;
     return <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">Rejeté</span>;
+  };
+
+
+  const updateProInfoStatus = async (id: number, status: string) => {
+    await fetch(`/api/admin/pro-info/${id}`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/pro-info"] });
   };
 
   return (

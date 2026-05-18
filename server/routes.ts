@@ -3552,6 +3552,137 @@ export async function registerRoutes(
     }
   });
 
+
+  // ── Pro Info (déclaration professionnelle) ─────────────────────────────────
+
+  app.get("/api/professionnel/pro-info", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const [rows] = await pool.query(
+        "SELECT * FROM pro_info WHERE tailor_id = ?",
+        [tailor.id]
+      ) as any[];
+      const row = Array.isArray(rows) && rows[0] ? rows[0] : null;
+      if (!row) return res.json(null);
+      res.json({
+        id: row.id,
+        siret: row.siret || null,
+        iban: row.iban || null,
+        insurerName: row.insurer_name || null,
+        insurerPolicy: row.insurer_policy || null,
+        rcProCertified: row.rc_pro_certified != null ? !!row.rc_pro_certified : null,
+        status: row.status || "pending",
+      });
+    } catch (error: any) {
+      console.error("[GET pro-info] error:", error?.message);
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  });
+
+  app.post("/api/professionnel/pro-info", requireAuth, async (req: any, res) => {
+    console.log("[POST /api/professionnel/pro-info] hit — user:", (req as any).authUserId);
+    try {
+      const userId = req.authUserId;
+      if ((req.user as any)?.role !== "tailor") {
+        return res.status(403).json({ error: "Réservé aux professionnels" });
+      }
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+
+      const { siret, iban, insurerName, insurerPolicy, rcProCertified } = req.body;
+      console.log("[POST pro-info] body:", { siret, iban: iban ? "***" : null, insurerName, rcProCertified });
+
+      if (!siret || !/^\d{14}$/.test(siret.replace(/\s/g, ""))) {
+        return res.status(400).json({ error: "SIRET invalide (14 chiffres requis)" });
+      }
+      if (!iban || !iban.trim()) {
+        return res.status(400).json({ error: "IBAN requis" });
+      }
+
+      const siretClean = siret.replace(/\s/g, "");
+
+      await pool.query(
+        `INSERT INTO pro_info (tailor_id, siret, iban, insurer_name, insurer_policy, rc_pro_certified, status, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW())
+         ON DUPLICATE KEY UPDATE
+           siret = VALUES(siret),
+           iban = VALUES(iban),
+           insurer_name = VALUES(insurer_name),
+           insurer_policy = VALUES(insurer_policy),
+           rc_pro_certified = VALUES(rc_pro_certified),
+           status = 'pending',
+           updated_at = NOW()`,
+        [tailor.id, siretClean, iban.trim(), insurerName || null, insurerPolicy || null, rcProCertified ? 1 : 0]
+      );
+
+      const [userRows] = await pool.query(
+        "SELECT email, first_name, last_name FROM users WHERE id = ?",
+        [userId]
+      ) as any[];
+      const userRow = Array.isArray(userRows) && userRows[0] ? userRows[0] : null;
+      if (userRow) {
+        const userName = [userRow.first_name, userRow.last_name].filter(Boolean).join(" ") || userRow.email;
+        sendAdminProInfoEmail(userName, siretClean, iban.trim(), insurerName, insurerPolicy, !!rcProCertified)
+          .catch((err: any) => console.error("[Pro info email] Failed:", err));
+      }
+
+      console.log("[POST pro-info] success — tailor:", tailor.id);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("[POST pro-info] error:", {
+        message: error?.message,
+        code: error?.code,
+        sqlMessage: error?.sqlMessage,
+        errno: error?.errno,
+      });
+      res.status(500).json({ error: "Erreur lors de l'enregistrement", detail: error?.message });
+    }
+  });
+
+  app.get("/api/admin/pro-info", requireAuth, async (req: any, res) => {
+    try {
+      if ((req.user as any)?.role !== "admin") {
+        return res.status(403).json({ error: "Admin only" });
+      }
+      const [rows] = await pool.query(`
+        SELECT pi.id, pi.siret, pi.iban, pi.insurer_name, pi.insurer_policy,
+               pi.rc_pro_certified, pi.status, pi.created_at, pi.updated_at,
+               u.email, u.first_name, u.last_name, t.shop_name, t.id AS tailor_id
+        FROM pro_info pi
+        JOIN tailors t ON t.id = pi.tailor_id
+        JOIN users u ON u.id = t.user_id
+        ORDER BY pi.updated_at DESC
+      `) as any[];
+      res.json(Array.isArray(rows) ? rows : []);
+    } catch (error: any) {
+      console.error("[GET admin/pro-info] error:", error?.message);
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  });
+
+  app.patch("/api/admin/pro-info/:id", requireAuth, async (req: any, res) => {
+    try {
+      if ((req.user as any)?.role !== "admin") {
+        return res.status(403).json({ error: "Admin only" });
+      }
+      const { id } = req.params;
+      const { status } = req.body;
+      if (!["pending", "validated", "rejected"].includes(status)) {
+        return res.status(400).json({ error: "Statut invalide" });
+      }
+      await pool.query(
+        "UPDATE pro_info SET status = ?, updated_at = NOW() WHERE id = ?",
+        [status, id]
+      );
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("[PATCH admin/pro-info] error:", error?.message);
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  });
+
 // ── Notifications ──────────────────────────────────────────────────────────
 
   app.get("/api/notifications", requireAuth, async (req: any, res) => {

@@ -45,6 +45,22 @@ export async function ensureTables() {
   }
 
   // reviews: admin approval + project link
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pro_info (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      tailor_id INT NOT NULL,
+      siret VARCHAR(14) DEFAULT NULL,
+      iban VARCHAR(50) DEFAULT NULL,
+      insurer_name VARCHAR(255) DEFAULT NULL,
+      insurer_policy VARCHAR(255) DEFAULT NULL,
+      rc_pro_certified TINYINT(1) NOT NULL DEFAULT 0,
+      status ENUM('pending','validated','rejected') NOT NULL DEFAULT 'pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_tailor_id (tailor_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
   await addColumnIfMissing("reviews", "is_approved", "TINYINT(1) NOT NULL DEFAULT 1");
   await addColumnIfMissing("reviews", "project_id", "VARCHAR(36) NULL");
 

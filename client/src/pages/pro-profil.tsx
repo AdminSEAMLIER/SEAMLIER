@@ -23,7 +23,7 @@ function ProInfoSection() {
     insurerName?: string | null;
     insurerPolicy?: string | null;
     rcProCertified?: boolean | null;
-  }>({ queryKey: ["/api/professionnel/dossier"] });
+  }>({ queryKey: ["/api/professionnel/pro-info"] });
 
   const [siret, setSiret] = useState("");
   const [iban, setIban] = useState("");
@@ -54,8 +54,8 @@ function ProInfoSection() {
     }
     setSaving(true);
     try {
-      const res = await fetch("/api/professionnel/dossier", {
-        method: "PATCH",
+      const res = await fetch("/api/professionnel/pro-info", {
+        method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -68,7 +68,7 @@ function ProInfoSection() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error((data as any).error || "Erreur lors de l'enregistrement");
-      queryClient.invalidateQueries({ queryKey: ["/api/professionnel/dossier"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/professionnel/pro-info"] });
       toast({ title: "Informations enregistrées", description: "Vos informations professionnelles ont été mises à jour." });
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
@@ -80,6 +80,12 @@ function ProInfoSection() {
   return (
     <div className="rounded-xl border border-gray-100 shadow-sm bg-white p-6 space-y-5">
       <h2 className="font-semibold text-gray-900 text-base">Informations professionnelles</h2>
+      {( dossier as any)?.status === "validated" && (
+        <p className="text-sm text-green-600 font-medium">✓ Informations validées par l'équipe SEAMLiER</p>
+      )}
+      {( dossier as any)?.status === "pending" && dossier?.siret && (
+        <p className="text-sm text-amber-600">En attente de validation</p>
+      )}
       <div className="space-y-4">
 
         <div>

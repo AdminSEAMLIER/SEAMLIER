@@ -30,7 +30,6 @@ const proNavItems = [
   { icon: Calendar, labelKey: "nav.planning", path: "/portefeuille" },
   { icon: Clock, labelKey: "nav.schedule", path: "/pro/horaires" },
   { icon: BarChart2, labelKey: "nav.stats", path: "/pro-statistiques" },
-  { icon: FolderOpen, labelKey: "nav.dossier", path: "/pro-dossier" },
   { icon: User, labelKey: "nav.profile", path: "/pro-profil" },
 ];
 
