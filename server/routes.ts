@@ -1673,6 +1673,49 @@ export async function registerRoutes(
     }
   });
 
+  // ─── Disputes (client/tailor initiated) ─────────────────────────────────
+  app.post("/api/disputes", requireAuth, async (req: any, res) => {
+    try {
+      const { projectId, reason } = req.body;
+      if (!projectId) return res.status(400).json({ error: "projectId requis" });
+
+      const [rows] = await pool.query(
+        `SELECT p.*,
+          c.email as client_email, c.first_name as client_first, c.last_name as client_last,
+          u.email as tailor_email, u.first_name as tailor_first, u.last_name as tailor_last
+         FROM projects p
+         LEFT JOIN users c ON p.client_id = c.id
+         LEFT JOIN tailors t ON p.tailor_id = t.id
+         LEFT JOIN users u ON t.user_id = u.id
+         WHERE p.id = ?`,
+        [projectId]
+      ) as any[];
+      const project = (rows as any[])[0];
+      if (!project) return res.status(404).json({ error: "Projet introuvable" });
+
+      const id = crypto.randomUUID();
+      await pool.query(
+        `INSERT INTO disputes (id, project_id, reason, status, created_by) VALUES (?, ?, ?, 'open', ?)`,
+        [id, projectId, reason || null, req.authUserId]
+      );
+      await pool.query(`UPDATE projects SET status = 'dispute' WHERE id = ?`, [projectId]);
+
+      const title = project.title || `Projet #${projectId.slice(0, 6)}`;
+      if (project.client_email) {
+        sendDisputeEmail(project.client_email, `${project.client_first} ${project.client_last}`.trim(), title, projectId, true).catch(() => {});
+      }
+      if (project.tailor_email) {
+        sendDisputeEmail(project.tailor_email, `${project.tailor_first} ${project.tailor_last}`.trim(), title, projectId, false).catch(() => {});
+      }
+      const adminEmail = process.env.ADMIN_EMAIL || "admin@seamlier.fr";
+      sendDisputeEmail(adminEmail, "Admin", title, projectId, false).catch(() => {});
+
+      res.json({ success: true, disputeId: id });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // ─── Litige admin ────────────────────────────────────────────────────────
   app.post("/api/admin/projects/:id/dispute", requireAdmin, async (req, res) => {
     try {

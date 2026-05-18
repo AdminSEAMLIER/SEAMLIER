@@ -196,4 +196,21 @@ export async function ensureTables() {
   } catch (err) {
     console.warn("[DB] tailor_exceptions table:", (err as any)?.message);
   }
+
+  // disputes table
+  try {
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS disputes (
+        id VARCHAR(36) PRIMARY KEY,
+        project_id VARCHAR(36) NOT NULL,
+        reason TEXT,
+        status VARCHAR(20) NOT NULL DEFAULT 'open',
+        created_by VARCHAR(36) NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log("[DB] disputes table ensured ✅");
+  } catch (err) {
+    console.warn("[DB] disputes table:", (err as any)?.message);
+  }
 }
