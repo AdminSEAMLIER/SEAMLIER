@@ -3,6 +3,7 @@ import { Link, useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,6 +42,7 @@ export default function SuiviProjet() {
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
@@ -110,7 +112,7 @@ export default function SuiviProjet() {
     onSuccess: () => {
       setShowDisputeModal(false);
       setDisputeReason("");
-      toast({ title: "Signalement enregistré", description: "L'équipe SEAMLIER vous répondra sous 48h." });
+      toast({ title: t('dispute.success'), description: t('dispute.successDesc') });
     },
     onError: (err: any) => toast({ title: "Erreur", description: err?.message, variant: "destructive" }),
   });
@@ -348,7 +350,7 @@ export default function SuiviProjet() {
               onClick={() => setShowDisputeModal(true)}
             >
               <Flag className="h-3.5 w-3.5 mr-1.5" />
-              Signaler un problème
+              {t('dispute.reportProblem')}
             </Button>
           )}
         </div>
@@ -422,24 +424,24 @@ export default function SuiviProjet() {
       <Dialog open={showDisputeModal} onOpenChange={setShowDisputeModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-serif text-[#601B28]">Signaler un problème</DialogTitle>
+            <DialogTitle className="font-serif text-[#601B28]">{t('dispute.reportProblem')}</DialogTitle>
           </DialogHeader>
-          <p className="text-gray-500 text-sm">Décrivez le problème rencontré. L'équipe SEAMLIER examinera votre signalement sous 48h ouvrées.</p>
+          <p className="text-gray-500 text-sm">Décrivez le problème rencontré. L'équipe SEAMLiER examinera votre signalement sous 48h ouvrées.</p>
           <Textarea
             value={disputeReason}
             onChange={e => setDisputeReason(e.target.value)}
-            placeholder="Ex. : l'article reçu ne correspond pas à la commande, problème de qualité, délai non respecté…"
+            placeholder={t('dispute.reasonPlaceholder')}
             className="min-h-[120px] text-sm"
           />
           <div className="flex gap-3 mt-1">
-            <Button variant="outline" className="flex-1" onClick={() => setShowDisputeModal(false)}>Annuler</Button>
+            <Button variant="outline" className="flex-1" onClick={() => setShowDisputeModal(false)}>{t('common.cancel')}</Button>
             <Button
               className="flex-1 bg-red-600 hover:bg-red-700 text-white"
               onClick={() => disputeMutation.mutate()}
               disabled={disputeMutation.isPending || !disputeReason.trim()}
             >
               {disputeMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Flag className="h-4 w-4 mr-1.5" />}
-              Envoyer le signalement
+              {t('dispute.submit')}
             </Button>
           </div>
         </DialogContent>

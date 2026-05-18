@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, TrendingUp, Star, Settings, FileText, FolderKanban, Loader2, Briefcase, ImageIcon, XCircle, Clock, BookOpen, Languages, Euro } from "lucide-react";
+import { User, Mail, Phone, MapPin, Camera, Edit2, Save, LogOut, TrendingUp, Star, Settings, FileText, FolderKanban, Loader2, Briefcase, ImageIcon, XCircle, Clock, BookOpen, Languages, Euro, BarChart2, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,15 +15,74 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 
 
+function StatsSection() {
+  const { t } = useTranslation();
+  const { data: stats } = useQuery<any>({
+    queryKey: ["/api/tailors/stats"],
+    staleTime: 60000,
+  });
+  const { data: fullStats } = useQuery<any>({
+    queryKey: ["/api/tailors/stats-full"],
+    staleTime: 60000,
+  });
+
+  const items = [
+    { label: t('proStats.monthlyRevenue'), value: (fullStats?.monthlyRevenue != null ? `${Math.round(fullStats.monthlyRevenue)} €` : (stats?.monthlyRevenue != null ? `${Math.round(stats.monthlyRevenue)} €` : "—")), icon: Euro, bg: "bg-[#601B28]/10", color: "text-[#601B28]" },
+    { label: t('proStats.totalClients'), value: fullStats?.totalClients != null ? String(fullStats.totalClients) : "—", icon: User, bg: "bg-blue-50", color: "text-blue-600" },
+    { label: t('proStats.activeProjects'), value: stats?.activeProjects != null ? String(stats.activeProjects) : "—", icon: FolderKanban, bg: "bg-green-50", color: "text-green-600" },
+    { label: t('proStats.averageRating'), value: stats?.averageRating != null ? `${Number(stats.averageRating).toFixed(1)} ★` : "—", icon: Star, bg: "bg-amber-50", color: "text-amber-600" },
+  ];
+
+  return (
+    <Card className="border border-gray-100 bg-white shadow-sm mb-6">
+      <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+        <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
+          <BarChart2 className="h-5 w-5" />
+          {t('proStats.title')}
+        </CardTitle>
+        <Link href="/pro-statistiques">
+          <Button variant="ghost" size="sm" className="text-xs text-[#601B28] gap-1">
+            {t('proStats.viewAll')} <ArrowRight className="h-3.5 w-3.5" />
+          </Button>
+        </Link>
+      </CardHeader>
+      <CardContent className="bg-white">
+        <div className="grid grid-cols-2 gap-3">
+          {items.map((item) => (
+            <div key={item.label} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100">
+              <div className={`w-9 h-9 rounded-lg ${item.bg} flex items-center justify-center shrink-0`}>
+                <item.icon className={`h-4 w-4 ${item.color}`} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] text-gray-500 font-medium leading-tight">{item.label}</p>
+                <p className="text-base font-bold text-gray-900 mt-0.5">{item.value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function ProInfoSection() {
+  const { t } = useTranslation();
   const { toast } = useToast();
-  const { data: dossier } = useQuery<{
+
+  const { data: proInfo, refetch: refetchProInfo } = useQuery<{
     siret?: string | null;
-    ibanRib?: string | null;
+    iban?: string | null;
     insurerName?: string | null;
     insurerPolicy?: string | null;
     rcProCertified?: boolean | null;
+    status?: string | null;
   }>({ queryKey: ["/api/professionnel/pro-info"] });
+
+  const { data: dossier, refetch: refetchDossier } = useQuery<{
+    idCardUrl?: string | null;
+    kbisUrl?: string | null;
+    dossierStatus?: string | null;
+  }>({ queryKey: ["/api/professionnel/dossier"] });
 
   const [siret, setSiret] = useState("");
   const [iban, setIban] = useState("");
@@ -31,25 +90,50 @@ function ProInfoSection() {
   const [insurerName, setInsurerName] = useState("");
   const [insurerPolicy, setInsurerPolicy] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploadingCni, setUploadingCni] = useState(false);
+  const [uploadingKbis, setUploadingKbis] = useState(false);
+  const cniInputRef = useRef<HTMLInputElement>(null);
+  const kbisInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!dossier) return;
-    setSiret(dossier.siret || "");
-    setIban(dossier.ibanRib || "");
-    setHasRcPro(dossier.rcProCertified ?? null);
-    setInsurerName(dossier.insurerName || "");
-    setInsurerPolicy(dossier.insurerPolicy || "");
-  }, [dossier]);
+    if (!proInfo) return;
+    setSiret(proInfo.siret || "");
+    setIban(proInfo.iban || "");
+    setHasRcPro(proInfo.rcProCertified ?? null);
+    setInsurerName(proInfo.insurerName || "");
+    setInsurerPolicy(proInfo.insurerPolicy || "");
+  }, [proInfo]);
+
+  const handleDocUpload = async (file: File, docType: "idCard" | "kbis") => {
+    const setUploading = docType === "idCard" ? setUploadingCni : setUploadingKbis;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("document", file);
+      const res = await fetch(`/api/professionnel/dossier/upload/${docType}`, {
+        method: "POST",
+        body: fd,
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur upload");
+      await refetchDossier();
+      toast({ title: t('proInfo.docUploaded'), description: t('proInfo.docUploadedDesc') });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSave = async () => {
-    console.log("Enregistrer cliqué", { siret, iban });
     const siretClean = siret.replace(/\s/g, "");
     if (!/^\d{14}$/.test(siretClean)) {
-      toast({ title: "SIRET invalide", description: "Le SIRET doit contenir exactement 14 chiffres.", variant: "destructive" });
+      toast({ title: t('proInfo.siretInvalid'), description: t('proInfo.siretInvalidDesc'), variant: "destructive" });
       return;
     }
     if (!iban.trim()) {
-      toast({ title: "IBAN requis", description: "Veuillez saisir votre IBAN.", variant: "destructive" });
+      toast({ title: t('proInfo.ibanRequired'), description: t('proInfo.ibanRequiredDesc'), variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -69,7 +153,7 @@ function ProInfoSection() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error((data as any).error || "Erreur lors de l'enregistrement");
       queryClient.invalidateQueries({ queryKey: ["/api/professionnel/pro-info"] });
-      toast({ title: "Informations enregistrées", description: "Vos informations professionnelles ont été mises à jour." });
+      toast({ title: t('proInfo.saved'), description: t('proInfo.savedDesc') });
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
     } finally {
@@ -78,16 +162,16 @@ function ProInfoSection() {
   };
 
   return (
-    <div className="rounded-xl border border-gray-100 shadow-sm bg-white p-6 space-y-5">
-      <h2 className="font-semibold text-gray-900 text-base">Informations professionnelles</h2>
-      {( dossier as any)?.status === "validated" && (
-        <p className="text-sm text-green-600 font-medium">✓ Informations validées par l'équipe SEAMLiER</p>
+    <div className="rounded-xl border border-gray-100 shadow-sm bg-white p-6 space-y-5 mb-6">
+      <h2 className="font-semibold text-gray-900 text-base">{t('proInfo.title')}</h2>
+      {proInfo?.status === "validated" && (
+        <p className="text-sm text-green-600 font-medium">✓ {t('proInfo.validated')}</p>
       )}
-      {( dossier as any)?.status === "pending" && dossier?.siret && (
-        <p className="text-sm text-amber-600">En attente de validation</p>
+      {proInfo?.status === "pending" && proInfo?.siret && (
+        <p className="text-sm text-amber-600">{t('proInfo.pending')}</p>
       )}
-      <div className="space-y-4">
 
+      <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             SIRET <span className="text-red-500">*</span>
@@ -100,7 +184,7 @@ function ProInfoSection() {
             maxLength={17}
             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#601B28]/30 font-mono"
           />
-          <p className="text-xs text-gray-400 mt-1">Numéro à 14 chiffres de votre entreprise.</p>
+          <p className="text-xs text-gray-400 mt-1">{t('proInfo.siretHint')}</p>
         </div>
 
         <div>
@@ -117,7 +201,7 @@ function ProInfoSection() {
         </div>
 
         <div>
-          <p className="text-sm font-medium text-gray-700 mb-2">Avez-vous une assurance RC Pro ?</p>
+          <p className="text-sm font-medium text-gray-700 mb-2">{t('proInfo.rcProQuestion')}</p>
           <div className="flex gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -127,7 +211,7 @@ function ProInfoSection() {
                 onChange={() => setHasRcPro(true)}
                 className="w-4 h-4 accent-[#601B28]"
               />
-              <span className="text-sm text-gray-700">Oui</span>
+              <span className="text-sm text-gray-700">{t('common.yes')}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -137,7 +221,7 @@ function ProInfoSection() {
                 onChange={() => setHasRcPro(false)}
                 className="w-4 h-4 accent-[#601B28]"
               />
-              <span className="text-sm text-gray-700">Non</span>
+              <span className="text-sm text-gray-700">{t('common.no')}</span>
             </label>
           </div>
         </div>
@@ -145,7 +229,7 @@ function ProInfoSection() {
         {hasRcPro === true && (
           <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Assureur RC Pro</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('proInfo.insurerName')}</label>
               <input
                 type="text"
                 value={insurerName}
@@ -155,7 +239,7 @@ function ProInfoSection() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Numéro de police</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('proInfo.policyNumber')}</label>
               <input
                 type="text"
                 value={insurerPolicy}
@@ -173,8 +257,105 @@ function ProInfoSection() {
           onClick={handleSave}
           className="w-full py-2.5 px-4 bg-[#601B28] text-white text-sm font-medium rounded-lg hover:bg-[#7a2234] disabled:opacity-60 transition-colors"
         >
-          {saving ? "Enregistrement…" : "Enregistrer"}
+          {saving ? t('common.saving') : t('common.save')}
         </button>
+      </div>
+
+      {/* Documents d'identite */}
+      <div className="border-t border-gray-100 pt-5 space-y-4">
+        <h3 className="text-sm font-semibold text-gray-800">{t('proInfo.documents')}</h3>
+
+        {/* CNI */}
+        <div className="flex items-start justify-between gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-700">
+              {t('proInfo.cni')} <span className="text-red-500">*</span>
+            </p>
+            {dossier?.idCardUrl ? (
+              <p className="text-xs text-green-600 mt-0.5 flex items-center gap-1">
+                <span>✓</span> {t('proInfo.docReceived')}
+              </p>
+            ) : (
+              <p className="text-xs text-gray-400 mt-0.5">{t('proInfo.cniFormats')}</p>
+            )}
+          </div>
+          <div className="shrink-0">
+            <input
+              ref={cniInputRef}
+              type="file"
+              accept="image/jpeg,image/png,application/pdf"
+              className="hidden"
+              onChange={e => {
+                const file = e.target.files?.[0];
+                if (file) handleDocUpload(file, "idCard");
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              disabled={uploadingCni}
+              onClick={() => cniInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[#601B28]/40 text-[#601B28] hover:bg-[#601B28]/5 disabled:opacity-60 transition-colors"
+            >
+              {uploadingCni ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <FileText className="h-3.5 w-3.5" />
+              )}
+              {dossier?.idCardUrl ? t('proInfo.replace') : t('proInfo.upload')}
+            </button>
+          </div>
+        </div>
+
+        {/* KBIS */}
+        <div className="flex items-start justify-between gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-700">
+              {t('proInfo.kbis')}
+              <span className="text-xs text-gray-400 ml-1">({t('common.optional')})</span>
+            </p>
+            {dossier?.kbisUrl ? (
+              <p className="text-xs text-green-600 mt-0.5 flex items-center gap-1">
+                <span>✓</span> {t('proInfo.docReceived')}
+              </p>
+            ) : (
+              <p className="text-xs text-gray-400 mt-0.5">{t('proInfo.kbisFormats')}</p>
+            )}
+          </div>
+          <div className="shrink-0">
+            <input
+              ref={kbisInputRef}
+              type="file"
+              accept="image/jpeg,image/png,application/pdf"
+              className="hidden"
+              onChange={e => {
+                const file = e.target.files?.[0];
+                if (file) handleDocUpload(file, "kbis");
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              disabled={uploadingKbis}
+              onClick={() => kbisInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-60 transition-colors"
+            >
+              {uploadingKbis ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <FileText className="h-3.5 w-3.5" />
+              )}
+              {dossier?.kbisUrl ? t('proInfo.replace') : t('proInfo.upload')}
+            </button>
+          </div>
+        </div>
+
+        {dossier?.dossierStatus === "validated" && (
+          <p className="text-xs text-green-600 font-medium">✓ {t('proInfo.dossierValidated')}</p>
+        )}
+        {dossier?.dossierStatus === "pending" && (dossier?.idCardUrl || dossier?.kbisUrl) && (
+          <p className="text-xs text-amber-600">{t('proInfo.dossierPending')}</p>
+        )}
       </div>
     </div>
   );
@@ -512,7 +693,7 @@ export default function ProProfil() {
           data-testid="button-change-banner"
         >
           {bannerSaveMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
-          Changer la bannière
+          {t('profile.changeBanner')}
         </button>
         <div className="absolute bottom-3 left-4">
           <h1 className="font-serif text-2xl text-white drop-shadow">{t('nav.profile')}</h1>
@@ -724,11 +905,11 @@ export default function ProProfil() {
 
         <Card className="border border-gray-100 bg-white shadow-sm mb-6">
           <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle className="text-lg text-[#601B28]">Profil public</CardTitle>
+            <CardTitle className="text-lg text-[#601B28]">{t('profile.publicProfile')}</CardTitle>
             {!isEditingPro && (
               <Button variant="ghost" size="sm" onClick={() => setIsEditingPro(true)} className="text-gray-500">
                 <Edit2 className="h-4 w-4 mr-2" />
-                Modifier
+                {t('profile.edit')}
               </Button>
             )}
           </CardHeader>
@@ -738,12 +919,12 @@ export default function ProProfil() {
                 <BookOpen className="h-5 w-5 text-gray-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <Label className="text-gray-500 text-sm">Bio</Label>
+                <Label className="text-gray-500 text-sm">{t('profile.bio')}</Label>
                 {isEditingPro ? (
                   <Textarea
                     value={proProfil.bio}
                     onChange={(e) => setProProfil({ ...proProfil, bio: e.target.value })}
-                    placeholder="Décrivez votre parcours, votre style et votre savoir-faire…"
+                    placeholder={t('profile.bioPlaceholder')}
                     className="mt-1 min-h-[90px]"
                   />
                 ) : (
@@ -757,7 +938,7 @@ export default function ProProfil() {
                 <Briefcase className="h-5 w-5 text-gray-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <Label className="text-gray-500 text-sm">Années d'expérience</Label>
+                <Label className="text-gray-500 text-sm">{t('profile.yearsExperience')}</Label>
                 {isEditingPro ? (
                   <Input
                     type="number"
@@ -765,7 +946,7 @@ export default function ProProfil() {
                     max="60"
                     value={proProfil.experience}
                     onChange={(e) => setProProfil({ ...proProfil, experience: e.target.value })}
-                    placeholder="Ex: 10"
+                    placeholder={t('profile.experiencePlaceholder')}
                     className="mt-1"
                   />
                 ) : (
@@ -781,12 +962,12 @@ export default function ProProfil() {
                 <Languages className="h-5 w-5 text-gray-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <Label className="text-gray-500 text-sm">Langues parlées</Label>
+                <Label className="text-gray-500 text-sm">{t('profile.languages')}</Label>
                 {isEditingPro ? (
                   <Input
                     value={proProfil.languages}
                     onChange={(e) => setProProfil({ ...proProfil, languages: e.target.value })}
-                    placeholder="Ex: Français, Anglais, Arabe"
+                    placeholder={t('profile.languagesPlaceholder')}
                     className="mt-1"
                   />
                 ) : (
@@ -806,7 +987,7 @@ export default function ProProfil() {
                 <Euro className="h-5 w-5 text-gray-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <Label className="text-gray-500 text-sm">Tarif indicatif (€)</Label>
+                <Label className="text-gray-500 text-sm">{t('profile.priceRange')}</Label>
                 {isEditingPro ? (
                   <div className="flex gap-2 mt-1">
                     <Input
@@ -836,25 +1017,28 @@ export default function ProProfil() {
 
             {isEditingPro && (
               <div className="flex gap-3 pt-2">
-                <Button variant="outline" className="flex-1" onClick={() => setIsEditingPro(false)}>Annuler</Button>
+                <Button variant="outline" className="flex-1" onClick={() => setIsEditingPro(false)}>{t('profile.cancel')}</Button>
                 <Button
                   className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
                   onClick={() => proSaveMutation.mutate()}
                   disabled={proSaveMutation.isPending}
                 >
                   {proSaveMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                  Enregistrer
+                  {t('profile.save')}
                 </Button>
               </div>
             )}
           </CardContent>
         </Card>
 
+        {/* ── Statistiques (sous-rubrique) ──────────────────── */}
+        <StatsSection />
+
         <Card className="border border-gray-100 bg-white shadow-sm mb-6">
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
             <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
               <ImageIcon className="h-5 w-5" />
-              Mon Portfolio
+              {t('profile.portfolio')}
             </CardTitle>
             <Button
               size="sm"
@@ -863,7 +1047,7 @@ export default function ProProfil() {
               data-testid="button-add-portfolio"
             >
               <Camera className="h-4 w-4" />
-              Ajouter
+              {t('profile.addPhoto')}
             </Button>
           </CardHeader>
           <CardContent className="bg-white">
@@ -878,8 +1062,8 @@ export default function ProProfil() {
                   ) : (
                     <div className="py-4">
                       <Camera className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500">Cliquez pour sélectionner une photo</p>
-                      <p className="text-xs text-gray-400 mt-1">JPG, PNG — max 8 Mo</p>
+                      <p className="text-sm text-gray-500">{t('profile.selectPhoto')}</p>
+                      <p className="text-xs text-gray-400 mt-1">{t('profile.photoFormats')}</p>
                     </div>
                   )}
                   <input
@@ -891,18 +1075,18 @@ export default function ProProfil() {
                   />
                 </div>
                 <div>
-                  <Label className="text-sm text-gray-700 mb-1 block">Titre *</Label>
+                  <Label className="text-sm text-gray-700 mb-1 block">{t('profile.portfolioTitle')}</Label>
                   <Input
-                    placeholder="Ex: Robe de soirée sur mesure"
+                    placeholder={t('profile.portfolioTitlePlaceholder')}
                     value={newPortfolioTitle}
                     onChange={(e) => setNewPortfolioTitle(e.target.value)}
                     data-testid="input-portfolio-title"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm text-gray-700 mb-1 block">Catégorie</Label>
+                  <Label className="text-sm text-gray-700 mb-1 block">{t('profile.portfolioCategory')}</Label>
                   <Input
-                    placeholder="Ex: Robe, Costume, Retouche…"
+                    placeholder={t('profile.portfolioCategoryPlaceholder')}
                     value={newPortfolioCategory}
                     onChange={(e) => setNewPortfolioCategory(e.target.value)}
                     data-testid="input-portfolio-category"
@@ -915,14 +1099,14 @@ export default function ProProfil() {
                     disabled={addPortfolioMutation.isPending}
                     data-testid="button-save-portfolio"
                   >
-                    {addPortfolioMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Publier"}
+                    {addPortfolioMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t('profile.publish')}
                   </Button>
                   <Button
                     variant="outline"
                     className="border-gray-200"
                     onClick={() => { setIsAddingPortfolio(false); setNewPortfolioFile(null); if (newPortfolioPreview) URL.revokeObjectURL(newPortfolioPreview); setNewPortfolioPreview(""); setNewPortfolioTitle(""); setNewPortfolioCategory(""); }}
                   >
-                    Annuler
+                    {t('profile.cancel')}
                   </Button>
                 </div>
               </div>
@@ -935,8 +1119,8 @@ export default function ProProfil() {
             ) : portfolioItems.length === 0 && !isAddingPortfolio ? (
               <div className="text-center py-8 text-gray-400">
                 <ImageIcon className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p className="text-sm">Votre portfolio est vide.</p>
-                <p className="text-xs mt-1">Ajoutez des photos de vos créations.</p>
+                <p className="text-sm">{t('profile.noPortfolio')}</p>
+                <p className="text-xs mt-1">{t('profile.noPortfolioDesc')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-2">
@@ -1015,6 +1199,16 @@ export default function ProProfil() {
                 >
                   <Clock className="h-4 w-4 mr-3" />
                   Horaires de travail
+                </Button>
+              </Link>
+              <Link href="/pro-statistiques">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start bg-white border border-[#601B28]/30 text-[#601B28] hover:bg-[#601B28]/5"
+                  data-testid="button-stats-full"
+                >
+                  <BarChart2 className="h-4 w-4 mr-3" />
+                  Statistiques complètes
                 </Button>
               </Link>
               <Link href="/pro-profil/parametres">

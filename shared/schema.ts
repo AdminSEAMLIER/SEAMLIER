@@ -30,6 +30,7 @@ export const users = mysqlTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
   stripeAccountId: varchar("stripe_account_id", { length: 255 }),
   stripeOnboarded: boolean("stripe_onboarded").default(false),
+  adminNotes: text("admin_notes"),
 });
 export const tailors = mysqlTable("tailors", {
   id: varchar("id", { length: 36 }).primaryKey(),

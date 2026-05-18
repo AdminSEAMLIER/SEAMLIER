@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
-import { Home, FileText, FolderKanban, MessageSquare, BarChart2, User, FolderOpen } from "lucide-react";
+import { Home, FileText, FolderKanban, MessageSquare, User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
@@ -22,20 +22,19 @@ export function ProBottomNav() {
     { icon: FileText, labelKey: "nav.requests", href: "/gestion-demandes" },
     { icon: FolderKanban, labelKey: "nav.projects", href: "/atelier" },
     { icon: MessageSquare, labelKey: "nav.messaging", href: "/messagerie", isMessages: true },
-    { icon: BarChart2, labelKey: "nav.stats", href: "/pro-statistiques" },
     { icon: User, labelKey: "nav.profile", href: "/pro-profil" },
   ];
 
   return (
-    <nav 
+    <nav
       className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 shadow-lg z-50 pb-safe lg:hidden"
       data-testid="nav-bottom-pro"
     >
       <div className="flex items-center justify-around h-full max-w-lg mx-auto px-2">
         {navItems.map((item) => {
-          const isActive = location === item.href || 
+          const isActive = location === item.href ||
             (item.href !== "/dashboard-pro" && location.startsWith(item.href));
-          
+
           return (
             <Link key={item.href} href={item.href}>
               <button

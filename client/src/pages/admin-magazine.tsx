@@ -20,7 +20,7 @@ import {
   Globe, Bell, Palette, Shield, Database, Key, ToggleLeft,
   Bold, Italic, Underline, Star, Package, ArrowDownCircle,
   Euro, BarChart3, FolderOpen, ExternalLink, Flag,
-  CalendarCheck, Download
+  CalendarCheck, Download, StickyNote
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -220,6 +220,9 @@ export default function AdminDashboard() {
   const [newArticleContent, setNewArticleContent] = useState("");
   const [newArticleExcerpt, setNewArticleExcerpt] = useState("");
   const [newArticleImageUrl, setNewArticleImageUrl] = useState("");
+  const [adminNotesUserId, setAdminNotesUserId] = useState<string | null>(null);
+  const [adminNotesValue, setAdminNotesValue] = useState("");
+  const [adminNotesSaving, setAdminNotesSaving] = useState(false);
   const [editingArticleId, setEditingArticleId] = useState<string | null>(null);
   const [editArticleTitle, setEditArticleTitle] = useState("");
   const [editArticleCategory, setEditArticleCategory] = useState("");
@@ -1355,15 +1358,42 @@ export default function AdminDashboard() {
                                 <td className="px-4 py-3 text-[#601B28] font-semibold">{p.amount}</td>
                                 <td className="px-4 py-3 text-gray-400 text-xs">{p.date}</td>
                                 <td className="px-4 py-3">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-7 text-xs gap-1 text-[#601B28] border-[#601B28]/30"
-                                    onClick={() => setActiveTab("messaging")}
-                                  >
-                                    <MessageSquare size={12} />
-                                    Message
-                                  </Button>
+                                  <div className="flex gap-1 flex-wrap">
+                                    {(p as any).clientId && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 text-[10px] gap-1 text-blue-700 border-blue-200 hover:bg-blue-50"
+                                        onClick={async () => {
+                                          try {
+                                            const res = await apiFetch(`/api/admin/contact/${(p as any).clientId}`, { method: "POST" });
+                                            const conv = await res.json();
+                                            if (conv?.id) { setSelectedConversationId(conv.id); setActiveTab("messaging"); }
+                                          } catch { toast({ title: "Erreur", description: "Impossible d'ouvrir la conversation", variant: "destructive" }); }
+                                        }}
+                                      >
+                                        <MessageSquare size={10} />
+                                        Client
+                                      </Button>
+                                    )}
+                                    {(p as any).tailorUserId && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 text-[10px] gap-1 text-[#601B28] border-[#601B28]/30 hover:bg-[#601B28]/5"
+                                        onClick={async () => {
+                                          try {
+                                            const res = await apiFetch(`/api/admin/contact/${(p as any).tailorUserId}`, { method: "POST" });
+                                            const conv = await res.json();
+                                            if (conv?.id) { setSelectedConversationId(conv.id); setActiveTab("messaging"); }
+                                          } catch { toast({ title: "Erreur", description: "Impossible d'ouvrir la conversation", variant: "destructive" }); }
+                                        }}
+                                      >
+                                        <MessageSquare size={10} />
+                                        Artisan
+                                      </Button>
+                                    )}
+                                  </div>
                                 </td>
                               </tr>
                             ))}
@@ -2695,7 +2725,7 @@ export default function AdminDashboard() {
                                   </td>
                                   <td className="p-4">
                                     {u.role !== 'admin' && (
-                                      <div className="flex items-center gap-1">
+                                      <div className="flex items-center gap-1 flex-wrap">
                                         <Button
                                           variant="ghost"
                                           size="sm"
@@ -2714,6 +2744,16 @@ export default function AdminDashboard() {
                                           title={`Contacter ${u.firstName}`}
                                         >
                                           <MessageSquare className="h-3.5 w-3.5" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className={cn("h-7 px-2 text-xs hover:bg-amber-50", u.adminNotes ? "text-amber-600" : "text-gray-400 hover:text-amber-600")}
+                                          onClick={() => { setAdminNotesUserId(u.id); setAdminNotesValue(u.adminNotes || ""); }}
+                                          data-testid={`button-notes-user-${u.id}`}
+                                          title="Notes internes"
+                                        >
+                                          <StickyNote className="h-3.5 w-3.5" />
                                         </Button>
                                         <Button
                                           variant="ghost"
@@ -2742,6 +2782,53 @@ export default function AdminDashboard() {
                 </>
                 );
               })()}
+
+              {/* Dialog notes internes utilisateur */}
+              <Dialog open={!!adminNotesUserId} onOpenChange={(o) => !o && setAdminNotesUserId(null)}>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="font-serif text-[#601B28] flex items-center gap-2">
+                      <StickyNote className="h-4 w-4" />
+                      Notes internes
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3 py-2">
+                    <p className="text-xs text-gray-500">Ces notes sont visibles uniquement par l'équipe SEAMLiER.</p>
+                    <Textarea
+                      value={adminNotesValue}
+                      onChange={e => setAdminNotesValue(e.target.value)}
+                      placeholder="Ajouter une note interne sur cet utilisateur..."
+                      className="min-h-[120px] text-sm"
+                    />
+                  </div>
+                  <DialogFooter className="gap-2">
+                    <Button variant="outline" onClick={() => setAdminNotesUserId(null)}>Annuler</Button>
+                    <Button
+                      className="bg-[#601B28] hover:bg-[#4E1522] text-white"
+                      disabled={adminNotesSaving}
+                      onClick={async () => {
+                        if (!adminNotesUserId) return;
+                        setAdminNotesSaving(true);
+                        try {
+                          await apiFetch(`/api/admin/users/${adminNotesUserId}/notes`, {
+                            method: "PATCH",
+                            body: JSON.stringify({ adminNotes: adminNotesValue || null }),
+                          });
+                          queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.admin.users] });
+                          toast({ title: "Note enregistrée" });
+                          setAdminNotesUserId(null);
+                        } catch {
+                          toast({ title: "Erreur", variant: "destructive" });
+                        } finally {
+                          setAdminNotesSaving(false);
+                        }
+                      }}
+                    >
+                      {adminNotesSaving ? "Enregistrement…" : "Enregistrer"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
 
               {/* ===== ARTISANS ===== */}
               {activeTab === "artisans" && (

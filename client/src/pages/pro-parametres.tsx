@@ -416,24 +416,24 @@ export default function ProParametres() {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => { setInterval("month"); setShowPayForm(true); }}
-                    className="p-4 rounded-xl border-2 border-[#601B28] bg-[#601B28]/5 text-left hover:bg-[#601B28]/10 transition-colors"
+                    className={`p-4 rounded-xl border-2 text-left transition-colors ${interval === "month" ? "border-[#601B28] bg-[#601B28] text-white" : "border-gray-200 hover:border-[#601B28] hover:bg-[#601B28]/5"}`}
                     data-testid="button-plan-monthly"
                   >
-                    <p className="font-bold text-[#601B28] text-lg">29€</p>
-                    <p className="text-xs text-gray-500">par mois</p>
-                    <p className="text-xs font-semibold text-gray-700 mt-2">0% de commission</p>
-                    <p className="text-xs text-gray-500">Mesures illimitées</p>
+                    <p className={`font-bold text-lg ${interval === "month" ? "text-white" : "text-[#601B28]"}`}>29€</p>
+                    <p className={`text-xs mt-0.5 ${interval === "month" ? "text-white/80" : "text-gray-500"}`}>par mois</p>
+                    <p className={`text-xs font-semibold mt-2 ${interval === "month" ? "text-white" : "text-gray-700"}`}>0% de commission</p>
+                    <p className={`text-xs ${interval === "month" ? "text-white/80" : "text-gray-500"}`}>Mesures illimitées</p>
                   </button>
                   <button
                     onClick={() => { setInterval("year"); setShowPayForm(true); }}
-                    className="p-4 rounded-xl border-2 border-gray-200 text-left hover:border-[#601B28] hover:bg-[#601B28]/5 transition-colors relative"
+                    className={`p-4 rounded-xl border-2 text-left transition-colors relative ${interval === "year" ? "border-[#601B28] bg-[#601B28] text-white" : "border-gray-200 hover:border-[#601B28] hover:bg-[#601B28]/5"}`}
                     data-testid="button-plan-yearly"
                   >
-                    <Badge className="absolute top-2 right-2 bg-green-100 text-green-700 border-none text-[9px] px-1.5">−17%</Badge>
-                    <p className="font-bold text-gray-800 text-lg">290€</p>
-                    <p className="text-xs text-gray-500">par an</p>
-                    <p className="text-xs font-semibold text-gray-700 mt-2">0% de commission</p>
-                    <p className="text-xs text-gray-500">Mesures illimitées</p>
+                    <Badge className={`absolute top-2 right-2 border-none text-[9px] px-1.5 ${interval === "year" ? "bg-white/20 text-white" : "bg-green-100 text-green-700"}`}>−17%</Badge>
+                    <p className={`font-bold text-lg ${interval === "year" ? "text-white" : "text-gray-800"}`}>290€</p>
+                    <p className={`text-xs mt-0.5 ${interval === "year" ? "text-white/80" : "text-gray-500"}`}>par an</p>
+                    <p className={`text-xs font-semibold mt-2 ${interval === "year" ? "text-white" : "text-gray-700"}`}>0% de commission</p>
+                    <p className={`text-xs ${interval === "year" ? "text-white/80" : "text-gray-500"}`}>Mesures illimitées</p>
                   </button>
                 </div>
 

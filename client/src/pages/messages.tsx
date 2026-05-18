@@ -186,7 +186,17 @@ export default function Messages() {
                 {conversations.map((conversation) => (
                   <button
                     key={conversation.id}
-                    onClick={() => setSelectedConversationId(conversation.id)}
+                    onClick={() => {
+                      setSelectedConversationId(conversation.id);
+                      if (conversation.unreadCount > 0) {
+                        apiRequest("PATCH", `/api/messages/${conversation.id}/read`, {})
+                          .then(() => {
+                            queryClient.invalidateQueries({ queryKey: ["/api/conversations/unread-count"] });
+                            queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+                          })
+                          .catch(() => {});
+                      }
+                    }}
                     className={cn(
                       "w-full flex items-center gap-3 p-4 hover-elevate transition-colors text-left border-b border-border",
                       selectedConversationId === conversation.id && "bg-white"

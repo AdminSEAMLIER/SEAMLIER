@@ -80,7 +80,7 @@ export interface IStorage {
   updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment | undefined>;
   deleteAppointment(id: string): Promise<void>;
 
-  getAllUsers(): Promise<Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'role' | 'createdAt' | 'emailVerified'>[]>;
+  getAllUsers(): Promise<Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'role' | 'createdAt' | 'emailVerified' | 'adminNotes'>[]>;
   getAdminUser(): Promise<Pick<User, 'id'> | undefined>;
   deleteUnverifiedUsers(): Promise<number>;
   deleteUser(id: string): Promise<void>;
@@ -680,7 +680,7 @@ class DatabaseStorage implements IStorage {
     await db.delete(appointments).where(eq(appointments.id, id));
   }
 
-  async getAllUsers(): Promise<Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'role' | 'createdAt' | 'emailVerified'>[]> {
+  async getAllUsers(): Promise<Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'role' | 'createdAt' | 'emailVerified' | 'adminNotes'>[]> {
     try {
       const result = await db.select({
         id: users.id,
@@ -691,6 +691,7 @@ class DatabaseStorage implements IStorage {
         role: users.role,
         createdAt: users.createdAt,
         emailVerified: users.emailVerified,
+        adminNotes: users.adminNotes,
       }).from(users).orderBy(desc(users.createdAt));
       return result || [];
     } catch (error) {
@@ -705,7 +706,7 @@ class DatabaseStorage implements IStorage {
           role: users.role,
           createdAt: users.createdAt,
         }).from(users).orderBy(desc(users.createdAt));
-        return (fallback || []).map((u: any) => ({ ...u, emailVerified: false }));
+        return (fallback || []).map((u: any) => ({ ...u, emailVerified: false, adminNotes: null }));
       } catch (fallbackError) {
         console.error("getAllUsers fallback error:", fallbackError);
         return [];
@@ -1030,6 +1031,8 @@ class DatabaseStorage implements IStorage {
         p.payment_status,
         p.client_confirmed,
         p.created_at,
+        p.client_id,
+        tu.id AS tailor_user_id,
         CONCAT(cu.first_name, ' ', cu.last_name) AS client_name,
         CONCAT(tu.first_name, ' ', tu.last_name) AS tailor_name
       FROM projects p
@@ -1044,6 +1047,8 @@ class DatabaseStorage implements IStorage {
       id: r.id,
       client: r.client_name || "—",
       artisan: r.tailor_name || "—",
+      clientId: r.client_id || null,
+      tailorUserId: r.tailor_user_id || null,
       description: r.description || r.title || "—",
       date: r.created_at ? new Date(r.created_at).toLocaleDateString("fr-FR") : "—",
       amount: r.amount ? `${r.amount}€` : "—",
@@ -1098,8 +1103,11 @@ class DatabaseStorage implements IStorage {
     `, [limit, offset]) as any[];
     if (!Array.isArray(rows)) return [];
     return rows.map((r: any) => {
-      const fields = [r.neck, r.bust, r.waist, r.hips, r.shoulders, r.arm_length, r.back_length, r.inseam, r.height, r.weight];
-      const filled = fields.filter((v) => v != null).length;
+      // Required fields are the 8 fields shown in the UI form; height and weight are optional
+      const requiredFields = [r.neck, r.bust, r.waist, r.hips, r.shoulders, r.arm_length, r.back_length, r.inseam];
+      const allFields = [...requiredFields, r.height, r.weight];
+      const filledRequired = requiredFields.filter((v) => v != null && v !== "").length;
+      const filledAll = allFields.filter((v) => v != null && v !== "").length;
       return {
         id: r.id,
         userId: r.user_id,
@@ -1115,9 +1123,10 @@ class DatabaseStorage implements IStorage {
         inseam: r.inseam,
         height: r.height,
         weight: r.weight,
-        filledCount: filled,
-        totalFields: fields.length,
-        status: filled === fields.length ? "Complet" : filled > 0 ? "Incomplet" : "Vide",
+        filledCount: filledAll,
+        totalFields: allFields.length,
+        // "Complet" when all 8 required UI fields are filled
+        status: filledRequired === requiredFields.length ? "Complet" : filledRequired > 0 ? "Incomplet" : "Vide",
         updatedAt: r.updated_at ? new Date(r.updated_at).toLocaleDateString("fr-FR") : "—",
       };
     });

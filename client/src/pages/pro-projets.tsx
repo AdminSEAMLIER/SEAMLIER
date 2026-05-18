@@ -38,6 +38,8 @@ export default function ProProjets() {
   const [bookingTime, setBookingTime] = useState("");
   const [bookingType, setBookingType] = useState("consultation");
   const [bookingNotes, setBookingNotes] = useState("");
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [disputeReason, setDisputeReason] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: allProjects = [], isLoading } = useQuery<ProjectWithClient[]>({
@@ -134,6 +136,20 @@ export default function ProProjets() {
     onError: (err: any) => {
       toast({ title: "Erreur", description: err?.message || "Impossible de créer le rendez-vous.", variant: "destructive" });
     },
+  });
+
+  const disputeMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedProject) throw new Error("Pas de projet sélectionné");
+      const res = await apiRequest("POST", "/api/disputes", { projectId: selectedProject.id, reason: disputeReason });
+      return res.json();
+    },
+    onSuccess: () => {
+      setShowDisputeModal(false);
+      setDisputeReason("");
+      toast({ title: "Litige ouvert", description: "L'équipe SEAMLiER a été notifiée et examinera votre demande sous 48h." });
+    },
+    onError: (err: any) => toast({ title: "Erreur", description: err?.message, variant: "destructive" }),
   });
 
   const handleOpenProject = (project: ProjectWithClient) => {
@@ -691,7 +707,7 @@ export default function ProProjets() {
                     Messagerie
                   </Button>
                 </Link>
-                <Button 
+                <Button
                   className="flex-1 gap-2 bg-[#601B28] hover:bg-[#4E1522] text-white"
                   onClick={() => setIsBookingOpen(true)}
                   data-testid="button-schedule-appointment"
@@ -700,8 +716,45 @@ export default function ProProjets() {
                   Prendre RDV avec ce client
                 </Button>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2 mt-2 text-red-600 border-red-200 hover:bg-red-50"
+                onClick={() => setShowDisputeModal(true)}
+                data-testid="button-open-dispute"
+              >
+                <Flag className="h-4 w-4" />
+                Ouvrir un litige
+              </Button>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog litige */}
+      <Dialog open={showDisputeModal} onOpenChange={setShowDisputeModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-serif text-[#601B28]">Ouvrir un litige</DialogTitle>
+            <DialogDescription>Décrivez le problème rencontré. L'équipe SEAMLiER examinera votre demande sous 48h ouvrées.</DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={disputeReason}
+            onChange={e => setDisputeReason(e.target.value)}
+            placeholder="Expliquez la situation en détail..."
+            className="min-h-[120px] text-sm"
+          />
+          <div className="flex gap-3 mt-1">
+            <Button variant="outline" className="flex-1" onClick={() => setShowDisputeModal(false)}>Annuler</Button>
+            <Button
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => disputeMutation.mutate()}
+              disabled={disputeMutation.isPending || !disputeReason.trim()}
+            >
+              {disputeMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Flag className="h-4 w-4 mr-1.5" />}
+              Soumettre le litige
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 

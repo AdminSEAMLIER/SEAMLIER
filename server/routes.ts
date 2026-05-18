@@ -2063,6 +2063,20 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/admin/users/:id/notes", requireAdmin, async (req, res) => {
+    try {
+      const { adminNotes } = req.body;
+      await pool.query(
+        "UPDATE users SET admin_notes = ? WHERE id = ?",
+        [adminNotes ?? null, req.params.id]
+      );
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating admin notes:", error);
+      res.status(500).json({ error: "Failed to update notes" });
+    }
+  });
+
   app.get("/api/admin/artisans", requireAdmin, async (req, res) => {
     try {
       const manualArtisans = await storage.getAdminArtisans();
@@ -2381,6 +2395,21 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Error deleting admin artisan:", error);
       res.status(500).json({ error: "Failed to delete artisan", detail: error?.sqlMessage || error?.message });
+    }
+  });
+
+  // Admin: open/get conversation with a specific user (for contacting client or artisan from admin panel)
+  app.post("/api/admin/contact/:userId", requireAdmin, async (req: any, res) => {
+    try {
+      const adminUser = await storage.getAdminUser();
+      if (!adminUser) return res.status(404).json({ error: "Admin user not found" });
+      const targetUserId = req.params.userId;
+      if (adminUser.id === targetUserId) return res.status(400).json({ error: "Cannot contact yourself" });
+      const conversation = await storage.getOrCreateConversation(adminUser.id, targetUserId);
+      res.json(conversation);
+    } catch (error) {
+      console.error("admin contact error:", error);
+      res.status(500).json({ error: "Failed to create conversation" });
     }
   });
 
