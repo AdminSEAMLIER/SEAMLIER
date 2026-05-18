@@ -28,10 +28,8 @@ import { useToast } from "@/hooks/use-toast";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
-const stripePromise: Promise<import("@stripe/stripe-js").Stripe | null> = fetch("/api/stripe/config", { credentials: "include" })
-  .then(r => r.json())
-  .then(d => d.publishableKey ? loadStripe(d.publishableKey) : Promise.resolve(null))
-  .catch(() => Promise.resolve(null));
+const _pubKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "";
+const stripePromise = _pubKey ? loadStripe(_pubKey).catch(() => null) : Promise.resolve(null);
 
 // ── Formulaire paiement abonnement ─────────────────────────────────────────
 function SubscribeForm({ interval, onSuccess }: { interval: "month" | "year"; onSuccess: () => void }) {
@@ -293,6 +291,73 @@ function AvailabilitySection({ tailorId }: { tailorId: string }) {
   );
 }
 
+// ── Section Parrainage ──────────────────────────────────────────────────────
+function ParrainageSection() {
+  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+
+  const referralMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const res = await fetch("/api/pro/referral", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Erreur");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      setSent(true);
+      setEmail("");
+      toast({ title: "Invitation envoyée", description: "Votre filleul recevra un email d'invitation." });
+    },
+    onError: (err: any) => {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <Card className="border border-gray-100 bg-white shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
+          <Crown className="h-5 w-5" />Parrainage
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="bg-white space-y-3">
+        <p className="text-sm text-gray-600">Invitez un autre artisan à rejoindre SEAMLIER en lui envoyant une invitation par email.</p>
+        {sent && (
+          <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
+            <CheckCircle size={15} className="shrink-0" />Invitation envoyée avec succès !
+          </div>
+        )}
+        <div className="flex gap-2">
+          <Input
+            type="email"
+            placeholder="email@exemple.fr"
+            value={email}
+            onChange={e => { setEmail(e.target.value); setSent(false); }}
+            className="flex-1 h-10 text-sm"
+            data-testid="input-referral-email"
+          />
+          <Button
+            className="bg-[#601B28] hover:bg-[#4E1522] text-white h-10 px-4 text-sm"
+            disabled={!email || referralMutation.isPending}
+            onClick={() => referralMutation.mutate(email)}
+            data-testid="button-send-referral"
+          >
+            {referralMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : "Inviter"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Page principale ────────────────────────────────────────────────────────
 export default function ProParametres() {
   const { t } = useTranslation();
@@ -416,24 +481,24 @@ export default function ProParametres() {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => { setInterval("month"); setShowPayForm(true); }}
-                    className={`p-4 rounded-xl border-2 text-left transition-colors ${interval === "month" ? "border-[#601B28] bg-[#601B28] text-white" : "border-gray-200 hover:border-[#601B28] hover:bg-[#601B28]/5"}`}
+                    className="p-4 rounded-xl border-2 border-[#601B28] bg-[#601B28]/5 text-left hover:bg-[#601B28]/10 transition-colors"
                     data-testid="button-plan-monthly"
                   >
-                    <p className={`font-bold text-lg ${interval === "month" ? "text-white" : "text-[#601B28]"}`}>29€</p>
-                    <p className={`text-xs mt-0.5 ${interval === "month" ? "text-white/80" : "text-gray-500"}`}>par mois</p>
-                    <p className={`text-xs font-semibold mt-2 ${interval === "month" ? "text-white" : "text-gray-700"}`}>0% de commission</p>
-                    <p className={`text-xs ${interval === "month" ? "text-white/80" : "text-gray-500"}`}>Mesures illimitées</p>
+                    <p className="font-bold text-[#601B28] text-lg">29€</p>
+                    <p className="text-xs text-gray-500">par mois</p>
+                    <p className="text-xs font-semibold text-gray-700 mt-2">0% de commission</p>
+                    <p className="text-xs text-gray-500">Mesures illimitées</p>
                   </button>
                   <button
                     onClick={() => { setInterval("year"); setShowPayForm(true); }}
-                    className={`p-4 rounded-xl border-2 text-left transition-colors relative ${interval === "year" ? "border-[#601B28] bg-[#601B28] text-white" : "border-gray-200 hover:border-[#601B28] hover:bg-[#601B28]/5"}`}
+                    className="p-4 rounded-xl border-2 border-gray-200 text-left hover:border-[#601B28] hover:bg-[#601B28]/5 transition-colors relative"
                     data-testid="button-plan-yearly"
                   >
-                    <Badge className={`absolute top-2 right-2 border-none text-[9px] px-1.5 ${interval === "year" ? "bg-white/20 text-white" : "bg-green-100 text-green-700"}`}>−17%</Badge>
-                    <p className={`font-bold text-lg ${interval === "year" ? "text-white" : "text-gray-800"}`}>290€</p>
-                    <p className={`text-xs mt-0.5 ${interval === "year" ? "text-white/80" : "text-gray-500"}`}>par an</p>
-                    <p className={`text-xs font-semibold mt-2 ${interval === "year" ? "text-white" : "text-gray-700"}`}>0% de commission</p>
-                    <p className={`text-xs ${interval === "year" ? "text-white/80" : "text-gray-500"}`}>Mesures illimitées</p>
+                    <Badge className="absolute top-2 right-2 bg-green-100 text-green-700 border-none text-[9px] px-1.5">−17%</Badge>
+                    <p className="font-bold text-gray-800 text-lg">290€</p>
+                    <p className="text-xs text-gray-500">par an</p>
+                    <p className="text-xs font-semibold text-gray-700 mt-2">0% de commission</p>
+                    <p className="text-xs text-gray-500">Mesures illimitées</p>
                   </button>
                 </div>
 
@@ -540,6 +605,9 @@ export default function ProParametres() {
             </div>
           </CardContent>
         </Card>
+
+        {/* ── Parrainage ── */}
+        <ParrainageSection />
 
         {/* ── Sécurité ── */}
         <Card className="border border-gray-100 bg-white shadow-sm">
