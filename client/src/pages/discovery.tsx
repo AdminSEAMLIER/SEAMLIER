@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearch } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Search, Scissors, MapPin, Star } from "lucide-react";
@@ -50,6 +50,27 @@ export default function Discovery() {
   const [searchQuery, setSearchQuery] = useState(villeParam);
   const [activeSearch, setActiveSearch] = useState(villeParam);
   const [sortBy, setSortBy] = useState("default");
+  const [userPosition, setUserPosition] = useState<{lat: number, lng: number} | null>(null);
+  const [sortByDistance, setSortByDistance] = useState(false);
+
+  function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  const toggleNearMe = () => {
+    if (sortByDistance) { setSortByDistance(false); return; }
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition((pos) => {
+      setUserPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      setSortByDistance(true);
+    });
+  };
   const matchingCity = villeParam && cities.includes(villeParam) ? villeParam : "all";
   const [selectedCity, setSelectedCity] = useState(matchingCity);
 
@@ -93,6 +114,11 @@ export default function Discovery() {
       tailor.user.location?.toLowerCase().includes(selectedCity.toLowerCase());
     return matchesFilter && matchesSearch && matchesCity;
   }).sort((a, b) => {
+    if (sortByDistance && userPosition) {
+      const distA = (a.latitude && a.longitude) ? haversineDistance(userPosition.lat, userPosition.lng, a.latitude, a.longitude) : 99999;
+      const distB = (b.latitude && b.longitude) ? haversineDistance(userPosition.lat, userPosition.lng, b.latitude, b.longitude) : 99999;
+      return distA - distB;
+    }
     if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0);
     if (sortBy === "reviews") return (b.reviewCount || 0) - (a.reviewCount || 0);
     return 0;
@@ -145,7 +171,13 @@ export default function Discovery() {
 
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6">
         <div className="flex flex-col gap-6">
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-4 items-center">
+            <button
+              onClick={toggleNearMe}
+              className={"flex items-center gap-1 px-3 py-1.5 rounded-full text-sm border transition-colors " + (sortByDistance ? "bg-[#601B28] text-white border-[#601B28]" : "bg-white text-[#601B28] border-[#601B28]")}
+            >
+              <span>📍</span> Près de moi
+            </button>
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-[#601B28]" />
               <Select value={selectedCity} onValueChange={setSelectedCity}>
