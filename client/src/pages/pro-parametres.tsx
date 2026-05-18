@@ -291,73 +291,6 @@ function AvailabilitySection({ tailorId }: { tailorId: string }) {
   );
 }
 
-// ── Section Parrainage ──────────────────────────────────────────────────────
-function ParrainageSection() {
-  const { toast } = useToast();
-  const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
-
-  const referralMutation = useMutation({
-    mutationFn: async (email: string) => {
-      const res = await fetch("/api/pro/referral", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Erreur");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      setSent(true);
-      setEmail("");
-      toast({ title: "Invitation envoyée", description: "Votre filleul recevra un email d'invitation." });
-    },
-    onError: (err: any) => {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
-    },
-  });
-
-  return (
-    <Card className="border border-gray-100 bg-white shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
-          <Crown className="h-5 w-5" />Parrainage
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="bg-white space-y-3">
-        <p className="text-sm text-gray-600">Invitez un autre artisan à rejoindre SEAMLIER en lui envoyant une invitation par email.</p>
-        {sent && (
-          <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
-            <CheckCircle size={15} className="shrink-0" />Invitation envoyée avec succès !
-          </div>
-        )}
-        <div className="flex gap-2">
-          <Input
-            type="email"
-            placeholder="email@exemple.fr"
-            value={email}
-            onChange={e => { setEmail(e.target.value); setSent(false); }}
-            className="flex-1 h-10 text-sm"
-            data-testid="input-referral-email"
-          />
-          <Button
-            className="bg-[#601B28] hover:bg-[#4E1522] text-white h-10 px-4 text-sm"
-            disabled={!email || referralMutation.isPending}
-            onClick={() => referralMutation.mutate(email)}
-            data-testid="button-send-referral"
-          >
-            {referralMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : "Inviter"}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 // ── Page principale ────────────────────────────────────────────────────────
 export default function ProParametres() {
   const { t } = useTranslation();
@@ -605,9 +538,6 @@ export default function ProParametres() {
             </div>
           </CardContent>
         </Card>
-
-        {/* ── Parrainage ── */}
-        <ParrainageSection />
 
         {/* ── Sécurité ── */}
         <Card className="border border-gray-100 bg-white shadow-sm">

@@ -1699,7 +1699,7 @@ export async function registerRoutes(
   app.get("/api/admin/artisan-dossiers", requireAdmin, async (req, res) => {
     try {
       const [rows] = await pool.query(
-        `SELECT t.id, t.siret, t.dossier_status, t.iban,
+        `SELECT t.id, t.siret, t.dossier_status, t.iban, t.rc_pro_certified,
           t.kbis_url IS NOT NULL as has_kbis, t.kbis_expiry,
           t.id_doc_url IS NOT NULL as has_id_doc,
           t.rc_pro_url IS NOT NULL as has_rc_pro,
@@ -1715,20 +1715,45 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/admin/artisan-dossiers/:id/validate", requireAdmin, async (req, res) => {
+  app.post("/api/admin/artisan-dossiers/:id/validate", requireAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
       const { action, reason } = req.body;
+      const adminUserId = req.authUserId;
       const status = action === "validate" ? "validated" : "rejected";
       await pool.query(`UPDATE tailors SET dossier_status = ? WHERE id = ?`, [status, id]);
       const [rows] = await pool.query(
-        `SELECT u.email, u.first_name, u.last_name FROM tailors t LEFT JOIN users u ON t.user_id = u.id WHERE t.id = ?`,
+        `SELECT t.user_id, u.email, u.first_name, u.last_name FROM tailors t LEFT JOIN users u ON t.user_id = u.id WHERE t.id = ?`,
         [id]
       ) as any[];
-      const user = (rows as any[])[0];
-      if (user?.email) {
-        sendDossierStatusEmail(user.email, `${user.first_name || ""} ${user.last_name || ""}`.trim(), status, reason).catch(() => {});
+      const tailorRow = (rows as any[])[0];
+      if (tailorRow?.email) {
+        sendDossierStatusEmail(tailorRow.email, `${tailorRow.first_name || ""} ${tailorRow.last_name || ""}`.trim(), status, reason).catch(() => {});
       }
+      if (action === "validate" && tailorRow?.user_id && adminUserId) {
+        try {
+          const conv = await storage.getOrCreateConversation(adminUserId, tailorRow.user_id);
+          await storage.createMessage({
+            conversationId: conv.id,
+            senderId: adminUserId,
+            content: "Bienvenue sur SEAMLiER ! Votre compte a été activé. Pour finaliser votre dossier, merci de nous envoyer via cette messagerie : votre CNI/Passeport (obligatoire) et votre extrait KBIS (si applicable). L'équipe SEAMLiER",
+          });
+        } catch (e) { console.error("Auto-message on validation failed:", e); }
+      }
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.patch("/api/admin/artisan-dossiers/:id/pro-info", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { siret, iban, rcProCertified } = req.body;
+      await pool.query(
+        `UPDATE tailors SET siret = ?, iban = ?, rc_pro_certified = ? WHERE id = ?`,
+        [siret || null, iban || null, rcProCertified ? 1 : 0, id]
+      );
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });

@@ -257,6 +257,8 @@ export default function AdminDashboard() {
   const [artisanDossierId, setArtisanDossierId] = useState<string | null>(null);
   const [artisanDossierMode, setArtisanDossierMode] = useState<"view" | "edit" | null>(null);
   const [artisanEditForm, setArtisanEditForm] = useState<Partial<Artisan>>({});
+  const [editingProInfoId, setEditingProInfoId] = useState<string | null>(null);
+  const [proInfoForm, setProInfoForm] = useState<{ siret: string; iban: string; rcProCertified: boolean }>({ siret: "", iban: "", rcProCertified: false });
   const [showAddArtisan, setShowAddArtisan] = useState(false);
   const [newArtisan, setNewArtisan] = useState({
     firstName: "", lastName: "", specialty: "", city: "", email: "", phone: "",
@@ -574,6 +576,23 @@ export default function AdminDashboard() {
       toast({ title: vars.action === "validate" ? "Dossier validé" : "Dossier rejeté", description: "L'artisan a été notifié par email." });
     },
     onError: () => toast({ title: "Erreur", variant: "destructive" }),
+  });
+
+  const saveProInfoMutation = useMutation({
+    mutationFn: async ({ id, siret, iban, rcProCertified }: { id: string; siret: string; iban: string; rcProCertified: boolean }) => {
+      const res = await apiFetch(`/api/admin/artisan-dossiers/${id}/pro-info`, {
+        method: "PATCH",
+        body: JSON.stringify({ siret, iban, rcProCertified }),
+      });
+      if (!res.ok) throw new Error("Erreur");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/artisan-dossiers"] });
+      setEditingProInfoId(null);
+      toast({ title: "Informations enregistrées" });
+    },
+    onError: () => toast({ title: "Erreur", description: "Impossible d'enregistrer.", variant: "destructive" }),
   });
 
   const { data: artisanDossiers = [] } = useQuery<any[]>({
@@ -1450,7 +1469,7 @@ export default function AdminDashboard() {
                           <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
                             <tr>
                               <th className="px-4 py-3 text-left">Artisan</th>
-                              <th className="px-4 py-3 text-left">SIRET</th>
+                              <th className="px-4 py-3 text-left">SIRET / IBAN / RC Pro</th>
                               <th className="px-4 py-3 text-center">Kbis</th>
                               <th className="px-4 py-3 text-center">CNI</th>
                               <th className="px-4 py-3 text-center">RC Pro</th>
@@ -1461,12 +1480,29 @@ export default function AdminDashboard() {
                           </thead>
                           <tbody className="divide-y divide-gray-50">
                             {artisanDossiers.map((d: any) => (
+                              <>
                               <tr key={d.id} className="hover:bg-gray-50/50 transition-colors" data-testid={`row-dossier-${d.id}`}>
                                 <td className="px-4 py-3">
                                   <p className="font-medium text-gray-900">{d.first_name} {d.last_name}</p>
                                   <p className="text-xs text-gray-400">{d.email}</p>
                                 </td>
-                                <td className="px-4 py-3 text-xs text-gray-600 font-mono">{d.siret || "—"}</td>
+                                <td className="px-4 py-3">
+                                  <div className="text-xs text-gray-600 font-mono space-y-0.5">
+                                    <p>{d.siret || <span className="text-gray-300">SIRET —</span>}</p>
+                                    <p>{d.iban || <span className="text-gray-300">IBAN —</span>}</p>
+                                    <p>{d.rc_pro_certified ? <span className="text-green-600">RC Pro ✓</span> : <span className="text-gray-300">RC Pro —</span>}</p>
+                                  </div>
+                                  <button
+                                    className="text-[10px] text-[#601B28] hover:underline mt-1"
+                                    onClick={() => {
+                                      setEditingProInfoId(editingProInfoId === d.id ? null : d.id);
+                                      setProInfoForm({ siret: d.siret || "", iban: d.iban || "", rcProCertified: !!d.rc_pro_certified });
+                                    }}
+                                    data-testid={`button-edit-pro-info-${d.id}`}
+                                  >
+                                    {editingProInfoId === d.id ? "Annuler" : "Modifier"}
+                                  </button>
+                                </td>
                                 {[d.has_kbis, d.has_id_doc, d.has_rc_pro, d.has_rib].map((has: any, i: number) => (
                                   <td key={i} className="px-4 py-3 text-center">
                                     {has
@@ -1507,6 +1543,56 @@ export default function AdminDashboard() {
                                   </div>
                                 </td>
                               </tr>
+                              {editingProInfoId === d.id && (
+                                <tr key={`edit-${d.id}`} className="bg-[#601B28]/5">
+                                  <td colSpan={8} className="px-4 py-3">
+                                    <div className="flex flex-wrap items-end gap-3">
+                                      <div>
+                                        <p className="text-xs font-medium text-gray-600 mb-1">SIRET</p>
+                                        <input
+                                          type="text"
+                                          value={proInfoForm.siret}
+                                          onChange={e => setProInfoForm(f => ({ ...f, siret: e.target.value }))}
+                                          placeholder="14 chiffres"
+                                          className="px-2 py-1 border border-gray-200 rounded text-xs font-mono w-40"
+                                          data-testid={`input-admin-siret-${d.id}`}
+                                        />
+                                      </div>
+                                      <div>
+                                        <p className="text-xs font-medium text-gray-600 mb-1">IBAN</p>
+                                        <input
+                                          type="text"
+                                          value={proInfoForm.iban}
+                                          onChange={e => setProInfoForm(f => ({ ...f, iban: e.target.value }))}
+                                          placeholder="FR76…"
+                                          className="px-2 py-1 border border-gray-200 rounded text-xs font-mono w-52"
+                                          data-testid={`input-admin-iban-${d.id}`}
+                                        />
+                                      </div>
+                                      <label className="flex items-center gap-1.5 cursor-pointer">
+                                        <input
+                                          type="checkbox"
+                                          checked={proInfoForm.rcProCertified}
+                                          onChange={e => setProInfoForm(f => ({ ...f, rcProCertified: e.target.checked }))}
+                                          className="w-3.5 h-3.5 accent-[#601B28]"
+                                          data-testid={`input-admin-rcpro-${d.id}`}
+                                        />
+                                        <span className="text-xs text-gray-700">RC Pro certifiée</span>
+                                      </label>
+                                      <Button
+                                        size="sm"
+                                        className="h-7 text-xs bg-[#601B28] hover:bg-[#4E1522] text-white px-3"
+                                        disabled={saveProInfoMutation.isPending}
+                                        onClick={() => saveProInfoMutation.mutate({ id: d.id, ...proInfoForm })}
+                                        data-testid={`button-save-pro-info-${d.id}`}
+                                      >
+                                        Enregistrer
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                              </>
                             ))}
                           </tbody>
                         </table>
