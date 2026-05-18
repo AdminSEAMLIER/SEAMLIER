@@ -3,7 +3,7 @@ import {
   MessageSquare, Search, Send, Users, Headset, ArrowLeft,
   User, FolderKanban, Calendar, Ruler, Mail, Phone,
   MapPin, Clock, CheckCircle2, Circle, AlertCircle, AlertTriangle,
-  StickyNote, ChevronDown, Tag,
+  StickyNote, ChevronDown, Tag, EyeOff,
 } from "lucide-react";
 import { renderMessageContent } from "@/lib/message-renderer";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -526,6 +526,20 @@ export default function ProMessagerie() {
     },
   });
 
+  const markAsUnreadMutation = useMutation({
+    mutationFn: async (conversationId: string) => {
+      return apiRequest("PATCH", `/api/messages/${conversationId}/unread`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations/unread-count"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      setSelectedConversationId(null);
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de marquer comme non lu", variant: "destructive" });
+    },
+  });
+
   const handleSendMessage = () => {
     if (!newMessage.trim() || !selectedConversationId) return;
     sendMessageMutation.mutate(newMessage.trim());
@@ -673,6 +687,19 @@ export default function ProMessagerie() {
                       {selectedConversation.otherParticipant.location || "Client"}
                     </p>
                   </div>
+                  {/* Bouton Non lu */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 text-xs text-gray-400 hover:text-gray-700 flex-shrink-0"
+                    onClick={() => selectedConversationId && markAsUnreadMutation.mutate(selectedConversationId)}
+                    disabled={markAsUnreadMutation.isPending}
+                    title="Marquer comme non lu"
+                    data-testid="button-mark-unread"
+                  >
+                    <EyeOff className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Non lu</span>
+                  </Button>
                   {/* Bouton Fiche client */}
                   <Button
                     variant="outline"

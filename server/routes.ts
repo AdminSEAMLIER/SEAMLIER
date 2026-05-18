@@ -535,6 +535,15 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/messages/:conversationId/unread", requireAuth, async (req: any, res) => {
+    try {
+      await storage.markMessagesAsUnread(req.params.conversationId, req.authUserId);
+      res.json({ ok: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to mark as unread" });
+    }
+  });
+
   app.patch("/api/messages/all/read", requireAuth, async (req: any, res) => {
     try {
       await storage.markAllMessagesAsRead(req.authUserId);

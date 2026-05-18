@@ -4,7 +4,7 @@ import { useSearch, Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, ImagePlus, ArrowLeft, MessageCircle, Headset } from "lucide-react";
+import { Send, ImagePlus, ArrowLeft, MessageCircle, Headset, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -100,6 +100,20 @@ export default function Messages() {
     },
     onError: () => {
       toast({ title: "Erreur", description: "Impossible de contacter le support", variant: "destructive" });
+    },
+  });
+
+  const markAsUnreadMutation = useMutation({
+    mutationFn: async (conversationId: string) => {
+      return apiRequest("PATCH", `/api/messages/${conversationId}/unread`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations/unread-count"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      setSelectedConversationId(null);
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible de marquer comme non lu", variant: "destructive" });
     },
   });
 
@@ -229,7 +243,7 @@ export default function Messages() {
                     {(selectedConversation.otherParticipant.firstName || "?").charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="flex-1 min-w-0">
                   {selectedConversation.otherParticipantTailorId ? (
                     <Link href={`/profil-pro/${selectedConversation.otherParticipantTailorId}`}>
                       <h2 className="font-medium text-foreground hover:text-[#601B28] hover:underline cursor-pointer transition-colors">
@@ -241,6 +255,18 @@ export default function Messages() {
                   )}
                   <p className="text-xs text-muted-foreground">{selectedConversation.otherParticipant.role === "tailor" ? "Artisan" : "Client"}</p>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-muted-foreground hover:text-foreground gap-1.5 flex-shrink-0"
+                  onClick={() => selectedConversationId && markAsUnreadMutation.mutate(selectedConversationId)}
+                  disabled={markAsUnreadMutation.isPending}
+                  title="Marquer comme non lu"
+                  data-testid="button-mark-unread"
+                >
+                  <EyeOff className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Non lu</span>
+                </Button>
               </div>
 
               <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">

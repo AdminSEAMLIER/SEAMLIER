@@ -61,6 +61,7 @@ export interface IStorage {
   getMessages(conversationId: string): Promise<MessageWithSender[]>;
   createMessage(message: InsertMessage): Promise<Message>;
   markMessagesAsRead(conversationId: string, userId: string): Promise<void>;
+  markMessagesAsUnread(conversationId: string, userId: string): Promise<void>;
   markAllMessagesAsRead(userId: string): Promise<void>;
   getUnreadCount(userId: string): Promise<number>;
 
@@ -482,6 +483,20 @@ class DatabaseStorage implements IStorage {
   async markMessagesAsRead(conversationId: string, userId: string): Promise<void> {
     await pool.query(
       `UPDATE messages SET is_read = 1 WHERE conversation_id = ? AND sender_id != ? AND is_read = 0`,
+      [conversationId, userId]
+    );
+  }
+
+  async markMessagesAsUnread(conversationId: string, userId: string): Promise<void> {
+    await pool.query(
+      `UPDATE messages SET is_read = 0
+       WHERE id = (
+         SELECT id FROM (
+           SELECT id FROM messages
+           WHERE conversation_id = ? AND sender_id != ?
+           ORDER BY sent_at DESC LIMIT 1
+         ) tmp
+       )`,
       [conversationId, userId]
     );
   }
