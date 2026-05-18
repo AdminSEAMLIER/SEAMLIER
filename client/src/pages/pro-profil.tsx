@@ -109,7 +109,7 @@ function ProInfoSection() {
     setUploading(true);
     try {
       const fd = new FormData();
-      fd.append("document", file);
+      fd.append("file", file);
       const res = await fetch(`/api/professionnel/dossier/upload/${docType}`, {
         method: "POST",
         body: fd,
@@ -127,7 +127,7 @@ function ProInfoSection() {
   };
 
   const handleSave = async () => {
-    const siretClean = siret.replace(/\s/g, "");
+    const siretClean = siret.replace(/[^0-9]/g, "");
     if (!/^\d{14}$/.test(siretClean)) {
       toast({ title: t('proInfo.siretInvalid'), description: t('proInfo.siretInvalidDesc'), variant: "destructive" });
       return;
@@ -147,7 +147,7 @@ function ProInfoSection() {
           iban: iban.trim(),
           insurerName: hasRcPro === true ? insurerName : null,
           insurerPolicy: hasRcPro === true ? insurerPolicy : null,
-          rcProCertified: hasRcPro,
+          rcProCertified: hasRcPro === true,
         }),
       });
       const data = await res.json().catch(() => ({}));

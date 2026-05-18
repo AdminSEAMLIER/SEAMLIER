@@ -189,6 +189,15 @@ export default function Messages() {
                     onClick={() => {
                       setSelectedConversationId(conversation.id);
                       if (conversation.unreadCount > 0) {
+                        // Optimistic: zero out badge instantly
+                        queryClient.setQueryData<ConversationWithParticipant[]>(
+                          ["/api/conversations"],
+                          (old) => old?.map(c => c.id === conversation.id ? { ...c, unreadCount: 0 } : c) ?? []
+                        );
+                        queryClient.setQueryData<{ count: number }>(
+                          ["/api/conversations/unread-count"],
+                          (old) => ({ count: Math.max(0, (old?.count || 0) - (conversation.unreadCount || 0)) })
+                        );
                         apiRequest("PATCH", `/api/messages/${conversation.id}/read`, {})
                           .then(() => {
                             queryClient.invalidateQueries({ queryKey: ["/api/conversations/unread-count"] });

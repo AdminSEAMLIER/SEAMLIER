@@ -2401,11 +2401,10 @@ export async function registerRoutes(
   // Admin: open/get conversation with a specific user (for contacting client or artisan from admin panel)
   app.post("/api/admin/contact/:userId", requireAdmin, async (req: any, res) => {
     try {
-      const adminUser = await storage.getAdminUser();
-      if (!adminUser) return res.status(404).json({ error: "Admin user not found" });
+      const adminId = (req as any).authUserId;
       const targetUserId = req.params.userId;
-      if (adminUser.id === targetUserId) return res.status(400).json({ error: "Cannot contact yourself" });
-      const conversation = await storage.getOrCreateConversation(adminUser.id, targetUserId);
+      if (adminId === targetUserId) return res.status(400).json({ error: "Cannot contact yourself" });
+      const conversation = await storage.getOrCreateConversation(adminId, targetUserId);
       res.json(conversation);
     } catch (error) {
       console.error("admin contact error:", error);
@@ -3542,14 +3541,14 @@ export async function registerRoutes(
 
       const { siret, iban, insurerName, insurerPolicy, rcProCertified } = req.body;
 
-      if (!siret || !/^\d{14}$/.test(siret.replace(/\s/g, ""))) {
+      if (!siret || !/^\d{14}$/.test(siret.replace(/[^0-9]/g, ""))) {
         return res.status(400).json({ error: "SIRET invalide (14 chiffres requis)" });
       }
       if (!iban || !iban.trim()) {
         return res.status(400).json({ error: "IBAN requis" });
       }
 
-      const siretClean = siret.replace(/\s/g, "");
+      const siretClean = siret.replace(/[^0-9]/g, "");
 
       await pool.query(
         `UPDATE tailors SET siret = ?, iban_rib = ?, insurer_name = ?, insurer_policy = ?, rc_pro_certified = ?, dossier_status = 'pending' WHERE id = ?`,
@@ -3623,14 +3622,14 @@ export async function registerRoutes(
       const { siret, iban, insurerName, insurerPolicy, rcProCertified } = req.body;
       console.log("[POST pro-info] body:", { siret, iban: iban ? "***" : null, insurerName, rcProCertified });
 
-      if (!siret || !/^\d{14}$/.test(siret.replace(/\s/g, ""))) {
+      if (!siret || !/^\d{14}$/.test(siret.replace(/[^0-9]/g, ""))) {
         return res.status(400).json({ error: "SIRET invalide (14 chiffres requis)" });
       }
       if (!iban || !iban.trim()) {
         return res.status(400).json({ error: "IBAN requis" });
       }
 
-      const siretClean = siret.replace(/\s/g, "");
+      const siretClean = siret.replace(/[^0-9]/g, "");
 
       await pool.query(
         `INSERT INTO pro_info (tailor_id, siret, iban, insurer_name, insurer_policy, rc_pro_certified, status, updated_at)
@@ -3902,6 +3901,37 @@ export async function registerRoutes(
 
   // ── Litiges ────────────────────────────────────────────────────────────────
 
+
+  app.post("/api/admin/disputes", requireAdmin, async (req: any, res) => {
+    try {
+      const { projectId, reason } = req.body;
+      if (!projectId || !reason?.trim()) {
+        return res.status(400).json({ error: "projectId et reason requis" });
+      }
+      const [projectRows] = await pool.query(
+        "SELECT id, client_id FROM projects WHERE id = ?", [projectId]
+      ) as any[];
+      const project = Array.isArray(projectRows) && projectRows[0] ? projectRows[0] : null;
+      if (!project) return res.status(404).json({ error: "Projet introuvable" });
+      const [existing] = await pool.query(
+        "SELECT id FROM disputes WHERE project_id = ? AND status = 'open'", [projectId]
+      ) as any[];
+      if (Array.isArray(existing) && existing.length > 0) {
+        return res.status(409).json({ error: "Un litige est déjà ouvert pour ce projet" });
+      }
+      const id = crypto.randomUUID();
+      await pool.query(
+        "INSERT INTO disputes (id, project_id, client_id, reason, status) VALUES (?, ?, ?, ?, 'open')",
+        [id, projectId, project.client_id, reason.trim()]
+      );
+      await createNotification(project.client_id, "dispute_opened", "Litige ouvert",
+        "L'équipe SEAMLiER a ouvert un litige sur votre projet.");
+      res.status(201).json({ id });
+    } catch (error) {
+      console.error("admin dispute error:", error);
+      res.status(500).json({ error: "Failed to open dispute" });
+    }
+  });
   app.post("/api/disputes", requireAuth, async (req: any, res) => {
     try {
       const clientId = req.authUserId;
