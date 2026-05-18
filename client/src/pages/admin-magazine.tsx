@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { API_ENDPOINTS, apiFetch } from "@/lib/api-config";
-import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,8 +18,7 @@ import {
   User, Building2, Phone, CreditCard, Briefcase, Hash,
   Globe, Bell, Palette, Shield, Database, Key, ToggleLeft,
   Bold, Italic, Underline, Star, Package, ArrowDownCircle,
-  Euro, BarChart3, FolderOpen, ExternalLink, Flag,
-  CalendarCheck, Download, StickyNote
+  Euro, BarChart3, Loader2, FolderOpen, AlertOctagon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +44,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
+const ADMIN_AUTH_KEY = "seamlier_admin_auth";
 
 type Project = {
   id: string;
@@ -82,8 +81,6 @@ type Artisan = {
   bio: string;
   subscriptionPlan: string;
   paymentStatus: string;
-  subscriptionCurrentPeriodEnd?: number | null;
-  stripeSubscriptionId?: string | null;
 };
 
 type ReplyMessage = {
@@ -199,8 +196,11 @@ type AdminReview = {
 
 export default function AdminDashboard() {
   const { toast } = useToast();
-  const { user: authUser, isLoading: authLoading } = useAuth();
-  const isAuthenticated = authUser?.role === "admin";
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    try {
+      return localStorage.getItem(ADMIN_AUTH_KEY) === "true";
+    } catch { return false; }
+  });
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
@@ -220,9 +220,6 @@ export default function AdminDashboard() {
   const [newArticleContent, setNewArticleContent] = useState("");
   const [newArticleExcerpt, setNewArticleExcerpt] = useState("");
   const [newArticleImageUrl, setNewArticleImageUrl] = useState("");
-  const [adminNotesUserId, setAdminNotesUserId] = useState<string | null>(null);
-  const [adminNotesValue, setAdminNotesValue] = useState("");
-  const [adminNotesSaving, setAdminNotesSaving] = useState(false);
   const [editingArticleId, setEditingArticleId] = useState<string | null>(null);
   const [editArticleTitle, setEditArticleTitle] = useState("");
   const [editArticleCategory, setEditArticleCategory] = useState("");
@@ -269,15 +266,6 @@ export default function AdminDashboard() {
     subscriptionPlan: "Starter", paymentStatus: "En attente",
   });
 
-  const [editProjectId, setEditProjectId] = useState<string | null>(null);
-  const [editProjectStatus, setEditProjectStatus] = useState("");
-  const [editProjectAmount, setEditProjectAmount] = useState("");
-  const [editProjectNotes, setEditProjectNotes] = useState("");
-  const [refundDialogProjectId, setRefundDialogProjectId] = useState<string | null>(null);
-  const [refundPending, setRefundPending] = useState(false);
-  const [cancelSubArtisanId, setCancelSubArtisanId] = useState<string | null>(null);
-  const [cancelSubPending, setCancelSubPending] = useState(false);
-
   const [settingsPlatformName, setSettingsPlatformName] = useState("SEAMLiER");
   const [settingsContactEmail, setSettingsContactEmail] = useState("contact@seamlier.fr");
   const [settingsSupportEmail, setSettingsSupportEmail] = useState("support@seamlier.fr");
@@ -301,10 +289,19 @@ export default function AdminDashboard() {
   const settingsLoaded = useRef(false);
 
   useEffect(() => {
-    if (isAuthenticated && authUser && !adminUser) {
-      setAdminUser(authUser);
+    try {
+      localStorage.setItem(ADMIN_AUTH_KEY, isAuthenticated ? "true" : "false");
+    } catch {}
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated && !adminUser) {
+      fetch("/api/auth/user", { credentials: "include" })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => { if (data && data.role === "admin") setAdminUser(data); })
+        .catch(() => {});
     }
-  }, [isAuthenticated, authUser, adminUser]);
+  }, [isAuthenticated, adminUser]);
 
   const [sequestreOverrides, setSequestreOverrides] = useState<Record<string, "Bloqué" | "Libéré">>({});
   const { data: rawProjects = [] } = useQuery<Project[]>({
@@ -334,12 +331,9 @@ export default function AdminDashboard() {
 
   const { data: globalStats } = useQuery<{
     totalRevenue: number;
-    totalCommissions: number;
     monthRevenue: number;
-    monthCommissions: number;
-    avgProjectValue: number;
-    totalProjectsPaid: number;
     totalProjectsCompleted: number;
+    avgProjectValue: number;
     starterCount: number;
     proCount: number;
     activeClientsCount: number;
@@ -375,8 +369,6 @@ export default function AdminDashboard() {
       bio: a.bio || "",
       subscriptionPlan: a.subscriptionPlan || "Starter",
       paymentStatus: a.paymentStatus || "En attente",
-      subscriptionCurrentPeriodEnd: a.subscriptionCurrentPeriodEnd ?? null,
-      stripeSubscriptionId: a.stripeSubscriptionId ?? null,
     })),
   [dbArtisans]);
 
@@ -532,6 +524,72 @@ export default function AdminDashboard() {
     queryKey: ["/api/admin/events"],
     enabled: isAuthenticated,
   });
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const { data: expandedParticipants = [], isLoading: participantsLoading } = useQuery<any[]>({
+    queryKey: ["/api/admin/events", expandedEventId, "participants"],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/admin/events/${expandedEventId}/participants`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!expandedEventId,
+  });
+  const releaseEventMutation = useMutation({
+    mutationFn: async (eventId: string) => {
+      const res = await apiFetch(`/api/admin/events/${eventId}/release`, { method: "POST" });
+      if (!res.ok) throw new Error("Erreur lors de la libération");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/events"] });
+      toast({ title: "Paiement libéré", description: "La commande groupée a été validée." });
+    },
+    onError: () => toast({ title: "Erreur", variant: "destructive" }),
+  });
+
+  const openDisputeMutation = useMutation({
+    mutationFn: async (projectId: string) => {
+      const res = await apiFetch(`/api/admin/projects/${projectId}/dispute`, { method: "POST" });
+      if (!res.ok) throw new Error("Erreur");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/all-projects"] });
+      toast({ title: "Litige ouvert", description: "Les parties ont été notifiées par email." });
+    },
+    onError: () => toast({ title: "Erreur", description: "Impossible d'ouvrir le litige.", variant: "destructive" }),
+  });
+
+  const validateDossierMutation = useMutation({
+    mutationFn: async ({ id, action, reason }: { id: string; action: "validate" | "reject"; reason?: string }) => {
+      const res = await apiFetch(`/api/admin/artisan-dossiers/${id}/validate`, {
+        method: "POST",
+        body: JSON.stringify({ action, reason }),
+      });
+      if (!res.ok) throw new Error("Erreur");
+      return res.json();
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/artisan-dossiers"] });
+      toast({ title: vars.action === "validate" ? "Dossier validé" : "Dossier rejeté", description: "L'artisan a été notifié par email." });
+    },
+    onError: () => toast({ title: "Erreur", variant: "destructive" }),
+  });
+
+  const { data: artisanDossiers = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/artisan-dossiers"],
+    enabled: isAuthenticated,
+  });
+
+  const createConversationMutation = useMutation({
+    mutationFn: async ({ tailorId }: { tailorId: string }) => {
+      const res = await apiRequest("POST", "/api/conversations", { tailorId });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+    },
+  });
 
   const { data: adminReviews = [], isLoading: reviewsLoading } = useQuery<AdminReview[]>({
     queryKey: ["/api/admin/reviews"],
@@ -551,10 +609,6 @@ export default function AdminDashboard() {
 
   const { data: rawArtisans = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/artisans"],
-    enabled: isAuthenticated,
-  });
-  const { data: proInfoList = [], refetch: refetchProInfo } = useQuery<any[]>({
-    queryKey: ["/api/admin/pro-info"],
     enabled: isAuthenticated,
   });
   const couturiers: CouturierData[] = rawArtisans.map((a: any) => ({
@@ -607,6 +661,7 @@ export default function AdminDashboard() {
       }
       setAdminUser(data);
       await queryClient.invalidateQueries({ queryKey: ["auth-user"] });
+      setIsAuthenticated(true);
       toast({ title: "Accès autorisé", description: "Bienvenue sur la console d'administration." });
     } catch {
       toast({ title: "Erreur", description: "Impossible de se connecter au serveur.", variant: "destructive" });
@@ -620,18 +675,27 @@ export default function AdminDashboard() {
       await apiFetch('/api/logout');
       await queryClient.invalidateQueries({ queryKey: ["auth-user"] });
     } catch {}
+    setIsAuthenticated(false);
+    try { localStorage.removeItem(ADMIN_AUTH_KEY); } catch {}
     toast({ title: "Déconnexion", description: "Vous avez été déconnecté." });
   }, [toast]);
 
   const toggleSequestre = (id: string) => {
     const project = projects.find(p => p.id === id);
-    const currentStatus = project?.status ?? "Bloqué";
-    const newStatus: "Bloqué" | "Libéré" = currentStatus === "Bloqué" ? "Libéré" : "Bloqué";
-    setSequestreOverrides(prev => ({ ...prev, [id]: newStatus }));
-    toast({
-      title: newStatus === "Libéré" ? "Fonds libérés" : "Fonds bloqués",
-      description: `Séquestre mis à jour pour ${project?.client}`,
-    });
+    apiFetch(`/api/stripe/transfer/admin-release/${id}`, { method: "POST" })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          setSequestreOverrides(prev => ({ ...prev, [id]: "Libéré" }));
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/all-projects"] });
+          toast({ title: "Fonds libérés", description: `Virement initié pour ${project?.client}` });
+        } else {
+          toast({ title: "Erreur", description: data?.error || "Échec du virement", variant: "destructive" });
+        }
+      })
+      .catch(() => {
+        toast({ title: "Erreur réseau", description: "Impossible de contacter le serveur.", variant: "destructive" });
+      });
   };
 
   const approveArtisan = (id: string) => {
@@ -913,35 +977,11 @@ export default function AdminDashboard() {
   };
 
   const dossierArtisan = artisans.find(a => a.id === artisanDossierId);
-  const dossierTailorId = artisanDossierId?.startsWith("reg-")
-    ? artisanDossierId.replace("reg-", "")
-    : artisanDossierId ?? null;
-  const dossierDocs = ([] as any[]).find(
-    (d: any) => String(d.id) === dossierTailorId
-  );
 
-  const totalRevenue = projects.filter(p => p.status === "Libéré").reduce((sum, p) => sum + parseFloat(p.amount.replace(/[^0-9.]/g, "") || "0"), 0);
+  const totalRevenue = projects.filter(p => p.status === "Libéré").reduce((sum, p) => sum + parseInt(p.amount.replace(/[^\d]/g, "")), 0);
   const pendingProjects = projects.filter(p => p.status === "Bloqué").length;
   const verifiedArtisans = artisans.filter(a => a.status === "Vérifié").length;
   const unreadMessages = adminConversations.reduce((sum: number, c: any) => sum + (c.unreadCount || 0), 0);
-
-  const { data: adminPayments = [] } = useQuery<any[]>({
-    queryKey: ["/api/admin/payments"],
-    enabled: isAuthenticated,
-    refetchInterval: 60000,
-  });
-
-  const [paymentsSearch, setPaymentsSearch] = useState("");
-  const [paymentsStatusFilter, setPaymentsStatusFilter] = useState("all");
-
-  const projectsInProgress = rawProjects.filter((p: any) => (p as any).rawStatus === "in_progress").length;
-  const projectsPending = rawProjects.filter((p: any) => (p as any).rawStatus === "pending");
-  const totalCommissions = adminPayments
-    .filter((p: any) => ["paid", "client_confirmed", "transferred"].includes(p.paymentStatus))
-    .reduce((sum: number, p: any) => sum + (p.commission || 0), 0);
-  const pendingArtisans = artisans.filter(a => a.status === "En attente").length;
-
-  const [pendingQuotesSearch, setPendingQuotesSearch] = useState("");
 
   const filteredProjects = useMemo(() => projects.filter(p =>
     p.client.toLowerCase().includes(projectSearch.toLowerCase()) ||
@@ -954,14 +994,6 @@ export default function AdminDashboard() {
     a.city.toLowerCase().includes(artisanSearch.toLowerCase())
   ), [artisans, artisanSearch]);
 
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#601B28]">
-        <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   if (!isAuthenticated) {
     return (
@@ -1016,19 +1048,16 @@ export default function AdminDashboard() {
     { label: "Dashboard", icon: LayoutDashboard, id: "overview" },
     { label: "Inscrits", icon: User, id: "users" },
     { label: "Artisans", icon: Users, id: "artisans" },
-    { label: "Dossiers pros", icon: FolderOpen, id: "dossiers" },
+    { label: "Dossiers Pro", icon: FolderOpen, id: "dossiers" },
     { label: "Demandes", icon: Clock, id: "requests" },
-    { label: "Devis en cours", icon: FileText, id: "pending-quotes" },
     { label: "Projets", icon: ShoppingBag, id: "projects" },
-    { label: "Paiements", icon: Euro, id: "payments" },
-    { label: "Rendez-vous", icon: CalendarCheck, id: "appointments" },
+    { label: "Planning", icon: Calendar, id: "planning" },
     { label: "Abonnements", icon: CreditCard, id: "subscriptions" },
     { label: "Messagerie", icon: MessageSquare, id: "messaging" },
     { label: "Mesures", icon: Ruler, id: "measures" },
     { label: "Avis", icon: Star, id: "reviews" },
     { label: "Commandes groupées", icon: Users, id: "events" },
     { label: "Magazine", icon: FileText, id: "magazine" },
-    { label: "Litiges", icon: Flag, id: "litiges" },
   ];
 
   const stats = [
@@ -1120,78 +1149,43 @@ export default function AdminDashboard() {
                     <p className="text-gray-500 mt-1 text-sm">Vue globale de la plateforme SEAMLiER</p>
                   </div>
 
-                  {/* Notifications admin */}
-                  {(pendingArtisans > 0 || adminPayments.filter((p: any) => p.paymentStatus === "failed").length > 0) && (
-                    <div className="space-y-2">
-                      {pendingArtisans > 0 && (
-                        <button
-                          className="w-full flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-left hover:bg-amber-100 transition-colors"
-                          onClick={() => setActiveTab("dossiers")}
-                          data-testid="notif-pending-artisans"
-                        >
-                          <Bell size={16} className="text-amber-600 shrink-0" />
-                          <span className="text-sm text-amber-800 font-medium">
-                            {pendingArtisans} artisan{pendingArtisans > 1 ? "s" : ""} en attente de validation de dossier
-                          </span>
-                          <ChevronRight size={14} className="ml-auto text-amber-500" />
-                        </button>
-                      )}
-                      {adminPayments.filter((p: any) => p.paymentStatus === "failed").length > 0 && (
-                        <button
-                          className="w-full flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-lg text-left hover:bg-red-100 transition-colors"
-                          onClick={() => setActiveTab("payments")}
-                          data-testid="notif-failed-payments"
-                        >
-                          <Bell size={16} className="text-red-600 shrink-0" />
-                          <span className="text-sm text-red-800 font-medium">
-                            {adminPayments.filter((p: any) => p.paymentStatus === "failed").length} paiement(s) en échec
-                          </span>
-                          <ChevronRight size={14} className="ml-auto text-red-500" />
-                        </button>
-                      )}
+                  {/* Bloc revenus & activité */}
+                  {globalStats && (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      {[
+                        { label: "CA ce mois", value: `${globalStats.monthRevenue?.toFixed(0) ?? 0} €`, icon: TrendingUp, bg: "bg-green-50", color: "text-green-600" },
+                        { label: "CA total", value: `${globalStats.totalRevenue?.toFixed(0) ?? 0} €`, icon: Euro, bg: "bg-[#601B28]/5", color: "text-[#601B28]" },
+                        { label: "Projets terminés", value: globalStats.totalProjectsCompleted ?? 0, icon: CheckCircle, bg: "bg-blue-50", color: "text-blue-600" },
+                        { label: "Panier moyen", value: `${globalStats.avgProjectValue?.toFixed(0) ?? 0} €`, icon: BarChart3, bg: "bg-amber-50", color: "text-amber-600" },
+                      ].map(s => (
+                        <Card key={s.label} className="border-none shadow-sm">
+                          <CardContent className="p-4">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${s.bg}`}>
+                              <s.icon size={16} className={s.color} />
+                            </div>
+                            <p className="text-xs text-gray-500 font-medium">{s.label}</p>
+                            <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
                   )}
 
-                  {/* KPIs principaux */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {[
-                      { label: "CA total (payé)", value: `${globalStats?.totalRevenue?.toFixed(0) ?? 0} €`, icon: Euro, bg: "bg-[#601B28]/5", color: "text-[#601B28]" },
-                      { label: "Commissions SEAMLiER", value: `${globalStats?.totalCommissions?.toFixed(0) ?? 0} €`, icon: TrendingUp, bg: "bg-green-50", color: "text-green-600" },
-                      { label: "CA ce mois", value: `${globalStats?.monthRevenue?.toFixed(0) ?? 0} €`, icon: BarChart3, bg: "bg-blue-50", color: "text-blue-600" },
-                      { label: "Panier moyen", value: `${globalStats?.avgProjectValue?.toFixed(0) ?? 0} €`, icon: BarChart3, bg: "bg-amber-50", color: "text-amber-600" },
-                    ].map(s => (
-                      <Card key={s.label} className="border-none shadow-sm">
-                        <CardContent className="p-4">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${s.bg}`}>
-                            <s.icon size={16} className={s.color} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+                    {stats.map((stat) => (
+                      <Card key={stat.label} className="border-none shadow-sm hover-elevate cursor-pointer" onClick={() => setActiveTab(stat.tab)} data-testid={`card-stat-${stat.label.replace(/\s/g, "-").toLowerCase()}`}>
+                        <CardContent className="p-5">
+                          <div className="flex justify-between items-start">
+                            <div className={cn("p-2 rounded-lg", stat.bg)}>
+                              <stat.icon size={18} className={stat.color} />
+                            </div>
                           </div>
-                          <p className="text-xs text-gray-500 font-medium">{s.label}</p>
-                          <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
+                          <p className="text-sm font-medium text-gray-500 mt-3">{stat.label}</p>
+                          <p className="text-2xl lg:text-3xl font-bold text-gray-900 mt-1">{stat.val}</p>
                         </CardContent>
                       </Card>
                     ))}
                   </div>
-
-                  {/* KPIs activité */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {[
-                      { label: "Clients inscrits", value: globalStats?.activeClientsCount ?? dbUsers.filter((u: any) => u.role === "client").length, icon: User, bg: "bg-purple-50", color: "text-purple-600", tab: "users" },
-                      { label: "Artisans actifs", value: globalStats?.activeArtisansCount ?? verifiedArtisans, icon: Users, bg: "bg-amber-50", color: "text-amber-600", tab: "artisans" },
-                      { label: "Projets en cours", value: projectsInProgress, icon: ShoppingBag, bg: "bg-blue-50", color: "text-blue-600", tab: "projects" },
-                      { label: "Projets terminés", value: globalStats?.totalProjectsCompleted ?? 0, icon: CheckCircle, bg: "bg-green-50", color: "text-green-600", tab: "projects" },
-                    ].map(s => (
-                      <Card key={s.label} className="border-none shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab(s.tab)}>
-                        <CardContent className="p-4">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${s.bg}`}>
-                            <s.icon size={16} className={s.color} />
-                          </div>
-                          <p className="text-xs text-gray-500 font-medium">{s.label}</p>
-                          <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-
                   <div className="grid lg:grid-cols-2 gap-6">
                     <Card className="border-none shadow-sm">
                       <CardContent className="p-5">
@@ -1278,6 +1272,7 @@ export default function AdminDashboard() {
                               <th className="px-4 py-3 text-left">Artisan</th>
                               <th className="px-4 py-3 text-left">Statut</th>
                               <th className="px-4 py-3 text-left">Date</th>
+                              <th className="px-4 py-3 text-left">Contact</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-50">
@@ -1294,102 +1289,28 @@ export default function AdminDashboard() {
                                 <td className="px-4 py-3 text-gray-400 text-xs">
                                   {r.createdAt ? new Date(r.createdAt).toLocaleDateString("fr-FR") : "—"}
                                 </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </Card>
-                </>
-              )}
-
-              {/* ===== DEVIS EN COURS ===== */}
-              {activeTab === "pending-quotes" && (
-                <>
-                  <div>
-                    <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900">Devis en cours</h1>
-                    <p className="text-gray-500 mt-1 text-sm">Projets en attente de réponse artisan</p>
-                  </div>
-                  <Card className="border-none shadow-sm overflow-hidden bg-white">
-                    <div className="p-5 border-b border-gray-50 flex items-center gap-3 flex-wrap">
-                      <Badge className="bg-yellow-50 text-yellow-700 border-none px-3 py-1">{projectsPending.length} en attente</Badge>
-                      <div className="ml-auto relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                        <Input
-                          placeholder="Rechercher..."
-                          value={pendingQuotesSearch}
-                          onChange={e => setPendingQuotesSearch(e.target.value)}
-                          className="pl-10 w-64 h-9 text-sm"
-                        />
-                      </div>
-                    </div>
-                    {projectsPending.length === 0 ? (
-                      <div className="p-12 text-center text-gray-400">
-                        <CheckCircle className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                        <p className="text-sm">Aucun devis en attente</p>
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-                            <tr>
-                              <th className="px-4 py-3 text-left">Projet</th>
-                              <th className="px-4 py-3 text-left">Client</th>
-                              <th className="px-4 py-3 text-left">Artisan</th>
-                              <th className="px-4 py-3 text-left">Montant estimé</th>
-                              <th className="px-4 py-3 text-left">Date</th>
-                              <th className="px-4 py-3 text-left">Contacter</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-50">
-                            {projectsPending
-                              .filter((p: any) => {
-                                if (!pendingQuotesSearch) return true;
-                                const q = pendingQuotesSearch.toLowerCase();
-                                return (p.client || "").toLowerCase().includes(q) || (p.artisan || "").toLowerCase().includes(q) || (p.description || "").toLowerCase().includes(q);
-                              })
-                              .map((p: any) => (
-                              <tr key={p.id} className="hover:bg-gray-50/50 transition-colors">
-                                <td className="px-4 py-3 font-medium text-gray-900 max-w-[180px] truncate">{p.description}</td>
-                                <td className="px-4 py-3 text-gray-600">{p.client}</td>
-                                <td className="px-4 py-3 text-gray-600">{p.artisan}</td>
-                                <td className="px-4 py-3 text-[#601B28] font-semibold">{p.amount}</td>
-                                <td className="px-4 py-3 text-gray-400 text-xs">{p.date}</td>
                                 <td className="px-4 py-3">
-                                  <div className="flex gap-1 flex-wrap">
-                                    {(p as any).clientId && (
+                                  <div className="flex gap-1">
+                                    {r.tailorId && (
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        className="h-7 text-[10px] gap-1 text-blue-700 border-blue-200 hover:bg-blue-50"
-                                        onClick={async () => {
-                                          try {
-                                            const res = await apiFetch(`/api/admin/contact/${(p as any).clientId}`, { method: "POST" });
-                                            const conv = await res.json();
-                                            if (conv?.id) { setSelectedConversationId(conv.id); setActiveTab("messaging"); }
-                                          } catch { toast({ title: "Erreur", description: "Impossible d'ouvrir la conversation", variant: "destructive" }); }
-                                        }}
+                                        className="h-7 text-[10px] px-2 border-[#601B28]/30 text-[#601B28] hover:bg-[#601B28]/5"
+                                        onClick={() => { setActiveTab("messaging"); }}
+                                        data-testid={`button-contact-artisan-${r.id}`}
                                       >
-                                        <MessageSquare size={10} />
-                                        Client
+                                        <MessageSquare size={10} className="mr-1" />Artisan
                                       </Button>
                                     )}
-                                    {(p as any).tailorUserId && (
+                                    {r.clientId && (
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        className="h-7 text-[10px] gap-1 text-[#601B28] border-[#601B28]/30 hover:bg-[#601B28]/5"
-                                        onClick={async () => {
-                                          try {
-                                            const res = await apiFetch(`/api/admin/contact/${(p as any).tailorUserId}`, { method: "POST" });
-                                            const conv = await res.json();
-                                            if (conv?.id) { setSelectedConversationId(conv.id); setActiveTab("messaging"); }
-                                          } catch { toast({ title: "Erreur", description: "Impossible d'ouvrir la conversation", variant: "destructive" }); }
-                                        }}
+                                        className="h-7 text-[10px] px-2 border-gray-300 text-gray-600 hover:bg-gray-50"
+                                        onClick={() => { setActiveTab("messaging"); }}
+                                        data-testid={`button-contact-client-${r.id}`}
                                       >
-                                        <MessageSquare size={10} />
-                                        Artisan
+                                        <User size={10} className="mr-1" />Client
                                       </Button>
                                     )}
                                   </div>
@@ -1404,209 +1325,12 @@ export default function AdminDashboard() {
                 </>
               )}
 
-              {/* ===== PAIEMENTS ===== */}
-              {activeTab === "payments" && (() => {
-                const filteredPayments = adminPayments.filter((p: any) => {
-                  if (paymentsStatusFilter !== "all" && p.paymentStatus !== paymentsStatusFilter) return false;
-                  if (!paymentsSearch) return true;
-                  const q = paymentsSearch.toLowerCase();
-                  return (p.client || "").toLowerCase().includes(q) || (p.tailor || "").toLowerCase().includes(q) || (p.title || "").toLowerCase().includes(q);
-                });
-                const totalCA = filteredPayments.reduce((s: number, p: any) => s + (p.amountClient || 0), 0);
-                const totalComm = filteredPayments.filter((p: any) => ["paid","client_confirmed","transferred"].includes(p.paymentStatus)).reduce((s: number, p: any) => s + (p.commission || 0), 0);
-                const statusLabel: Record<string, string> = {
-                  paid: "Payé", client_confirmed: "Confirmé", transferred: "Transféré",
-                  pending: "En attente", failed: "Échoué",
-                };
-                const statusColor: Record<string, string> = {
-                  paid: "bg-yellow-100 text-yellow-700",
-                  client_confirmed: "bg-blue-100 text-blue-700",
-                  transferred: "bg-green-100 text-green-700",
-                  pending: "bg-gray-100 text-gray-600",
-                  failed: "bg-red-100 text-red-700",
-                };
-                return (
-                  <>
-                    <div className="flex items-center justify-between gap-4 flex-wrap">
-                      <div>
-                        <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900">Paiements</h1>
-                        <p className="text-gray-500 mt-1 text-sm">Transactions et commissions SEAMLiER (10%)</p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5 text-xs"
-                        onClick={() => {
-                          const headers = ["Projet", "Client", "Artisan", "Montant client", "Commission", "Montant artisan", "Statut", "Date"];
-                          const rows = filteredPayments.map((p: any) => [p.title, p.client, p.tailor, p.amountClient.toFixed(2), p.commission.toFixed(2), p.amountArtisan.toFixed(2), p.paymentStatus, p.createdAt]);
-                          const csv = [headers, ...rows].map(r => r.map((v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
-                          const blob = new Blob([csv], { type: "text/csv" });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement("a"); a.href = url; a.download = "paiements.csv"; a.click(); URL.revokeObjectURL(url);
-                        }}
-                      >
-                        <Download className="h-3.5 w-3.5" /> Exporter CSV
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                      {[
-                        { label: "CA total filtré", value: `${totalCA.toFixed(0)} €`, bg: "bg-[#601B28]/5", color: "text-[#601B28]", icon: Euro },
-                        { label: "Commissions perçues", value: `${totalComm.toFixed(0)} €`, bg: "bg-green-50", color: "text-green-600", icon: TrendingUp },
-                        { label: "Transactions payées", value: filteredPayments.filter((p: any) => ["paid","client_confirmed","transferred"].includes(p.paymentStatus)).length, bg: "bg-blue-50", color: "text-blue-600", icon: CheckCircle },
-                        { label: "En attente", value: filteredPayments.filter((p: any) => p.paymentStatus === "pending").length, bg: "bg-amber-50", color: "text-amber-600", icon: Clock },
-                      ].map(s => (
-                        <Card key={s.label} className="border-none shadow-sm">
-                          <CardContent className="p-4">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${s.bg}`}>
-                              <s.icon size={16} className={s.color} />
-                            </div>
-                            <p className="text-xs text-gray-500 font-medium">{s.label}</p>
-                            <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                    <Card className="border-none shadow-sm overflow-hidden bg-white">
-                      <div className="p-5 border-b border-gray-50 flex flex-wrap items-center gap-3">
-                        <div className="flex gap-1 flex-wrap">
-                          {[
-                            { val: "all", label: "Tous" },
-                            { val: "paid", label: "Payé" },
-                            { val: "client_confirmed", label: "Confirmé" },
-                            { val: "transferred", label: "Transféré" },
-                            { val: "pending", label: "En attente" },
-                            { val: "failed", label: "Échoué" },
-                          ].map(f => (
-                            <button
-                              key={f.val}
-                              onClick={() => setPaymentsStatusFilter(f.val)}
-                              className={cn("px-3 py-1 text-xs rounded-full border transition-colors", paymentsStatusFilter === f.val ? "bg-[#601B28] text-white border-[#601B28]" : "border-gray-200 text-gray-600 hover:bg-gray-50")}
-                            >
-                              {f.label}
-                            </button>
-                          ))}
-                        </div>
-                        <div className="ml-auto relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                          <Input placeholder="Rechercher..." value={paymentsSearch} onChange={e => setPaymentsSearch(e.target.value)} className="pl-10 w-64 h-9 text-sm" />
-                        </div>
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm" data-testid="table-payments">
-                          <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-                            <tr>
-                              <th className="px-4 py-3 text-left">Projet</th>
-                              <th className="px-4 py-3 text-left">Client</th>
-                              <th className="px-4 py-3 text-left">Artisan</th>
-                              <th className="px-4 py-3 text-right">Montant client</th>
-                              <th className="px-4 py-3 text-right">Commission (10%)</th>
-                              <th className="px-4 py-3 text-right">Montant artisan</th>
-                              <th className="px-4 py-3 text-center">Statut Stripe</th>
-                              <th className="px-4 py-3 text-left">Date</th>
-                              <th className="px-4 py-3 text-center">Action</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-50">
-                            {filteredPayments.map((p: any) => (
-                              <tr key={p.id} className="hover:bg-gray-50/50 transition-colors" data-testid={`row-payment-${p.id}`}>
-                                <td className="px-4 py-3 font-medium text-gray-900 max-w-[140px] truncate">{p.title}</td>
-                                <td className="px-4 py-3 text-gray-600 max-w-[120px] truncate">{p.client}</td>
-                                <td className="px-4 py-3 text-gray-600 max-w-[120px] truncate">{p.tailor}</td>
-                                <td className="px-4 py-3 text-right font-semibold text-gray-900">{p.amountClient.toFixed(2)} €</td>
-                                <td className="px-4 py-3 text-right font-bold text-green-600">{p.commission.toFixed(2)} €</td>
-                                <td className="px-4 py-3 text-right text-[#601B28] font-semibold">{p.amountArtisan.toFixed(2)} €</td>
-                                <td className="px-4 py-3 text-center">
-                                  <Badge className={cn("text-[10px] border-none", statusColor[p.paymentStatus] || "bg-gray-100 text-gray-600")}>
-                                    {statusLabel[p.paymentStatus] || p.paymentStatus}
-                                  </Badge>
-                                </td>
-                                <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{p.createdAt}</td>
-                                <td className="px-4 py-3 text-center">
-                                  {(p.paymentStatus === "paid" || p.paymentStatus === "client_confirmed") && p.stripePaymentIntentId && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-7 text-[11px] text-red-600 border-red-100 hover:bg-red-50"
-                                      onClick={() => setRefundDialogProjectId(p.id)}
-                                      data-testid={`button-refund-${p.id}`}
-                                    >
-                                      Rembourser
-                                    </Button>
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
-                            {filteredPayments.length === 0 && (
-                              <tr><td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-400">Aucun paiement trouvé</td></tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </Card>
-                  </>
-                );
-              })()}
-
-              {/* ===== REFUND DIALOG ===== */}
-              <Dialog open={!!refundDialogProjectId} onOpenChange={open => !open && setRefundDialogProjectId(null)}>
-                <DialogContent className="max-w-sm">
-                  <DialogHeader>
-                    <DialogTitle className="font-serif text-red-700">Confirmer le remboursement</DialogTitle>
-                  </DialogHeader>
-                  <p className="text-sm text-gray-600 py-2">
-                    Cette action déclenchera un remboursement complet via Stripe pour ce projet. L'action est irréversible.
-                  </p>
-                  <DialogFooter>
-                    <Button variant="outline" size="sm" onClick={() => setRefundDialogProjectId(null)}>Annuler</Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      disabled={refundPending}
-                      onClick={async () => {
-                        if (!refundDialogProjectId) return;
-                        setRefundPending(true);
-                        try {
-                          await apiFetch(`/api/admin/refund/${refundDialogProjectId}`, { method: "POST" });
-                          queryClient.invalidateQueries({ queryKey: ["/api/admin/payments"] });
-                          queryClient.invalidateQueries({ queryKey: ["/api/admin/all-projects"] });
-                          toast({ title: "Remboursement effectué", description: "Le client sera remboursé sous 5 à 10 jours ouvrés." });
-                          setRefundDialogProjectId(null);
-                        } catch {
-                          toast({ title: "Erreur", description: "Impossible d'effectuer le remboursement", variant: "destructive" });
-                        } finally {
-                          setRefundPending(false);
-                        }
-                      }}
-                    >
-                      {refundPending ? "En cours..." : "Confirmer le remboursement"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-
               {/* ===== PROJECTS ===== */}
               {activeTab === "projects" && (
                 <>
-                  <div className="flex items-center justify-between gap-4 flex-wrap">
-                    <div>
-                      <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Projets & Séquestre</h1>
-                      <p className="text-gray-500 mt-1 text-sm">Gestion des flux financiers de la plateforme</p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 text-xs"
-                      onClick={() => {
-                        const headers = ["Client", "Artisan", "Description", "Date", "Montant", "Statut paiement"];
-                        const rows = filteredProjects.map(p => [p.client, p.artisan, p.description, p.date, p.amount, (p as any).paymentStatus || ""]);
-                        const csv = [headers, ...rows].map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
-                        const blob = new Blob([csv], { type: "text/csv" });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a"); a.href = url; a.download = "projets.csv"; a.click(); URL.revokeObjectURL(url);
-                      }}
-                    >
-                      <Download className="h-3.5 w-3.5" /> Exporter CSV
-                    </Button>
+                  <div>
+                    <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Projets & Séquestre</h1>
+                    <p className="text-gray-500 mt-1 text-sm">Gestion des flux financiers de la plateforme</p>
                   </div>
                   <Card className="border-none shadow-sm overflow-hidden bg-white">
                     <div className="p-5 border-b border-gray-50 flex items-center justify-between gap-4 flex-wrap">
@@ -1667,7 +1391,7 @@ export default function AdminDashboard() {
                               </td>
                               <td className="px-5 py-3 text-right font-bold text-[#601B28]">{p.amount}</td>
                               <td className="px-5 py-3 text-center">
-                                <div className="flex items-center justify-center gap-1.5">
+                                <div className="flex gap-1 justify-center">
                                   <Button
                                     size="sm"
                                     variant="default"
@@ -1681,34 +1405,12 @@ export default function AdminDashboard() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="h-8 text-[11px] gap-1 border-gray-200 hover:bg-gray-50"
-                                    onClick={() => {
-                                      setEditProjectId(p.id);
-                                      setEditProjectStatus((p as any).rawStatus || "");
-                                      setEditProjectAmount(p.amount ? p.amount.replace(" €", "") : "");
-                                      setEditProjectNotes("");
-                                    }}
-                                    data-testid={`button-edit-project-${p.id}`}
+                                    className="h-8 text-[11px] font-bold border-red-200 text-red-600 hover:bg-red-50"
+                                    disabled={openDisputeMutation.isPending}
+                                    onClick={() => { if (confirm(`Ouvrir un litige pour ce projet ?`)) openDisputeMutation.mutate(p.id); }}
+                                    data-testid={`button-dispute-${p.id}`}
                                   >
-                                    <Pencil size={11} /> Modifier
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-8 text-[11px] border-red-200 text-red-600 hover:bg-red-50"
-                                    onClick={async () => {
-                                      const reason = window.prompt("Raison du litige :");
-                                      if (!reason?.trim()) return;
-                                      try {
-                                        await apiRequest("POST", "/api/admin/disputes", { projectId: p.id, reason: reason.trim() });
-                                        toast({ title: "Litige ouvert" });
-                                      } catch (e: any) {
-                                        toast({ title: "Erreur", description: e.message, variant: "destructive" });
-                                      }
-                                    }}
-                                    data-testid={`button-open-dispute-${p.id}`}
-                                  >
-                                    <Flag size={11} className="mr-1 inline" /> Litige
+                                    <AlertOctagon size={11} className="mr-1" />Litige
                                   </Button>
                                 </div>
                               </td>
@@ -1724,78 +1426,95 @@ export default function AdminDashboard() {
                 </>
               )}
 
-              {/* ===== EDIT PROJECT DIALOG ===== */}
-              <Dialog open={!!editProjectId} onOpenChange={open => !open && setEditProjectId(null)}>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle className="font-serif">Modifier le projet</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-2">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">Statut</label>
-                      <select
-                        value={editProjectStatus}
-                        onChange={e => setEditProjectStatus(e.target.value)}
-                        className="w-full h-9 rounded-md border border-gray-200 px-3 text-sm"
-                      >
-                        <option value="">— Inchangé —</option>
-                        <option value="pending">En attente (pending)</option>
-                        <option value="quoted">Devis envoyé (quoted)</option>
-                        <option value="in_progress">En cours (in_progress)</option>
-                        <option value="completed">Terminé (completed)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">Montant (€)</label>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={editProjectAmount}
-                        onChange={e => setEditProjectAmount(e.target.value)}
-                        placeholder="Montant en euros"
-                        className="h-9"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">Notes admin</label>
-                      <Textarea
-                        value={editProjectNotes}
-                        onChange={e => setEditProjectNotes(e.target.value)}
-                        placeholder="Notes internes (non visibles par les utilisateurs)"
-                        className="min-h-[80px] resize-none text-sm"
-                      />
-                    </div>
+              {/* ===== DOSSIERS PRO ===== */}
+              {activeTab === "dossiers" && (
+                <>
+                  <div>
+                    <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900">Dossiers Professionnels</h1>
+                    <p className="text-gray-500 mt-1 text-sm">Vérification des pièces justificatives des artisans</p>
                   </div>
-                  <DialogFooter>
-                    <Button variant="outline" size="sm" onClick={() => setEditProjectId(null)}>Annuler</Button>
-                    <Button
-                      size="sm"
-                      className="bg-[#601B28] hover:bg-[#4E1522]"
-                      onClick={async () => {
-                        if (!editProjectId) return;
-                        const body: any = {};
-                        if (editProjectStatus) body.status = editProjectStatus;
-                        if (editProjectAmount) body.amount = editProjectAmount;
-                        if (editProjectNotes) body.adminNotes = editProjectNotes;
-                        try {
-                          await apiFetch(`/api/admin/projects/${editProjectId}`, {
-                            method: "PATCH",
-                            body: JSON.stringify(body),
-                          });
-                          queryClient.invalidateQueries({ queryKey: ["/api/admin/all-projects"] });
-                          toast({ title: "Projet mis à jour" });
-                          setEditProjectId(null);
-                        } catch {
-                          toast({ title: "Erreur", description: "Impossible de modifier le projet", variant: "destructive" });
-                        }
-                      }}
-                    >
-                      Enregistrer
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                  <div className="flex gap-2 flex-wrap">
+                    <Badge className="bg-yellow-50 text-yellow-700 border-none px-3 py-1">{artisanDossiers.filter((d: any) => d.dossier_status === "pending").length} en attente</Badge>
+                    <Badge className="bg-green-50 text-green-700 border-none px-3 py-1">{artisanDossiers.filter((d: any) => d.dossier_status === "validated").length} validés</Badge>
+                    <Badge className="bg-red-50 text-red-700 border-none px-3 py-1">{artisanDossiers.filter((d: any) => d.dossier_status === "rejected").length} rejetés</Badge>
+                  </div>
+                  <Card className="border-none shadow-sm overflow-hidden bg-white">
+                    {artisanDossiers.length === 0 ? (
+                      <div className="p-12 text-center text-gray-400">
+                        <FolderOpen className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                        <p className="text-sm">Aucun dossier soumis</p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                            <tr>
+                              <th className="px-4 py-3 text-left">Artisan</th>
+                              <th className="px-4 py-3 text-left">SIRET</th>
+                              <th className="px-4 py-3 text-center">Kbis</th>
+                              <th className="px-4 py-3 text-center">CNI</th>
+                              <th className="px-4 py-3 text-center">RC Pro</th>
+                              <th className="px-4 py-3 text-center">RIB</th>
+                              <th className="px-4 py-3 text-center">Statut</th>
+                              <th className="px-4 py-3 text-center">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-50">
+                            {artisanDossiers.map((d: any) => (
+                              <tr key={d.id} className="hover:bg-gray-50/50 transition-colors" data-testid={`row-dossier-${d.id}`}>
+                                <td className="px-4 py-3">
+                                  <p className="font-medium text-gray-900">{d.first_name} {d.last_name}</p>
+                                  <p className="text-xs text-gray-400">{d.email}</p>
+                                </td>
+                                <td className="px-4 py-3 text-xs text-gray-600 font-mono">{d.siret || "—"}</td>
+                                {[d.has_kbis, d.has_id_doc, d.has_rc_pro, d.has_rib].map((has: any, i: number) => (
+                                  <td key={i} className="px-4 py-3 text-center">
+                                    {has
+                                      ? <CheckCircle size={16} className="text-green-500 mx-auto" />
+                                      : <XCircle size={16} className="text-gray-300 mx-auto" />
+                                    }
+                                  </td>
+                                ))}
+                                <td className="px-4 py-3 text-center">
+                                  {d.dossier_status === "validated" && <Badge className="bg-green-100 text-green-700 border-none text-xs">Validé</Badge>}
+                                  {d.dossier_status === "rejected" && <Badge className="bg-red-100 text-red-700 border-none text-xs">Rejeté</Badge>}
+                                  {(!d.dossier_status || d.dossier_status === "pending") && <Badge className="bg-yellow-100 text-yellow-700 border-none text-xs">En attente</Badge>}
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  <div className="flex gap-1 justify-center">
+                                    <Button
+                                      size="sm"
+                                      className="h-7 text-[10px] bg-green-600 hover:bg-green-700 text-white font-bold px-2"
+                                      disabled={validateDossierMutation.isPending || d.dossier_status === "validated"}
+                                      onClick={() => validateDossierMutation.mutate({ id: d.id, action: "validate" })}
+                                      data-testid={`button-validate-dossier-${d.id}`}
+                                    >
+                                      <CheckCircle size={10} className="mr-1" />Valider
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 text-[10px] border-red-200 text-red-600 hover:bg-red-50 px-2"
+                                      disabled={validateDossierMutation.isPending || d.dossier_status === "rejected"}
+                                      onClick={() => {
+                                        const reason = prompt("Motif du rejet (optionnel) :");
+                                        validateDossierMutation.mutate({ id: d.id, action: "reject", reason: reason || undefined });
+                                      }}
+                                      data-testid={`button-reject-dossier-${d.id}`}
+                                    >
+                                      <XCircle size={10} className="mr-1" />Rejeter
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </Card>
+                </>
+              )}
 
               {/* ===== MESSAGING ===== */}
               {activeTab === "messaging" && (
@@ -1899,83 +1618,65 @@ export default function AdminDashboard() {
                 </>
               )}
 
-              {/* ===== RENDEZ-VOUS ===== */}
-              {activeTab === "appointments" && (
+              {/* ===== PLANNING ===== */}
+              {activeTab === "planning" && (
                 <>
-                  <div className="flex items-center justify-between gap-4 flex-wrap">
-                    <div>
-                      <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Rendez-vous</h1>
-                      <p className="text-gray-500 mt-1 text-sm">Tous les rendez-vous entre clients et artisans</p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 text-xs"
-                      onClick={() => {
-                        const headers = ["Date", "Heure", "Client", "Artisan", "Type RDV", "Statut"];
-                        const rows = planningEvents.map(e => [e.date, e.time, e.client, e.artisan, e.title, e.status]);
-                        const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
-                        const blob = new Blob([csv], { type: "text/csv" });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a"); a.href = url; a.download = "rendez-vous.csv"; a.click(); URL.revokeObjectURL(url);
-                      }}
-                    >
-                      <Download className="h-3.5 w-3.5" /> Exporter CSV
-                    </Button>
+                  <div>
+                    <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title">Planning Global</h1>
+                    <p className="text-gray-500 mt-1 text-sm">Vue d'ensemble des rendez-vous</p>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {[
-                      { label: "Total RDV", value: planningEvents.length, color: "text-[#601B28]", bg: "bg-[#601B28]/5" },
-                      { label: "Confirmés", value: planningEvents.filter(e => e.status === "Confirmé").length, color: "text-green-600", bg: "bg-green-50" },
-                      { label: "En attente", value: planningEvents.filter(e => e.status === "En attente").length, color: "text-amber-600", bg: "bg-amber-50" },
-                      { label: "Annulés", value: planningEvents.filter(e => e.status === "Annulé").length, color: "text-red-500", bg: "bg-red-50" },
-                    ].map(s => (
-                      <Card key={s.label} className="border-none shadow-sm">
-                        <CardContent className="p-4">
-                          <p className="text-xs text-gray-500 font-medium">{s.label}</p>
-                          <p className={`text-2xl font-bold mt-0.5 ${s.color}`}>{s.value}</p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                  <Card className="border-none shadow-sm overflow-hidden bg-white">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left" data-testid="table-appointments">
-                        <thead>
-                          <tr className="text-[11px] uppercase tracking-wider text-gray-400 bg-gray-50/30">
-                            <th className="px-5 py-3 font-bold">Date</th>
-                            <th className="px-5 py-3 font-bold">Heure</th>
-                            <th className="px-5 py-3 font-bold">Client</th>
-                            <th className="px-5 py-3 font-bold">Artisan</th>
-                            <th className="px-5 py-3 font-bold">Type RDV</th>
-                            <th className="px-5 py-3 font-bold text-center">Statut</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                          {planningEvents.length === 0 && (
-                            <tr><td colSpan={6} className="px-5 py-8 text-center text-sm text-gray-400">Aucun rendez-vous</td></tr>
-                          )}
-                          {planningEvents.map(ev => (
-                            <tr key={ev.id} className="hover:bg-gray-50/50 transition-colors" data-testid={`row-appointment-${ev.id}`}>
-                              <td className="px-5 py-3 text-xs text-gray-500">{ev.date}</td>
-                              <td className="px-5 py-3 text-xs font-medium">{ev.time}</td>
-                              <td className="px-5 py-3 text-sm text-gray-600">{ev.client}</td>
-                              <td className="px-5 py-3 text-sm text-gray-600">{ev.artisan}</td>
-                              <td className="px-5 py-3 text-sm font-semibold">{ev.title}</td>
-                              <td className="px-5 py-3 text-center">
-                                <Badge className={cn("text-[10px] border-none font-bold", ev.status === "Confirmé" ? "bg-green-100 text-green-700" : ev.status === "Annulé" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700")}>
-                                  {ev.status}
-                                </Badge>
-                              </td>
+                  <div className="grid lg:grid-cols-3 gap-6">
+                    <Card className="border-none shadow-sm bg-white lg:col-span-2 overflow-hidden">
+                      <div className="p-5 border-b border-gray-50 flex justify-between items-center gap-3 flex-wrap">
+                        <CardTitle className="text-base font-serif">Prochains rendez-vous</CardTitle>
+                        <div className="flex gap-2 flex-wrap">
+                          <Badge className="bg-green-50 text-green-700 border-none" data-testid="badge-confirmed-events">{planningEvents.filter(e => e.status === "Confirmé").length} confirmés</Badge>
+                          <Badge className="bg-amber-50 text-amber-700 border-none" data-testid="badge-pending-events">{planningEvents.filter(e => e.status === "En attente").length} en attente</Badge>
+                        </div>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left" data-testid="table-planning">
+                          <thead>
+                            <tr className="text-[11px] uppercase tracking-wider text-gray-400 bg-gray-50/30">
+                              <th className="px-5 py-3 font-bold">RDV</th>
+                              <th className="px-5 py-3 font-bold">Client</th>
+                              <th className="px-5 py-3 font-bold">Artisan</th>
+                              <th className="px-5 py-3 font-bold">Date</th>
+                              <th className="px-5 py-3 font-bold">Heure</th>
+                              <th className="px-5 py-3 font-bold text-center">Statut</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </Card>
+                          </thead>
+                          <tbody className="divide-y divide-gray-50">
+                            {planningEvents.map(ev => (
+                              <tr key={ev.id} className="hover:bg-gray-50/50 transition-colors" data-testid={`row-event-${ev.id}`}>
+                                <td className="px-5 py-3 text-sm font-semibold">{ev.title}</td>
+                                <td className="px-5 py-3 text-sm text-gray-600">{ev.client}</td>
+                                <td className="px-5 py-3 text-sm text-gray-600">{ev.artisan}</td>
+                                <td className="px-5 py-3 text-xs text-gray-500">{ev.date}</td>
+                                <td className="px-5 py-3 text-xs font-medium">{ev.time}</td>
+                                <td className="px-5 py-3 text-center">
+                                  <Badge className={cn("text-[10px] border-none font-bold", ev.status === "Confirmé" ? "bg-green-100 text-green-700" : ev.status === "Annulé" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700")} data-testid={`badge-event-status-${ev.id}`}>{ev.status}</Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </Card>
+                    <Card className="border-none shadow-sm">
+                      <CardContent className="p-5">
+                        <CardTitle className="text-base font-serif mb-4">Résumé</CardTitle>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center text-sm"><span className="text-gray-500">Total RDV</span><span className="font-bold" data-testid="text-total-events">{planningEvents.length}</span></div>
+                          <div className="flex justify-between items-center text-sm"><span className="text-gray-500">Confirmés</span><span className="font-bold text-green-600" data-testid="text-confirmed-events">{planningEvents.filter(e => e.status === "Confirmé").length}</span></div>
+                          <div className="flex justify-between items-center text-sm"><span className="text-gray-500">En attente</span><span className="font-bold text-amber-600" data-testid="text-pending-events">{planningEvents.filter(e => e.status === "En attente").length}</span></div>
+                          <div className="flex justify-between items-center text-sm"><span className="text-gray-500">Annulés</span><span className="font-bold text-red-500" data-testid="text-cancelled-events">{planningEvents.filter(e => e.status === "Annulé").length}</span></div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </>
               )}
-
 
               {/* ===== MEASURES ===== */}
               {activeTab === "measures" && (
@@ -2481,45 +2182,28 @@ export default function AdminDashboard() {
 
                 return (
                 <>
-                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="flex items-start justify-between">
                     <div>
                       <h1 className="text-2xl lg:text-3xl font-serif font-bold text-gray-900" data-testid="text-page-title-users">Utilisateurs</h1>
                       <p className="text-gray-500 mt-1 text-sm">Gestion des comptes inscrits sur la plateforme</p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    {totalUnverified > 0 && (
                       <Button
                         variant="outline"
                         size="sm"
-                        className="gap-1.5 text-xs"
+                        className="border-red-200 text-red-600 hover:bg-red-50 gap-1.5"
                         onClick={() => {
-                          const headers = ["Prénom", "Nom", "Email", "Rôle", "Statut", "Inscription"];
-                          const rows = filteredUsers.map((u: any) => [u.firstName, u.lastName, u.email, u.role, u.emailVerified ? "Activé" : "En attente", u.createdAt ? new Date(u.createdAt).toLocaleDateString("fr-FR") : ""]);
-                          const csv = [headers, ...rows].map(r => r.map((v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
-                          const blob = new Blob([csv], { type: "text/csv" });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement("a"); a.href = url; a.download = "utilisateurs.csv"; a.click(); URL.revokeObjectURL(url);
+                          if (confirm(`Supprimer ${totalUnverified} compte(s) non activé(s) ? Cette action est irréversible.`)) {
+                            deleteUnverifiedMutation.mutate();
+                          }
                         }}
+                        disabled={deleteUnverifiedMutation.isPending}
+                        data-testid="button-delete-unverified"
                       >
-                        <Download className="h-3.5 w-3.5" /> Exporter CSV
+                        <Trash2 className="h-4 w-4" />
+                        Supprimer non activés ({totalUnverified})
                       </Button>
-                      {totalUnverified > 0 && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-red-200 text-red-600 hover:bg-red-50 gap-1.5"
-                          onClick={() => {
-                            if (confirm(`Supprimer ${totalUnverified} compte(s) non activé(s) ? Cette action est irréversible.`)) {
-                              deleteUnverifiedMutation.mutate();
-                            }
-                          }}
-                          disabled={deleteUnverifiedMutation.isPending}
-                          data-testid="button-delete-unverified"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Supprimer non activés ({totalUnverified})
-                        </Button>
-                      )}
-                    </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -2683,7 +2367,7 @@ export default function AdminDashboard() {
                                   </td>
                                   <td className="p-4">
                                     {u.role !== 'admin' && (
-                                      <div className="flex items-center gap-1 flex-wrap">
+                                      <div className="flex items-center gap-1">
                                         <Button
                                           variant="ghost"
                                           size="sm"
@@ -2692,26 +2376,6 @@ export default function AdminDashboard() {
                                           data-testid={`button-toggle-${u.id}`}
                                         >
                                           {u.emailVerified ? "Désactiver" : "Activer"}
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-7 px-2 text-xs text-[#601B28] hover:text-[#601B28] hover:bg-[#601B28]/5"
-                                          onClick={() => setActiveTab("messaging")}
-                                          data-testid={`button-contact-user-${u.id}`}
-                                          title={`Contacter ${u.firstName}`}
-                                        >
-                                          <MessageSquare className="h-3.5 w-3.5" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className={cn("h-7 px-2 text-xs hover:bg-amber-50", u.adminNotes ? "text-amber-600" : "text-gray-400 hover:text-amber-600")}
-                                          onClick={() => { setAdminNotesUserId(u.id); setAdminNotesValue(u.adminNotes || ""); }}
-                                          data-testid={`button-notes-user-${u.id}`}
-                                          title="Notes internes"
-                                        >
-                                          <StickyNote className="h-3.5 w-3.5" />
                                         </Button>
                                         <Button
                                           variant="ghost"
@@ -2740,53 +2404,6 @@ export default function AdminDashboard() {
                 </>
                 );
               })()}
-
-              {/* Dialog notes internes utilisateur */}
-              <Dialog open={!!adminNotesUserId} onOpenChange={(o) => !o && setAdminNotesUserId(null)}>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle className="font-serif text-[#601B28] flex items-center gap-2">
-                      <StickyNote className="h-4 w-4" />
-                      Notes internes
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-3 py-2">
-                    <p className="text-xs text-gray-500">Ces notes sont visibles uniquement par l'équipe SEAMLiER.</p>
-                    <Textarea
-                      value={adminNotesValue}
-                      onChange={e => setAdminNotesValue(e.target.value)}
-                      placeholder="Ajouter une note interne sur cet utilisateur..."
-                      className="min-h-[120px] text-sm"
-                    />
-                  </div>
-                  <DialogFooter className="gap-2">
-                    <Button variant="outline" onClick={() => setAdminNotesUserId(null)}>Annuler</Button>
-                    <Button
-                      className="bg-[#601B28] hover:bg-[#4E1522] text-white"
-                      disabled={adminNotesSaving}
-                      onClick={async () => {
-                        if (!adminNotesUserId) return;
-                        setAdminNotesSaving(true);
-                        try {
-                          await apiFetch(`/api/admin/users/${adminNotesUserId}/notes`, {
-                            method: "PATCH",
-                            body: JSON.stringify({ adminNotes: adminNotesValue || null }),
-                          });
-                          queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.admin.users] });
-                          toast({ title: "Note enregistrée" });
-                          setAdminNotesUserId(null);
-                        } catch {
-                          toast({ title: "Erreur", variant: "destructive" });
-                        } finally {
-                          setAdminNotesSaving(false);
-                        }
-                      }}
-                    >
-                      {adminNotesSaving ? "Enregistrement…" : "Enregistrer"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
 
               {/* ===== ARTISANS ===== */}
               {activeTab === "artisans" && (
@@ -3115,54 +2732,6 @@ export default function AdminDashboard() {
                                 </div>
                               </div>
                             </div>
-
-                            {/* Pro Info Table */}
-                    <div className="space-y-3">
-                      <h3 className="font-semibold text-sm text-gray-700">Informations professionnelles</h3>
-                      {proInfoList.filter((pi: any) => pi.tailor_id === dossierArtisan?.id).map((pi: any) => (
-                        <div key={pi.id} className="space-y-2 text-sm">
-                          <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-                            {pi.siret && <><span className="text-gray-500">SIRET</span><span className="font-mono">{pi.siret}</span></>}
-                            {pi.iban && <><span className="text-gray-500">IBAN</span><span className="font-mono text-xs">{pi.iban}</span></>}
-                            {pi.insurer_name && <><span className="text-gray-500">Assureur</span><span>{pi.insurer_name}</span></>}
-                            {pi.insurer_policy && <><span className="text-gray-500">Police</span><span>{pi.insurer_policy}</span></>}
-                            <span className="text-gray-500">RC Pro</span>
-                            <span>{pi.rc_pro_certified ? "Oui" : "Non"}</span>
-                            <span className="text-gray-500">Statut</span>
-                            <span className={pi.status === "validated" ? "text-green-600 font-medium" : pi.status === "rejected" ? "text-red-600" : "text-amber-600"}>
-                              {pi.status === "validated" ? "Validé" : pi.status === "rejected" ? "Refusé" : "En attente"}
-                            </span>
-                          </div>
-                          <div className="flex gap-2 pt-1">
-                            <button
-                              onClick={async () => {
-                                await fetch(`/api/admin/pro-info/${pi.id}`, {
-                                  method: "PATCH", credentials: "include",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ status: "validated" }),
-                                });
-                                refetchProInfo();
-                              }}
-                              className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                            >Valider</button>
-                            <button
-                              onClick={async () => {
-                                await fetch(`/api/admin/pro-info/${pi.id}`, {
-                                  method: "PATCH", credentials: "include",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ status: "rejected" }),
-                                });
-                                refetchProInfo();
-                              }}
-                              className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
-                            >Refuser</button>
-                          </div>
-                        </div>
-                      ))}
-                      {proInfoList.filter((pi: any) => pi.tailor_id === dossierArtisan?.id).length === 0 && (
-                        <p className="text-xs text-gray-400 italic">Aucune déclaration soumise</p>
-                      )}
-                    </div>
 
                             <div className="bg-gray-50 rounded-lg p-4 space-y-1">
                               <p className="text-xs font-bold uppercase tracking-wider text-[#601B28] mb-3 flex items-center gap-2">
@@ -3540,59 +3109,6 @@ export default function AdminDashboard() {
                       </Card>
                     </div>
 
-                    {/* Pro artisans avec abonnement actif */}
-                    <Card className="border-none shadow-sm overflow-hidden bg-white">
-                      <div className="p-5 border-b border-gray-50">
-                        <CardTitle className="text-base font-serif">Abonnements Pro actifs</CardTitle>
-                        <p className="text-xs text-gray-500 mt-1">Artisans avec un abonnement Pro — possibilité d'annuler immédiatement</p>
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                          <thead>
-                            <tr className="text-[11px] uppercase tracking-wider text-gray-400 bg-gray-50/30">
-                              <th className="px-5 py-3 font-bold">Artisan</th>
-                              <th className="px-5 py-3 font-bold">Email</th>
-                              <th className="px-5 py-3 font-bold text-center">Renouvellement</th>
-                              <th className="px-5 py-3 font-bold text-center">Montant</th>
-                              <th className="px-5 py-3 font-bold text-center">Action</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-50">
-                            {proArtisans.length === 0 && (
-                              <tr><td colSpan={5} className="px-5 py-8 text-center text-sm text-gray-400">Aucun artisan Pro</td></tr>
-                            )}
-                            {proArtisans.map(a => {
-                              const renewDate = a.subscriptionCurrentPeriodEnd
-                                ? new Date(a.subscriptionCurrentPeriodEnd * 1000).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })
-                                : "—";
-                              return (
-                                <tr key={a.id} className="hover:bg-gray-50/50 transition-colors">
-                                  <td className="px-5 py-3">
-                                    <p className="text-sm font-semibold">{a.name}</p>
-                                    <p className="text-xs text-gray-400">{a.city || "—"}</p>
-                                  </td>
-                                  <td className="px-5 py-3 text-sm text-gray-600">{a.email}</td>
-                                  <td className="px-5 py-3 text-center text-sm text-gray-600">{renewDate}</td>
-                                  <td className="px-5 py-3 text-center text-sm font-bold text-purple-700">{settingsSubscriptionPrice} €/mois</td>
-                                  <td className="px-5 py-3 text-center">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-7 text-[11px] text-red-600 border-red-100 hover:bg-red-50"
-                                      onClick={() => setCancelSubArtisanId(a.id)}
-                                      data-testid={`button-cancel-sub-${a.id}`}
-                                    >
-                                      Annuler
-                                    </Button>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </Card>
-
                     <Card className="border-none shadow-sm overflow-hidden bg-white">
                       <div className="p-5 border-b border-gray-50 flex items-center justify-between gap-4 flex-wrap">
                         <CardTitle className="text-base font-serif">Détail par artisan</CardTitle>
@@ -3647,42 +3163,6 @@ export default function AdminDashboard() {
                 );
               })()}
 
-              {/* ===== CANCEL SUBSCRIPTION DIALOG ===== */}
-              <Dialog open={!!cancelSubArtisanId} onOpenChange={open => !open && setCancelSubArtisanId(null)}>
-                <DialogContent className="max-w-sm">
-                  <DialogHeader>
-                    <DialogTitle className="font-serif text-red-700">Annuler l'abonnement Pro</DialogTitle>
-                  </DialogHeader>
-                  <p className="text-sm text-gray-600 py-2">
-                    Cette action annulera immédiatement l'abonnement Pro de cet artisan et le rétrogadera en plan Starter. L'action est irréversible.
-                  </p>
-                  <DialogFooter>
-                    <Button variant="outline" size="sm" onClick={() => setCancelSubArtisanId(null)}>Annuler</Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      disabled={cancelSubPending}
-                      onClick={async () => {
-                        if (!cancelSubArtisanId) return;
-                        setCancelSubPending(true);
-                        try {
-                          await apiFetch(`/api/admin/subscription/cancel/${cancelSubArtisanId}`, { method: "POST" });
-                          queryClient.invalidateQueries({ queryKey: ["/api/admin/artisans"] });
-                          toast({ title: "Abonnement annulé", description: "L'artisan a été rétrogadé en plan Starter." });
-                          setCancelSubArtisanId(null);
-                        } catch {
-                          toast({ title: "Erreur", description: "Impossible d'annuler l'abonnement", variant: "destructive" });
-                        } finally {
-                          setCancelSubPending(false);
-                        }
-                      }}
-                    >
-                      {cancelSubPending ? "En cours..." : "Confirmer l'annulation"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-
               {/* ===== COMMANDES GROUPÉES ===== */}
               {activeTab === "events" && (
                 <>
@@ -3697,33 +3177,28 @@ export default function AdminDashboard() {
                       <Badge className="bg-red-50 text-red-700 border-none">{adminEvents.filter((e: any) => e.status === 'rejected').length} refusées</Badge>
                     </div>
                   </div>
-                  <Card className="border-none shadow-sm">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-gray-100">
-                            <th className="text-left py-3 px-4 text-gray-500 font-medium">Événement</th>
-                            <th className="text-left py-3 px-4 text-gray-500 font-medium">Artisan</th>
-                            <th className="text-left py-3 px-4 text-gray-500 font-medium">Organisateur</th>
-                            <th className="text-left py-3 px-4 text-gray-500 font-medium">Date</th>
-                            <th className="text-left py-3 px-4 text-gray-500 font-medium">Participants</th>
-                            <th className="text-left py-3 px-4 text-gray-500 font-medium">Statut</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {adminEvents.length === 0 ? (
-                            <tr><td colSpan={6} className="text-center py-8 text-gray-400">Aucune commande groupée</td></tr>
-                          ) : adminEvents.map((ev: any) => (
-                            <tr key={ev.id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                              <td className="py-3 px-4 font-medium text-gray-900">{ev.name}</td>
-                              <td className="py-3 px-4 text-gray-600">{ev.tailor_first_name} {ev.tailor_last_name}</td>
-                              <td className="py-3 px-4 text-gray-600">
-                                <div>{ev.organizer_first_name} {ev.organizer_last_name}</div>
-                                <div className="text-xs text-gray-400">{ev.organizer_email}</div>
-                              </td>
-                              <td className="py-3 px-4 text-gray-600">{ev.event_date ? new Date(ev.event_date).toLocaleDateString("fr-FR") : "—"}</td>
-                              <td className="py-3 px-4 text-gray-600">{ev.participant_count ?? 0}</td>
-                              <td className="py-3 px-4">
+                  <div className="space-y-3">
+                    {adminEvents.length === 0 ? (
+                      <Card className="border-none shadow-sm">
+                        <div className="py-12 text-center text-gray-400">Aucune commande groupée</div>
+                      </Card>
+                    ) : adminEvents.map((ev: any) => {
+                      const isExpanded = expandedEventId === ev.id;
+                      const paidCount = Number(ev.paid_count ?? 0);
+                      const totalCount = Number(ev.participant_count ?? 0);
+                      const allPaid = totalCount > 0 && paidCount === totalCount;
+                      const alreadyReleased = !!ev.payment_released;
+                      return (
+                        <Card key={ev.id} className="border-none shadow-sm overflow-hidden">
+                          {/* Ligne principale */}
+                          <div
+                            className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-gray-50/60 transition-colors"
+                            onClick={() => setExpandedEventId(isExpanded ? null : ev.id)}
+                            data-testid={`row-event-${ev.id}`}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold text-gray-900 text-sm truncate">{ev.name}</span>
                                 {ev.status === 'active' ? (
                                   <Badge className="bg-green-50 text-green-700 border-none text-xs">Active</Badge>
                                 ) : ev.status === 'rejected' ? (
@@ -3731,13 +3206,107 @@ export default function AdminDashboard() {
                                 ) : (
                                   <Badge className="bg-amber-50 text-amber-700 border-none text-xs">En attente</Badge>
                                 )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </Card>
+                                {alreadyReleased && (
+                                  <Badge className="bg-purple-50 text-purple-700 border-none text-xs">Libéré</Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 flex-wrap">
+                                <span>✂️ {ev.tailor_first_name} {ev.tailor_last_name}</span>
+                                <span>👤 {ev.organizer_first_name} {ev.organizer_last_name}</span>
+                                {ev.event_date && <span>📅 {new Date(ev.event_date).toLocaleDateString("fr-FR")}</span>}
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <div className="text-sm font-medium text-gray-700">
+                                {paidCount}/{totalCount} payé{totalCount > 1 ? "s" : ""}
+                              </div>
+                              {ev.price_per_person && (
+                                <div className="text-xs text-gray-400">{ev.price_per_person} €/pers.</div>
+                              )}
+                            </div>
+                            <ChevronRight className={`h-4 w-4 text-gray-400 shrink-0 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                          </div>
+
+                          {/* Détail expandable */}
+                          {isExpanded && (
+                            <div className="border-t border-gray-100 bg-gray-50/50 px-5 py-4 space-y-4">
+                              {participantsLoading ? (
+                                <div className="flex items-center gap-2 text-sm text-gray-500">
+                                  <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
+                                </div>
+                              ) : expandedParticipants.length === 0 ? (
+                                <p className="text-sm text-gray-400 italic">Aucun participant pour l'instant.</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Participants</p>
+                                  {expandedParticipants.map((p: any) => (
+                                    <div key={p.id} className="flex items-center gap-3 bg-white rounded-xl px-3 py-2.5 border border-gray-100">
+                                      <div className="h-8 w-8 rounded-full bg-[#601B28]/10 flex items-center justify-center text-[#601B28] text-xs font-bold shrink-0">
+                                        {(p.first_name?.[0] || "?").toUpperCase()}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-gray-900">{p.first_name} {p.last_name}</p>
+                                        <p className="text-xs text-gray-400">{p.email}</p>
+                                      </div>
+                                      {p.payment_status === "paid" ? (
+                                        <Badge className="bg-green-100 text-green-700 border-none text-xs">
+                                          <CheckCircle className="h-3 w-3 mr-1" />Payé
+                                        </Badge>
+                                      ) : p.payment_status === "awaiting_payment" ? (
+                                        <Badge className="bg-amber-50 text-amber-700 border-none text-xs">En attente</Badge>
+                                      ) : (
+                                        <Badge className="bg-gray-100 text-gray-500 border-none text-xs">Non payé</Badge>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Barre de progression paiement */}
+                              {totalCount > 0 && (
+                                <div>
+                                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                                    <span>Paiements reçus</span>
+                                    <span>{paidCount}/{totalCount}</span>
+                                  </div>
+                                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-[#601B28] rounded-full transition-all"
+                                      style={{ width: `${totalCount > 0 ? (paidCount / totalCount) * 100 : 0}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Bouton libérer */}
+                              {ev.status === "active" && !alreadyReleased && (
+                                <Button
+                                  className={`w-full ${allPaid ? "bg-[#601B28] hover:bg-[#4E1522] text-white" : "bg-gray-100 text-gray-400 cursor-not-allowed"}`}
+                                  disabled={!allPaid || releaseEventMutation.isPending}
+                                  onClick={() => allPaid && releaseEventMutation.mutate(ev.id)}
+                                  data-testid={`button-release-event-${ev.id}`}
+                                >
+                                  {releaseEventMutation.isPending ? (
+                                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Libération…</>
+                                  ) : allPaid ? (
+                                    <><CheckCircle className="h-4 w-4 mr-2" />Valider & libérer le paiement</>
+                                  ) : (
+                                    <>En attente de tous les paiements ({paidCount}/{totalCount})</>
+                                  )}
+                                </Button>
+                              )}
+                              {alreadyReleased && (
+                                <div className="flex items-center gap-2 text-sm text-purple-700 bg-purple-50 rounded-xl px-3 py-2">
+                                  <CheckCircle className="h-4 w-4" />
+                                  Paiement libéré — fonds transférés à l'artisan
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </Card>
+                      );
+                    })}
+                  </div>
                 </>
               )}
 
@@ -4120,479 +3689,10 @@ export default function AdminDashboard() {
                 </>
               )}
 
-              {activeTab === "dossiers" && <AdminDossiers />}
-              {activeTab === "litiges" && <AdminLitiges />}
-
             </div>
           </main>
         </div>
       </div>
     </SidebarProvider>
-  );
-}
-
-// ── Section Dossiers pros ──────────────────────────────────────────────────────
-
-type DossierPro = {
-  id: string;
-  siret: string | null;
-  kbisUrl: string | null;
-  kbisExpiryDate: string | null;
-  idCardUrl: string | null;
-  rcProUrl: string | null;
-  ibanRib: string | null;
-  dossierStatus: "pending" | "validated" | "rejected";
-  dossierRejectionReason: string | null;
-  email: string;
-  firstName: string | null;
-  lastName: string | null;
-  phone: string | null;
-};
-
-function AdminDossiers() {
-  const { toast } = useToast();
-  const [selected, setSelected] = useState<DossierPro | null>(null);
-  const [formSiret, setFormSiret] = useState("");
-  const [formKbisExpiry, setFormKbisExpiry] = useState("");
-  const [formReason, setFormReason] = useState("");
-
-  const { data: dossiers = [], isLoading } = useQuery<DossierPro[]>({
-    queryKey: ["/api/admin/dossiers"],
-  });
-
-  const validateMutation = useMutation({
-    mutationFn: ({ id, action, siret, kbisExpiryDate, rejectionReason }: {
-      id: string; action: "validate" | "reject";
-      siret?: string; kbisExpiryDate?: string; rejectionReason?: string;
-    }) =>
-      apiRequest("PATCH", `/api/admin/dossiers/${id}`, { action, siret, kbisExpiryDate, rejectionReason })
-        .then((r) => r.json()),
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/dossiers"] });
-      toast({ title: vars.action === "validate" ? "Dossier validé" : "Dossier rejeté" });
-      setSelected(null);
-    },
-    onError: () => toast({ title: "Erreur", variant: "destructive" }),
-  });
-
-  function openDossier(d: DossierPro) {
-    setSelected(d);
-    setFormSiret(d.siret || "");
-    setFormKbisExpiry(d.kbisExpiryDate ? d.kbisExpiryDate.split("T")[0] : "");
-    setFormReason("");
-  }
-
-  const statusBadge = (s: DossierPro["dossierStatus"]) => {
-    if (s === "validated") return <Badge className="bg-green-100 text-green-700 border-none text-xs">Validé</Badge>;
-    if (s === "rejected") return <Badge className="bg-red-100 text-red-700 border-none text-xs">Rejeté</Badge>;
-    return <Badge className="bg-amber-100 text-amber-700 border-none text-xs">En attente</Badge>;
-  };
-
-  const pending = dossiers.filter((d) => d.dossierStatus === "pending").length;
-
-  return (
-    <>
-      <div className="flex items-center justify-between gap-3 mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">Dossiers professionnels</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Validation des pièces justificatives des artisans</p>
-        </div>
-        {pending > 0 && (
-          <Badge className="bg-amber-100 text-amber-800 border-none">{pending} en attente</Badge>
-        )}
-      </div>
-
-      {isLoading ? (
-        <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-4 border-[#601B28] border-t-transparent rounded-full animate-spin" />
-        </div>
-      ) : (
-        <Card className="border-none shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs">Artisan</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs">SIRET</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs">Kbis</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs">Documents</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 text-xs">Statut</th>
-                  <th className="px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {dossiers.map((d) => (
-                  <tr key={d.id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-gray-800">{[d.firstName, d.lastName].filter(Boolean).join(" ") || "—"}</p>
-                      <p className="text-xs text-gray-400">{d.email}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-xs text-gray-600">{d.siret || <span className="text-gray-300">—</span>}</span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-gray-500">
-                      {d.kbisExpiryDate
-                        ? new Date(d.kbisExpiryDate).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" })
-                        : <span className="text-gray-300">—</span>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1 flex-wrap">
-                        {[
-                          { url: d.kbisUrl, label: "Kbis" },
-                          { url: d.idCardUrl, label: "ID" },
-                          { url: d.rcProUrl, label: "RC" },
-                          { url: d.ibanRib?.startsWith("/") || d.ibanRib?.startsWith("http") ? d.ibanRib : null, label: "RIB" },
-                        ].map(({ url, label }) =>
-                          url ? (
-                            <a
-                              key={label}
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors inline-flex items-center gap-0.5"
-                              title={`Voir ${label}`}
-                              onClick={e => e.stopPropagation()}
-                            >
-                              {label} <ExternalLink className="h-2.5 w-2.5" />
-                            </a>
-                          ) : (
-                            <span key={label} className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-gray-100 text-gray-400">
-                              {label}
-                            </span>
-                          )
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">{statusBadge(d.dossierStatus)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {d.dossierStatus === "pending" && (
-                          <>
-                            <Button
-                              size="sm"
-                              className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white px-2"
-                              disabled={validateMutation.isPending}
-                              onClick={() => validateMutation.mutate({ id: d.id, action: "validate" })}
-                              data-testid={`button-validate-dossier-${d.id}`}
-                            >
-                              ✓ Valider
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 text-xs border-red-200 text-red-600 hover:bg-red-50 px-2"
-                              disabled={validateMutation.isPending}
-                              onClick={() => openDossier(d)}
-                              data-testid={`button-reject-dossier-${d.id}`}
-                            >
-                              ✗ Refuser
-                            </Button>
-                          </>
-                        )}
-                        <Button variant="outline" size="sm" className="text-xs h-7 px-2" onClick={() => openDossier(d)}>
-                          Instruire
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
-
-      {/* Dialog d'instruction */}
-      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="font-serif text-[#601B28]">
-              Dossier — {selected ? [selected.firstName, selected.lastName].filter(Boolean).join(" ") || selected.email : ""}
-            </DialogTitle>
-          </DialogHeader>
-
-          {selected && (
-            <div className="space-y-4">
-              {/* Documents */}
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { url: selected.kbisUrl, label: "Extrait Kbis" },
-                  { url: selected.idCardUrl, label: "Pièce d'identité" },
-                  { url: selected.rcProUrl, label: "RC Pro" },
-                  { url: selected.ibanRib, label: "RIB / IBAN" },
-                ].map(({ url, label }) => (
-                  <div key={label} className={cn("rounded-lg border p-2.5 flex items-center justify-between", url ? "border-green-200 bg-green-50" : "border-gray-100 bg-gray-50")}>
-                    <span className="text-xs font-medium text-gray-700">{label}</span>
-                    {url ? (
-                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-[#601B28]">
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
-                    ) : (
-                      <span className="text-xs text-gray-300">Non déposé</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* SIRET */}
-              <div>
-                <label className="text-xs font-medium text-gray-600 block mb-1">SIRET</label>
-                <input
-                  type="text"
-                  value={formSiret}
-                  onChange={(e) => setFormSiret(e.target.value)}
-                  placeholder="14 chiffres"
-                  maxLength={20}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#601B28]/20"
-                />
-              </div>
-
-              {/* Kbis expiry */}
-              <div>
-                <label className="text-xs font-medium text-gray-600 block mb-1">Date d'expiration Kbis</label>
-                <input
-                  type="date"
-                  value={formKbisExpiry}
-                  onChange={(e) => setFormKbisExpiry(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#601B28]/20"
-                />
-              </div>
-
-              {/* Rejection reason */}
-              <div>
-                <label className="text-xs font-medium text-gray-600 block mb-1">Motif de rejet (si rejet)</label>
-                <textarea
-                  value={formReason}
-                  onChange={(e) => setFormReason(e.target.value)}
-                  placeholder="Documents manquants, illisibles..."
-                  rows={2}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#601B28]/20 resize-none"
-                />
-              </div>
-
-              <div className="flex gap-2 pt-1">
-                <Button
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                  disabled={validateMutation.isPending}
-                  onClick={() => validateMutation.mutate({
-                    id: selected.id,
-                    action: "validate",
-                    siret: formSiret || undefined,
-                    kbisExpiryDate: formKbisExpiry || undefined,
-                  })}
-                >
-                  <CheckCircle className="h-4 w-4 mr-1" /> Valider le dossier
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
-                  disabled={validateMutation.isPending}
-                  onClick={() => validateMutation.mutate({
-                    id: selected.id,
-                    action: "reject",
-                    rejectionReason: formReason || undefined,
-                  })}
-                >
-                  <XCircle className="h-4 w-4 mr-1" /> Rejeter
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
-
-// ── Section Litiges ───────────────────────────────────────────────────────────
-
-type Dispute = {
-  id: string;
-  projectId: string;
-  projectTitle: string;
-  reason: string;
-  status: "open" | "approved" | "rejected";
-  adminNote: string | null;
-  stripeRefundId: string | null;
-  amountTotal: number | null;
-  stripePaymentIntentId: string | null;
-  clientEmail: string;
-  clientName: string;
-  tailorEmail: string | null;
-  tailorName: string;
-  createdAt: string;
-  resolvedAt: string | null;
-};
-
-function AdminLitiges() {
-  const { toast } = useToast();
-  const [selected, setSelected] = useState<Dispute | null>(null);
-  const [adminNote, setAdminNote] = useState("");
-  const [refundAmount, setRefundAmount] = useState("");
-
-  const { data: disputes = [], refetch } = useQuery<Dispute[]>({
-    queryKey: ["/api/admin/disputes"],
-  });
-
-  const resolveMutation = useMutation({
-    mutationFn: ({ action }: { action: "approve" | "reject" }) =>
-      apiRequest("PATCH", `/api/admin/disputes/${selected!.id}`, {
-        action,
-        adminNote: adminNote || undefined,
-        refundAmount: refundAmount ? parseFloat(refundAmount) : undefined,
-      }).then(r => r.json()),
-    onSuccess: () => {
-      toast({ title: "Litige traité" });
-      setSelected(null);
-      setAdminNote("");
-      setRefundAmount("");
-      refetch();
-    },
-    onError: (e: any) => toast({ title: "Erreur", description: e.message, variant: "destructive" }),
-  });
-
-  const open = disputes.filter(d => d.status === "open");
-  const resolved = disputes.filter(d => d.status !== "open");
-
-  const statusBadge = (s: string) => {
-    if (s === "open") return <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium">Ouvert</span>;
-    if (s === "approved") return <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-medium">Approuvé</span>;
-    return <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">Rejeté</span>;
-  };
-
-
-  const updateProInfoStatus = async (id: number, status: string) => {
-    await fetch(`/api/admin/pro-info/${id}`, {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    queryClient.invalidateQueries({ queryKey: ["/api/admin/pro-info"] });
-  };
-
-  return (
-    <>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">Litiges</h2>
-            <p className="text-sm text-gray-500 mt-0.5">{open.length} litige{open.length !== 1 ? "s" : ""} ouvert{open.length !== 1 ? "s" : ""}</p>
-          </div>
-        </div>
-
-        {open.length === 0 && resolved.length === 0 && (
-          <div className="text-center py-16 text-gray-400">
-            <Flag className="h-10 w-10 mx-auto mb-3 opacity-30" />
-            <p>Aucun litige enregistré</p>
-          </div>
-        )}
-
-        {open.length > 0 && (
-          <div className="space-y-3">
-            <p className="text-xs uppercase tracking-widest text-gray-400 font-medium">En attente de traitement</p>
-            {open.map(d => (
-              <div key={d.id} className="border border-amber-200 bg-amber-50 rounded-xl p-4 flex items-start justify-between gap-4">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    {statusBadge(d.status)}
-                    <span className="text-sm font-semibold text-gray-800 truncate">{d.projectTitle}</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mb-0.5">Client : {d.clientName} · {d.clientEmail}</p>
-                  <p className="text-xs text-gray-500 mb-1">Artisan : {d.tailorName}{d.tailorEmail ? ` · ${d.tailorEmail}` : ""}</p>
-                  <p className="text-sm text-gray-700 line-clamp-2">{d.reason}</p>
-                  <p className="text-xs text-gray-400 mt-1">Ouvert le {d.createdAt}{d.amountTotal ? ` · ${Math.round(d.amountTotal / 100)}€` : ""}</p>
-                </div>
-                <button
-                  onClick={() => { setSelected(d); setAdminNote(""); setRefundAmount(""); }}
-                  className="shrink-0 text-xs bg-[#601B28] text-white px-3 py-1.5 rounded-lg hover:bg-[#4E1522]"
-                >
-                  Instruire
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {resolved.length > 0 && (
-          <div className="space-y-3">
-            <p className="text-xs uppercase tracking-widest text-gray-400 font-medium">Résolus</p>
-            {resolved.map(d => (
-              <div key={d.id} className="border border-gray-100 rounded-xl p-4 flex items-start gap-4">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    {statusBadge(d.status)}
-                    <span className="text-sm font-medium text-gray-700 truncate">{d.projectTitle}</span>
-                  </div>
-                  <p className="text-xs text-gray-400">Client : {d.clientName} · Artisan : {d.tailorName} · résolu le {d.resolvedAt}</p>
-                  {d.adminNote && <p className="text-xs text-gray-500 mt-1 italic">{d.adminNote}</p>}
-                  {d.stripeRefundId && <p className="text-xs text-green-600 mt-1">Remboursement Stripe : {d.stripeRefundId}</p>}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <Dialog open={!!selected} onOpenChange={v => !v && setSelected(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-serif text-[#601B28]">Instruire le litige</DialogTitle>
-          </DialogHeader>
-          {selected && (
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-1">
-                <p><span className="font-medium">Projet :</span> {selected.projectTitle}</p>
-                <p><span className="font-medium">Client :</span> {selected.clientName} {selected.clientEmail && <span className="text-gray-400">({selected.clientEmail})</span>}</p>
-                <p><span className="font-medium">Artisan :</span> {selected.tailorName} {selected.tailorEmail && <span className="text-gray-400">({selected.tailorEmail})</span>}</p>
-                {selected.amountTotal && <p><span className="font-medium">Montant :</span> {Math.round(selected.amountTotal / 100)}€</p>}
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-600 mb-1">Motif du client</p>
-                <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{selected.reason}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600 block mb-1">Note admin (optionnel)</label>
-                <textarea
-                  value={adminNote}
-                  onChange={e => setAdminNote(e.target.value)}
-                  rows={2}
-                  placeholder="Motif de la décision..."
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#601B28]/20"
-                />
-              </div>
-              {selected.stripePaymentIntentId && (
-                <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1">Montant remboursé (€ — laisser vide pour rembourser tout)</label>
-                  <input
-                    type="number"
-                    value={refundAmount}
-                    onChange={e => setRefundAmount(e.target.value)}
-                    placeholder={selected.amountTotal ? String(Math.round(selected.amountTotal / 100)) : ""}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#601B28]/20"
-                  />
-                </div>
-              )}
-              <div className="flex gap-3 pt-1">
-                <button
-                  onClick={() => resolveMutation.mutate({ action: "reject" })}
-                  disabled={resolveMutation.isPending}
-                  className="flex-1 border border-amber-300 text-amber-800 bg-amber-50 rounded-lg py-2 text-sm hover:bg-amber-100 font-medium"
-                >
-                  Résoudre en faveur de l'artisan
-                </button>
-                <button
-                  onClick={() => resolveMutation.mutate({ action: "approve" })}
-                  disabled={resolveMutation.isPending}
-                  className="flex-1 bg-green-600 text-white rounded-lg py-2 text-sm hover:bg-green-700 font-medium"
-                >
-                  {selected.stripePaymentIntentId ? "Résoudre en faveur du client (rembourser)" : "Résoudre en faveur du client"}
-                </button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
   );
 }
