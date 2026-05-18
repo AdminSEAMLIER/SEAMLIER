@@ -30,6 +30,7 @@ export const users = mysqlTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
   stripeAccountId: varchar("stripe_account_id", { length: 255 }),
   stripeOnboarded: boolean("stripe_onboarded").default(false),
+  adminNotes: text("admin_notes"),
 });
 export const tailors = mysqlTable("tailors", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -316,8 +317,8 @@ export type ProductWithTailor = Product & { tailor: TailorWithUser };
 export type ReviewWithUser = Review & { user: User };
 export type ConversationWithParticipant = Conversation & { otherParticipant: User; unreadCount: number; otherParticipantTailorId?: string | null };
 export type MessageWithSender = Message & { sender: User };
-export type ProjectWithClient = Project & { client: User };
-export type ProjectWithTailor = Project & { tailor: Tailor; tailorUser: User };
+export type ProjectWithClient = Project & { client: User | null };
+export type ProjectWithTailor = Project & { tailor: Tailor | null; tailorUser: User | null };
 export type AppointmentWithClient = Appointment & { client: User };
 
 export const pushSubscriptions = mysqlTable("push_subscriptions", {
