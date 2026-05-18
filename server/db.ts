@@ -45,51 +45,12 @@ export async function ensureTables() {
   }
 
   // reviews: admin approval + project link
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS pro_info (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      tailor_id INT NOT NULL,
-      siret VARCHAR(14) DEFAULT NULL,
-      iban VARCHAR(50) DEFAULT NULL,
-      insurer_name VARCHAR(255) DEFAULT NULL,
-      insurer_policy VARCHAR(255) DEFAULT NULL,
-      rc_pro_certified TINYINT(1) NOT NULL DEFAULT 0,
-      status ENUM('pending','validated','rejected') NOT NULL DEFAULT 'pending',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      UNIQUE KEY uq_tailor_id (tailor_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS referral_invites (
-      id                  INT AUTO_INCREMENT PRIMARY KEY,
-      referrer_tailor_id  INT NOT NULL,
-      invited_email       VARCHAR(255) NOT NULL,
-      referral_code       VARCHAR(50)  DEFAULT NULL,
-      status              ENUM('pending','registered') NOT NULL DEFAULT 'pending',
-      sent_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE KEY uq_referrer_email (referrer_tailor_id, invited_email),
-      INDEX idx_referral_code (referral_code)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-  `);
-
   await addColumnIfMissing("reviews", "is_approved", "TINYINT(1) NOT NULL DEFAULT 1");
   await addColumnIfMissing("reviews", "project_id", "VARCHAR(36) NULL");
 
   // tailors: rating + review_count (may be missing in older installations)
   await addColumnIfMissing("tailors", "rating", "FLOAT NOT NULL DEFAULT 0");
   await addColumnIfMissing("tailors", "review_count", "INT NOT NULL DEFAULT 0");
-
-  // tailors: dossier fields (added after initial deployment)
-  await addColumnIfMissing("tailors", "kbis_url", "TEXT NULL");
-  await addColumnIfMissing("tailors", "kbis_expiry_date", "DATE NULL");
-  await addColumnIfMissing("tailors", "id_card_url", "TEXT NULL");
-  await addColumnIfMissing("tailors", "rc_pro_url", "TEXT NULL");
-  await addColumnIfMissing("tailors", "iban_rib", "TEXT NULL");
-  await addColumnIfMissing("tailors", "dossier_status", "VARCHAR(20) NOT NULL DEFAULT 'pending'");
-  await addColumnIfMissing("tailors", "dossier_rejection_reason", "TEXT NULL");
 
   // users: CGV acceptance + last activity
   await addColumnIfMissing("users", "cgv_accepted", "TINYINT(1) NOT NULL DEFAULT 0");
@@ -137,21 +98,6 @@ export async function ensureTables() {
   // projects: delivery date for event-linked projects
   await addColumnIfMissing("projects", "delivery_date", "DATE NULL");
   await addColumnIfMissing("projects", "event_id", "VARCHAR(36) NULL");
-  await addColumnIfMissing("projects", "contract_url", "TEXT NULL");
-  await addColumnIfMissing("projects", "client_confirmed", "TINYINT(1) NOT NULL DEFAULT 0");
-  await addColumnIfMissing("projects", "requested_price", "DECIMAL(10,2) NULL");
-  await addColumnIfMissing("projects", "clothing_type", "VARCHAR(100) NULL");
-
-  // projects: widen model_photo_url from TEXT (64KB) to MEDIUMTEXT (16MB) for base64 photos
-  try {
-    await pool.execute(`ALTER TABLE projects MODIFY COLUMN model_photo_url MEDIUMTEXT NULL`);
-    console.log("[DB] projects.model_photo_url widened to MEDIUMTEXT ✅");
-  } catch (err: any) {
-    // Idempotent: ignore if already MEDIUMTEXT or column doesn't exist
-    if (!err?.message?.includes("MEDIUMTEXT")) {
-      console.warn("[DB] model_photo_url ALTER:", err?.message);
-    }
-  }
 
   // events: add new columns if table already existed
   await addColumnIfMissing("events", "registration_deadline", "DATE NULL");
@@ -172,6 +118,8 @@ export async function ensureTables() {
         user_id VARCHAR(36) NOT NULL,
         project_id VARCHAR(36) NULL,
         joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        payment_status VARCHAR(20) NOT NULL DEFAULT 'pending',
+        payment_intent_id VARCHAR(100) NULL,
         UNIQUE KEY uq_event_user (event_id, user_id)
       )
     `);
@@ -179,6 +127,19 @@ export async function ensureTables() {
   } catch (err) {
     console.warn("[DB] event_participants table:", (err as any)?.message);
   }
+  await addColumnIfMissing("event_participants", "payment_status", "VARCHAR(20) NOT NULL DEFAULT 'pending'");
+  await addColumnIfMissing("event_participants", "payment_intent_id", "VARCHAR(100) NULL");
+  await addColumnIfMissing("events", "payment_released", "TINYINT(1) NOT NULL DEFAULT 0");
+
+  // tailors: dossier fields
+  await addColumnIfMissing("tailors", "siret", "VARCHAR(50) NULL");
+  await addColumnIfMissing("tailors", "dossier_status", "VARCHAR(20) NOT NULL DEFAULT 'pending'");
+  await addColumnIfMissing("tailors", "kbis_url", "MEDIUMTEXT NULL");
+  await addColumnIfMissing("tailors", "kbis_expiry", "DATE NULL");
+  await addColumnIfMissing("tailors", "id_doc_url", "MEDIUMTEXT NULL");
+  await addColumnIfMissing("tailors", "rc_pro_url", "MEDIUMTEXT NULL");
+  await addColumnIfMissing("tailors", "rib_url", "MEDIUMTEXT NULL");
+  await addColumnIfMissing("tailors", "iban", "VARCHAR(50) NULL");
 
   // tailor_working_hours table
   try {
@@ -232,89 +193,4 @@ export async function ensureTables() {
   } catch (err) {
     console.warn("[DB] tailor_exceptions table:", (err as any)?.message);
   }
-
-  // disputes table
-  try {
-    await pool.execute(`
-      CREATE TABLE IF NOT EXISTS disputes (
-        id VARCHAR(36) PRIMARY KEY,
-        project_id VARCHAR(36) NOT NULL,
-        client_id VARCHAR(36) NOT NULL,
-        reason TEXT NOT NULL,
-        status VARCHAR(20) DEFAULT 'open',
-        admin_note TEXT,
-        stripe_refund_id VARCHAR(255),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        resolved_at TIMESTAMP NULL
-      )
-    `);
-    console.log("[DB] disputes table ensured ✅");
-  } catch (err) {
-    console.warn("[DB] disputes table:", (err as any)?.message);
-  }
-
-  // push_subscriptions table
-  try {
-    await pool.execute(`
-      CREATE TABLE IF NOT EXISTS push_subscriptions (
-        id VARCHAR(36) PRIMARY KEY,
-        user_id VARCHAR(36) NOT NULL,
-        endpoint TEXT NOT NULL,
-        p256dh TEXT NOT NULL,
-        auth TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_push_user (user_id)
-      )
-    `);
-    console.log("[DB] push_subscriptions table ensured ✅");
-  } catch (err) {
-    console.warn("[DB] push_subscriptions table:", (err as any)?.message);
-  }
-
-  // referrals table
-  try {
-    await pool.execute(`
-      CREATE TABLE IF NOT EXISTS referrals (
-        id VARCHAR(36) PRIMARY KEY,
-        referrer_tailor_id VARCHAR(36) NOT NULL,
-        referred_email VARCHAR(255) NOT NULL,
-        status VARCHAR(20) DEFAULT 'pending',
-        token VARCHAR(64) NOT NULL UNIQUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_referral_tailor (referrer_tailor_id)
-      )
-    `);
-    console.log("[DB] referrals table ensured ✅");
-  } catch (err) {
-    console.warn("[DB] referrals table:", (err as any)?.message);
-  }
-
-  // tailors: extra profile fields
-  await addColumnIfMissing("tailors", "languages", "JSON NULL");
-  await addColumnIfMissing("tailors", "price_min", "FLOAT NULL");
-  await addColumnIfMissing("tailors", "price_max", "FLOAT NULL");
-  await addColumnIfMissing("tailors", "referral_code", "VARCHAR(16) NULL");
-  await addColumnIfMissing("tailors", "insurer_name", "VARCHAR(255) DEFAULT NULL");
-  await addColumnIfMissing("tailors", "insurer_policy", "VARCHAR(255) DEFAULT NULL");
-  await addColumnIfMissing("tailors", "rc_pro_certified", "TINYINT(1) NOT NULL DEFAULT 0");
 }
-
-// ── Column migrations (idempotent) ─────────────────────────────────────────
-async function ensureColumns(): Promise<void> {
-  const cols = [
-    ["tailors", "insurer_name", "VARCHAR(255) DEFAULT NULL"],
-    ["tailors", "insurer_policy", "VARCHAR(255) DEFAULT NULL"],
-    ["tailors", "rc_pro_certified", "TINYINT(1) NOT NULL DEFAULT 0"],
-  ] as const;
-  for (const [table, col, def] of cols) {
-    const [rows] = await pool.query(
-      `SELECT COUNT(*) as cnt FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
-      [table, col]
-    ) as any[];
-    if ((rows as any[])[0]?.cnt === 0) {
-      await pool.query(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`);
-      console.log(`[DB] Added column ${table}.${col}`);
-    }
-  }
-}
-ensureColumns().catch(err => console.error("[DB] Migration error:", err));
