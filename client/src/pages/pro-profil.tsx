@@ -283,7 +283,7 @@ function ProInfoSection() {
             <input
               ref={cniInputRef}
               type="file"
-              accept="image/jpeg,image/png,application/pdf"
+              accept="*/*"
               className="hidden"
               onChange={e => {
                 const file = e.target.files?.[0];
@@ -326,7 +326,7 @@ function ProInfoSection() {
             <input
               ref={kbisInputRef}
               type="file"
-              accept="image/jpeg,image/png,application/pdf"
+              accept="*/*"
               className="hidden"
               onChange={e => {
                 const file = e.target.files?.[0];
@@ -683,7 +683,7 @@ export default function ProProfil() {
           type="file"
           ref={bannerInputRef}
           onChange={handleBannerChange}
-          accept="image/jpeg,image/png,image/webp"
+          accept="*/*"
           className="hidden"
           data-testid="input-banner-file"
         />
@@ -731,7 +731,7 @@ export default function ProProfil() {
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileChange}
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="*/*"
                   className="hidden"
                   data-testid="input-avatar-file"
                 />
@@ -1069,7 +1069,7 @@ export default function ProProfil() {
                   <input
                     ref={portfolioInputRef}
                     type="file"
-                    accept="image/*"
+                    accept="*/*"
                     className="hidden"
                     onChange={handlePortfolioImageChange}
                   />

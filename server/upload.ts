@@ -65,28 +65,18 @@ const portfolioStorage = multer.diskStorage({
 
 const imageFilter = (
   _req: Express.Request,
-  file: Express.Multer.File,
+  _file: Express.Multer.File,
   cb: multer.FileFilterCallback
 ) => {
-  const allowed = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
-  if (allowed.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error("Type de fichier non autorisé. Seuls JPG, PNG et WebP sont acceptés."));
-  }
+  cb(null, true);
 };
 
 const docFilter = (
   _req: Express.Request,
-  file: Express.Multer.File,
+  _file: Express.Multer.File,
   cb: multer.FileFilterCallback
 ) => {
-  const allowed = ["application/pdf", "image/jpeg", "image/png", "image/jpg"];
-  if (allowed.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error("Type de fichier non autorisé. Seuls PDF, JPG et PNG sont acceptés."));
-  }
+  cb(null, true);
 };
 
 export const uploadDoc = multer({

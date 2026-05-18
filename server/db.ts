@@ -140,6 +140,9 @@ export async function ensureTables() {
   await addColumnIfMissing("tailors", "rc_pro_url", "MEDIUMTEXT NULL");
   await addColumnIfMissing("tailors", "rib_url", "MEDIUMTEXT NULL");
   await addColumnIfMissing("tailors", "iban", "VARCHAR(50) NULL");
+  await addColumnIfMissing("tailors", "rc_pro_certified", "TINYINT(1) NULL DEFAULT 0");
+  await addColumnIfMissing("tailors", "insurer_name", "VARCHAR(255) NULL");
+  await addColumnIfMissing("tailors", "insurer_policy", "VARCHAR(255) NULL");
 
   // tailor_working_hours table
   try {

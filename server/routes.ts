@@ -1581,7 +1581,73 @@ export async function registerRoutes(
     }
   });
 
+  // ── Informations professionnelles (SIRET, IBAN, RC Pro) ─────────────────
+  app.get("/api/professionnel/pro-info", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const [rows] = await pool.query(
+        `SELECT siret, iban, rc_pro_certified, insurer_name, insurer_policy, dossier_status FROM tailors WHERE id = ?`,
+        [tailor.id]
+      ) as any[];
+      const row = (rows as any[])[0] || {};
+      res.json({
+        siret: row.siret || null,
+        iban: row.iban || null,
+        rcProCertified: row.rc_pro_certified != null ? Boolean(row.rc_pro_certified) : null,
+        insurerName: row.insurer_name || null,
+        insurerPolicy: row.insurer_policy || null,
+        status: row.dossier_status || "pending",
+      });
+    } catch (error) {
+      console.error("Failed to get pro-info:", error);
+      res.status(500).json({ error: "Failed to get pro-info" });
+    }
+  });
+
+  app.post("/api/professionnel/pro-info", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const { siret, iban, rcProCertified, insurerName, insurerPolicy } = req.body;
+      await pool.query(
+        `UPDATE tailors SET siret = ?, iban = ?, rc_pro_certified = ?, insurer_name = ?, insurer_policy = ? WHERE id = ?`,
+        [siret || null, iban || null, rcProCertified ? 1 : 0, insurerName || null, insurerPolicy || null, tailor.id]
+      );
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to update pro-info:", error);
+      res.status(500).json({ error: "Failed to update pro-info" });
+    }
+  });
+
   // ─── Parrainage ──────────────────────────────────────────────────────────
+  app.get("/api/referrals/mine", requireAuth, async (req: any, res) => {
+    try {
+      res.json({ referrals: [], referralCode: null });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get referrals" });
+    }
+  });
+
+  app.post("/api/referrals", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.authUserId;
+      const tailor = await storage.getTailorByUserId(userId);
+      if (!tailor) return res.status(403).json({ error: "Not a tailor" });
+      const user = await storage.getUser(userId);
+      const { email } = req.body;
+      if (!email || !/\S+@\S+\.\S+/.test(email)) return res.status(400).json({ error: "Email invalide" });
+      const referrerName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Un artisan SEAMLIER";
+      sendReferralEmail(email, referrerName).catch(() => {});
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to send referral" });
+    }
+  });
+
   app.post("/api/pro/referral", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
