@@ -22,16 +22,16 @@ export default function ProParrainage() {
   const queryClient = useQueryClient();
 
   const { data: stats, isLoading } = useQuery<ReferralStats>({
-    queryKey: ["/api/professionnel/referral/stats"],
+    queryKey: ["/api/referrals/mine"],
   });
 
   const inviteMutation = useMutation({
     mutationFn: (invitedEmail: string) =>
-      apiRequest("POST", "/api/professionnel/referral/invite", { email: invitedEmail }),
+      apiRequest("POST", "/api/pro/referral", { email: invitedEmail }),
     onSuccess: () => {
       toast({ title: "Invitation envoyée !", description: `Un email a été envoyé à ${email}.` });
       setEmail("");
-      queryClient.invalidateQueries({ queryKey: ["/api/professionnel/referral/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/referrals/mine"] });
     },
     onError: (err: any) => {
       const msg = err?.message || "Erreur lors de l'envoi";
