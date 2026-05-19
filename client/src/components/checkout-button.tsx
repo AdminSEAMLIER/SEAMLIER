@@ -8,20 +8,20 @@ import { apiFetch } from "@/lib/api-config";
 import { useTranslation } from "react-i18next";
 
 // Clé publiable chargée depuis l'API au runtime (évite de hardcoder dans le bundle)
-const stripePromise: Promise<import("@stripe/stripe-js").Stripe | null> = fetch("/api/stripe/config", { credentials: "include" })
+export const stripePromise: Promise<import("@stripe/stripe-js").Stripe | null> = fetch("/api/stripe/config", { credentials: "include" })
   .then(r => r.json())
   .then(d => d.publishableKey ? loadStripe(d.publishableKey) : Promise.resolve(null))
   .catch(() => Promise.resolve(null));
 
 // ── Formulaire interne (doit être dans <Elements>) ─────────────────────────
-interface FormProps {
+export interface FormProps {
   clientSecret: string;
   montants: { prixConfection: number; fraisClient: number; totalClient: number; commissionArtisan: number; montantArtisan: number };
   onSuccess: () => void;
   onClose: () => void;
 }
 
-function CheckoutForm({ clientSecret, montants, onSuccess, onClose }: FormProps) {
+export function CheckoutForm({ clientSecret, montants, onSuccess, onClose }: FormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const { i18n } = useTranslation();

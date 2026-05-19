@@ -15,21 +15,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PortfolioCard, PortfolioCardSkeleton } from "@/components/portfolio-card";
 import { ReviewCard, ReviewCardSkeleton } from "@/components/review-card";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
-import { 
-  Star, 
-  MapPin, 
-  BadgeCheck, 
-  MessageCircle, 
-  Calendar, 
-  Clock, 
+import { Elements } from "@stripe/react-stripe-js";
+import { CheckoutForm, stripePromise, type FormProps } from "@/components/checkout-button";
+import {
+  Star,
+  MapPin,
+  BadgeCheck,
+  MessageCircle,
+  Calendar,
+  Clock,
   ArrowLeft,
   Share2,
   Heart,
   Camera,
   Euro,
-  X
+  X,
+  Ruler,
+  Loader2,
+  CheckCircle,
 } from "lucide-react";
 import type { TailorWithUser, PortfolioWithTailor, ReviewWithUser } from "@shared/schema";
 
@@ -46,9 +52,10 @@ const getInitials = (user: { firstName?: string | null; lastName?: string | null
 export default function TailorProfile() {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   const [, params] = useRoute("/tailor/:id");
   const tailorId = params?.id;
-  
+
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingDate, setBookingDate] = useState("");
   const [bookingTime, setBookingTime] = useState("");
@@ -62,6 +69,15 @@ export default function TailorProfile() {
   const [devisRequestedPrice, setDevisRequestedPrice] = useState("");
   const [devisClientDeadline, setDevisClientDeadline] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
+
+  // Prise de mesures
+  type MeasurementStep = "confirm" | "paying" | "paid";
+  const [measurementOpen, setMeasurementOpen] = useState(false);
+  const [measurementStep, setMeasurementStep] = useState<MeasurementStep>("confirm");
+  const [measurementClientSecret, setMeasurementClientSecret] = useState<string | null>(null);
+  const [measurementMontants, setMeasurementMontants] = useState<FormProps["montants"] | null>(null);
+  const [measurementProjectId, setMeasurementProjectId] = useState<string | null>(null);
+  const [showLoginHintMeasure, setShowLoginHintMeasure] = useState(false);
 
   const handleDevisPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -139,6 +155,47 @@ export default function TailorProfile() {
       toast({ title: "Erreur", description: err?.message || "Impossible d'envoyer la demande.", variant: "destructive" });
     },
   });
+
+  const bookMeasurementMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/projects/measurements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ tailorId }),
+      });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Erreur serveur"); }
+      return res.json() as Promise<{ projectId: string; planArtisan: string }>;
+    },
+    onSuccess: async ({ projectId, planArtisan }) => {
+      setMeasurementProjectId(projectId);
+      const payRes = await fetch("/api/stripe/payment/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ projectId, prixConfection: 5, planArtisan }),
+      });
+      const payData = await payRes.json().catch(() => ({}));
+      if (!payRes.ok || !payData.clientSecret) {
+        toast({ title: "Erreur paiement", description: payData.error || "Impossible d'initialiser le paiement.", variant: "destructive" });
+        return;
+      }
+      setMeasurementClientSecret(payData.clientSecret);
+      setMeasurementMontants(payData.montants);
+      setMeasurementStep("paying");
+    },
+    onError: (err: any) => {
+      toast({ title: "Erreur", description: err?.message || "Impossible de créer la commande.", variant: "destructive" });
+    },
+  });
+
+  const closeMeasurementDialog = () => {
+    setMeasurementOpen(false);
+    setMeasurementStep("confirm");
+    setMeasurementClientSecret(null);
+    setMeasurementMontants(null);
+    setMeasurementProjectId(null);
+  };
 
   const handleBooking = () => {
     if (!bookingDate || !bookingTime) {
@@ -322,6 +379,37 @@ export default function TailorProfile() {
             </Button>
           </div>
         </div>
+
+        {/* Prise de mesures */}
+        <div className="mt-4 border border-[#601B28]/20 bg-[#601B28]/5 rounded-xl p-4 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <Ruler className="h-4 w-4 text-[#601B28] shrink-0" />
+              <span className="font-semibold text-sm text-foreground">Prise de mesures</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Prestation standard · prix fixe SEAMLiER</p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="font-bold text-[#601B28]">5 €</span>
+            <Button
+              size="sm"
+              className="bg-[#601B28] hover:bg-[#4E1522] text-white"
+              data-testid="button-book-measurements"
+              onClick={() => {
+                if (!isAuthenticated) { setShowLoginHintMeasure(true); return; }
+                setMeasurementStep("confirm");
+                setMeasurementOpen(true);
+              }}
+            >
+              Réserver
+            </Button>
+          </div>
+        </div>
+        {showLoginHintMeasure && (
+          <p className="text-sm text-muted-foreground text-center mt-2">
+            <Link href="/connexion" className="text-[#601B28] underline">Connectez-vous</Link> pour réserver.
+          </p>
+        )}
 
         <Tabs defaultValue="portfolio" className="mt-8">
           <TabsList className="w-full grid grid-cols-2 bg-transparent border-b border-gray-200 rounded-none h-auto p-0">
@@ -572,6 +660,84 @@ export default function TailorProfile() {
               {devisMutation.isPending ? "Envoi…" : "Envoyer la demande"}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog prise de mesures */}
+      <Dialog open={measurementOpen} onOpenChange={(v) => { if (!v) closeMeasurementDialog(); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-[#601B28] flex items-center gap-2">
+              <Ruler className="h-5 w-5" />
+              Prise de mesures
+            </DialogTitle>
+            <DialogDescription>
+              Prestation standard proposée par toutes les artisanes SEAMLiER.
+            </DialogDescription>
+          </DialogHeader>
+
+          {measurementStep === "confirm" && (
+            <div className="space-y-4 py-2">
+              <div className="bg-[#601B28]/5 border border-[#601B28]/20 rounded-lg p-4 text-sm space-y-1.5">
+                <div className="flex justify-between text-gray-600">
+                  <span>Prise de mesures</span>
+                  <span>5,00 €</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>Frais de service (10%)</span>
+                  <span>0,50 €</span>
+                </div>
+                <div className="flex justify-between font-bold text-gray-900 border-t border-[#601B28]/20 pt-2 mt-1">
+                  <span>Total à payer</span>
+                  <span>5,50 €</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Si vous passez une commande de confection à la suite, l'artisane peut déduire ces 5€ du devis final.
+              </p>
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={closeMeasurementDialog}>
+                  Annuler
+                </Button>
+                <Button
+                  className="flex-1 bg-[#601B28] hover:bg-[#4E1522] text-white"
+                  onClick={() => bookMeasurementMutation.mutate()}
+                  disabled={bookMeasurementMutation.isPending}
+                >
+                  {bookMeasurementMutation.isPending
+                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Préparation…</>
+                    : "Payer 5,50 €"}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {measurementStep === "paying" && measurementClientSecret && measurementMontants && (
+            <Elements stripe={stripePromise} options={{ clientSecret: measurementClientSecret, locale: "fr" }}>
+              <CheckoutForm
+                clientSecret={measurementClientSecret}
+                montants={measurementMontants}
+                onSuccess={() => {
+                  setMeasurementStep("paid");
+                  queryClient.invalidateQueries({ queryKey: ["/api/client/projects"] });
+                }}
+                onClose={closeMeasurementDialog}
+              />
+            </Elements>
+          )}
+
+          {measurementStep === "paid" && (
+            <div className="text-center py-6 space-y-3">
+              <CheckCircle className="h-14 w-14 text-green-500 mx-auto" />
+              <p className="text-gray-700 font-medium">Prise de mesures réservée !</p>
+              <p className="text-sm text-gray-500">
+                La commande apparaît dans vos projets. L'artisane vous contactera pour convenir d'un rendez-vous.
+              </p>
+              <Button className="bg-[#601B28] hover:bg-[#4E1522] text-white w-full mt-2" onClick={closeMeasurementDialog}>
+                Fermer
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

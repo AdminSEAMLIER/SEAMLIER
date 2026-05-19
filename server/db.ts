@@ -217,4 +217,7 @@ export async function ensureTables() {
   } catch (err) {
     console.warn("[DB] disputes table:", (err as any)?.message);
   }
+
+  // projects: type de projet (prise_de_mesures, etc.)
+  await addColumnIfMissing("projects", "project_type", "VARCHAR(50) NULL");
 }

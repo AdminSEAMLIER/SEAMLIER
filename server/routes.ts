@@ -984,6 +984,35 @@ export async function registerRoutes(
     }
   });
 
+  // ── Prise de mesures (5€ fixe) ───────────────────────────────────────────
+  app.post("/api/projects/measurements", requireAuth, async (req: any, res) => {
+    try {
+      const clientId = req.authUserId;
+      const { tailorId } = req.body;
+      if (!tailorId) return res.status(400).json({ error: "tailorId requis" });
+
+      const [tailorRows] = await pool.query(
+        `SELECT id, subscription_plan FROM tailors WHERE id = ? LIMIT 1`,
+        [tailorId]
+      ) as any[];
+      const tailor = (tailorRows as any[])[0];
+      if (!tailor) return res.status(404).json({ error: "Artisan introuvable" });
+
+      const id = require("crypto").randomUUID();
+      await pool.query(
+        `INSERT INTO projects (id, tailor_id, client_id, title, project_type, amount, status, payment_status, progress, current_step, created_at, updated_at)
+         VALUES (?, ?, ?, 'Prise de mesures', 'prise_de_mesures', 5, 'pending', 'pending', 0, 'prise_mesures', NOW(), NOW())`,
+        [id, tailorId, clientId]
+      );
+
+      const planArtisan = tailor.subscription_plan || "Starter";
+      res.status(201).json({ projectId: id, planArtisan });
+    } catch (error: any) {
+      console.error("[measurements] Erreur:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.post("/api/projects", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
