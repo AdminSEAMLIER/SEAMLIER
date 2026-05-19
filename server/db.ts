@@ -197,6 +197,10 @@ export async function ensureTables() {
     console.warn("[DB] tailor_exceptions table:", (err as any)?.message);
   }
 
+  // messages: file attachments
+  await addColumnIfMissing("messages", "file_url", "VARCHAR(500) NULL");
+  await addColumnIfMissing("messages", "mime_type", "VARCHAR(100) NULL");
+
   // disputes table
   try {
     await pool.execute(`

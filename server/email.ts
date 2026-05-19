@@ -18,12 +18,23 @@ function getTransporter(): nodemailer.Transporter | null {
   return transporter;
 }
 
-async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+async function sendEmail(to: string, subject: string, html: string, extraHeaders?: Record<string, string>): Promise<boolean> {
   const mailer = getTransporter();
   if (!mailer) { console.log(`[EMAIL DISABLED] ${subject} → ${to}`); return false; }
-  const from = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@seamlier.fr";
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER || "contact@seamlier.fr";
+  const msgId = `<${Date.now()}.${crypto.randomBytes(8).toString("hex")}@seamlier.fr>`;
   try {
-    await mailer.sendMail({ from: `"SEAMLIER" <${from}>`, to, subject, html });
+    await mailer.sendMail({
+      from: `"SEAMLIER" <${from}>`,
+      to,
+      subject,
+      html,
+      headers: {
+        "X-Mailer": "SEAMLIER Platform",
+        "Message-ID": msgId,
+        ...extraHeaders,
+      },
+    });
     console.log(`[EMAIL] ${subject} → ${to}`);
     return true;
   } catch (err) {
@@ -254,19 +265,23 @@ export async function sendReferralEmail(
 ): Promise<boolean> {
   const baseUrl = process.env.APP_URL || "https://www.seamlier.fr";
   const html = emailTemplate({
-    title: `${referrerName} vous invite à rejoindre SEAMLIER`,
-    badge: '🤝 Invitation',
-    badgeColor: 'bordeaux',
+    title: "Invitation \u00e0 rejoindre SEAMLiER",
+    badge: "Invitation",
+    badgeColor: "bordeaux",
     content: `
-      ${p(`Bonjour,`)}
-      ${p(`${strong(referrerName)}, artisan sur ${strong('SEAMLIER')}, vous invite à rejoindre la première plateforme de mise en relation entre particuliers et artisans couturiers.`)}
-      ${p("Créez votre profil gratuitement et commencez à recevoir des demandes dès aujourd\u2019hui.")}
+      ${p("Bonjour,")}
+      ${p(`${strong(referrerName)} vous a transmis une invitation \u00e0 rejoindre SEAMLiER, la plateforme de mise en relation entre clients et artisans couturiers.`)}
+      ${p("Pour cr\u00e9er votre compte, utilisez le lien ci-dessous.")}
     `,
-    ctaText: "Créer mon profil artisan",
+    ctaText: "Acc\u00e9der \u00e0 l\u2019inscription",
     ctaUrl: `${baseUrl}/inscription-professionnel`,
-    ctaNote: "L\u2019inscription est gratuite et sans engagement.",
   });
-  return sendEmail(toEmail, `${referrerName} vous invite sur SEAMLIER`, html);
+  return sendEmail(
+    toEmail,
+    "Votre invitation SEAMLiER",
+    html,
+    { "X-Auto-Response-Suppress": "OOF, AutoReply" }
+  );
 }
 
 // ─── LITIGE ──────────────────────────────────────────────────────────────────

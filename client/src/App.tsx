@@ -60,6 +60,7 @@ const ProSetup = lazy(() => import("@/pages/pro-setup"));
 const ProStatistiques = lazy(() => import("@/pages/pro-statistiques"));
 const ProDossier = lazy(() => import("@/pages/pro-dossier"));
 const ProHoraires = lazy(() => import("@/pages/pro-horaires"));
+const ProParrainage = lazy(() => import("@/pages/pro-parrainage"));
 const MesProjets = lazy(() => import("@/pages/mes-projets"));
 const MesRendezVous = lazy(() => import("@/pages/mes-rendez-vous"));
 const DashboardClient = lazy(() => import("@/pages/dashboard-client"));
@@ -412,6 +413,12 @@ function Router() {
           <Route path="/pro/horaires">
             <ProtectedRoute>
               <ProLayout><ProHoraires /></ProLayout>
+            </ProtectedRoute>
+          </Route>
+
+          <Route path="/pro/parrainage">
+            <ProtectedRoute>
+              <ProLayout><ProParrainage /></ProLayout>
             </ProtectedRoute>
           </Route>
 

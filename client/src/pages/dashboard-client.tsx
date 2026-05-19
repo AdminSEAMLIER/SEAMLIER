@@ -1,8 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { TailorCard, TailorCardSkeleton } from "@/components/tailor-card";
 import {
   Compass,
@@ -23,12 +25,19 @@ import {
   PartyPopper,
   Calendar,
   Users,
+  Gift,
+  Send,
 } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { TailorWithUser, ProjectWithTailor } from "@shared/schema";
 
 export default function DashboardClient() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [inviteEmail, setInviteEmail] = useState("");
 
   const { data: tailors, isLoading: tailorsLoading } = useQuery<TailorWithUser[]>({
     queryKey: ["/api/tailors"],
@@ -70,6 +79,16 @@ export default function DashboardClient() {
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
     return new Date(measurements.updatedAt) < sixMonthsAgo;
   })();
+
+  const inviteMutation = useMutation({
+    mutationFn: (email: string) => apiRequest("POST", "/api/referrals", { email }),
+    onSuccess: () => {
+      setInviteEmail("");
+      toast({ title: "Invitation envoyée", description: "Votre ami recevra un email d'invitation." });
+      queryClient.invalidateQueries({ queryKey: ["/api/referrals/mine"] });
+    },
+    onError: () => toast({ title: "Erreur", description: "Impossible d'envoyer l'invitation.", variant: "destructive" }),
+  });
 
   const featuredTailors = tailors?.slice(0, 3) || [];
   const activeProjects = projects.filter((p) => p.status !== "terminé").length;
@@ -369,7 +388,7 @@ export default function DashboardClient() {
         )}
 
         {/* Magazine teaser */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center justify-between gap-4">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[#601B28]/10 flex items-center justify-center">
               <BookOpen className="h-5 w-5 text-[#601B28]" />
@@ -384,6 +403,37 @@ export default function DashboardClient() {
               Lire
             </Button>
           </Link>
+        </div>
+
+        {/* Parrainage */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-lg bg-[#601B28]/10 flex items-center justify-center">
+              <Gift className="h-5 w-5 text-[#601B28]" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 text-sm">Inviter un proche</p>
+              <p className="text-gray-500 text-xs">Partagez SEAMLIER avec vos proches</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              placeholder="email@exemple.com"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && inviteEmail && inviteMutation.mutate(inviteEmail)}
+              className="flex-1 h-9 text-sm"
+            />
+            <Button
+              size="sm"
+              className="bg-[#601B28] hover:bg-[#4E1522] text-white h-9 px-3 shrink-0"
+              onClick={() => inviteEmail && inviteMutation.mutate(inviteEmail)}
+              disabled={inviteMutation.isPending || !inviteEmail}
+            >
+              <Send className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

@@ -11,10 +11,11 @@ export const uploadsDir =
 const docsDir = path.join(uploadsDir, "docs");
 const contractsDir = path.join(uploadsDir, "contracts");
 const portfolioDir = path.join(uploadsDir, "portfolio");
+export const messagesDir = path.join(uploadsDir, "messages");
 
 // Create all required directories at startup.
 console.log(`[upload] uploadsDir = ${uploadsDir}`);
-for (const dir of [uploadsDir, docsDir, contractsDir, portfolioDir]) {
+for (const dir of [uploadsDir, docsDir, contractsDir, portfolioDir, messagesDir]) {
   try {
     fs.mkdirSync(dir, { recursive: true });
     console.log(`[upload] Directory ready: ${dir}`);
@@ -90,3 +91,33 @@ export const uploadPortfolio = multer({
   fileFilter: imageFilter,
   limits: { fileSize: 8 * 1024 * 1024 }, // 8 MB
 }).single("image");
+
+const messageStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    try {
+      ensureDir(messagesDir);
+      cb(null, messagesDir);
+    } catch (err: any) {
+      cb(err, "");
+    }
+  },
+  filename: (_req, file, cb) => {
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+    cb(null, `${Date.now()}-${safeName}`);
+  },
+});
+
+const messageFileFilter = (
+  _req: Express.Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback
+) => {
+  const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+  cb(null, allowed.includes(file.mimetype));
+};
+
+export const uploadMessage = multer({
+  storage: messageStorage,
+  fileFilter: messageFileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+}).single("file");

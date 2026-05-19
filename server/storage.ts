@@ -432,6 +432,7 @@ class DatabaseStorage implements IStorage {
     const [rows] = await pool.query(
       `SELECT m.id, m.conversation_id as conversationId, m.sender_id as senderId,
               m.content, m.sent_at as sentAt, m.is_read as isRead,
+              m.file_url as fileUrl, m.mime_type as mimeType,
               u.id as u_id, u.first_name as u_firstName, u.last_name as u_lastName,
               u.email as u_email, u.role as u_role, u.profile_image_url as u_profileImageUrl
        FROM messages m
@@ -453,6 +454,8 @@ class DatabaseStorage implements IStorage {
       content: row.content,
       sentAt: row.sentAt,
       isRead: !!row.isRead,
+      fileUrl: row.fileUrl || null,
+      mimeType: row.mimeType || null,
       sender: row.u_id ? {
         id: row.u_id,
         firstName: row.u_firstName,
@@ -469,10 +472,13 @@ class DatabaseStorage implements IStorage {
     console.log(`[createMessage] conversationId=${message.conversationId} senderId=${message.senderId}`);
     await db.insert(messages).values({ ...message, id });
 
+    const preview = message.content?.trim()
+      ? message.content.substring(0, 100)
+      : message.fileUrl ? "(📎 fichier)" : "";
     await db.update(conversations)
-      .set({ 
+      .set({
         lastMessageAt: new Date(),
-        lastMessagePreview: message.content.substring(0, 100)
+        lastMessagePreview: preview,
       })
       .where(eq(conversations.id, message.conversationId));
 

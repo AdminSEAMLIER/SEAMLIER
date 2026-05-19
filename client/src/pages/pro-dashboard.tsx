@@ -623,10 +623,17 @@ export default function ProDashboard() {
 
         <Card className="border border-gray-100 bg-white shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Inviter une collègue
-            </CardTitle>
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-lg text-[#601B28] flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Inviter une collègue
+              </CardTitle>
+              <Link href="/pro/parrainage">
+                <button className="text-xs text-[#601B28] hover:underline flex items-center gap-1 font-medium">
+                  Programme complet <ArrowRight className="h-3 w-3" />
+                </button>
+              </Link>
+            </div>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex gap-2">

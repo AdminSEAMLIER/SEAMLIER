@@ -100,6 +100,8 @@ export const messages = mysqlTable("messages", {
   content: text("content").notNull(),
   sentAt: timestamp("sent_at").defaultNow(),
   isRead: boolean("is_read").default(false),
+  fileUrl: varchar("file_url", { length: 500 }),
+  mimeType: varchar("mime_type", { length: 100 }),
 });
 
 export const measurements = mysqlTable("measurements", {

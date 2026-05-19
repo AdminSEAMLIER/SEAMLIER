@@ -4,7 +4,7 @@ import { useSearch, Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, ImagePlus, ArrowLeft, MessageCircle, Headset, EyeOff } from "lucide-react";
+import { Send, ImagePlus, ArrowLeft, MessageCircle, Headset, EyeOff, X, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -17,6 +17,8 @@ export default function Messages() {
   const { toast } = useToast();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState("");
+  const [pendingFile, setPendingFile] = useState<{ url: string; mimeType: string; name: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const searchStr = useSearch();
@@ -77,7 +79,8 @@ export default function Messages() {
     mutationFn: async (content: string) => {
       return apiRequest("POST", "/api/messages", {
         conversationId: selectedConversationId,
-        content,
+        content: content || "",
+        ...(pendingFile ? { fileUrl: pendingFile.url, mimeType: pendingFile.mimeType } : {}),
       });
     },
     onSuccess: () => {
@@ -103,6 +106,20 @@ export default function Messages() {
     },
   });
 
+  const uploadFileMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/messages/upload", { method: "POST", body: fd, credentials: "include" });
+      if (!res.ok) throw new Error("Upload échoué");
+      return res.json() as Promise<{ fileUrl: string; mimeType: string; fileName: string }>;
+    },
+    onSuccess: (data) => {
+      setPendingFile({ url: data.fileUrl, mimeType: data.mimeType, name: data.fileName });
+    },
+    onError: () => toast({ title: "Erreur", description: "Impossible d'envoyer ce fichier", variant: "destructive" }),
+  });
+
   const markAsUnreadMutation = useMutation({
     mutationFn: async (conversationId: string) => {
       return apiRequest("PATCH", `/api/messages/${conversationId}/unread`, {});
@@ -118,9 +135,11 @@ export default function Messages() {
   });
 
   const handleSendMessage = () => {
-    if (!messageInput.trim() || !selectedConversationId) return;
+    if (!messageInput.trim() && !pendingFile) return;
+    if (!selectedConversationId) return;
     sendMessageMutation.mutate(messageInput.trim());
     setMessageInput("");
+    setPendingFile(null);
   };
 
   return (
@@ -298,7 +317,26 @@ export default function Messages() {
                           )}
                           data-testid={`message-${message.id}`}
                         >
-                          <div className="text-sm">{renderMessageContent(message.content, isSent)}</div>
+                          {(message as any).fileUrl && (message as any).mimeType?.startsWith("image/") && (
+                            <img
+                              src={(message as any).fileUrl}
+                              alt="image"
+                              className="max-w-[220px] rounded-lg mb-1 cursor-pointer"
+                              onClick={() => window.open((message as any).fileUrl, "_blank")}
+                            />
+                          )}
+                          {(message as any).fileUrl && (message as any).mimeType === "application/pdf" && (
+                            <a
+                              href={(message as any).fileUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className={`flex items-center gap-1.5 text-xs underline mb-1 ${isSent ? "text-white/90" : "text-[#601B28]"}`}
+                            >
+                              <FileText className="h-3.5 w-3.5 shrink-0" />
+                              {(message as any).fileUrl.split("/").pop()}
+                            </a>
+                          )}
+                          {message.content && <div className="text-sm">{renderMessageContent(message.content, isSent)}</div>}
                           <div className="flex items-center gap-1 mt-1">
                             <p className={cn(
                               "text-[10px]",
@@ -329,8 +367,39 @@ export default function Messages() {
               </div>
 
               <div className="p-4 border-t border-border bg-white">
+                {pendingFile && (
+                  <div className="flex items-center gap-2 mb-2 px-2 py-1.5 bg-gray-50 rounded-lg border border-border">
+                    {pendingFile.mimeType.startsWith("image/") ? (
+                      <img src={pendingFile.url} alt="" className="h-10 w-10 object-cover rounded" />
+                    ) : (
+                      <FileText className="h-5 w-5 text-[#601B28] shrink-0" />
+                    )}
+                    <span className="text-xs text-gray-700 flex-1 truncate">{pendingFile.name}</span>
+                    <button onClick={() => setPendingFile(null)} className="text-gray-400 hover:text-gray-700">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon" className="text-muted-foreground" data-testid="button-attach">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp,.pdf"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) uploadFileMutation.mutate(f);
+                      e.target.value = "";
+                    }}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadFileMutation.isPending}
+                    data-testid="button-attach"
+                  >
                     <ImagePlus className="h-5 w-5" />
                   </Button>
                   <Input
@@ -341,11 +410,11 @@ export default function Messages() {
                     onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
                     data-testid="input-message"
                   />
-                  <Button 
-                    size="icon" 
+                  <Button
+                    size="icon"
                     className="bg-[#601B28] hover:bg-[#4E1522]"
                     onClick={handleSendMessage}
-                    disabled={!messageInput.trim() || sendMessageMutation.isPending}
+                    disabled={(!messageInput.trim() && !pendingFile) || sendMessageMutation.isPending}
                     data-testid="button-send-message"
                   >
                     <Send className="h-5 w-5" />

@@ -3,7 +3,7 @@ import {
   MessageSquare, Search, Send, Users, Headset, ArrowLeft,
   User, FolderKanban, Calendar, Ruler, Mail, Phone,
   MapPin, Clock, CheckCircle2, Circle, AlertCircle, AlertTriangle,
-  StickyNote, ChevronDown, Tag, EyeOff,
+  StickyNote, ChevronDown, Tag, EyeOff, ImagePlus, X, FileText,
 } from "lucide-react";
 import { renderMessageContent } from "@/lib/message-renderer";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -450,6 +450,8 @@ export default function ProMessagerie() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [showClientFiche, setShowClientFiche] = useState(false);
+  const [pendingFile, setPendingFile] = useState<{ url: string; mimeType: string; name: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: conversations = [], isLoading } = useQuery<ConversationWithParticipant[]>({
@@ -514,7 +516,8 @@ export default function ProMessagerie() {
     mutationFn: async (content: string) => {
       return apiRequest("POST", "/api/messages", {
         conversationId: selectedConversationId,
-        content,
+        content: content || "",
+        ...(pendingFile ? { fileUrl: pendingFile.url, mimeType: pendingFile.mimeType } : {}),
       });
     },
     onSuccess: () => {
@@ -524,6 +527,20 @@ export default function ProMessagerie() {
     onError: () => {
       toast({ title: "Erreur", description: "Impossible d'envoyer le message", variant: "destructive" });
     },
+  });
+
+  const uploadFileMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/messages/upload", { method: "POST", body: fd, credentials: "include" });
+      if (!res.ok) throw new Error("Upload échoué");
+      return res.json() as Promise<{ fileUrl: string; mimeType: string; fileName: string }>;
+    },
+    onSuccess: (data) => {
+      setPendingFile({ url: data.fileUrl, mimeType: data.mimeType, name: data.fileName });
+    },
+    onError: () => toast({ title: "Erreur", description: "Impossible d'envoyer ce fichier", variant: "destructive" }),
   });
 
   const markAsUnreadMutation = useMutation({
@@ -541,9 +558,11 @@ export default function ProMessagerie() {
   });
 
   const handleSendMessage = () => {
-    if (!newMessage.trim() || !selectedConversationId) return;
+    if (!newMessage.trim() && !pendingFile) return;
+    if (!selectedConversationId) return;
     sendMessageMutation.mutate(newMessage.trim());
     setNewMessage("");
+    setPendingFile(null);
   };
 
   const handleOpenConversation = (convId: string) => {
@@ -733,7 +752,26 @@ export default function ProMessagerie() {
                               }`}
                               data-testid={`message-${msg.id}`}
                             >
-                              <div className="text-sm">{renderMessageContent(msg.content, isSent)}</div>
+                              {(msg as any).fileUrl && (msg as any).mimeType?.startsWith("image/") && (
+                                <img
+                                  src={(msg as any).fileUrl}
+                                  alt="image"
+                                  className="max-w-[200px] rounded-lg mb-1 cursor-pointer"
+                                  onClick={() => window.open((msg as any).fileUrl, "_blank")}
+                                />
+                              )}
+                              {(msg as any).fileUrl && (msg as any).mimeType === "application/pdf" && (
+                                <a
+                                  href={(msg as any).fileUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className={`flex items-center gap-1.5 text-xs underline mb-1 ${isSent ? "text-white/90" : "text-[#601B28]"}`}
+                                >
+                                  <FileText className="h-3.5 w-3.5 shrink-0" />
+                                  {(msg as any).fileUrl.split("/").pop()}
+                                </a>
+                              )}
+                              {msg.content && <div className="text-sm">{renderMessageContent(msg.content, isSent)}</div>}
                               <p className={`text-[10px] mt-1 ${isSent ? 'text-white/70' : 'text-gray-400'}`}>
                                 {msg.sentAt ? new Date(msg.sentAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ""}
                               </p>
@@ -751,7 +789,41 @@ export default function ProMessagerie() {
                 </div>
 
                 <div className="p-4 border-t border-gray-100">
+                  {pendingFile && (
+                    <div className="flex items-center gap-2 mb-2 px-2 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
+                      {pendingFile.mimeType.startsWith("image/") ? (
+                        <img src={pendingFile.url} alt="" className="h-10 w-10 object-cover rounded" />
+                      ) : (
+                        <FileText className="h-5 w-5 text-[#601B28] shrink-0" />
+                      )}
+                      <span className="text-xs text-gray-700 flex-1 truncate">{pendingFile.name}</span>
+                      <button onClick={() => setPendingFile(null)} className="text-gray-400 hover:text-gray-600">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
                   <div className="flex gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.webp,.pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadFileMutation.mutate(f);
+                        e.target.value = "";
+                      }}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-gray-400 hover:text-gray-700 shrink-0"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadFileMutation.isPending}
+                      data-testid="button-attach"
+                    >
+                      <ImagePlus className="h-5 w-5" />
+                    </Button>
                     <Input
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
@@ -764,7 +836,7 @@ export default function ProMessagerie() {
                       className="bg-[#601B28] hover:bg-[#4E1522]"
                       size="icon"
                       onClick={handleSendMessage}
-                      disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                      disabled={(!newMessage.trim() && !pendingFile) || sendMessageMutation.isPending}
                       data-testid="button-send"
                     >
                       <Send className="h-4 w-4" />

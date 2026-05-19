@@ -5,6 +5,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { setupAuth } from "./replit_integrations/auth";
 import { ensureTables } from "./db";
+import { uploadsDir } from "./upload";
 import path from "path";
 import fs from "fs";
 
@@ -83,6 +84,10 @@ app.use((req, res, next) => {
 (async () => {
   await ensureTables();
   await setupAuth(app);
+
+  // Serve uploaded files (images, PDFs, docs)
+  app.use("/uploads", express.static(uploadsDir));
+
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

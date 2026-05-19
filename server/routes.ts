@@ -2,6 +2,7 @@ import { registerStripeRoutes } from "./stripe";
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
+import { uploadMessage, uploadsDir } from "./upload";
 import { storage } from "./storage";
 import { db, pool } from "./db";
 import { eq } from "drizzle-orm";
@@ -542,6 +543,15 @@ export async function registerRoutes(
     } catch (error) {
       res.status(500).json({ error: "Failed to mark as unread" });
     }
+  });
+
+  app.post("/api/messages/upload", requireAuth, (req: any, res: any) => {
+    uploadMessage(req, res, (err: any) => {
+      if (err) return res.status(400).json({ error: err.message });
+      if (!req.file) return res.status(400).json({ error: "Aucun fichier reçu" });
+      const fileUrl = `/uploads/messages/${req.file.filename}`;
+      res.json({ fileUrl, mimeType: req.file.mimetype, fileName: req.file.originalname });
+    });
   });
 
   app.patch("/api/messages/all/read", requireAuth, async (req: any, res) => {
