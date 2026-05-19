@@ -513,14 +513,16 @@ export default function ProMessagerie() {
   });
 
   const sendMessageMutation = useMutation({
-    mutationFn: async (content: string) => {
-      return apiRequest("POST", "/api/messages", {
+    mutationFn: async (params: { content: string; fileUrl?: string | null; mimeType?: string | null }) => {
+      const res = await apiRequest("POST", "/api/messages", {
         conversationId: selectedConversationId,
-        content: content || "",
-        ...(pendingFile ? { fileUrl: pendingFile.url, mimeType: pendingFile.mimeType } : {}),
+        content: params.content || "",
+        ...(params.fileUrl ? { fileUrl: params.fileUrl, mimeType: params.mimeType } : {}),
       });
+      return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      console.log("[sendMessage onSuccess] message retourné:", { id: data?.id, fileUrl: data?.fileUrl, mimeType: data?.mimeType });
       queryClient.invalidateQueries({ queryKey: ["/api/messages", selectedConversationId] });
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
     },
@@ -560,7 +562,9 @@ export default function ProMessagerie() {
   const handleSendMessage = () => {
     if (!newMessage.trim() && !pendingFile) return;
     if (!selectedConversationId) return;
-    sendMessageMutation.mutate(newMessage.trim());
+    const fileUrl = pendingFile?.url ?? null;
+    const mimeType = pendingFile?.mimeType ?? null;
+    sendMessageMutation.mutate({ content: newMessage.trim(), fileUrl, mimeType });
     setNewMessage("");
     setPendingFile(null);
   };
