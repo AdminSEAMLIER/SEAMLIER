@@ -81,6 +81,13 @@ app.use((req, res, next) => {
   next();
 });
 
+process.on("uncaughtException", (err) => {
+  console.error("[process] uncaughtException:", err?.message ?? err);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("[process] unhandledRejection:", reason);
+});
+
 (async () => {
   await ensureTables();
   await setupAuth(app);
@@ -93,9 +100,10 @@ app.use((req, res, next) => {
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
+    console.error(`[Express error handler] ${status} — ${message}`, err?.stack ?? "");
+    if (!res.headersSent) {
+      res.status(status).json({ message });
+    }
   });
 
   // Serve the deployment ZIP before Vite/static catch-all
@@ -125,4 +133,7 @@ app.use((req, res, next) => {
       log(`serving on port ${port}`);
     },
   );
-})();
+})().catch((err) => {
+  console.error("[startup] Fatal error during server initialisation:", err?.message ?? err, err?.stack ?? "");
+  process.exit(1);
+});
