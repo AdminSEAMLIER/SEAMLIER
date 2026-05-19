@@ -547,9 +547,11 @@ export async function registerRoutes(
 
   app.post("/api/messages/upload", requireAuth, (req: any, res: any) => {
     uploadMessage(req, res, (err: any) => {
-      if (err) return res.status(400).json({ error: err.message });
-      if (!req.file) return res.status(400).json({ error: "Aucun fichier reçu" });
+      if (err) { console.error("[upload] multer error:", err.message); return res.status(400).json({ error: err.message }); }
+      if (!req.file) { console.warn("[upload] req.file undefined after multer"); return res.status(400).json({ error: "Aucun fichier reçu" }); }
+      console.log("[upload] req.file:", { filename: req.file.filename, path: req.file.path, size: req.file.size, mimetype: req.file.mimetype });
       const fileUrl = `/uploads/messages/${req.file.filename}`;
+      console.log("[upload] fileUrl renvoyé:", fileUrl);
       res.json({ fileUrl, mimeType: req.file.mimetype, fileName: req.file.originalname });
     });
   });
@@ -566,6 +568,7 @@ export async function registerRoutes(
   app.post("/api/messages", requireAuth, async (req: any, res) => {
     try {
       const userId = req.authUserId;
+      console.log("[messages POST] body:", { conversationId: req.body.conversationId, content: String(req.body.content ?? "").slice(0, 80), fileUrl: req.body.fileUrl, mimeType: req.body.mimeType });
       const { sentAt, ...bodyWithoutSentAt } = req.body;
       const message = await storage.createMessage({
         ...bodyWithoutSentAt,
@@ -1832,7 +1835,7 @@ export async function registerRoutes(
           await storage.createMessage({
             conversationId: conv.id,
             senderId: adminUserId,
-            content: "Bienvenue sur SEAMLiER ! Votre compte a été activé. Pour finaliser votre dossier, merci de nous envoyer via cette messagerie : votre CNI/Passeport (obligatoire) et votre extrait KBIS (si applicable). L'équipe SEAMLiER",
+            content: "Félicitations ! Votre profil SEAMLiER a été validé. Vous pouvez maintenant recevoir des commandes. Bienvenue dans la communauté SEAMLiER 🎉",
           });
         } catch (e) { console.error("Auto-message on validation failed:", e); }
       }
@@ -1900,6 +1903,20 @@ export async function registerRoutes(
       ) as any[];
       const totalRevenue = parseFloat(revenueRows?.[0]?.total) || 0;
 
+      // Financial breakdown: volume, SEAMLiER take, artisan payout
+      const [finRows] = await pool.query(`
+        SELECT
+          COALESCE(SUM(p.amount), 0) as volume_total,
+          COALESCE(SUM(p.amount * 0.10), 0) as client_fees,
+          COALESCE(SUM(CASE WHEN COALESCE(t.subscription_plan, 'Starter') != 'Premium' THEN p.amount * 0.15 ELSE 0 END), 0) as artisan_commission
+        FROM projects p
+        LEFT JOIN tailors t ON t.id = p.tailor_id
+        WHERE p.status = 'completed'
+      `) as any[];
+      const volumeTotal = parseFloat(finRows?.[0]?.volume_total) || 0;
+      const encaisseSeamlier = (parseFloat(finRows?.[0]?.client_fees) || 0) + (parseFloat(finRows?.[0]?.artisan_commission) || 0);
+      const reverseArtisans = volumeTotal - (parseFloat(finRows?.[0]?.artisan_commission) || 0);
+
       const [monthRevenueRows] = await pool.query(
         "SELECT COALESCE(SUM(amount), 0) as total FROM projects WHERE status = 'completed' AND created_at >= ?",
         [firstOfMonth]
@@ -1945,6 +1962,9 @@ export async function registerRoutes(
         activeClientsCount,
         starterCount,
         proCount,
+        volumeTotal,
+        encaisseSeamlier,
+        reverseArtisans,
         // legacy aliases
         avgOrderValue: avgProjectValue,
         activeArtisans: activeArtisansCount,
@@ -2212,12 +2232,9 @@ export async function registerRoutes(
       if (!admin || admin.id === artisanUserId) return;
       const conversation = await storage.getOrCreateConversation(admin.id, artisanUserId);
       const messageText =
-        "Félicitations ! 🎉 Votre profil artisan a été validé par notre équipe. " +
-        "Vous êtes désormais visible sur la plateforme SEAMLIER et disponible pour recevoir des demandes de confection. " +
-        "Bienvenue dans la communauté !\n\n" +
-        "Congratulations! Your artisan profile has been approved by our team. " +
-        "You are now visible on the SEAMLIER platform and ready to receive tailoring requests. " +
-        "Welcome to the community!";
+        "Félicitations ! Votre profil SEAMLiER a été validé. " +
+        "Vous pouvez maintenant recevoir des commandes. " +
+        "Bienvenue dans la communauté SEAMLiER 🎉";
       await storage.createMessage({
         conversationId: conversation.id,
         senderId: admin.id,

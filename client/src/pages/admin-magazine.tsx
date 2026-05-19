@@ -340,6 +340,9 @@ export default function AdminDashboard() {
     proCount: number;
     activeClientsCount: number;
     activeArtisansCount: number;
+    volumeTotal: number;
+    encaisseSeamlier: number;
+    reverseArtisans: number;
   }>({
     queryKey: ["/api/admin/global-stats"],
     enabled: isAuthenticated,
@@ -1187,23 +1190,50 @@ export default function AdminDashboard() {
 
                   {/* Bloc revenus & activité */}
                   {globalStats && (
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                      {[
-                        { label: "CA ce mois", value: `${globalStats.monthRevenue?.toFixed(0) ?? 0} €`, icon: TrendingUp, bg: "bg-green-50", color: "text-green-600" },
-                        { label: "CA total", value: `${globalStats.totalRevenue?.toFixed(0) ?? 0} €`, icon: Euro, bg: "bg-[#601B28]/5", color: "text-[#601B28]" },
-                        { label: "Projets terminés", value: globalStats.totalProjectsCompleted ?? 0, icon: CheckCircle, bg: "bg-blue-50", color: "text-blue-600" },
-                        { label: "Panier moyen", value: `${globalStats.avgProjectValue?.toFixed(0) ?? 0} €`, icon: BarChart3, bg: "bg-amber-50", color: "text-amber-600" },
-                      ].map(s => (
-                        <Card key={s.label} className="border-none shadow-sm">
+                    <div className="space-y-4">
+                      {/* Activité générale */}
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        {[
+                          { label: "CA ce mois", value: `${globalStats.monthRevenue?.toFixed(0) ?? 0} €`, icon: TrendingUp, bg: "bg-green-50", color: "text-green-600" },
+                          { label: "CA total", value: `${globalStats.totalRevenue?.toFixed(0) ?? 0} €`, icon: Euro, bg: "bg-[#601B28]/5", color: "text-[#601B28]" },
+                          { label: "Projets terminés", value: globalStats.totalProjectsCompleted ?? 0, icon: CheckCircle, bg: "bg-blue-50", color: "text-blue-600" },
+                          { label: "Panier moyen", value: `${globalStats.avgProjectValue?.toFixed(0) ?? 0} €`, icon: BarChart3, bg: "bg-amber-50", color: "text-amber-600" },
+                        ].map(s => (
+                          <Card key={s.label} className="border-none shadow-sm">
+                            <CardContent className="p-4">
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${s.bg}`}>
+                                <s.icon size={16} className={s.color} />
+                              </div>
+                              <p className="text-xs text-gray-500 font-medium">{s.label}</p>
+                              <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                      {/* Ventilation financière */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Card className="border-none shadow-sm">
                           <CardContent className="p-4">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${s.bg}`}>
-                              <s.icon size={16} className={s.color} />
-                            </div>
-                            <p className="text-xs text-gray-500 font-medium">{s.label}</p>
-                            <p className="text-xl font-bold text-gray-900 mt-0.5">{s.value}</p>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Volume total traité</p>
+                            <p className="text-2xl font-bold text-gray-900">{(globalStats.volumeTotal ?? 0).toFixed(0)} €</p>
+                            <p className="text-xs text-gray-400 mt-1">Somme de toutes les commandes terminées</p>
                           </CardContent>
                         </Card>
-                      ))}
+                        <Card className="border-none shadow-sm border-l-4 border-l-[#601B28]">
+                          <CardContent className="p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-[#601B28] mb-1">Encaissé par SEAMLiER</p>
+                            <p className="text-2xl font-bold text-[#601B28]">{(globalStats.encaisseSeamlier ?? 0).toFixed(0)} €</p>
+                            <p className="text-xs text-gray-400 mt-1">Frais client 10 % + commissions Starter 15 %</p>
+                          </CardContent>
+                        </Card>
+                        <Card className="border-none shadow-sm border-l-4 border-l-green-500">
+                          <CardContent className="p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-green-600 mb-1">Reversé aux artisanes</p>
+                            <p className="text-2xl font-bold text-green-700">{(globalStats.reverseArtisans ?? 0).toFixed(0)} €</p>
+                            <p className="text-xs text-gray-400 mt-1">Montant net après commission SEAMLiER</p>
+                          </CardContent>
+                        </Card>
+                      </div>
                     </div>
                   )}
 
