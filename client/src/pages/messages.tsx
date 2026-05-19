@@ -321,15 +321,7 @@ export default function Messages() {
                           )}
                           data-testid={`message-${message.id}`}
                         >
-                          {(message as any).fileUrl && (message as any).mimeType?.startsWith("image/") && (
-                            <img
-                              src={(message as any).fileUrl}
-                              alt="image"
-                              className="max-w-[220px] rounded-lg mb-1 cursor-pointer"
-                              onClick={() => window.open((message as any).fileUrl, "_blank")}
-                            />
-                          )}
-                          {(message as any).fileUrl && (message as any).mimeType === "application/pdf" && (
+                          {(message as any).fileUrl && (
                             <a
                               href={(message as any).fileUrl}
                               target="_blank"
@@ -337,7 +329,7 @@ export default function Messages() {
                               className={`flex items-center gap-1.5 text-xs underline mb-1 ${isSent ? "text-white/90" : "text-[#601B28]"}`}
                             >
                               <FileText className="h-3.5 w-3.5 shrink-0" />
-                              {(message as any).fileUrl.split("/").pop()}
+                              Voir la pièce jointe
                             </a>
                           )}
                           {message.content && <div className="text-sm">{renderMessageContent(message.content, isSent)}</div>}

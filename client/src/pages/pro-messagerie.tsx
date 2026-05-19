@@ -756,15 +756,7 @@ export default function ProMessagerie() {
                               }`}
                               data-testid={`message-${msg.id}`}
                             >
-                              {(msg as any).fileUrl && (msg as any).mimeType?.startsWith("image/") && (
-                                <img
-                                  src={(msg as any).fileUrl}
-                                  alt="image"
-                                  className="max-w-[200px] rounded-lg mb-1 cursor-pointer"
-                                  onClick={() => window.open((msg as any).fileUrl, "_blank")}
-                                />
-                              )}
-                              {(msg as any).fileUrl && (msg as any).mimeType === "application/pdf" && (
+                              {(msg as any).fileUrl && (
                                 <a
                                   href={(msg as any).fileUrl}
                                   target="_blank"
@@ -772,7 +764,7 @@ export default function ProMessagerie() {
                                   className={`flex items-center gap-1.5 text-xs underline mb-1 ${isSent ? "text-white/90" : "text-[#601B28]"}`}
                                 >
                                   <FileText className="h-3.5 w-3.5 shrink-0" />
-                                  {(msg as any).fileUrl.split("/").pop()}
+                                  Voir la pièce jointe
                                 </a>
                               )}
                               {msg.content && <div className="text-sm">{renderMessageContent(msg.content, isSent)}</div>}
