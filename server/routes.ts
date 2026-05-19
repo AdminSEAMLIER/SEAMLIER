@@ -887,7 +887,9 @@ export async function registerRoutes(
     try {
       const [rows] = await pool.query(`
         SELECT p.id, p.title, p.status, p.created_at as createdAt, p.amount,
+               p.client_id as clientId,
                u_c.first_name as clientFirstName, u_c.last_name as clientLastName,
+               u_t.id as tailorUserId,
                u_t.first_name as tailorFirstName, u_t.last_name as tailorLastName
         FROM projects p
         LEFT JOIN users u_c ON u_c.id COLLATE utf8mb4_unicode_ci = p.client_id COLLATE utf8mb4_unicode_ci
@@ -1694,16 +1696,19 @@ export async function registerRoutes(
           c.email as client_email, c.first_name as client_first, c.last_name as client_last,
           u.email as tailor_email, u.first_name as tailor_first, u.last_name as tailor_last
          FROM projects p
-         LEFT JOIN users c ON p.client_id = c.id
-         LEFT JOIN tailors t ON p.tailor_id = t.id
-         LEFT JOIN users u ON t.user_id = u.id
-         WHERE p.id = ?`,
+         LEFT JOIN users c ON c.id COLLATE utf8mb4_unicode_ci = p.client_id COLLATE utf8mb4_unicode_ci
+         LEFT JOIN tailors t ON t.id COLLATE utf8mb4_unicode_ci = p.tailor_id COLLATE utf8mb4_unicode_ci
+         LEFT JOIN users u ON u.id COLLATE utf8mb4_unicode_ci = t.user_id COLLATE utf8mb4_unicode_ci
+         WHERE p.id = ? COLLATE utf8mb4_unicode_ci`,
         [projectId]
       ) as any[];
       const project = (rows as any[])[0];
-      if (!project) return res.status(404).json({ error: "Projet introuvable" });
+      if (!project) {
+        console.error(`[disputes] Project not found: ${projectId}`);
+        return res.status(404).json({ error: "Projet introuvable", projectId });
+      }
 
-      const id = crypto.randomUUID();
+      const id = require("crypto").randomUUID();
       await pool.query(
         `INSERT INTO disputes (id, project_id, reason, status, created_by) VALUES (?, ?, ?, 'open', ?)`,
         [id, projectId, reason || null, req.authUserId]

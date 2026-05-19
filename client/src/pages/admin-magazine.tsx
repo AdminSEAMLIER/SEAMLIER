@@ -549,6 +549,23 @@ export default function AdminDashboard() {
     onError: () => toast({ title: "Erreur", variant: "destructive" }),
   });
 
+  const openConversationMutation = useMutation({
+    mutationFn: async (participantId: string) => {
+      const res = await apiFetch("/api/conversations", {
+        method: "POST",
+        body: JSON.stringify({ participantId }),
+      });
+      if (!res.ok) throw new Error("Erreur");
+      return res.json() as Promise<{ id: string }>;
+    },
+    onSuccess: (conv) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      setSelectedConversationId(conv.id);
+      setActiveTab("messaging");
+    },
+    onError: () => toast({ title: "Erreur", description: "Impossible d'ouvrir la conversation.", variant: "destructive" }),
+  });
+
   const openDisputeMutation = useMutation({
     mutationFn: async (projectId: string) => {
       const res = await apiFetch(`/api/admin/projects/${projectId}/dispute`, { method: "POST" });
@@ -1310,12 +1327,13 @@ export default function AdminDashboard() {
                                 </td>
                                 <td className="px-4 py-3">
                                   <div className="flex gap-1">
-                                    {r.tailorId && (
+                                    {r.tailorUserId && (
                                       <Button
                                         size="sm"
                                         variant="outline"
                                         className="h-7 text-[10px] px-2 border-[#601B28]/30 text-[#601B28] hover:bg-[#601B28]/5"
-                                        onClick={() => { setActiveTab("messaging"); }}
+                                        onClick={() => openConversationMutation.mutate(r.tailorUserId)}
+                                        disabled={openConversationMutation.isPending}
                                         data-testid={`button-contact-artisan-${r.id}`}
                                       >
                                         <MessageSquare size={10} className="mr-1" />Artisan
@@ -1326,7 +1344,8 @@ export default function AdminDashboard() {
                                         size="sm"
                                         variant="outline"
                                         className="h-7 text-[10px] px-2 border-gray-300 text-gray-600 hover:bg-gray-50"
-                                        onClick={() => { setActiveTab("messaging"); }}
+                                        onClick={() => openConversationMutation.mutate(r.clientId)}
+                                        disabled={openConversationMutation.isPending}
                                         data-testid={`button-contact-client-${r.id}`}
                                       >
                                         <User size={10} className="mr-1" />Client
