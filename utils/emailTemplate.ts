@@ -125,7 +125,7 @@ export function emailTemplate({
   const heroBg = HERO_BG[badgeColor];
 
   const badgeHtml = badge ? `
-    <div style="display:inline-block;background-color:${accentColor};color:#fff;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;padding:4px 10px;margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;">
+    <div class="email-badge" style="display:inline-block;background-color:${accentColor};color:#fff;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;padding:4px 10px;margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;">
       ${badge}
     </div><br>
   ` : '';
@@ -134,7 +134,7 @@ export function emailTemplate({
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;">
       <tr><td style="text-align:center;padding:0 48px 36px;">
         ${ctaNote ? `<p style="font-size:12px;color:#9a8a8d;margin:0 0 20px;letter-spacing:0.02em;">${ctaNote}</p>` : ''}
-        <a href="${ctaUrl}" style="display:inline-block;background-color:#6B0F1A;color:#ffffff;text-decoration:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.2em;text-transform:uppercase;padding:16px 48px;">
+        <a href="${ctaUrl}" class="cta-btn" style="display:inline-block;background-color:#6B0F1A !important;color:#ffffff !important;text-decoration:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.2em;text-transform:uppercase;padding:16px 48px;mso-padding-alt:0;">
           ${ctaText}
         </a>
       </td></tr>
@@ -151,6 +151,11 @@ export function emailTemplate({
     @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Barlow:wght@400;500;600&display=swap');
     * { margin:0; padding:0; box-sizing:border-box; }
     body { background-color:#f0ede8; font-family:'Barlow',sans-serif; -webkit-font-smoothing:antialiased; }
+    /* Force bordeaux on mobile clients that strip inline styles */
+    .email-badge { background-color:#6B0F1A !important; color:#ffffff !important; }
+    .cta-btn { background-color:#6B0F1A !important; color:#ffffff !important; }
+    .email-strong { color:#6B0F1A !important; }
+    .email-box-bordeaux { background-color:#f7f4f0 !important; border-color:#6B0F1A !important; }
     @media (max-width:480px) {
       .mobile-pad { padding-left:24px !important; padding-right:24px !important; }
       .cta-btn { width:100% !important; display:block !important; padding:16px 24px !important; }

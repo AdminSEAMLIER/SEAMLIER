@@ -263,7 +263,7 @@ export async function sendReferralEmail(
 ): Promise<boolean> {
   console.log(`[sendReferralEmail] Appel → ${toEmail} de la part de "${referrerName}"`);
   const baseUrl = process.env.APP_URL || "https://www.seamlier.fr";
-  const ctaUrl = `${baseUrl}/inscription-professionnel${referrerId ? `?ref=${referrerId}` : ""}`;
+  const ctaUrl = `${baseUrl}/inscription/professionnel${referrerId ? `?ref=${referrerId}` : ""}`;
   const unsubscribeEmail = `contact@seamlier.fr`;
 
   const html = emailTemplate({
@@ -281,7 +281,7 @@ export async function sendReferralEmail(
         <p style="margin:4px 0;font-size:14px;color:#5a4448;">✅ Paiement sécurisé garanti</p>
       </div>
 
-      <div style="background:#f7f4f0;border:2px solid #6B0F1A;border-radius:8px;padding:18px 22px;margin:20px 0;">
+      <div class="email-box-bordeaux" style="background:#f7f4f0;border:2px solid #6B0F1A;border-radius:8px;padding:18px 22px;margin:20px 0;">
         <p style="margin:0;font-size:14px;color:#3a2a2d;line-height:1.5;">
           🎁 <strong>Offre spéciale :</strong> 1 mois de plan Premium <strong>GRATUIT</strong>
           si vous rejoignez et recevez votre première commande.
@@ -304,7 +304,7 @@ export async function sendReferralEmail(
     "",
     "Offre spéciale : 1 mois de plan Premium GRATUIT si vous rejoignez et recevez votre première commande.",
     "",
-    `Créez votre compte : ${ctaUrl}`,
+    `Créez votre compte gratuitement : ${ctaUrl}`,
     "",
     `Pour ne plus recevoir ces emails : mailto:${unsubscribeEmail}?subject=unsubscribe`,
   ].join("\n");
