@@ -16,7 +16,7 @@ function getResend(): Resend | null {
   return resendClient;
 }
 
-async function sendEmail(to: string, subject: string, html: string, extraHeaders?: Record<string, string>): Promise<boolean> {
+async function sendEmail(to: string, subject: string, html: string, extraHeaders?: Record<string, string>, text?: string): Promise<boolean> {
   const client = getResend();
   if (!client) { console.log(`[EMAIL DISABLED] Would send "${subject}" → ${to}`); return false; }
   console.log(`[EMAIL] Tentative envoi "${subject}" → ${to}`);
@@ -26,6 +26,7 @@ async function sendEmail(to: string, subject: string, html: string, extraHeaders
       to: [to],
       subject,
       html,
+      text,
       headers: extraHeaders,
     });
     if (error) {
@@ -262,19 +263,59 @@ export async function sendReferralEmail(
 ): Promise<boolean> {
   console.log(`[sendReferralEmail] Appel → ${toEmail} de la part de "${referrerName}"`);
   const baseUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const ctaUrl = `${baseUrl}/inscription-professionnel`;
+  const unsubscribeEmail = `contact@seamlier.fr`;
+
   const html = emailTemplate({
-    title: "Invitation à rejoindre SEAMLiER",
+    title: `${referrerName} vous invite à rejoindre SEAMLiER`,
     badge: "Invitation",
     badgeColor: "bordeaux",
     content: `
-      ${p("Bonjour,")}
-      ${p(`${strong(referrerName)} vous a transmis une invitation à rejoindre SEAMLiER, la plateforme de mise en relation entre clients et artisans couturiers.`)}
-      ${p("Pour créer votre compte, utilisez le lien ci-dessous.")}
+      ${p(`${strong(referrerName)} vous invite à rejoindre ${strong("SEAMLiER")}.`)}
+      ${p("La plateforme qui connecte les couturières professionnelles avec leurs clients en France.")}
+
+      <div style="margin:20px 0;">
+        <p style="margin:0 0 8px;font-weight:700;font-size:14px;color:#3a2a2d;">Pourquoi rejoindre SEAMLiER ?</p>
+        <p style="margin:4px 0;font-size:14px;color:#5a4448;">✅ Profil artisan 100&nbsp;% gratuit</p>
+        <p style="margin:4px 0;font-size:14px;color:#5a4448;">✅ Recevez des commandes en ligne directement</p>
+        <p style="margin:4px 0;font-size:14px;color:#5a4448;">✅ Paiement sécurisé garanti</p>
+      </div>
+
+      <div style="background:#f7f4f0;border:2px solid #6B0F1A;border-radius:8px;padding:18px 22px;margin:20px 0;">
+        <p style="margin:0;font-size:14px;color:#3a2a2d;line-height:1.5;">
+          🎁 <strong>Offre spéciale :</strong> 1 mois de plan Premium <strong>GRATUIT</strong>
+          si vous rejoignez et recevez votre première commande.
+        </p>
+      </div>
     `,
-    ctaText: "Accéder à l'inscription",
-    ctaUrl: `${baseUrl}/inscription-professionnel`,
+    ctaText: "Rejoindre SEAMLiER gratuitement",
+    ctaUrl,
   });
-  return sendEmail(toEmail, "Votre invitation SEAMLiER", html);
+
+  const text = [
+    `${referrerName} vous invite à rejoindre SEAMLiER.`,
+    "",
+    "La plateforme qui connecte les couturières professionnelles avec leurs clients en France.",
+    "",
+    "Pourquoi rejoindre SEAMLiER ?",
+    "- Profil artisan 100 % gratuit",
+    "- Recevez des commandes en ligne directement",
+    "- Paiement sécurisé garanti",
+    "",
+    "Offre spéciale : 1 mois de plan Premium GRATUIT si vous rejoignez et recevez votre première commande.",
+    "",
+    `Créez votre compte : ${ctaUrl}`,
+    "",
+    `Pour ne plus recevoir ces emails : mailto:${unsubscribeEmail}?subject=unsubscribe`,
+  ].join("\n");
+
+  return sendEmail(
+    toEmail,
+    `${referrerName} vous invite à rejoindre SEAMLiER`,
+    html,
+    { "List-Unsubscribe": `<mailto:${unsubscribeEmail}?subject=unsubscribe>` },
+    text,
+  );
 }
 
 // ─── LITIGE ──────────────────────────────────────────────────────────────────
