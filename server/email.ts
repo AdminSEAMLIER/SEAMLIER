@@ -10,8 +10,9 @@ function getTransporter(): nodemailer.Transporter | null {
   const port = parseInt(process.env.SMTP_PORT || "465");
   const user = process.env.SMTP_USER || "contact@seamlier.fr";
   const pass = process.env.EMAIL_PASSWORD || process.env.SMTP_PASS;
+  console.log(`[EMAIL] SMTP config — host=${host} port=${port} user=${user} hasPass=${!!pass}`);
   if (!pass) {
-    console.warn("SMTP not configured — email sending disabled.");
+    console.warn("[EMAIL] SMTP not configured — EMAIL_PASSWORD / SMTP_PASS manquant. Email désactivé.");
     return null;
   }
   transporter = nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
@@ -20,11 +21,12 @@ function getTransporter(): nodemailer.Transporter | null {
 
 async function sendEmail(to: string, subject: string, html: string, extraHeaders?: Record<string, string>): Promise<boolean> {
   const mailer = getTransporter();
-  if (!mailer) { console.log(`[EMAIL DISABLED] ${subject} → ${to}`); return false; }
+  if (!mailer) { console.log(`[EMAIL DISABLED] Would send "${subject}" → ${to}`); return false; }
   const from = process.env.SMTP_FROM || process.env.SMTP_USER || "contact@seamlier.fr";
   const msgId = `<${Date.now()}.${crypto.randomBytes(8).toString("hex")}@seamlier.fr>`;
+  console.log(`[EMAIL] Tentative envoi "${subject}" → ${to} (from=${from})`);
   try {
-    await mailer.sendMail({
+    const info = await mailer.sendMail({
       from: `"SEAMLIER" <${from}>`,
       to,
       subject,
@@ -35,10 +37,10 @@ async function sendEmail(to: string, subject: string, html: string, extraHeaders
         ...extraHeaders,
       },
     });
-    console.log(`[EMAIL] ${subject} → ${to}`);
+    console.log(`[EMAIL] ✅ Envoyé "${subject}" → ${to} messageId=${info?.messageId}`);
     return true;
-  } catch (err) {
-    console.error(`[EMAIL] Failed to send "${subject}" to ${to}:`, err);
+  } catch (err: any) {
+    console.error(`[EMAIL] ❌ Échec "${subject}" → ${to}:`, err?.message ?? err);
     return false;
   }
 }
@@ -263,6 +265,7 @@ export async function sendFabricDepositReminderEmail(
 export async function sendReferralEmail(
   toEmail: string, referrerName: string
 ): Promise<boolean> {
+  console.log(`[sendReferralEmail] Appel → ${toEmail} de la part de "${referrerName}"`);
   const baseUrl = process.env.APP_URL || "https://www.seamlier.fr";
   const html = emailTemplate({
     title: "Invitation \u00e0 rejoindre SEAMLiER",
@@ -359,4 +362,46 @@ export async function sendDeadlineWarningEmail(
     ctaUrl: 'https://www.seamlier.fr/mes-projets',
   });
   return sendEmail(recipientEmail, subject, html);
+}
+
+// ─── BIENVENUE ARTISANE (avec section documents) ─────────────────────────────
+export async function sendTailorWelcomeEmail(
+  email: string, token: string, firstName?: string | null
+): Promise<boolean> {
+  const baseUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const verifyUrl = `${baseUrl}/api/verify-email?token=${token}`;
+  const dossierUrl = `${baseUrl}/pro/dossier`;
+  const name = firstName || "artisane";
+  const html = emailTemplate({
+    title: `Bienvenue sur SEAMLiER, ${name}`,
+    badge: "✓ Compte créé",
+    badgeColor: "bordeaux",
+    content: `
+      ${p(`Merci de rejoindre ${strong("SEAMLIER")}, la plateforme qui met en relation clients et artisans couturiers.`)}
+      ${p("Commencez par confirmer votre adresse email :")}
+      ${p(`<a href="${verifyUrl}" style="color:#6B0F1A;font-size:12px;word-break:break-all;">${verifyUrl}</a>`)}
+
+      <div style="background:#f7f4f0;border:1px solid #e8ddd0;border-radius:8px;padding:20px 24px;margin:20px 0;">
+        <p style="margin:0 0 12px;font-weight:700;font-size:14px;color:#3a2a2d;">
+          📋 Complétez votre dossier professionnel
+        </p>
+        <p style="margin:0 0 12px;font-size:13px;color:#5a4448;line-height:1.5;">
+          Pour que votre profil soit validé et visible des clients, déposez ces documents dans votre espace :
+        </p>
+        <ul style="margin:0 0 12px;padding-left:18px;font-size:13px;color:#5a4448;line-height:1.8;">
+          <li>CNI (recto/verso) — pièce d'identité en cours de validité</li>
+          <li>SIRET / extrait Kbis de moins de 3 mois</li>
+          <li>RC Pro (si disponible)</li>
+          <li>IBAN — pour recevoir vos paiements</li>
+        </ul>
+        <p style="margin:0;font-size:12px;color:#9a8a8d;">
+          L'équipe SEAMLiER examine chaque dossier sous 48h ouvrées.
+        </p>
+      </div>
+    `,
+    ctaText: "Déposer mes documents",
+    ctaUrl: dossierUrl,
+    ctaNote: "Le lien de vérification email expire dans 24 heures.",
+  });
+  return sendEmail(email, "Bienvenue sur SEAMLiER — activez votre compte", html);
 }

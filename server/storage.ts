@@ -469,21 +469,26 @@ class DatabaseStorage implements IStorage {
 
   async createMessage(message: InsertMessage): Promise<Message> {
     const id = generateUUID();
-    console.log(`[createMessage] conversationId=${message.conversationId} senderId=${message.senderId}`);
-    await db.insert(messages).values({ ...message, id });
+    console.log(`[createMessage] conversationId=${message.conversationId} senderId=${message.senderId} fileUrl=${message.fileUrl ?? "null"} mimeType=${message.mimeType ?? "null"}`);
+
+    // Use raw SQL so nullable columns (file_url, mime_type) are reliably inserted
+    await pool.query(
+      `INSERT INTO messages (id, conversation_id, sender_id, content, file_url, mime_type, sent_at, is_read)
+       VALUES (?, ?, ?, ?, ?, ?, NOW(), 0)`,
+      [id, message.conversationId, message.senderId, message.content ?? "", message.fileUrl ?? null, message.mimeType ?? null]
+    );
 
     const preview = message.content?.trim()
       ? message.content.substring(0, 100)
       : message.fileUrl ? "(📎 fichier)" : "";
     await db.update(conversations)
-      .set({
-        lastMessageAt: new Date(),
-        lastMessagePreview: preview,
-      })
+      .set({ lastMessageAt: new Date(), lastMessagePreview: preview })
       .where(eq(conversations.id, message.conversationId));
 
-    const result = await db.select().from(messages).where(eq(messages.id, id));
-    return result[0];
+    // Return via raw SQL to ensure all columns (including file_url/mime_type) are present
+    const [rows] = await pool.query(`SELECT * FROM messages WHERE id = ?`, [id]) as any[];
+    const row = (rows as any[])[0];
+    return snakeToCamel(row) as any;
   }
 
   async markMessagesAsRead(conversationId: string, userId: string): Promise<void> {

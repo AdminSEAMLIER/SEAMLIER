@@ -1691,7 +1691,7 @@ export async function registerRoutes(
       const { email } = req.body;
       if (!email || !/\S+@\S+\.\S+/.test(email)) return res.status(400).json({ error: "Email invalide" });
       const referrerName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Un artisan SEAMLIER";
-      sendReferralEmail(email, referrerName).catch(() => {});
+      sendReferralEmail(email, referrerName).catch(err => console.error("[referral] Email error:", err?.message ?? err));
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to send referral" });
@@ -1707,7 +1707,7 @@ export async function registerRoutes(
       const { email } = req.body;
       if (!email || !/\S+@\S+\.\S+/.test(email)) return res.status(400).json({ error: "Email invalide" });
       const referrerName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Un artisan SEAMLIER";
-      sendReferralEmail(email, referrerName).catch(() => {});
+      sendReferralEmail(email, referrerName).catch(err => console.error("[referral] Email error:", err?.message ?? err));
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to send referral" });

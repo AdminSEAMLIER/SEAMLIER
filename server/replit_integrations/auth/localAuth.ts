@@ -10,7 +10,7 @@ import { authStorage } from "./storage";
 import { storage } from "../../storage";
 import { pool } from "../../db";
 import crypto from "crypto";
-import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail, sendPasswordResetEmail } from "../../email";
+import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail, sendTailorWelcomeEmail, sendPasswordResetEmail } from "../../email";
 
 // ─── Session ────────────────────────────────────────────────────────────────
 
@@ -220,8 +220,9 @@ export async function setupAuth(app: Express) {
         ).catch((e: any) => console.error("[CGV] Failed to save cgvAccepted:", e?.message));
       }
 
-      sendVerificationEmail(email, verificationToken, resolvedFirstName).catch(err => {
-        console.error("Failed to send verification email:", err);
+      const emailFn = userRole === "tailor" ? sendTailorWelcomeEmail : sendVerificationEmail;
+      emailFn(email, verificationToken, resolvedFirstName).catch(err => {
+        console.error("Failed to send verification/welcome email:", err);
       });
 
       return res.status(201).json({
