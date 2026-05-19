@@ -429,42 +429,52 @@ class DatabaseStorage implements IStorage {
   }
 
   async getMessages(conversationId: string): Promise<MessageWithSender[]> {
-    const [rows] = await pool.query(
-      `SELECT m.id, m.conversation_id as conversationId, m.sender_id as senderId,
-              m.content, m.sent_at as sentAt, m.is_read as isRead,
-              m.file_url as fileUrl, m.mime_type as mimeType,
-              u.id as u_id, u.first_name as u_firstName, u.last_name as u_lastName,
-              u.email as u_email, u.role as u_role, u.profile_image_url as u_profileImageUrl
-       FROM messages m
-       LEFT JOIN users u ON m.sender_id COLLATE utf8mb4_unicode_ci = u.id COLLATE utf8mb4_unicode_ci
-       WHERE m.conversation_id = ?
-       ORDER BY m.sent_at ASC`,
-      [conversationId]
-    ) as any[];
+    try {
+      const [rows] = await pool.query(
+        `SELECT m.id, m.conversation_id as conversationId, m.sender_id as senderId,
+                m.content, m.sent_at as sentAt, m.is_read as isRead,
+                m.file_url as fileUrl, m.mime_type as mimeType,
+                u.id as u_id, u.first_name as u_firstName, u.last_name as u_lastName,
+                u.email as u_email, u.role as u_role, u.profile_image_url as u_profileImageUrl
+         FROM messages m
+         LEFT JOIN users u ON m.sender_id = u.id
+         WHERE m.conversation_id = ?
+         ORDER BY m.sent_at ASC`,
+        [conversationId]
+      ) as any[];
 
-    console.log(`[getMessages] conversationId=${conversationId} → ${rows?.length ?? 0} rows`);
+      console.log(`[getMessages] conversationId=${conversationId} → ${rows?.length ?? 0} rows`);
 
-    if (!rows || !Array.isArray(rows)) return [];
-    // @ts-ignore
-
-    return rows.map((row: any) => ({
-      id: row.id,
-      conversationId: row.conversationId,
-      senderId: row.senderId,
-      content: row.content,
-      sentAt: row.sentAt,
-      isRead: !!row.isRead,
-      fileUrl: row.fileUrl || null,
-      mimeType: row.mimeType || null,
-      sender: row.u_id ? {
-        id: row.u_id,
-        firstName: row.u_firstName,
-        lastName: row.u_lastName,
-        email: row.u_email,
-        role: row.u_role,
-        profileImageUrl: row.u_profileImageUrl,
-      } : null
-    }));
+      if (!rows || !Array.isArray(rows)) return [];
+      // @ts-ignore
+      return rows.map((row: any) => ({
+        id: row.id,
+        conversationId: row.conversationId,
+        senderId: row.senderId,
+        content: row.content,
+        sentAt: row.sentAt,
+        isRead: !!row.isRead,
+        fileUrl: row.fileUrl || null,
+        mimeType: row.mimeType || null,
+        sender: row.u_id ? {
+          id: row.u_id,
+          firstName: row.u_firstName,
+          lastName: row.u_lastName,
+          email: row.u_email,
+          role: row.u_role,
+          profileImageUrl: row.u_profileImageUrl,
+        } : null
+      }));
+    } catch (err: any) {
+      console.error(
+        `[getMessages] ❌ SQL error conversationId=${conversationId}`,
+        `| sqlMessage: ${err?.sqlMessage ?? "—"}`,
+        `| code: ${err?.code ?? "—"}`,
+        `| errno: ${err?.errno ?? "—"}`,
+        `| message: ${err?.message ?? String(err)}`
+      );
+      throw err;
+    }
   }
 
   async createMessage(message: InsertMessage): Promise<Message> {

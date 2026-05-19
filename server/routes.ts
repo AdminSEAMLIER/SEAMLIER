@@ -517,13 +517,24 @@ export async function registerRoutes(
   });
 
   app.get("/api/messages/:conversationId", requireAuth, async (req: any, res) => {
+    const convId = req.params.conversationId;
     try {
-      const msgs = await storage.getMessages(req.params.conversationId);
-      console.log(`[GET /api/messages/${req.params.conversationId}] returning ${msgs.length} messages, user=${req.authUserId}`);
+      const msgs = await storage.getMessages(convId);
+      console.log(`[GET /api/messages/${convId}] returning ${msgs.length} messages, user=${req.authUserId}`);
       res.json(msgs);
-    } catch (error) {
-      console.error("Failed to fetch messages:", error);
-      res.status(500).json({ error: "Failed to fetch messages" });
+    } catch (error: any) {
+      console.error(`[GET /api/messages/${convId}] ❌ sqlMessage=${error?.sqlMessage ?? "—"} code=${error?.code ?? "—"} message=${error?.message ?? String(error)}`);
+      res.status(500).json({ error: "Failed to fetch messages", detail: error?.sqlMessage || error?.message });
+    }
+  });
+
+  app.get("/api/admin/debug/messages-schema", requireAdmin, async (_req, res) => {
+    try {
+      const [cols] = await pool.query(`SHOW COLUMNS FROM messages`) as any[];
+      const [sample] = await pool.query(`SELECT id, file_url, mime_type FROM messages ORDER BY sent_at DESC LIMIT 3`) as any[];
+      res.json({ columns: cols, sample });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.sqlMessage || err?.message });
     }
   });
 
