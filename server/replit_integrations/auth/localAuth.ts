@@ -10,7 +10,7 @@ import { authStorage } from "./storage";
 import { storage } from "../../storage";
 import { pool } from "../../db";
 import crypto from "crypto";
-import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail, sendTailorWelcomeEmail, sendPasswordResetEmail } from "../../email";
+import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail, sendTailorWelcomeEmail, sendPasswordResetEmail, sendAdminReferralNotification } from "../../email";
 
 // ─── Session ────────────────────────────────────────────────────────────────
 
@@ -224,6 +224,24 @@ export async function setupAuth(app: Express) {
       emailFn(email, verificationToken, resolvedFirstName).catch(err => {
         console.error("Failed to send verification/welcome email:", err);
       });
+
+      // Detect referral and notify admin
+      const referralCode = req.body.ref || req.body.referralCode || (req as any).query?.ref;
+      if (referralCode) {
+        (async () => {
+          try {
+            const referrer = await authStorage.getUser(referralCode);
+            if (referrer?.email) {
+              await sendAdminReferralNotification(
+                resolvedFirstName, resolvedLastName, email,
+                referrer.firstName ?? null, referrer.lastName ?? null, referrer.email
+              );
+            }
+          } catch (err: any) {
+            console.error("[referral] Admin notification error:", err?.message ?? err);
+          }
+        })();
+      }
 
       return res.status(201).json({
         success: true,

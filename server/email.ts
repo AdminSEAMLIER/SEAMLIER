@@ -259,11 +259,11 @@ export async function sendFabricDepositReminderEmail(
 
 // ─── PARRAINAGE ──────────────────────────────────────────────────────────────
 export async function sendReferralEmail(
-  toEmail: string, referrerName: string
+  toEmail: string, referrerName: string, referrerId?: string
 ): Promise<boolean> {
   console.log(`[sendReferralEmail] Appel → ${toEmail} de la part de "${referrerName}"`);
   const baseUrl = process.env.APP_URL || "https://www.seamlier.fr";
-  const ctaUrl = `${baseUrl}/inscription-professionnel`;
+  const ctaUrl = `${baseUrl}/inscription-professionnel${referrerId ? `?ref=${referrerId}` : ""}`;
   const unsubscribeEmail = `contact@seamlier.fr`;
 
   const html = emailTemplate({
@@ -435,4 +435,53 @@ export async function sendTailorWelcomeEmail(
     ctaNote: "Le lien de vérification email expire dans 24 heures.",
   });
   return sendEmail(email, "Bienvenue sur SEAMLiER — activez votre compte", html);
+}
+
+// ─── NOTIFICATION ADMIN — INSCRIPTION VIA PARRAINAGE ─────────────────────────
+export async function sendAdminReferralNotification(
+  newUserFirstName: string | null, newUserLastName: string | null, newUserEmail: string,
+  referrerFirstName: string | null, referrerLastName: string | null, referrerEmail: string
+): Promise<boolean> {
+  const newUserName = `${newUserFirstName || ""} ${newUserLastName || ""}`.trim() || newUserEmail;
+  const referrerName = `${referrerFirstName || ""} ${referrerLastName || ""}`.trim() || referrerEmail;
+  const baseUrl = process.env.APP_URL || "https://www.seamlier.fr";
+  const html = emailTemplate({
+    title: "Nouvelle inscription via parrainage",
+    badge: "🎁 Parrainage",
+    badgeColor: "bordeaux",
+    content: `
+      ${p("Une nouvelle artisane s'est inscrite via un lien de parrainage. Pensez à activer son mois Premium dans le dashboard admin.")}
+      ${infoBlock("NOUVELLE INSCRITE", [
+        { label: "Nom", value: newUserName },
+        { label: "Email", value: newUserEmail },
+      ])}
+      ${infoBlock("PARRAIN / MARRAINE", [
+        { label: "Nom", value: referrerName },
+        { label: "Email", value: referrerEmail },
+      ])}
+      <div style="background:#f7f4f0;border:2px solid #6B0F1A;border-radius:8px;padding:16px 20px;margin:20px 0;">
+        <p style="margin:0;font-size:14px;color:#3a2a2d;font-weight:600;">
+          ⚡ Action requise : activer 1 mois Premium pour la nouvelle inscrite dans le dashboard admin.
+        </p>
+      </div>
+    `,
+    ctaText: "Aller au dashboard admin",
+    ctaUrl: `${baseUrl}/admin`,
+  });
+  const text = [
+    "Nouvelle inscription via parrainage — action requise.",
+    "",
+    `Nouvelle inscrite : ${newUserName} <${newUserEmail}>`,
+    `Parrain / marraine : ${referrerName} <${referrerEmail}>`,
+    "",
+    "Action : activer 1 mois Premium pour la nouvelle inscrite dans le dashboard admin.",
+    `${baseUrl}/admin`,
+  ].join("\n");
+  return sendEmail(
+    "admin@seamlier.fr",
+    "Nouvelle inscription via parrainage — activation Premium à faire",
+    html,
+    undefined,
+    text,
+  );
 }
