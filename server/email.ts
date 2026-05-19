@@ -1,46 +1,41 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import crypto from "crypto";
 import { emailTemplate, infoBlock, dateBlock, amountBlock, p, strong } from "../utils/emailTemplate";
 
-let transporter: nodemailer.Transporter | null = null;
+let resendClient: Resend | null = null;
 
-function getTransporter(): nodemailer.Transporter | null {
-  if (transporter) return transporter;
-  const host = process.env.SMTP_HOST || "mail.seamlier.fr";
-  const port = parseInt(process.env.SMTP_PORT || "465");
-  const user = process.env.SMTP_USER || "contact@seamlier.fr";
-  const pass = process.env.EMAIL_PASSWORD || process.env.SMTP_PASS;
-  console.log(`[EMAIL] SMTP config — host=${host} port=${port} user=${user} hasPass=${!!pass}`);
-  if (!pass) {
-    console.warn("[EMAIL] SMTP not configured — EMAIL_PASSWORD / SMTP_PASS manquant. Email désactivé.");
+function getResend(): Resend | null {
+  if (resendClient) return resendClient;
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn("[EMAIL] RESEND_API_KEY manquant — envoi désactivé.");
     return null;
   }
-  transporter = nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
-  return transporter;
+  resendClient = new Resend(apiKey);
+  console.log("[EMAIL] Resend initialisé ✅");
+  return resendClient;
 }
 
 async function sendEmail(to: string, subject: string, html: string, extraHeaders?: Record<string, string>): Promise<boolean> {
-  const mailer = getTransporter();
-  if (!mailer) { console.log(`[EMAIL DISABLED] Would send "${subject}" → ${to}`); return false; }
-  const from = process.env.SMTP_FROM || process.env.SMTP_USER || "contact@seamlier.fr";
-  const msgId = `<${Date.now()}.${crypto.randomBytes(8).toString("hex")}@seamlier.fr>`;
-  console.log(`[EMAIL] Tentative envoi "${subject}" → ${to} (from=${from})`);
+  const client = getResend();
+  if (!client) { console.log(`[EMAIL DISABLED] Would send "${subject}" → ${to}`); return false; }
+  console.log(`[EMAIL] Tentative envoi "${subject}" → ${to}`);
   try {
-    const info = await mailer.sendMail({
-      from: `"SEAMLIER" <${from}>`,
-      to,
+    const { data, error } = await client.emails.send({
+      from: "SEAMLIER <contact@seamlier.fr>",
+      to: [to],
       subject,
       html,
-      headers: {
-        "X-Mailer": "SEAMLIER Platform",
-        "Message-ID": msgId,
-        ...extraHeaders,
-      },
+      headers: extraHeaders,
     });
-    console.log(`[EMAIL] ✅ Envoyé "${subject}" → ${to} messageId=${info?.messageId}`);
+    if (error) {
+      console.error(`[EMAIL] ❌ Resend error "${subject}" → ${to}:`, error);
+      return false;
+    }
+    console.log(`[EMAIL] ✅ Envoyé "${subject}" → ${to} id=${data?.id}`);
     return true;
   } catch (err: any) {
-    console.error(`[EMAIL] ❌ Échec "${subject}" → ${to}:`, err?.message ?? err);
+    console.error(`[EMAIL] ❌ Exception "${subject}" → ${to}:`, err?.message ?? err);
     return false;
   }
 }
@@ -268,23 +263,18 @@ export async function sendReferralEmail(
   console.log(`[sendReferralEmail] Appel → ${toEmail} de la part de "${referrerName}"`);
   const baseUrl = process.env.APP_URL || "https://www.seamlier.fr";
   const html = emailTemplate({
-    title: "Invitation \u00e0 rejoindre SEAMLiER",
+    title: "Invitation à rejoindre SEAMLiER",
     badge: "Invitation",
     badgeColor: "bordeaux",
     content: `
       ${p("Bonjour,")}
-      ${p(`${strong(referrerName)} vous a transmis une invitation \u00e0 rejoindre SEAMLiER, la plateforme de mise en relation entre clients et artisans couturiers.`)}
-      ${p("Pour cr\u00e9er votre compte, utilisez le lien ci-dessous.")}
+      ${p(`${strong(referrerName)} vous a transmis une invitation à rejoindre SEAMLiER, la plateforme de mise en relation entre clients et artisans couturiers.`)}
+      ${p("Pour créer votre compte, utilisez le lien ci-dessous.")}
     `,
-    ctaText: "Acc\u00e9der \u00e0 l\u2019inscription",
+    ctaText: "Accéder à l'inscription",
     ctaUrl: `${baseUrl}/inscription-professionnel`,
   });
-  return sendEmail(
-    toEmail,
-    "Votre invitation SEAMLiER",
-    html,
-    { "X-Auto-Response-Suppress": "OOF, AutoReply" }
-  );
+  return sendEmail(toEmail, "Votre invitation SEAMLiER", html);
 }
 
 // ─── LITIGE ──────────────────────────────────────────────────────────────────
